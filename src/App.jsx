@@ -112,6 +112,7 @@ import ScrollToTop from "./Component/Scrooltop";
 
 import DashBoard from "./pages/dashBoard/DashBoard";
 import OpdFeedBack from "./pages/reportsMain/OPDFeedbackDashboard";
+import IPDFeedbackDashboard from "./pages/reportsMain/IPDFeedbackDashboard";
 
 
 
@@ -124,6 +125,8 @@ function App() {
         <Routes>
           <Route path="/" element={<DashBoard />} />
           <Route path="/opd-feedback" element={<OpdFeedBack />} />
+          <Route path="/ipd-feedback" element={<IPDFeedbackDashboard />} />
+
 
         </Routes>
       </div>

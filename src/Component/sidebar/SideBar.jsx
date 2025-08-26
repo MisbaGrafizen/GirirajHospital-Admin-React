@@ -16,7 +16,7 @@ export default function SideBar() {
   const menuItems = [
     { name: "Dashboard", icon: dashboard, path: "/" },
     { name: "OPD ", icon: expan, path: "/opd-feedback" },
-    { name: "Inventory", icon: inventory, path: "/inventory" },
+    { name: "IPD", icon: inventory, path: "/ipd-feedback" },
     { name: "Stock", icon: sales,path: "/add-stock"  },
     { name: "Purchases", icon: purches, path: "/purches-invoice" },
     { name: "Sales", icon: newsales, path: "/sales-invoice" },
