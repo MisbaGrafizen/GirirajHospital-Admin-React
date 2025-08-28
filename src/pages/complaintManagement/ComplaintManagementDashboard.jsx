@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import Header from "../../Component/header/Header"
 import SideBar from "../../Component/sidebar/SideBar"
+import { useNavigate } from "react-router-dom"
 
 export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState("2024-01-01")
@@ -31,7 +32,12 @@ export default function ComplaintManagementDashboard() {
     const [selectedComplaint, setSelectedComplaint] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [chartAnimated, setChartAnimated] = useState(false)
+const navigate = useNavigate()
 
+
+const handlenavigate =()=>{
+    navigate("/complaint-details")
+}
     // Trigger chart animation on mount
     useEffect(() => {
         const timer = setTimeout(() => setChartAnimated(true), 500)
@@ -595,6 +601,7 @@ export default function ComplaintManagementDashboard() {
                                                     <tbody className="bg-white">
                                                         {topDepartments.map((dept, index) => (
                                                             <tr
+                                                
                                                                 key={index}
                                                                 className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                             >
@@ -706,6 +713,7 @@ export default function ComplaintManagementDashboard() {
                                                     {filteredComplaints.map((complaint, index) => (
                                                         <tr
                                                             key={complaint.id}
+                                                                        onClick={handlenavigate}
                                                             className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                         >
                                                             <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.id}</td>

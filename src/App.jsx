@@ -114,6 +114,7 @@ import DashBoard from "./pages/dashBoard/DashBoard";
 import OpdFeedBack from "./pages/reportsMain/OPDFeedbackDashboard";
 import IPDFeedbackDashboard from "./pages/reportsMain/IPDFeedbackDashboard";
 import ComplaintManagementDashboard from "./pages/complaintManagement/ComplaintManagementDashboard";
+import ComplaintViewPage from "./pages/complaintManagement/ComplaintViewPage";
 
 
 
@@ -128,6 +129,8 @@ function App() {
           <Route path="/opd-feedback" element={<OpdFeedBack />} />
           <Route path="/ipd-feedback" element={<IPDFeedbackDashboard />} />
           <Route path="/complaint-dashboard" element={<ComplaintManagementDashboard />} />
+          <Route path="/complaint-details" element={<ComplaintViewPage />} />
+
 
 
 
