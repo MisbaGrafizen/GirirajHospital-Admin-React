@@ -7,6 +7,7 @@ import {
   Modal as NextUIModal,
   ModalContent,
 } from "@nextui-org/react";
+import OpdFilter from "../ReportFilter/OpdFilter";
 
 
 export default function Header({ pageName = "" }) {
@@ -21,8 +22,8 @@ export default function Header({ pageName = "" }) {
 
   return (
     <>
-      <section className=" flex  w-[100%] ">
-        <div className=" w-[100%]  gap-[10px] flex items-center  justify-between px-[0px] border-b-[1.5px] pb-[25px] pt-[20px] bg h-[42px]">
+      <section className=" flex  w-[100%] border-b-[1.5px] ">
+        <div className=" gap-[30px]  flex items-center  justify-between px-[0px]  pb-[25px] pt-[20px] bg h-[42px]">
           <div className=" flex  w-fit  cursor-pointer items-center gap-[5px]  ">
             <img
               className=" flex w-[27px] h-[27px]"
@@ -39,9 +40,12 @@ export default function Header({ pageName = "" }) {
 
           </div>
 
+          <div className=" w-fit ">
+            <OpdFilter />
+          </div>
 
-     
         </div>
+
       </section>
 
 

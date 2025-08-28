@@ -17,7 +17,7 @@ export default function SideBar() {
     { name: "Dashboard", icon: dashboard, path: "/" },
     { name: "OPD ", icon: expan, path: "/opd-feedback" },
     { name: "IPD", icon: inventory, path: "/ipd-feedback" },
-    { name: "Stock", icon: sales,path: "/add-stock"  },
+    { name: "Complaint", icon: sales,path: "/complaint-dashboard"  },
     { name: "Purchases", icon: purches, path: "/purches-invoice" },
     { name: "Sales", icon: newsales, path: "/sales-invoice" },
     { name: "Settings", icon: settings, path: "/create-account" },

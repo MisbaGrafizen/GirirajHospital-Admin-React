@@ -113,6 +113,7 @@ import ScrollToTop from "./Component/Scrooltop";
 import DashBoard from "./pages/dashBoard/DashBoard";
 import OpdFeedBack from "./pages/reportsMain/OPDFeedbackDashboard";
 import IPDFeedbackDashboard from "./pages/reportsMain/IPDFeedbackDashboard";
+import ComplaintManagementDashboard from "./pages/complaintManagement/ComplaintManagementDashboard";
 
 
 
@@ -121,11 +122,13 @@ function App() {
   return (
     <>
       <ScrollToTop />
-      <div className="w-100 ease-soft-spring h-[100%]  !bg-[#F6FAFB]  duration-1000 ">
+      <div className="w-100 ease-soft-spring font-Poppins h-[100%]  !bg-[#F6FAFB]  duration-1000 ">
         <Routes>
           <Route path="/" element={<DashBoard />} />
           <Route path="/opd-feedback" element={<OpdFeedBack />} />
           <Route path="/ipd-feedback" element={<IPDFeedbackDashboard />} />
+          <Route path="/complaint-dashboard" element={<ComplaintManagementDashboard />} />
+
 
 
         </Routes>
