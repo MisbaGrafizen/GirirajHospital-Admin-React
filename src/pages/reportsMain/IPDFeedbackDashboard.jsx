@@ -18,10 +18,12 @@ import {
 import Header from "../../Component/header/Header"
 import SideBar from "../../Component/sidebar/SideBar"
 import { ApiGet, ApiPost } from "../../helper/axios"
+import { useNavigate } from "react-router-dom"
 
 
 export default function IPDFeedbackDashboard() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
+  const navigate = useNavigate()
   const [dateTo, setDateTo] = useState("2024-01-31")
   const [selectedService, setSelectedService] = useState("All Services")
   const [selectedDoctor, setSelectedDoctor] = useState("All Doctors")
@@ -564,6 +566,13 @@ useEffect(() => {
     )
   }
 
+
+
+
+
+  const handleNavigate =()=>{
+    navigate("/feedback-details")
+  }
   return (
 
 
@@ -818,7 +827,7 @@ useEffect(() => {
                               key={feedback.id}
                               className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
                                 } hover:bg-blue-50 transition-colors cursor-pointer`}
-                              onClick={() => alert(`Viewing details for ${feedback.patient}`)}
+                              onClick={handleNavigate}
                             >
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
