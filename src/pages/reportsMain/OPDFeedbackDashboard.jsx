@@ -61,7 +61,7 @@ export default function OPDFeedbackDashboard() {
   const [lineData, setLineData] = useState([]);
   const [trendBucket, setTrendBucket] = useState("day"); // "day" | "week" | "month"
   const [serviceSummary, setServiceSummary] = useState([]);
-  // Sample data
+  const [metric, setMetric] = useState("avg"); // 'avg' | 'count'
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
     averageRating: 0,
@@ -174,16 +174,33 @@ function bucketKeyAndLabel(d, bucket) {
   const y = d.getFullYear();
   const m = d.getMonth() + 1;
   const day = d.getDate();
+
   if (bucket === "day") {
-    return { key: `${y}-${pad2(m)}-${pad2(day)}`, label: `${pad2(day)}/${pad2(m)}` }; // dd/mm
+    // 👉 Sep 02 format
+    return {
+      key: `${y}-${pad2(m)}-${pad2(day)}`,
+      label: d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+      }),
+    };
   }
+
   if (bucket === "week") {
     const w = weekOfYear(d);
     return { key: `${y}-W${pad2(w)}`, label: `W${pad2(w)} ${y}` };
   }
-  // month
-  return { key: `${y}-${pad2(m)}`, label: `${pad2(m)}/${y}` }; // mm/yyyy
+
+  // month bucket → Sep 2024
+  return {
+    key: `${y}-${pad2(m)}`,
+    label: d.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    }),
+  };
 }
+
 
 function getRangeFromRows(list) {
   let min = Infinity, max = -Infinity;
@@ -200,6 +217,48 @@ function getRangeFromRows(list) {
   }
   return { from: new Date(min), to: new Date(max) };
 }
+
+function buildAutoTrendBoth(list, dateFrom, dateTo) {
+  // decide range (prefer dateFrom/dateTo if valid, else derive from data)
+  let from = dateFrom ? new Date(dateFrom) : null;
+  let to   = dateTo   ? new Date(dateTo)   : null;
+  if (!from || !to || isNaN(from) || isNaN(to)) {
+    const r = getRangeFromRows(list);
+    from = r.from; to = r.to;
+  }
+
+  const bucket = pickBucket(from, to);
+  const map = new Map(); // key -> { sum, count, label }
+
+  for (const row of list) {
+    const d = new Date(row.createdAt);
+    if (isNaN(d)) continue;
+    const { key, label } = bucketKeyAndLabel(d, bucket);
+    if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
+    const b = map.get(key);
+    b.sum += (row.rating || 0);
+    b.count += 1;
+  }
+
+  let trendAvg = Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => ({ date: v.label, value: v.count ? round1(v.sum / v.count) : 0 }));
+
+  let trendCount = Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => ({ date: v.label, value: v.count }));
+
+  // keep the chart readable
+  const MAX_POINTS = 40;
+  if (trendAvg.length > MAX_POINTS) {
+    const step = Math.ceil(trendAvg.length / MAX_POINTS);
+    trendAvg = trendAvg.filter((_, i) => i % step === 0);
+    trendCount = trendCount.filter((_, i) => i % step === 0);
+  }
+
+  return { trendAvg, trendCount, bucket };
+}
+
 
 function buildAutoTrend(list, dateFrom, dateTo) {
   // decide range (prefer dateFrom/dateTo if valid, else derive from data)
@@ -236,100 +295,6 @@ function buildAutoTrend(list, dateFrom, dateTo) {
 
   return { trend, bucket };
 }
-
-
-  const patientFeedback = [
-    {
-      id: 1,
-      date: "2024-01-15 10:30",
-      patient: "John Smith",
-      contact: "+91 9876543210",
-      doctor: "Dr. Sharma",
-      rating: 5,
-      comment: "Excellent service, very professional staff",
-    },
-    {
-      id: 2,
-      date: "2024-01-15 11:45",
-      patient: "Mary Johnson",
-      contact: "+91 9876543211",
-      doctor: "Dr. Patel",
-      rating: 4,
-      comment: "Good experience, waiting time was reasonable",
-    },
-    {
-      id: 3,
-      date: "2024-01-15 14:20",
-      patient: "Robert Brown",
-      contact: "+91 9876543212",
-      doctor: "Dr. Kumar",
-      rating: 3,
-      comment: "Average service, room for improvement",
-    },
-    {
-      id: 4,
-      date: "2024-01-15 15:30",
-      patient: "Sarah Davis",
-      contact: "+91 9876543213",
-      doctor: "Dr. Singh",
-      rating: 5,
-      comment: "Outstanding care and attention",
-    },
-    {
-      id: 5,
-      date: "2024-01-16 09:15",
-      patient: "Michael Wilson",
-      contact: "+91 9876543214",
-      doctor: "Dr. Sharma",
-      rating: 4,
-      comment: "Professional staff, clean facilities",
-    },
-    {
-      id: 6,
-      date: "2024-01-16 10:45",
-      patient: "Emily Taylor",
-      contact: "+91 9876543215",
-      doctor: "Dr. Patel",
-      rating: 2,
-      comment: "Long waiting time, staff could be more helpful",
-    },
-    {
-      id: 7,
-      date: "2024-01-16 12:30",
-      patient: "David Anderson",
-      contact: "+91 9876543216",
-      doctor: "Dr. Kumar",
-      rating: 5,
-      comment: "Excellent diagnosis and treatment",
-    },
-    {
-      id: 8,
-      date: "2024-01-16 14:15",
-      patient: "Lisa Martinez",
-      contact: "+91 9876543217",
-      doctor: "Dr. Singh",
-      rating: 4,
-      comment: "Good overall experience",
-    },
-    {
-      id: 9,
-      date: "2024-01-17 08:30",
-      patient: "James Garcia",
-      contact: "+91 9876543218",
-      doctor: "Dr. Sharma",
-      rating: 3,
-      comment: "Satisfactory service",
-    },
-    {
-      id: 10,
-      date: "2024-01-17 11:20",
-      patient: "Jennifer Lopez",
-      contact: "+91 9876543219",
-      doctor: "Dr. Patel",
-      rating: 5,
-      comment: "Highly recommend this hospital",
-    },
-  ]
 
    const getRatingStars = (rating) => {
     const filled = Math.round(rating) // show out of 5
@@ -408,6 +373,13 @@ function buildAutoTrend(list, dateFrom, dateTo) {
   useEffect(() => {
     fetchOPD()
   }, [fetchOPD])
+
+  useEffect(() => {
+  const { trendAvg, trendCount, bucket } = buildAutoTrendBoth(rows, dateFrom, dateTo);
+  setTrendBucket(bucket);
+  setLineData(metric === "avg" ? trendAvg : trendCount);
+}, [rows, dateFrom, dateTo, metric]);
+
 
 
 
@@ -652,12 +624,21 @@ function buildAutoTrend(list, dateFrom, dateTo) {
                     </div>
 
                     {/* Average Rating Trend Line Chart */}
-                    <div className="bg-white rounded-lg  p-6">
+                    {/* <div className="bg-white rounded-lg  p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Rating Trend</h3>
                       <div className="flex justify-center">
                         <LineChart data={lineChartData} />
                       </div>
-                    </div>
+                    </div> */}
+                    <div className="bg-white rounded-lg p-6">
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    Average Rating Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+  </h3>
+  <div className="flex justify-center">
+    <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} />
+  </div>
+</div>
+
                   </div>
 
                   {/* Word Cloud */}

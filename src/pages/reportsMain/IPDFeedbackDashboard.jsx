@@ -1,59 +1,79 @@
-"use client"
+import React, { useCallback, useEffect, useState } from 'react'
+import Header from '../../Component/header/Header'
+import SideBar from '../../Component/sidebar/SideBar'
+import { Calendar,FileText, Download, Search, Filter, Users, Star, ThumbsUp, Award, Phone, User, Clock } from "lucide-react"
+import { ApiGet } from '../../helper/axios'
 
-import { useEffect, useState } from "react"
-import {
-  Calendar,
-  Download,
-  Search,
-  Filter,
-  Star,
-  ThumbsUp,
-  Award,
-  Phone,
-  User,
-  Clock,
-  Bed,
-  FileText,
-} from "lucide-react"
-import Header from "../../Component/header/Header"
-import SideBar from "../../Component/sidebar/SideBar"
-import { ApiGet, ApiPost } from "../../helper/axios"
-import { useNavigate } from "react-router-dom"
+
+const API_URL = "/admin/ipd-patient"
+function formatDate(dateStr) {
+  const d = new Date(dateStr)
+  const day = String(d.getDate()).padStart(2, "0")
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const year = d.getFullYear()
+  return `${day}/${month}/${year}`
+}
+function round1(n) {
+  return Math.round((Number(n) || 0) * 10) / 10
+}
+
+const RATING_KEYS = [
+  "appointment", "appointmentBooking",
+  "reception", "receptionStaff",
+  "diagnostic",
+  "laboratory", "labServices",
+  "radiology", "radiologyServices",
+  "doctorServices", "consultant", "doctor",
+  "security",
+]
+
+function calcRowAverage(ratings = {}) {
+  const vals = []
+  for (const key of RATING_KEYS) {
+    const v = ratings?.[key]
+    if (typeof v === "number" && v >= 1 && v <= 5) vals.push(v)
+  }
+  if (!vals.length) return 0
+  return round1(vals.reduce((a, b) => a + b, 0) / vals.length)
+}
+
+function calcNpsPercent(items) {
+  const values = items
+    .map((it) => it.overallRecommendation)
+    .filter((v) => typeof v === "number")
+  if (!values.length) return 0
+  const promoters = values.filter((v) => v >= 9).length
+  const detractors = values.filter((v) => v <= 6).length
+  const n = values.length
+  return Math.round(((promoters - detractors) / n) * 100)
+}
 
 
 export default function IPDFeedbackDashboard() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
-  const navigate = useNavigate()
   const [dateTo, setDateTo] = useState("2024-01-31")
   const [selectedService, setSelectedService] = useState("All Services")
-  const [selectedDoctor, setSelectedDoctor] = useState("All Doctors")
-  const [searchTerm, setSearchTerm] = useState("");
-  const [lineData, setLineData] = useState([])
-  const [trendBucket, setTrendBucket] = useState("day") // day | week | month
-  const [chartData, setChartData] = useState([])
-  const [serviceData, setServiceData] = useState([])
-
-  const [feedback, setFeedback] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  // Sample data
-  // const kpiData = {
-  //   totalFeedback: 71,
-  //   averageRating: 4.2,
-  //   npsRating: 78,
-  //   overallScore: "Good",
-  // }
-
-  // const chartData = [
-  //   { label: "Excellent", count: 28, percentage: 39, color: "#10B981" },
-  //   { label: "Very Good", count: 18, percentage: 25, color: "#3B82F6" },
-  //   { label: "Good", count: 12, percentage: 17, color: "#06B6D4" },
-  //   { label: "Average", count: 8, percentage: 11, color: "#EAB308" },
-  //   { label: "Poor", count: 3, percentage: 4, color: "#F97316" },
-  //   { label: "Very Poor", count: 2, percentage: 3, color: "#EF4444" },
-  // ]
-
-
+  const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [rows, setRows] = useState([])
+  const [lineData, setLineData] = useState([]);
+  const [trendBucket, setTrendBucket] = useState("day"); // "day" | "week" | "month"
+  const [serviceSummary, setServiceSummary] = useState([]);
+  const [metric, setMetric] = useState("avg"); // 'avg' | 'count'
+  const [kpiData, setKpiData] = useState({
+    totalFeedback: 0,
+    averageRating: 0,
+    npsRating: 0,
+    overallScore: "-",
+  })
+  const [chartData, setChartData] = useState([
+    { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },   // 5
+    { label: "Very Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
+    { label: "Good", count: 0, percentage: 0, color: "#06B6D4" },        // 3
+    { label: "Average", count: 0, percentage: 0, color: "#EAB308" },     // 2
+    { label: "Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
+  ])
 
   const defaultColors = [
     '#3b82f6', // blue
@@ -64,357 +84,317 @@ export default function IPDFeedbackDashboard() {
     '#ec4899', // pink
   ]
 
-  // Line chart data for IPD ratings over time
+  // Line chart data
   const lineChartData = [
-    { date: "Jan 15", value: 4.1 },
-    { date: "Jan 16", value: 4.3 },
-    { date: "Jan 17", value: 4.0 },
-    { date: "Jan 18", value: 4.2 },
-    { date: "Jan 19", value: 4.5 },
-    { date: "Jan 20", value: 4.1 },
-    { date: "Jan 21", value: 4.4 },
-    { date: "Jan 22", value: 4.6 },
-    { date: "Jan 23", value: 4.2 },
+    { month: "OCT", value: 45 },
+    { month: "NOV", value: 65 },
+    { month: "DEC", value: 42 },
+    { month: "JAN", value: 40 },
+    { month: "FEB", value: 55 },
+    { month: "MAR", value: 15 },
+    { month: "APR", value: 35 },
+    { month: "MAY", value: 62 },
+    { month: "JUN", value: 75 },
   ]
 
-const SERVICE_KEYS = [
-    "appointmentBooking",
-    "attendantStaff",
-    "receptionStaff",
-    "cleanliness",
-    "labServices",
-    "radiologyServices",
-    "doctorServices",
-    "physiotherapyServices",
+  const serviceData = [
+    { service: "Appointment", excellent: 35, good: 30, average: 20, poor: 10, veryPoor: 5 },
+    { service: "Reception Staff", excellent: 40, good: 35, average: 15, poor: 7, veryPoor: 3 },
+    { service: "Diagnostic Services", excellent: 45, good: 25, average: 18, poor: 8, veryPoor: 4 },
+    { service: "Lab / Radio", excellent: 38, good: 32, average: 16, poor: 9, veryPoor: 5 },
+    { service: "Doctor Service", excellent: 50, good: 28, average: 12, poor: 7, veryPoor: 3 },
+    { service: "Security", excellent: 42, good: 30, average: 18, poor: 6, veryPoor: 4 },
   ]
 
-  const SERVICE_LABELS = {
-    appointmentBooking: "Appointment Booking",
-    attendantStaff: "Attendant Staff",
-    receptionStaff: "Reception Staff",
-    cleanliness: "Cleanliness",
-    labServices: "Lab Services",
-    radiologyServices: "Radiology Services",
-    doctorServices: "Doctor Services",
-    physiotherapyServices: "Physiotherapy Services",
-  }
+  // Group OPD rating fields → table rows
+const SERVICE_GROUPS = {
+  "Appointment": ["appointment", "appointmentBooking"],
+  "Reception Staff": ["reception", "receptionStaff"],
+  "Diagnostic Services": ["diagnostic"],
+  "Lab / Radio": ["laboratory", "labServices", "radiology", "radiologyServices"],
+  "Doctor Service": ["doctorServices", "consultant", "doctor"],
+  "Security": ["security"],
+};
 
-  const avg = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1)
-  const pad2 = (n) => String(n).padStart(2,"0")
+// Build % for each service (5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor)
+function buildServiceSummary(rawItems = []) {
+  const rows = [];
 
-  // Overall rating 0..5 for a row
-  function overallOutOf5(row) {
-    const vals = SERVICE_KEYS
-      .map((k) => Number(row?.ratings?.[k]))
-      .filter((n) => !Number.isNaN(n) && n > 0)
-    if (vals.length) return avg(vals)
-    const nps = Number(row?.overallRecommendation) // 0..10 -> 0..5
-    if (!Number.isNaN(nps)) return Math.max(0, Math.min(10, nps)) / 2
-    const r = Number(row?.rating)
-    if (!Number.isNaN(r) && r > 0) return Math.max(0, Math.min(5, r))
-    return 0
-  }
+  for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
 
-  // Donut: rating distribution
-  function buildDistribution(list = []) {
-    const buckets = { 5:0,4:0,3:0,2:0,1:0 }
-    let ratedCount = 0
-    for (const row of list) {
-      const r = overallOutOf5(row)
-      if (r > 0) {
-        const rounded = Math.max(1, Math.min(5, Math.round(r)))
-        buckets[rounded] += 1
-        ratedCount += 1
+    for (const item of rawItems) {
+      const r = item?.ratings || {};
+      for (const k of keys) {
+        const v = Number(r[k]);
+        if (v >= 1 && v <= 5) {
+          counts[Math.round(v)] += 1;
+          total += 1;
+        }
       }
     }
-    const denom = ratedCount || 1
+
+    const denom = total || 1;
+    rows.push({
+      service,
+      excellent: Math.round((counts[5] / denom) * 100),
+      good: Math.round((counts[4] / denom) * 100),
+      average: Math.round((counts[3] / denom) * 100),
+      poor: Math.round((counts[2] / denom) * 100),
+      veryPoor: Math.round((counts[1] / denom) * 100),
+    });
+  }
+
+  return rows;
+}
+
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+function weekOfYear(d) {
+  // ISO-ish week number
+  const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = a.getUTCDay() || 7;
+  a.setUTCDate(a.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(a.getUTCFullYear(), 0, 1));
+  return Math.ceil((((a - yearStart) / 86400000) + 1) / 7);
+}
+
+function pickBucket(fromDate, toDate) {
+  const ms = Math.max(1, toDate - fromDate);
+  const days = Math.ceil(ms / 86400000);
+  if (days <= 31) return "day";
+  if (days <= 180) return "week";
+  return "month";
+}
+
+function bucketKeyAndLabel(d, bucket) {
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+
+  if (bucket === "day") {
+    // 👉 Sep 02 format
+    return {
+      key: `${y}-${pad2(m)}-${pad2(day)}`,
+      label: d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+      }),
+    };
+  }
+
+  if (bucket === "week") {
+    const w = weekOfYear(d);
+    return { key: `${y}-W${pad2(w)}`, label: `W${pad2(w)} ${y}` };
+  }
+
+  // month bucket → Sep 2024
+  return {
+    key: `${y}-${pad2(m)}`,
+    label: d.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    }),
+  };
+}
+
+
+function getRangeFromRows(list) {
+  let min = Infinity, max = -Infinity;
+  for (const r of list) {
+    const t = +new Date(r.createdAt);
+    if (!isNaN(t)) {
+      if (t < min) min = t;
+      if (t > max) max = t;
+    }
+  }
+  if (!isFinite(min) || !isFinite(max)) {
+    const now = Date.now();
+    return { from: new Date(now), to: new Date(now) };
+  }
+  return { from: new Date(min), to: new Date(max) };
+}
+
+function buildAutoTrendBoth(list, dateFrom, dateTo) {
+  // decide range (prefer dateFrom/dateTo if valid, else derive from data)
+  let from = dateFrom ? new Date(dateFrom) : null;
+  let to   = dateTo   ? new Date(dateTo)   : null;
+  if (!from || !to || isNaN(from) || isNaN(to)) {
+    const r = getRangeFromRows(list);
+    from = r.from; to = r.to;
+  }
+
+  const bucket = pickBucket(from, to);
+  const map = new Map(); // key -> { sum, count, label }
+
+  for (const row of list) {
+    const d = new Date(row.createdAt);
+    if (isNaN(d)) continue;
+    const { key, label } = bucketKeyAndLabel(d, bucket);
+    if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
+    const b = map.get(key);
+    b.sum += (row.rating || 0);
+    b.count += 1;
+  }
+
+  let trendAvg = Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => ({ date: v.label, value: v.count ? round1(v.sum / v.count) : 0 }));
+
+  let trendCount = Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => ({ date: v.label, value: v.count }));
+
+  // keep the chart readable
+  const MAX_POINTS = 40;
+  if (trendAvg.length > MAX_POINTS) {
+    const step = Math.ceil(trendAvg.length / MAX_POINTS);
+    trendAvg = trendAvg.filter((_, i) => i % step === 0);
+    trendCount = trendCount.filter((_, i) => i % step === 0);
+  }
+
+  return { trendAvg, trendCount, bucket };
+}
+
+
+function buildAutoTrend(list, dateFrom, dateTo) {
+  // decide range (prefer dateFrom/dateTo if valid, else derive from data)
+  let from = dateFrom ? new Date(dateFrom) : null;
+  let to   = dateTo   ? new Date(dateTo)   : null;
+  if (!from || !to || isNaN(from) || isNaN(to)) {
+    const r = getRangeFromRows(list);
+    from = r.from; to = r.to;
+  }
+
+  const bucket = pickBucket(from, to);
+  const map = new Map(); // key -> { sum, count, label }
+
+  for (const row of list) {
+    const d = new Date(row.createdAt);
+    if (isNaN(d)) continue;
+    const { key, label } = bucketKeyAndLabel(d, bucket);
+    if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
+    const b = map.get(key);
+    b.sum += (row.rating || 0);
+    b.count += 1;
+  }
+
+  let trend = Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => ({ date: v.label, value: round1(v.sum / v.count) }));
+
+  // keep the chart readable
+  const MAX_POINTS = 40;
+  if (trend.length > MAX_POINTS) {
+    const step = Math.ceil(trend.length / MAX_POINTS);
+    trend = trend.filter((_, i) => i % step === 0);
+  }
+
+  return { trend, bucket };
+}
+
+   const getRatingStars = (rating) => {
+    const filled = Math.round(rating) // show out of 5
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} className={`w-4 h-4 ${i < filled ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+    ))
+  }
+
+    const buildDistribution = (list) => {
+    const buckets = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    list.forEach((r) => {
+      const rounded = Math.max(1, Math.min(5, Math.round(r.rating || 0)))
+      if (buckets[rounded] != null) buckets[rounded] += 1
+    })
+    const total = list.length || 1
     return [
-      { label: "Excellent", count: buckets[5], percentage: Math.round((buckets[5] / denom) * 100), color: "#10B981" },
-      { label: "Very Good", count: buckets[4], percentage: Math.round((buckets[4] / denom) * 100), color: "#3B82F6" },
-      { label: "Good",      count: buckets[3], percentage: Math.round((buckets[3] / denom) * 100), color: "#06B6D4" },
-      { label: "Average",   count: buckets[2], percentage: Math.round((buckets[2] / denom) * 100), color: "#EAB308" },
-      { label: "Poor",      count: buckets[1], percentage: Math.round((buckets[1] / denom) * 100), color: "#F97316" },
+      { label: "Excellent", count: buckets[5], percentage: Math.round((buckets[5] / total) * 100), color: "#10B981" },
+      { label: "Very Good", count: buckets[4], percentage: Math.round((buckets[4] / total) * 100), color: "#3B82F6" },
+      { label: "Good", count: buckets[3], percentage: Math.round((buckets[3] / total) * 100), color: "#06B6D4" },
+      { label: "Average", count: buckets[2], percentage: Math.round((buckets[2] / total) * 100), color: "#EAB308" },
+      { label: "Poor", count: buckets[1], percentage: Math.round((buckets[1] / total) * 100), color: "#F97316" },
     ]
   }
 
-   function buildServiceSummary(list = []) {
-    const out = []
-    for (const key of SERVICE_KEYS) {
-      const counts = { 5:0,4:0,3:0,2:0,1:0 }
-      let total = 0
-      for (const row of list) {
-        const val = Number(row?.ratings?.[key])
-        if (!Number.isNaN(val) && val >= 1 && val <= 5) {
-          counts[val] += 1
-          total += 1
+  const fetchOPD = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await ApiGet(`${API_URL}`)
+      const data = Array.isArray(res) ? res : (res.data || [])
+
+      // transform to table rows
+      const list = data.map((d) => {
+        const rating = calcRowAverage(d.ratings)
+        return {
+          id: d._id || d.id,
+          createdAt: d.createdAt || d.date,
+          patient: d.patientName || d.name || "-",
+          contact: d.contact || "-",
+          rating, // avg out of 5
+          overallRecommendation: d.overallRecommendation, // for NPS
         }
-      }
-      const d = total || 1
-      out.push({
-        service: SERVICE_LABELS[key] || key,
-        excellent: Math.round((counts[5]/d)*100),
-        good:      Math.round((counts[4]/d)*100),
-        average:   Math.round((counts[3]/d)*100),
-        poor:      Math.round((counts[2]/d)*100),
-        veryPoor:  Math.round((counts[1]/d)*100),
       })
+
+      // KPIs
+      const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0
+      const nps = calcNpsPercent(data)
+      const overallScore =
+        avg >= 4.5 ? "Excellent" :
+        avg >= 4.0 ? "Very Good" :
+        avg >= 3.0 ? "Good" :
+        avg >= 2.0 ? "Average" : "Poor"
+
+      setRows(list)
+      setKpiData({
+        totalFeedback: list.length,
+        averageRating: avg,
+        npsRating: nps,
+        overallScore,
+      })
+      setChartData(buildDistribution(list))
+      setServiceSummary(buildServiceSummary(data));
+    } catch (e) {
+      console.error("Fetch OPD failed:", e)
+      setError("Failed to load OPD feedback")
+      setRows([])
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" })
+      setChartData(buildDistribution([]))
+    } finally {
+      setLoading(false)
     }
-    return out
-  }
-
-  // Auto day/week/month bucketing for line chart
-  function weekOfYear(d) {
-    const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-    const day = a.getUTCDay() || 7
-    a.setUTCDate(a.getUTCDate() + 4 - day)
-    const y0 = new Date(Date.UTC(a.getUTCFullYear(),0,1))
-    return Math.ceil((((a - y0) / 86400000) + 1) / 7)
-  }
-  function pickBucket(from, to) {
-    const days = Math.ceil(Math.max(1, to - from) / 86400000)
-    if (days <= 31) return "day"
-    if (days <= 180) return "week"
-    return "month"
-  }
-  function bucketKeyAndLabel(d, bucket) {
-    const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate()
-    if (bucket === "day")  return { key:`${y}-${pad2(m)}-${pad2(day)}`, label:`${pad2(day)}/${pad2(m)}` }
-    if (bucket === "week"){ const w=weekOfYear(d); return { key:`${y}-W${pad2(w)}`, label:`W${pad2(w)} ${y}` } }
-    return { key:`${y}-${pad2(m)}`, label:`${pad2(m)}/${y}` }
-  }
-  function getRangeFromRows(list) {
-    let min=Infinity,max=-Infinity
-    for (const r of list) {
-      const t=+new Date(r.createdAt || r.date)
-      if (!isNaN(t)){ if (t<min) min=t; if (t>max) max=t }
-    }
-    const now = Date.now()
-    return { from:new Date(isFinite(min)?min:now), to:new Date(isFinite(max)?max:now) }
-  }
-  function buildAutoTrend(list, fromStr, toStr) {
-    let from = fromStr ? new Date(fromStr) : null
-    let to   = toStr   ? new Date(toStr)   : null
-    if (!from || !to || isNaN(+from) || isNaN(+to)) {
-      const r = getRangeFromRows(list); from = r.from; to = r.to
-    }
-    const bucket = pickBucket(+from, +to)
-    const map = new Map() // key -> {sum,count,label}
-
-    for (const row of list) {
-      const d = new Date(row.createdAt || row.date)
-      if (isNaN(+d)) continue
-      const v = overallOutOf5(row); if (v <= 0) continue
-      const { key, label } = bucketKeyAndLabel(d, bucket)
-      if (!map.has(key)) map.set(key, { sum:0, count:0, label })
-      const b = map.get(key); b.sum += v; b.count += 1
-    }
-
-    let trend = Array.from(map.entries())
-      .sort((a,b)=>a[0].localeCompare(b[0]))
-      .map(([,v])=>({ date:v.label, value:Number((v.sum/v.count).toFixed(1)) }))
-
-    const MAX_POINTS = 40
-    if (trend.length > MAX_POINTS) {
-      const step = Math.ceil(trend.length / MAX_POINTS)
-      trend = trend.filter((_, i) => i % step === 0)
-    }
-    return { trend, bucket }
-  }
-
-  // Pick a usable date from many possible fields; fallback to array order
-function getFeedbackDate(row, index) {
-  const candidates = [
-    row?.createdAt,
-    row?.created_at,
-    row?.date,
-    row?.feedbackDate,
-    row?.timestamp,
-    row?.updatedAt,
-    row?.createdOn,
-  ];
-
-  for (const c of candidates) {
-    const d = new Date(c);
-    if (Number.isFinite(+d)) return { date: d, isReal: true };
-  }
-
-  // Fallback: synthesize a stable sequence so line still works
-  const base = new Date("2000-01-01T00:00:00Z");
-  base.setMinutes(base.getMinutes() + index);
-  return { date: base, isReal: false };
-}
-
-
-function buildRawFeedbackTrend(list = [], fromStr, toStr) {
-  const from = fromStr ? new Date(fromStr) : null;
-  const to   = toStr   ? new Date(toStr)   : null;
-
-  const rows = list
-    .map(r => {
-      const raw = r.createdAt || r.date || r.created_at || r.feedbackDate;
-      const d = new Date(raw || Date.now());
-      return { row: r, t: +d, d };
-    })
-    .filter(x => Number.isFinite(x.t))
-    .filter(x => {
-      if (from && x.t < +from) return false;
-      if (to   && x.t > +to)   return false;
-      return true;
-    })
-    .sort((a,b) => a.t - b.t);
-
-  const points = [];
-  for (const x of rows) {
-    const v = Number(overallOutOf5(x.row)); // 0..5
-    if (!Number.isFinite(v) || v <= 0) continue;
-
-    const day = String(x.d.getDate()).padStart(2,"0");
-    const mon = String(x.d.getMonth()+1).padStart(2,"0");
-    const hh  = String(x.d.getHours()).padStart(2,"0");
-    const mm  = String(x.d.getMinutes()).padStart(2,"0");
-    const label = `${day}/${mon} ${hh}:${mm}`;
-
-    points.push({ date: label, value: Number(v.toFixed(1)) });
-  }
-  return points;
-}
-
-
-// useEffect(() => {
-//   const { trend, bucket } = buildAutoTrend(feedback, dateFrom, dateTo)
-//   setLineData(trend)
-//   setTrendBucket(bucket)
-// }, [feedback, dateFrom, dateTo])
-
+  }, [dateFrom, dateTo])
 
   useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const res = await ApiGet("/admin/ipd-patient");
-        console.log('res', res)
-        const data = res.data || [];
-        setFeedback(data);
-      } catch (err) {
-        console.error("Error fetching IPD feedback:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeedback();
-  }, []);
+    fetchOPD()
+  }, [fetchOPD])
 
-useEffect(() => {
-  setChartData(buildDistribution(feedback));
-  setServiceData(buildServiceSummary(feedback));
-  const raw = buildRawFeedbackTrend(feedback, dateFrom, dateTo);
-  setLineData(raw);
-  setTrendBucket("day");
-
-  console.log('lineData sample:', raw.slice(0,5)); // [{date:"15/01 10:30", value:3.9}, ...]
-}, [feedback, dateFrom, dateTo]);
+  useEffect(() => {
+  const { trendAvg, trendCount, bucket } = buildAutoTrendBoth(rows, dateFrom, dateTo);
+  setTrendBucket(bucket);
+  setLineData(metric === "avg" ? trendAvg : trendCount);
+}, [rows, dateFrom, dateTo, metric]);
 
 
-  function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 
-  const totalFeedback = feedback.length;
-  const averageRating =
-    totalFeedback > 0
-      ? (feedback.reduce((sum, f) => sum + (f.rating || 0), 0) / totalFeedback).toFixed(1)
-      : 0;
 
-  // NPS (example: assume each record has `overallRecommendation` 0–10)
-  const promoters = feedback.filter(f => f.overallRecommendation >= 9).length;
-  const detractors = feedback.filter(f => f.overallRecommendation <= 6).length;
-  const npsRating =
-    totalFeedback > 0
-      ? Math.round(((promoters - detractors) / totalFeedback) * 100)
-      : 0;
-
-  const kpiData = {
-    totalFeedback,
-    averageRating,
-    npsRating,
-    overallScore:
-      averageRating >= 4.5
-        ? "Excellent"
-        : averageRating >= 4.0
-          ? "Good"
-          : "Average",
-  };
-
-  const filteredFeedback = feedback.filter(
+  const filteredFeedback = rows.filter(
     (feedback) =>
-      feedback.patient?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
-      feedback.doctor?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
-      feedback.comment?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
-      feedback.bedNo?.toLowerCase().includes(searchTerm?.toLowerCase()),
+      feedback.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
   )
 
-  const getRatingStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-    ))
-  }
+  // const getRatingStars = (rating) => {
+  //   return Array.from({ length: 5 }, (_, i) => (
+  //     <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+  //   ))
+  // }
 
   const exportToExcel = () => {
     alert("Export functionality would be implemented here")
   }
-
-  // Donut Chart Component
-  // const DonutChart = ({ data }) => {
-  //   const size = 220
-  //   const strokeWidth = 45
-  //   const radius = (size - strokeWidth) / 2
-  //   const circumference = radius * 2 * Math.PI
-
-  //   let cumulativePercentage = 0
-
-  //   return (
-  //     <div className="flex flex-col items-center">
-  //       <svg width={size} height={size} className="transform -rotate-90">
-  //         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth} />
-  //         {data.map((item, index) => {
-  //           const strokeDasharray = `${(item.percentage / 100) * circumference} ${circumference}`
-  //           const strokeDashoffset = (-cumulativePercentage * circumference) / 100
-  //           cumulativePercentage += item.percentage
-
-  //           return (
-  //             <circle
-  //               key={index}
-  //               cx={size / 2}
-  //               cy={size / 2}
-  //               r={radius}
-  //               fill="none"
-  //               stroke={item.color}
-  //               strokeWidth={strokeWidth}
-  //               strokeDasharray={strokeDasharray}
-  //               strokeDashoffset={strokeDashoffset}
-  //               className="transition-all duration-300"
-  //             />
-  //           )
-  //         })}
-  //       </svg>
-  //       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-  //         {data.map((item, index) => (
-  //           <div key={index} className="flex items-center">
-  //             <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: item.color }}></div>
-  //             <span className="text-gray-700">
-  //               {item.label}: {item.count} ({item.percentage}%)
-  //             </span>
-  //           </div>
-  //         ))}
-  //       </div>
-  //     </div>
-  //   )
-  // }
-
 
   const DonutChart = ({ data }) => {
     const size = 220
@@ -566,27 +546,21 @@ useEffect(() => {
     )
   }
 
-
-
-
-
-  const handleNavigate =()=>{
-    navigate("/feedback-details")
-  }
   return (
-
-
     <>
       <section className="flex  font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
-          <Header pageName="IPD Feedback" />
+          <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
             <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
               <div className="">
-                <div className="">
+                <div className=" mx-auto">
+                  {/* Header */}
+       
 
-                  {/* KPI Cards */}
+                  {/* KPI Cards - Non-box style */}
+                       {/* KPI Cards */}
                   <div className="  pt-[5px] flex gap-6  mb-4">
                     <div className="bg-white rounded-lg min-w-[240px] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
                       <div className="flex items-center">
@@ -645,12 +619,21 @@ useEffect(() => {
                     </div>
 
                     {/* Average Rating Trend Line Chart */}
-                    <div className="bg-white rounded-lg  p-6">
+                    {/* <div className="bg-white rounded-lg  p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Rating Trend</h3>
                       <div className="flex justify-center">
-                        <LineChart data={lineData} />
+                        <LineChart data={lineChartData} />
                       </div>
-                    </div>
+                    </div> */}
+                    <div className="bg-white rounded-lg p-6">
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    Average Rating Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+  </h3>
+  <div className="flex justify-center">
+    <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} />
+  </div>
+</div>
+
                   </div>
 
                   {/* Word Cloud */}
@@ -728,7 +711,7 @@ useEffect(() => {
                             </tr>
                           </thead>
                           <tbody className="bg-white">
-                            {serviceData.map((service, index) => (
+                            {serviceSummary.map((service, index) => (
                               <tr
                                 key={index}
                                 className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
@@ -777,20 +760,28 @@ useEffect(() => {
                       </div>
                     </div>
                   </div>
-
                   {/* Patient-Wise Feedback Table */}
-                  <div className="bg-white border rounded-lg shadow-md overflow-hidden">
-                    <div className="px-6 py-2 border-b border-gray-200 flex flex-col sm:flex-row gap-[50px] items-start sm:items-center">
+                  <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                       <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Patient Feedback Details</h3>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-                        <input
-                          type="text"
-                          placeholder="Search feedback..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-7 pr-3 w-[150px] py-1 text-[12px] font-[400] border border-gray-300 rounded-md focus:outline-none "
-                        />
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            placeholder="Search feedback..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <button
+                          onClick={exportToExcel}
+                          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Export to Excel
+                        </button>
                       </div>
                     </div>
 
@@ -798,25 +789,22 @@ useEffect(() => {
                       <table className="min-w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Date & Time
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Patient Name
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Contact No.
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Contact
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Bed No.
-                            </th>
-                            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Doctor Name
+                            {/* <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Doctor
                             </th> */}
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Rating
                             </th>
-                            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {/* <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Comment
                             </th> */}
                           </tr>
@@ -825,9 +813,7 @@ useEffect(() => {
                           {filteredFeedback.map((feedback, index) => (
                             <tr
                               key={feedback.id}
-                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                                } hover:bg-blue-50 transition-colors cursor-pointer`}
-                              onClick={handleNavigate}
+                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                             >
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
@@ -835,10 +821,10 @@ useEffect(() => {
                                   {formatDate(feedback.createdAt)}
                                 </div>
                               </td>
-                              <td className="px-6 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">
+                              <td className="px-6 py-4 text-sm font-medium text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <User className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.patientName}
+                                  {feedback.patient}
                                 </div>
                               </td>
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
@@ -847,38 +833,18 @@ useEffect(() => {
                                   {feedback.contact}
                                 </div>
                               </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <Bed className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.bedNo}
-                                </div>
-                              </td>
                               {/* <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td> */}
-                              {/* <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   {getRatingStars(feedback.rating)}
                                   <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
                                 </div>
-                              </td> */}
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                {(() => {
-                                  const avg5 = overallOutOf5(feedback);     // float 0..5
-                                  const stars = Math.round(avg5);           // for star icons
-
-                                  return (
-                                    <div className="flex items-center">
-                                      {getRatingStars(stars)}
-                                      <span className="ml-2 text-sm font-medium">{avg5.toFixed(1)}/5</span>
-                                    </div>
-                                  );
-                                })()}
                               </td>
-
-                              <td className="px-6 py-3 text-sm text-gray-900 max-w-xs">
-                                {/* <div className="truncate" title={feedback.comment}>
+                              {/* <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                                <div className="truncate" title={feedback.comment}>
                                   {feedback.comment}
-                                </div> */}
-                              </td>
+                                </div>
+                              </td> */}
                             </tr>
                           ))}
                         </tbody>
@@ -887,10 +853,13 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
+
             </div>
+
           </div>
         </div>
       </section>
+
 
 
     </>
