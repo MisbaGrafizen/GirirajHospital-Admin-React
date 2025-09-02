@@ -115,6 +115,9 @@ import OpdFeedBack from "./pages/reportsMain/OPDFeedbackDashboard";
 import IPDFeedbackDashboard from "./pages/reportsMain/IPDFeedbackDashboard";
 import ComplaintManagementDashboard from "./pages/complaintManagement/ComplaintManagementDashboard";
 import ComplaintViewPage from "./pages/complaintManagement/ComplaintViewPage";
+import NpsDashboard from "./pages/NpsFolder/NpsDashboard";
+import ExecutiveReport from "./pages/executive/ExecutiveReport";
+import FeedbackDetails from "./pages/reportsMain/FeedbackDetails";
 
 
 
@@ -130,6 +133,12 @@ function App() {
           <Route path="/ipd-feedback" element={<IPDFeedbackDashboard />} />
           <Route path="/complaint-dashboard" element={<ComplaintManagementDashboard />} />
           <Route path="/complaint-details" element={<ComplaintViewPage />} />
+          <Route path="/nps-dashboard" element={<NpsDashboard />} />
+          <Route path="/executive-report" element={<ExecutiveReport />} />
+          <Route path="/feedback-details" element={<FeedbackDetails />} />
+
+
+
 
 
 

@@ -17,30 +17,39 @@ import {
 } from "lucide-react"
 import Header from "../../Component/header/Header"
 import SideBar from "../../Component/sidebar/SideBar"
+import { ApiGet, ApiPost } from "../../helper/axios"
+
 
 export default function IPDFeedbackDashboard() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState("2024-01-31")
   const [selectedService, setSelectedService] = useState("All Services")
   const [selectedDoctor, setSelectedDoctor] = useState("All Doctors")
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [lineData, setLineData] = useState([])
+  const [trendBucket, setTrendBucket] = useState("day") // day | week | month
+  const [chartData, setChartData] = useState([])
+  const [serviceData, setServiceData] = useState([])
+
+  const [feedback, setFeedback] = useState([])
+  const [loading, setLoading] = useState(true)
 
   // Sample data
-  const kpiData = {
-    totalFeedback: 71,
-    averageRating: 4.2,
-    npsRating: 78,
-    overallScore: "Good",
-  }
+  // const kpiData = {
+  //   totalFeedback: 71,
+  //   averageRating: 4.2,
+  //   npsRating: 78,
+  //   overallScore: "Good",
+  // }
 
-  const chartData = [
-    { label: "Excellent", count: 28, percentage: 39, color: "#10B981" },
-    { label: "Very Good", count: 18, percentage: 25, color: "#3B82F6" },
-    { label: "Good", count: 12, percentage: 17, color: "#06B6D4" },
-    { label: "Average", count: 8, percentage: 11, color: "#EAB308" },
-    { label: "Poor", count: 3, percentage: 4, color: "#F97316" },
-    { label: "Very Poor", count: 2, percentage: 3, color: "#EF4444" },
-  ]
+  // const chartData = [
+  //   { label: "Excellent", count: 28, percentage: 39, color: "#10B981" },
+  //   { label: "Very Good", count: 18, percentage: 25, color: "#3B82F6" },
+  //   { label: "Good", count: 12, percentage: 17, color: "#06B6D4" },
+  //   { label: "Average", count: 8, percentage: 11, color: "#EAB308" },
+  //   { label: "Poor", count: 3, percentage: 4, color: "#F97316" },
+  //   { label: "Very Poor", count: 2, percentage: 3, color: "#EF4444" },
+  // ]
 
 
 
@@ -66,244 +75,284 @@ export default function IPDFeedbackDashboard() {
     { date: "Jan 23", value: 4.2 },
   ]
 
-  const serviceData = [
-    { service: "Doctor Experience", excellent: 78, good: 30, average: 12, poor: 15, veryPoor: 10 },
-    { service: "Billing Services", excellent: 65, good: 25, average: 18, poor: 8, veryPoor: 4 },
-    { service: "Nursing Care", excellent: 82, good: 35, average: 15, poor: 5, veryPoor: 3 },
-    { service: "Housekeeping", excellent: 70, good: 28, average: 20, poor: 12, veryPoor: 5 },
-    { service: "Food Services", excellent: 60, good: 32, average: 25, poor: 18, veryPoor: 8 },
-    { service: "Pharmacy", excellent: 75, good: 30, average: 16, poor: 9, veryPoor: 5 },
+const SERVICE_KEYS = [
+    "appointmentBooking",
+    "attendantStaff",
+    "receptionStaff",
+    "cleanliness",
+    "labServices",
+    "radiologyServices",
+    "doctorServices",
+    "physiotherapyServices",
   ]
 
-  const patientFeedback = [
-    {
-      id: 1,
-      date: "2024-01-15 10:30",
-      patient: "John Smith",
-      contact: "+91 9876543210",
-      bedNo: "A-101",
-      doctor: "Dr. Sharma",
-      rating: 5,
-      comment: "Excellent care during my stay, very professional nursing staff",
-    },
-    {
-      id: 2,
-      date: "2024-01-15 14:45",
-      patient: "Mary Johnson",
-      contact: "+91 9876543211",
-      bedNo: "B-205",
-      doctor: "Dr. Patel",
-      rating: 4,
-      comment: "Good overall experience, room was clean and comfortable",
-    },
-    {
-      id: 3,
-      date: "2024-01-16 09:20",
-      patient: "Robert Brown",
-      contact: "+91 9876543212",
-      bedNo: "C-301",
-      doctor: "Dr. Kumar",
-      rating: 3,
-      comment: "Average service, food quality could be improved",
-    },
-    {
-      id: 4,
-      date: "2024-01-16 16:30",
-      patient: "Sarah Davis",
-      contact: "+91 9876543213",
-      bedNo: "A-102",
-      doctor: "Dr. Singh",
-      rating: 5,
-      comment: "Outstanding medical care and attention from all staff",
-    },
-    {
-      id: 5,
-      date: "2024-01-17 11:15",
-      patient: "Michael Wilson",
-      contact: "+91 9876543214",
-      bedNo: "B-206",
-      doctor: "Dr. Sharma",
-      rating: 4,
-      comment: "Professional staff, clean facilities, prompt service",
-    },
-    {
-      id: 6,
-      date: "2024-01-17 13:45",
-      patient: "Emily Taylor",
-      contact: "+91 9876543215",
-      bedNo: "C-302",
-      doctor: "Dr. Patel",
-      rating: 2,
-      comment: "Billing process was confusing, staff could be more helpful",
-    },
-    {
-      id: 7,
-      date: "2024-01-18 08:30",
-      patient: "David Anderson",
-      contact: "+91 9876543216",
-      bedNo: "A-103",
-      doctor: "Dr. Kumar",
-      rating: 5,
-      comment: "Excellent diagnosis and treatment, highly recommend",
-    },
-    {
-      id: 8,
-      date: "2024-01-18 15:15",
-      patient: "Lisa Martinez",
-      contact: "+91 9876543217",
-      bedNo: "B-207",
-      doctor: "Dr. Singh",
-      rating: 4,
-      comment: "Good nursing care, comfortable stay",
-    },
-    {
-      id: 9,
-      date: "2024-01-19 10:30",
-      patient: "James Garcia",
-      contact: "+91 9876543218",
-      bedNo: "C-303",
-      doctor: "Dr. Sharma",
-      rating: 3,
-      comment: "Satisfactory service, room maintenance needs improvement",
-    },
-    {
-      id: 10,
-      date: "2024-01-19 12:20",
-      patient: "Jennifer Lopez",
-      contact: "+91 9876543219",
-      bedNo: "A-104",
-      doctor: "Dr. Patel",
-      rating: 5,
-      comment: "Highly recommend this hospital, excellent care throughout",
-    },
-    {
-      id: 11,
-      date: "2024-01-20 09:45",
-      patient: "William Johnson",
-      contact: "+91 9876543220",
-      bedNo: "B-208",
-      doctor: "Dr. Kumar",
-      rating: 4,
-      comment: "Good medical care, staff was attentive",
-    },
-    {
-      id: 12,
-      date: "2024-01-20 14:30",
-      patient: "Amanda White",
-      contact: "+91 9876543221",
-      bedNo: "C-304",
-      doctor: "Dr. Singh",
-      rating: 5,
-      comment: "Exceptional service, felt well cared for",
-    },
-    {
-      id: 13,
-      date: "2024-01-21 11:00",
-      patient: "Christopher Lee",
-      contact: "+91 9876543222",
-      bedNo: "A-105",
-      doctor: "Dr. Sharma",
-      rating: 3,
-      comment: "Average experience, pharmacy service was slow",
-    },
-    {
-      id: 14,
-      date: "2024-01-21 16:45",
-      patient: "Michelle Brown",
-      contact: "+91 9876543223",
-      bedNo: "B-209",
-      doctor: "Dr. Patel",
-      rating: 4,
-      comment: "Good overall care, housekeeping was excellent",
-    },
-    {
-      id: 15,
-      date: "2024-01-22 08:15",
-      patient: "Daniel Wilson",
-      contact: "+91 9876543224",
-      bedNo: "C-305",
-      doctor: "Dr. Kumar",
-      rating: 5,
-      comment: "Outstanding medical team, very professional",
-    },
-    {
-      id: 16,
-      date: "2024-01-22 13:30",
-      patient: "Jessica Davis",
-      contact: "+91 9876543225",
-      bedNo: "A-106",
-      doctor: "Dr. Singh",
-      rating: 4,
-      comment: "Good experience, nursing staff was caring",
-    },
-    {
-      id: 17,
-      date: "2024-01-23 10:00",
-      patient: "Matthew Taylor",
-      contact: "+91 9876543226",
-      bedNo: "B-210",
-      doctor: "Dr. Sharma",
-      rating: 2,
-      comment: "Food quality was poor, room was not properly cleaned",
-    },
-    {
-      id: 18,
-      date: "2024-01-23 15:20",
-      patient: "Ashley Martinez",
-      contact: "+91 9876543227",
-      bedNo: "C-306",
-      doctor: "Dr. Patel",
-      rating: 5,
-      comment: "Excellent care from admission to discharge",
-    },
-    {
-      id: 19,
-      date: "2024-01-24 09:30",
-      patient: "Joshua Anderson",
-      contact: "+91 9876543228",
-      bedNo: "A-107",
-      doctor: "Dr. Kumar",
-      rating: 4,
-      comment: "Professional staff, good medical care",
-    },
-    {
-      id: 20,
-      date: "2024-01-24 14:15",
-      patient: "Stephanie Garcia",
-      contact: "+91 9876543229",
-      bedNo: "B-211",
-      doctor: "Dr. Singh",
-      rating: 3,
-      comment: "Average service, billing process needs improvement",
-    },
-    {
-      id: 21,
-      date: "2024-01-25 11:45",
-      patient: "Andrew Lopez",
-      contact: "+91 9876543230",
-      bedNo: "C-307",
-      doctor: "Dr. Sharma",
-      rating: 5,
-      comment: "Exceptional care, highly satisfied with treatment",
-    },
-    {
-      id: 22,
-      date: "2024-01-25 16:00",
-      patient: "Nicole Johnson",
-      contact: "+91 9876543231",
-      bedNo: "A-108",
-      doctor: "Dr. Patel",
-      rating: 4,
-      comment: "Good overall experience, staff was helpful",
-    },
-  ]
+  const SERVICE_LABELS = {
+    appointmentBooking: "Appointment Booking",
+    attendantStaff: "Attendant Staff",
+    receptionStaff: "Reception Staff",
+    cleanliness: "Cleanliness",
+    labServices: "Lab Services",
+    radiologyServices: "Radiology Services",
+    doctorServices: "Doctor Services",
+    physiotherapyServices: "Physiotherapy Services",
+  }
 
-  const filteredFeedback = patientFeedback.filter(
+  const avg = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1)
+  const pad2 = (n) => String(n).padStart(2,"0")
+
+  // Overall rating 0..5 for a row
+  function overallOutOf5(row) {
+    const vals = SERVICE_KEYS
+      .map((k) => Number(row?.ratings?.[k]))
+      .filter((n) => !Number.isNaN(n) && n > 0)
+    if (vals.length) return avg(vals)
+    const nps = Number(row?.overallRecommendation) // 0..10 -> 0..5
+    if (!Number.isNaN(nps)) return Math.max(0, Math.min(10, nps)) / 2
+    const r = Number(row?.rating)
+    if (!Number.isNaN(r) && r > 0) return Math.max(0, Math.min(5, r))
+    return 0
+  }
+
+  // Donut: rating distribution
+  function buildDistribution(list = []) {
+    const buckets = { 5:0,4:0,3:0,2:0,1:0 }
+    let ratedCount = 0
+    for (const row of list) {
+      const r = overallOutOf5(row)
+      if (r > 0) {
+        const rounded = Math.max(1, Math.min(5, Math.round(r)))
+        buckets[rounded] += 1
+        ratedCount += 1
+      }
+    }
+    const denom = ratedCount || 1
+    return [
+      { label: "Excellent", count: buckets[5], percentage: Math.round((buckets[5] / denom) * 100), color: "#10B981" },
+      { label: "Very Good", count: buckets[4], percentage: Math.round((buckets[4] / denom) * 100), color: "#3B82F6" },
+      { label: "Good",      count: buckets[3], percentage: Math.round((buckets[3] / denom) * 100), color: "#06B6D4" },
+      { label: "Average",   count: buckets[2], percentage: Math.round((buckets[2] / denom) * 100), color: "#EAB308" },
+      { label: "Poor",      count: buckets[1], percentage: Math.round((buckets[1] / denom) * 100), color: "#F97316" },
+    ]
+  }
+
+   function buildServiceSummary(list = []) {
+    const out = []
+    for (const key of SERVICE_KEYS) {
+      const counts = { 5:0,4:0,3:0,2:0,1:0 }
+      let total = 0
+      for (const row of list) {
+        const val = Number(row?.ratings?.[key])
+        if (!Number.isNaN(val) && val >= 1 && val <= 5) {
+          counts[val] += 1
+          total += 1
+        }
+      }
+      const d = total || 1
+      out.push({
+        service: SERVICE_LABELS[key] || key,
+        excellent: Math.round((counts[5]/d)*100),
+        good:      Math.round((counts[4]/d)*100),
+        average:   Math.round((counts[3]/d)*100),
+        poor:      Math.round((counts[2]/d)*100),
+        veryPoor:  Math.round((counts[1]/d)*100),
+      })
+    }
+    return out
+  }
+
+  // Auto day/week/month bucketing for line chart
+  function weekOfYear(d) {
+    const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+    const day = a.getUTCDay() || 7
+    a.setUTCDate(a.getUTCDate() + 4 - day)
+    const y0 = new Date(Date.UTC(a.getUTCFullYear(),0,1))
+    return Math.ceil((((a - y0) / 86400000) + 1) / 7)
+  }
+  function pickBucket(from, to) {
+    const days = Math.ceil(Math.max(1, to - from) / 86400000)
+    if (days <= 31) return "day"
+    if (days <= 180) return "week"
+    return "month"
+  }
+  function bucketKeyAndLabel(d, bucket) {
+    const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate()
+    if (bucket === "day")  return { key:`${y}-${pad2(m)}-${pad2(day)}`, label:`${pad2(day)}/${pad2(m)}` }
+    if (bucket === "week"){ const w=weekOfYear(d); return { key:`${y}-W${pad2(w)}`, label:`W${pad2(w)} ${y}` } }
+    return { key:`${y}-${pad2(m)}`, label:`${pad2(m)}/${y}` }
+  }
+  function getRangeFromRows(list) {
+    let min=Infinity,max=-Infinity
+    for (const r of list) {
+      const t=+new Date(r.createdAt || r.date)
+      if (!isNaN(t)){ if (t<min) min=t; if (t>max) max=t }
+    }
+    const now = Date.now()
+    return { from:new Date(isFinite(min)?min:now), to:new Date(isFinite(max)?max:now) }
+  }
+  function buildAutoTrend(list, fromStr, toStr) {
+    let from = fromStr ? new Date(fromStr) : null
+    let to   = toStr   ? new Date(toStr)   : null
+    if (!from || !to || isNaN(+from) || isNaN(+to)) {
+      const r = getRangeFromRows(list); from = r.from; to = r.to
+    }
+    const bucket = pickBucket(+from, +to)
+    const map = new Map() // key -> {sum,count,label}
+
+    for (const row of list) {
+      const d = new Date(row.createdAt || row.date)
+      if (isNaN(+d)) continue
+      const v = overallOutOf5(row); if (v <= 0) continue
+      const { key, label } = bucketKeyAndLabel(d, bucket)
+      if (!map.has(key)) map.set(key, { sum:0, count:0, label })
+      const b = map.get(key); b.sum += v; b.count += 1
+    }
+
+    let trend = Array.from(map.entries())
+      .sort((a,b)=>a[0].localeCompare(b[0]))
+      .map(([,v])=>({ date:v.label, value:Number((v.sum/v.count).toFixed(1)) }))
+
+    const MAX_POINTS = 40
+    if (trend.length > MAX_POINTS) {
+      const step = Math.ceil(trend.length / MAX_POINTS)
+      trend = trend.filter((_, i) => i % step === 0)
+    }
+    return { trend, bucket }
+  }
+
+  // Pick a usable date from many possible fields; fallback to array order
+function getFeedbackDate(row, index) {
+  const candidates = [
+    row?.createdAt,
+    row?.created_at,
+    row?.date,
+    row?.feedbackDate,
+    row?.timestamp,
+    row?.updatedAt,
+    row?.createdOn,
+  ];
+
+  for (const c of candidates) {
+    const d = new Date(c);
+    if (Number.isFinite(+d)) return { date: d, isReal: true };
+  }
+
+  // Fallback: synthesize a stable sequence so line still works
+  const base = new Date("2000-01-01T00:00:00Z");
+  base.setMinutes(base.getMinutes() + index);
+  return { date: base, isReal: false };
+}
+
+
+function buildRawFeedbackTrend(list = [], fromStr, toStr) {
+  const from = fromStr ? new Date(fromStr) : null;
+  const to   = toStr   ? new Date(toStr)   : null;
+
+  const rows = list
+    .map(r => {
+      const raw = r.createdAt || r.date || r.created_at || r.feedbackDate;
+      const d = new Date(raw || Date.now());
+      return { row: r, t: +d, d };
+    })
+    .filter(x => Number.isFinite(x.t))
+    .filter(x => {
+      if (from && x.t < +from) return false;
+      if (to   && x.t > +to)   return false;
+      return true;
+    })
+    .sort((a,b) => a.t - b.t);
+
+  const points = [];
+  for (const x of rows) {
+    const v = Number(overallOutOf5(x.row)); // 0..5
+    if (!Number.isFinite(v) || v <= 0) continue;
+
+    const day = String(x.d.getDate()).padStart(2,"0");
+    const mon = String(x.d.getMonth()+1).padStart(2,"0");
+    const hh  = String(x.d.getHours()).padStart(2,"0");
+    const mm  = String(x.d.getMinutes()).padStart(2,"0");
+    const label = `${day}/${mon} ${hh}:${mm}`;
+
+    points.push({ date: label, value: Number(v.toFixed(1)) });
+  }
+  return points;
+}
+
+
+// useEffect(() => {
+//   const { trend, bucket } = buildAutoTrend(feedback, dateFrom, dateTo)
+//   setLineData(trend)
+//   setTrendBucket(bucket)
+// }, [feedback, dateFrom, dateTo])
+
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        const res = await ApiGet("/admin/ipd-patient");
+        console.log('res', res)
+        const data = res.data || [];
+        setFeedback(data);
+      } catch (err) {
+        console.error("Error fetching IPD feedback:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeedback();
+  }, []);
+
+useEffect(() => {
+  setChartData(buildDistribution(feedback));
+  setServiceData(buildServiceSummary(feedback));
+  const raw = buildRawFeedbackTrend(feedback, dateFrom, dateTo);
+  setLineData(raw);
+  setTrendBucket("day");
+
+  console.log('lineData sample:', raw.slice(0,5)); // [{date:"15/01 10:30", value:3.9}, ...]
+}, [feedback, dateFrom, dateTo]);
+
+
+  function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+
+  const totalFeedback = feedback.length;
+  const averageRating =
+    totalFeedback > 0
+      ? (feedback.reduce((sum, f) => sum + (f.rating || 0), 0) / totalFeedback).toFixed(1)
+      : 0;
+
+  // NPS (example: assume each record has `overallRecommendation` 0–10)
+  const promoters = feedback.filter(f => f.overallRecommendation >= 9).length;
+  const detractors = feedback.filter(f => f.overallRecommendation <= 6).length;
+  const npsRating =
+    totalFeedback > 0
+      ? Math.round(((promoters - detractors) / totalFeedback) * 100)
+      : 0;
+
+  const kpiData = {
+    totalFeedback,
+    averageRating,
+    npsRating,
+    overallScore:
+      averageRating >= 4.5
+        ? "Excellent"
+        : averageRating >= 4.0
+          ? "Good"
+          : "Average",
+  };
+
+  const filteredFeedback = feedback.filter(
     (feedback) =>
-      feedback.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.bedNo.toLowerCase().includes(searchTerm.toLowerCase()),
+      feedback.patient?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+      feedback.doctor?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+      feedback.comment?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+      feedback.bedNo?.toLowerCase().includes(searchTerm?.toLowerCase()),
   )
 
   const getRatingStars = (rating) => {
@@ -590,7 +639,7 @@ export default function IPDFeedbackDashboard() {
                     <div className="bg-white rounded-lg  p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Rating Trend</h3>
                       <div className="flex justify-center">
-                        <LineChart data={lineChartData} />
+                        <LineChart data={lineData} />
                       </div>
                     </div>
                   </div>
@@ -752,15 +801,15 @@ export default function IPDFeedbackDashboard() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Bed No.
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Doctor Name
-                            </th>
+                            </th> */}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Rating
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Comment
-                            </th>
+                            </th> */}
                           </tr>
                         </thead>
                         <tbody className="bg-white">
@@ -774,13 +823,13 @@ export default function IPDFeedbackDashboard() {
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.date}
+                                  {formatDate(feedback.createdAt)}
                                 </div>
                               </td>
                               <td className="px-6 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <User className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.patient}
+                                  {feedback.patientName}
                                 </div>
                               </td>
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
@@ -795,17 +844,31 @@ export default function IPDFeedbackDashboard() {
                                   {feedback.bedNo}
                                 </div>
                               </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              {/* <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td> */}
+                              {/* <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   {getRatingStars(feedback.rating)}
                                   <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
                                 </div>
+                              </td> */}
+                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                                {(() => {
+                                  const avg5 = overallOutOf5(feedback);     // float 0..5
+                                  const stars = Math.round(avg5);           // for star icons
+
+                                  return (
+                                    <div className="flex items-center">
+                                      {getRatingStars(stars)}
+                                      <span className="ml-2 text-sm font-medium">{avg5.toFixed(1)}/5</span>
+                                    </div>
+                                  );
+                                })()}
                               </td>
+
                               <td className="px-6 py-3 text-sm text-gray-900 max-w-xs">
-                                <div className="truncate" title={feedback.comment}>
+                                {/* <div className="truncate" title={feedback.comment}>
                                   {feedback.comment}
-                                </div>
+                                </div> */}
                               </td>
                             </tr>
                           ))}

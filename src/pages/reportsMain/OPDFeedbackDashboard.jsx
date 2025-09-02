@@ -1,8 +1,52 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/SideBar'
 import { Calendar,FileText, Download, Search, Filter, Users, Star, ThumbsUp, Award, Phone, User, Clock } from "lucide-react"
+import { ApiGet } from '../../helper/axios'
 
+
+const API_URL = "/admin/opd-patient"
+function formatDate(dateStr) {
+  const d = new Date(dateStr)
+  const day = String(d.getDate()).padStart(2, "0")
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const year = d.getFullYear()
+  return `${day}/${month}/${year}`
+}
+function round1(n) {
+  return Math.round((Number(n) || 0) * 10) / 10
+}
+
+const RATING_KEYS = [
+  "appointment", "appointmentBooking",
+  "reception", "receptionStaff",
+  "diagnostic",
+  "laboratory", "labServices",
+  "radiology", "radiologyServices",
+  "doctorServices", "consultant", "doctor",
+  "security",
+]
+
+function calcRowAverage(ratings = {}) {
+  const vals = []
+  for (const key of RATING_KEYS) {
+    const v = ratings?.[key]
+    if (typeof v === "number" && v >= 1 && v <= 5) vals.push(v)
+  }
+  if (!vals.length) return 0
+  return round1(vals.reduce((a, b) => a + b, 0) / vals.length)
+}
+
+function calcNpsPercent(items) {
+  const values = items
+    .map((it) => it.overallRecommendation)
+    .filter((v) => typeof v === "number")
+  if (!values.length) return 0
+  const promoters = values.filter((v) => v >= 9).length
+  const detractors = values.filter((v) => v <= 6).length
+  const n = values.length
+  return Math.round(((promoters - detractors) / n) * 100)
+}
 
 
 export default function OPDFeedbackDashboard() {
@@ -11,25 +55,26 @@ export default function OPDFeedbackDashboard() {
   const [selectedService, setSelectedService] = useState("All Services")
   const [selectedDoctor, setSelectedDoctor] = useState("All Doctors")
   const [searchTerm, setSearchTerm] = useState("")
-
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [rows, setRows] = useState([])
+  const [lineData, setLineData] = useState([]);
+  const [trendBucket, setTrendBucket] = useState("day"); // "day" | "week" | "month"
+  const [serviceSummary, setServiceSummary] = useState([]);
   // Sample data
-  const kpiData = {
-    totalFeedback: 113,
-    averageRating: 4.3,
-    npsRating: 78,
-    overallScore: "Good",
-  }
-
-  const chartData = [
-    { label: "Excellent", count: 28, percentage: 39, color: "#10B981" },
-    { label: "Very Good", count: 18, percentage: 25, color: "#3B82F6" },
-    { label: "Good", count: 12, percentage: 17, color: "#06B6D4" },
-    { label: "Average", count: 8, percentage: 11, color: "#EAB308" },
-    { label: "Poor", count: 3, percentage: 4, color: "#F97316" },
-    { label: "Very Poor", count: 2, percentage: 3, color: "#EF4444" },
-  ]
-
-
+  const [kpiData, setKpiData] = useState({
+    totalFeedback: 0,
+    averageRating: 0,
+    npsRating: 0,
+    overallScore: "-",
+  })
+  const [chartData, setChartData] = useState([
+    { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },   // 5
+    { label: "Very Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
+    { label: "Good", count: 0, percentage: 0, color: "#06B6D4" },        // 3
+    { label: "Average", count: 0, percentage: 0, color: "#EAB308" },     // 2
+    { label: "Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
+  ])
 
   const defaultColors = [
     '#3b82f6', // blue
@@ -61,6 +106,137 @@ export default function OPDFeedbackDashboard() {
     { service: "Doctor Service", excellent: 50, good: 28, average: 12, poor: 7, veryPoor: 3 },
     { service: "Security", excellent: 42, good: 30, average: 18, poor: 6, veryPoor: 4 },
   ]
+
+  // Group OPD rating fields → table rows
+const SERVICE_GROUPS = {
+  "Appointment": ["appointment", "appointmentBooking"],
+  "Reception Staff": ["reception", "receptionStaff"],
+  "Diagnostic Services": ["diagnostic"],
+  "Lab / Radio": ["laboratory", "labServices", "radiology", "radiologyServices"],
+  "Doctor Service": ["doctorServices", "consultant", "doctor"],
+  "Security": ["security"],
+};
+
+// Build % for each service (5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor)
+function buildServiceSummary(rawItems = []) {
+  const rows = [];
+
+  for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
+
+    for (const item of rawItems) {
+      const r = item?.ratings || {};
+      for (const k of keys) {
+        const v = Number(r[k]);
+        if (v >= 1 && v <= 5) {
+          counts[Math.round(v)] += 1;
+          total += 1;
+        }
+      }
+    }
+
+    const denom = total || 1;
+    rows.push({
+      service,
+      excellent: Math.round((counts[5] / denom) * 100),
+      good: Math.round((counts[4] / denom) * 100),
+      average: Math.round((counts[3] / denom) * 100),
+      poor: Math.round((counts[2] / denom) * 100),
+      veryPoor: Math.round((counts[1] / denom) * 100),
+    });
+  }
+
+  return rows;
+}
+
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+function weekOfYear(d) {
+  // ISO-ish week number
+  const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = a.getUTCDay() || 7;
+  a.setUTCDate(a.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(a.getUTCFullYear(), 0, 1));
+  return Math.ceil((((a - yearStart) / 86400000) + 1) / 7);
+}
+
+function pickBucket(fromDate, toDate) {
+  const ms = Math.max(1, toDate - fromDate);
+  const days = Math.ceil(ms / 86400000);
+  if (days <= 31) return "day";
+  if (days <= 180) return "week";
+  return "month";
+}
+
+function bucketKeyAndLabel(d, bucket) {
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  if (bucket === "day") {
+    return { key: `${y}-${pad2(m)}-${pad2(day)}`, label: `${pad2(day)}/${pad2(m)}` }; // dd/mm
+  }
+  if (bucket === "week") {
+    const w = weekOfYear(d);
+    return { key: `${y}-W${pad2(w)}`, label: `W${pad2(w)} ${y}` };
+  }
+  // month
+  return { key: `${y}-${pad2(m)}`, label: `${pad2(m)}/${y}` }; // mm/yyyy
+}
+
+function getRangeFromRows(list) {
+  let min = Infinity, max = -Infinity;
+  for (const r of list) {
+    const t = +new Date(r.createdAt);
+    if (!isNaN(t)) {
+      if (t < min) min = t;
+      if (t > max) max = t;
+    }
+  }
+  if (!isFinite(min) || !isFinite(max)) {
+    const now = Date.now();
+    return { from: new Date(now), to: new Date(now) };
+  }
+  return { from: new Date(min), to: new Date(max) };
+}
+
+function buildAutoTrend(list, dateFrom, dateTo) {
+  // decide range (prefer dateFrom/dateTo if valid, else derive from data)
+  let from = dateFrom ? new Date(dateFrom) : null;
+  let to   = dateTo   ? new Date(dateTo)   : null;
+  if (!from || !to || isNaN(from) || isNaN(to)) {
+    const r = getRangeFromRows(list);
+    from = r.from; to = r.to;
+  }
+
+  const bucket = pickBucket(from, to);
+  const map = new Map(); // key -> { sum, count, label }
+
+  for (const row of list) {
+    const d = new Date(row.createdAt);
+    if (isNaN(d)) continue;
+    const { key, label } = bucketKeyAndLabel(d, bucket);
+    if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
+    const b = map.get(key);
+    b.sum += (row.rating || 0);
+    b.count += 1;
+  }
+
+  let trend = Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => ({ date: v.label, value: round1(v.sum / v.count) }));
+
+  // keep the chart readable
+  const MAX_POINTS = 40;
+  if (trend.length > MAX_POINTS) {
+    const step = Math.ceil(trend.length / MAX_POINTS);
+    trend = trend.filter((_, i) => i % step === 0);
+  }
+
+  return { trend, bucket };
+}
+
 
   const patientFeedback = [
     {
@@ -155,18 +331,99 @@ export default function OPDFeedbackDashboard() {
     },
   ]
 
-  const filteredFeedback = patientFeedback.filter(
+   const getRatingStars = (rating) => {
+    const filled = Math.round(rating) // show out of 5
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} className={`w-4 h-4 ${i < filled ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+    ))
+  }
+
+    const buildDistribution = (list) => {
+    const buckets = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    list.forEach((r) => {
+      const rounded = Math.max(1, Math.min(5, Math.round(r.rating || 0)))
+      if (buckets[rounded] != null) buckets[rounded] += 1
+    })
+    const total = list.length || 1
+    return [
+      { label: "Excellent", count: buckets[5], percentage: Math.round((buckets[5] / total) * 100), color: "#10B981" },
+      { label: "Very Good", count: buckets[4], percentage: Math.round((buckets[4] / total) * 100), color: "#3B82F6" },
+      { label: "Good", count: buckets[3], percentage: Math.round((buckets[3] / total) * 100), color: "#06B6D4" },
+      { label: "Average", count: buckets[2], percentage: Math.round((buckets[2] / total) * 100), color: "#EAB308" },
+      { label: "Poor", count: buckets[1], percentage: Math.round((buckets[1] / total) * 100), color: "#F97316" },
+    ]
+  }
+
+  const fetchOPD = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await ApiGet(`${API_URL}`)
+      const data = Array.isArray(res) ? res : (res.data || [])
+
+      // transform to table rows
+      const list = data.map((d) => {
+        const rating = calcRowAverage(d.ratings)
+        return {
+          id: d._id || d.id,
+          createdAt: d.createdAt || d.date,
+          patient: d.patientName || d.name || "-",
+          contact: d.contact || "-",
+          doctor: d.doctorName || d.consultant || d.consultantDoctor || "-",
+          rating, // avg out of 5
+          comment: d.comments || d.comment || "",
+          overallRecommendation: d.overallRecommendation, // for NPS
+        }
+      })
+
+      // KPIs
+      const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0
+      const nps = calcNpsPercent(data)
+      const overallScore =
+        avg >= 4.5 ? "Excellent" :
+        avg >= 4.0 ? "Very Good" :
+        avg >= 3.0 ? "Good" :
+        avg >= 2.0 ? "Average" : "Poor"
+
+      setRows(list)
+      setKpiData({
+        totalFeedback: list.length,
+        averageRating: avg,
+        npsRating: nps,
+        overallScore,
+      })
+      setChartData(buildDistribution(list))
+      setServiceSummary(buildServiceSummary(data));
+    } catch (e) {
+      console.error("Fetch OPD failed:", e)
+      setError("Failed to load OPD feedback")
+      setRows([])
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" })
+      setChartData(buildDistribution([]))
+    } finally {
+      setLoading(false)
+    }
+  }, [dateFrom, dateTo])
+
+  useEffect(() => {
+    fetchOPD()
+  }, [fetchOPD])
+
+
+
+
+  const filteredFeedback = rows.filter(
     (feedback) =>
       feedback.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.comment.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const getRatingStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-    ))
-  }
+  // const getRatingStars = (rating) => {
+  //   return Array.from({ length: 5 }, (_, i) => (
+  //     <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+  //   ))
+  // }
 
   const exportToExcel = () => {
     alert("Export functionality would be implemented here")
@@ -478,7 +735,7 @@ export default function OPDFeedbackDashboard() {
                             </tr>
                           </thead>
                           <tbody className="bg-white">
-                            {serviceData.map((service, index) => (
+                            {serviceSummary.map((service, index) => (
                               <tr
                                 key={index}
                                 className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
@@ -585,7 +842,7 @@ export default function OPDFeedbackDashboard() {
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.date}
+                                  {formatDate(feedback.createdAt)}
                                 </div>
                               </td>
                               <td className="px-6 py-4 text-sm font-medium text-gray-900 border-r border-gray-200">
