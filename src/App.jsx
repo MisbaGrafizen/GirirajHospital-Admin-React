@@ -118,6 +118,8 @@ import ComplaintViewPage from "./pages/complaintManagement/ComplaintViewPage";
 import NpsDashboard from "./pages/NpsFolder/NpsDashboard";
 import ExecutiveReport from "./pages/executive/ExecutiveReport";
 import FeedbackDetails from "./pages/reportsMain/FeedbackDetails";
+import RoleManage from "./pages/roleModule/RoleManage";
+import UserManageMent from "./pages/roleModule/UserManageMent";
 
 
 
@@ -136,6 +138,10 @@ function App() {
           <Route path="/nps-dashboard" element={<NpsDashboard />} />
           <Route path="/executive-report" element={<ExecutiveReport />} />
           <Route path="/feedback-details" element={<FeedbackDetails />} />
+          <Route path="/role-manage" element={<RoleManage />} />
+          <Route path="/user-manage" element={<UserManageMent />} />
+
+
 
 
 

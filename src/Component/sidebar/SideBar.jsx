@@ -20,8 +20,8 @@ export default function SideBar() {
     { name: "Complaint", icon: sales,path: "/complaint-dashboard"  },
     { name: "NPS", icon: purches, path: "/nps-dashboard" },
     { name: "Executive", icon: newsales, path: "/executive-report" },
-    // { name: "Settings", icon: settings, path: "/create-account" },
-    // { name: "Labour", icon: reports, path: "/labour" },
+    { name: "Role", icon: settings, path: "/role-manage" },
+    { name: "User Manage", icon: reports, path: "/user-manage" },
 
   ];
 
