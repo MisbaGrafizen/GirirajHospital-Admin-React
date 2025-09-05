@@ -1,8 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/SideBar'
-import { Calendar,FileText, Download, Search, Filter, Users, Star, ThumbsUp, Award, Phone, User, Clock } from "lucide-react"
+import { Calendar, FileText, Download, Search, Filter, Users, Star, ThumbsUp, Award, Phone, User, Clock } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  CartesianGrid,
+} from "recharts"
+
 
 
 const API_URL = "/admin/ipd-patient"
@@ -107,202 +120,202 @@ export default function IPDFeedbackDashboard() {
   ]
 
   // Group OPD rating fields → table rows
-const SERVICE_GROUPS = {
-  "Appointment": ["appointment", "appointmentBooking"],
-  "Reception Staff": ["reception", "receptionStaff"],
-  "Diagnostic Services": ["diagnostic"],
-  "Lab / Radio": ["laboratory", "labServices", "radiology", "radiologyServices"],
-  "Doctor Service": ["doctorServices", "consultant", "doctor"],
-  "Security": ["security"],
-};
+  const SERVICE_GROUPS = {
+    "Appointment": ["appointment", "appointmentBooking"],
+    "Reception Staff": ["reception", "receptionStaff"],
+    "Diagnostic Services": ["diagnostic"],
+    "Lab / Radio": ["laboratory", "labServices", "radiology", "radiologyServices"],
+    "Doctor Service": ["doctorServices", "consultant", "doctor"],
+    "Security": ["security"],
+  };
 
-// Build % for each service (5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor)
-function buildServiceSummary(rawItems = []) {
-  const rows = [];
+  // Build % for each service (5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor)
+  function buildServiceSummary(rawItems = []) {
+    const rows = [];
 
-  for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let total = 0;
+    for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let total = 0;
 
-    for (const item of rawItems) {
-      const r = item?.ratings || {};
-      for (const k of keys) {
-        const v = Number(r[k]);
-        if (v >= 1 && v <= 5) {
-          counts[Math.round(v)] += 1;
-          total += 1;
+      for (const item of rawItems) {
+        const r = item?.ratings || {};
+        for (const k of keys) {
+          const v = Number(r[k]);
+          if (v >= 1 && v <= 5) {
+            counts[Math.round(v)] += 1;
+            total += 1;
+          }
         }
       }
+
+      const denom = total || 1;
+      rows.push({
+        service,
+        excellent: Math.round((counts[5] / denom) * 100),
+        good: Math.round((counts[4] / denom) * 100),
+        average: Math.round((counts[3] / denom) * 100),
+        poor: Math.round((counts[2] / denom) * 100),
+        veryPoor: Math.round((counts[1] / denom) * 100),
+      });
     }
 
-    const denom = total || 1;
-    rows.push({
-      service,
-      excellent: Math.round((counts[5] / denom) * 100),
-      good: Math.round((counts[4] / denom) * 100),
-      average: Math.round((counts[3] / denom) * 100),
-      poor: Math.round((counts[2] / denom) * 100),
-      veryPoor: Math.round((counts[1] / denom) * 100),
-    });
+    return rows;
   }
-
-  return rows;
-}
 
 
   function pad2(n) { return String(n).padStart(2, "0"); }
 
-function weekOfYear(d) {
-  // ISO-ish week number
-  const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = a.getUTCDay() || 7;
-  a.setUTCDate(a.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(a.getUTCFullYear(), 0, 1));
-  return Math.ceil((((a - yearStart) / 86400000) + 1) / 7);
-}
+  function weekOfYear(d) {
+    // ISO-ish week number
+    const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = a.getUTCDay() || 7;
+    a.setUTCDate(a.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(a.getUTCFullYear(), 0, 1));
+    return Math.ceil((((a - yearStart) / 86400000) + 1) / 7);
+  }
 
-function pickBucket(fromDate, toDate) {
-  const ms = Math.max(1, toDate - fromDate);
-  const days = Math.ceil(ms / 86400000);
-  if (days <= 31) return "day";
-  if (days <= 180) return "week";
-  return "month";
-}
+  function pickBucket(fromDate, toDate) {
+    const ms = Math.max(1, toDate - fromDate);
+    const days = Math.ceil(ms / 86400000);
+    if (days <= 31) return "day";
+    if (days <= 180) return "week";
+    return "month";
+  }
 
-function bucketKeyAndLabel(d, bucket) {
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  const day = d.getDate();
+  function bucketKeyAndLabel(d, bucket) {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
 
-  if (bucket === "day") {
-    // 👉 Sep 02 format
+    if (bucket === "day") {
+      // 👉 Sep 02 format
+      return {
+        key: `${y}-${pad2(m)}-${pad2(day)}`,
+        label: d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+        }),
+      };
+    }
+
+    if (bucket === "week") {
+      const w = weekOfYear(d);
+      return { key: `${y}-W${pad2(w)}`, label: `W${pad2(w)} ${y}` };
+    }
+
+    // month bucket → Sep 2024
     return {
-      key: `${y}-${pad2(m)}-${pad2(day)}`,
+      key: `${y}-${pad2(m)}`,
       label: d.toLocaleDateString("en-US", {
         month: "short",
-        day: "2-digit",
+        year: "numeric",
       }),
     };
   }
 
-  if (bucket === "week") {
-    const w = weekOfYear(d);
-    return { key: `${y}-W${pad2(w)}`, label: `W${pad2(w)} ${y}` };
-  }
 
-  // month bucket → Sep 2024
-  return {
-    key: `${y}-${pad2(m)}`,
-    label: d.toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    }),
-  };
-}
-
-
-function getRangeFromRows(list) {
-  let min = Infinity, max = -Infinity;
-  for (const r of list) {
-    const t = +new Date(r.createdAt);
-    if (!isNaN(t)) {
-      if (t < min) min = t;
-      if (t > max) max = t;
+  function getRangeFromRows(list) {
+    let min = Infinity, max = -Infinity;
+    for (const r of list) {
+      const t = +new Date(r.createdAt);
+      if (!isNaN(t)) {
+        if (t < min) min = t;
+        if (t > max) max = t;
+      }
     }
-  }
-  if (!isFinite(min) || !isFinite(max)) {
-    const now = Date.now();
-    return { from: new Date(now), to: new Date(now) };
-  }
-  return { from: new Date(min), to: new Date(max) };
-}
-
-function buildAutoTrendBoth(list, dateFrom, dateTo) {
-  // decide range (prefer dateFrom/dateTo if valid, else derive from data)
-  let from = dateFrom ? new Date(dateFrom) : null;
-  let to   = dateTo   ? new Date(dateTo)   : null;
-  if (!from || !to || isNaN(from) || isNaN(to)) {
-    const r = getRangeFromRows(list);
-    from = r.from; to = r.to;
+    if (!isFinite(min) || !isFinite(max)) {
+      const now = Date.now();
+      return { from: new Date(now), to: new Date(now) };
+    }
+    return { from: new Date(min), to: new Date(max) };
   }
 
-  const bucket = pickBucket(from, to);
-  const map = new Map(); // key -> { sum, count, label }
+  function buildAutoTrendBoth(list, dateFrom, dateTo) {
+    // decide range (prefer dateFrom/dateTo if valid, else derive from data)
+    let from = dateFrom ? new Date(dateFrom) : null;
+    let to = dateTo ? new Date(dateTo) : null;
+    if (!from || !to || isNaN(from) || isNaN(to)) {
+      const r = getRangeFromRows(list);
+      from = r.from; to = r.to;
+    }
 
-  for (const row of list) {
-    const d = new Date(row.createdAt);
-    if (isNaN(d)) continue;
-    const { key, label } = bucketKeyAndLabel(d, bucket);
-    if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
-    const b = map.get(key);
-    b.sum += (row.rating || 0);
-    b.count += 1;
+    const bucket = pickBucket(from, to);
+    const map = new Map(); // key -> { sum, count, label }
+
+    for (const row of list) {
+      const d = new Date(row.createdAt);
+      if (isNaN(d)) continue;
+      const { key, label } = bucketKeyAndLabel(d, bucket);
+      if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
+      const b = map.get(key);
+      b.sum += (row.rating || 0);
+      b.count += 1;
+    }
+
+    let trendAvg = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, v]) => ({ date: v.label, value: v.count ? round1(v.sum / v.count) : 0 }));
+
+    let trendCount = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, v]) => ({ date: v.label, value: v.count }));
+
+    // keep the chart readable
+    const MAX_POINTS = 40;
+    if (trendAvg.length > MAX_POINTS) {
+      const step = Math.ceil(trendAvg.length / MAX_POINTS);
+      trendAvg = trendAvg.filter((_, i) => i % step === 0);
+      trendCount = trendCount.filter((_, i) => i % step === 0);
+    }
+
+    return { trendAvg, trendCount, bucket };
   }
 
-  let trendAvg = Array.from(map.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([, v]) => ({ date: v.label, value: v.count ? round1(v.sum / v.count) : 0 }));
 
-  let trendCount = Array.from(map.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([, v]) => ({ date: v.label, value: v.count }));
+  function buildAutoTrend(list, dateFrom, dateTo) {
+    // decide range (prefer dateFrom/dateTo if valid, else derive from data)
+    let from = dateFrom ? new Date(dateFrom) : null;
+    let to = dateTo ? new Date(dateTo) : null;
+    if (!from || !to || isNaN(from) || isNaN(to)) {
+      const r = getRangeFromRows(list);
+      from = r.from; to = r.to;
+    }
 
-  // keep the chart readable
-  const MAX_POINTS = 40;
-  if (trendAvg.length > MAX_POINTS) {
-    const step = Math.ceil(trendAvg.length / MAX_POINTS);
-    trendAvg = trendAvg.filter((_, i) => i % step === 0);
-    trendCount = trendCount.filter((_, i) => i % step === 0);
+    const bucket = pickBucket(from, to);
+    const map = new Map(); // key -> { sum, count, label }
+
+    for (const row of list) {
+      const d = new Date(row.createdAt);
+      if (isNaN(d)) continue;
+      const { key, label } = bucketKeyAndLabel(d, bucket);
+      if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
+      const b = map.get(key);
+      b.sum += (row.rating || 0);
+      b.count += 1;
+    }
+
+    let trend = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, v]) => ({ date: v.label, value: round1(v.sum / v.count) }));
+
+    // keep the chart readable
+    const MAX_POINTS = 40;
+    if (trend.length > MAX_POINTS) {
+      const step = Math.ceil(trend.length / MAX_POINTS);
+      trend = trend.filter((_, i) => i % step === 0);
+    }
+
+    return { trend, bucket };
   }
 
-  return { trendAvg, trendCount, bucket };
-}
-
-
-function buildAutoTrend(list, dateFrom, dateTo) {
-  // decide range (prefer dateFrom/dateTo if valid, else derive from data)
-  let from = dateFrom ? new Date(dateFrom) : null;
-  let to   = dateTo   ? new Date(dateTo)   : null;
-  if (!from || !to || isNaN(from) || isNaN(to)) {
-    const r = getRangeFromRows(list);
-    from = r.from; to = r.to;
-  }
-
-  const bucket = pickBucket(from, to);
-  const map = new Map(); // key -> { sum, count, label }
-
-  for (const row of list) {
-    const d = new Date(row.createdAt);
-    if (isNaN(d)) continue;
-    const { key, label } = bucketKeyAndLabel(d, bucket);
-    if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
-    const b = map.get(key);
-    b.sum += (row.rating || 0);
-    b.count += 1;
-  }
-
-  let trend = Array.from(map.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([, v]) => ({ date: v.label, value: round1(v.sum / v.count) }));
-
-  // keep the chart readable
-  const MAX_POINTS = 40;
-  if (trend.length > MAX_POINTS) {
-    const step = Math.ceil(trend.length / MAX_POINTS);
-    trend = trend.filter((_, i) => i % step === 0);
-  }
-
-  return { trend, bucket };
-}
-
-   const getRatingStars = (rating) => {
+  const getRatingStars = (rating) => {
     const filled = Math.round(rating) // show out of 5
     return Array.from({ length: 5 }, (_, i) => (
       <Star key={i} className={`w-4 h-4 ${i < filled ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
     ))
   }
 
-    const buildDistribution = (list) => {
+  const buildDistribution = (list) => {
     const buckets = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
     list.forEach((r) => {
       const rounded = Math.max(1, Math.min(5, Math.round(r.rating || 0)))
@@ -343,9 +356,9 @@ function buildAutoTrend(list, dateFrom, dateTo) {
       const nps = calcNpsPercent(data)
       const overallScore =
         avg >= 4.5 ? "Excellent" :
-        avg >= 4.0 ? "Very Good" :
-        avg >= 3.0 ? "Good" :
-        avg >= 2.0 ? "Average" : "Poor"
+          avg >= 4.0 ? "Very Good" :
+            avg >= 3.0 ? "Good" :
+              avg >= 2.0 ? "Average" : "Poor"
 
       setRows(list)
       setKpiData({
@@ -372,10 +385,10 @@ function buildAutoTrend(list, dateFrom, dateTo) {
   }, [fetchOPD])
 
   useEffect(() => {
-  const { trendAvg, trendCount, bucket } = buildAutoTrendBoth(rows, dateFrom, dateTo);
-  setTrendBucket(bucket);
-  setLineData(metric === "avg" ? trendAvg : trendCount);
-}, [rows, dateFrom, dateTo, metric]);
+    const { trendAvg, trendCount, bucket } = buildAutoTrendBoth(rows, dateFrom, dateTo);
+    setTrendBucket(bucket);
+    setLineData(metric === "avg" ? trendAvg : trendCount);
+  }, [rows, dateFrom, dateTo, metric]);
 
 
 
@@ -545,6 +558,7 @@ function buildAutoTrend(list, dateFrom, dateTo) {
       </div>
     )
   }
+  // const { areaData, lineData1 } = useMemo(() => aggregateTrends(filteredRecords, dates), [filteredRecords, dates])
 
   return (
     <>
@@ -557,10 +571,10 @@ function buildAutoTrend(list, dateFrom, dateTo) {
               <div className="">
                 <div className=" mx-auto">
                   {/* Header */}
-       
+
 
                   {/* KPI Cards - Non-box style */}
-                       {/* KPI Cards */}
+                  {/* KPI Cards */}
                   <div className="  pt-[5px] flex gap-6  mb-4">
                     <div className="bg-white rounded-lg min-w-[240px] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
                       <div className="flex items-center">
@@ -625,16 +639,45 @@ function buildAutoTrend(list, dateFrom, dateTo) {
                         <LineChart data={lineChartData} />
                       </div>
                     </div> */}
-                    <div className="bg-white rounded-lg p-6">
+                    {/* <div className="bg-white rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        Average Rating Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+                      </h3>
+                      <div className="flex justify-center">
+                        <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} />
+                      </div>
+                    </div> */}
+
+<div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
   <h3 className="text-lg font-semibold text-gray-900 mb-4">
     Average Rating Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
   </h3>
-  <div className="flex justify-center">
-    <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} />
+  <div className="h-72">
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+        <CartesianGrid stroke="#f3f4f6" vertical={false} />
+        <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+        <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} /> {/* Rating scale */}
+        <Tooltip contentStyle={{ fontSize: 12 }} />
+        <Legend />
+        <Line
+          type="monotone"
+          dataKey="value"
+          name="Average Rating"
+          stroke="#3B82F6"
+          strokeWidth={3}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+          isAnimationActive
+          animationDuration={600}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   </div>
 </div>
 
                   </div>
+
 
                   {/* Word Cloud */}
                   <div className="bg-white  border-b-[1.7px] border-dashed p-3 mb-6">

@@ -1,10 +1,25 @@
 
 import React, { Fragment, useEffect, useState } from "react";
-
+import { Container, Row } from "reactstrap";
+import { Breadcrumbs } from "../../AbstractElements";
 
 import SideBar from '../../Component/sidebar/SideBar';
 import Header from '../../Component/header/Header';
+import GreetingCard from "../../Component/DashboardFiles/Components/Dashboard/Default/GreetingCard";
+import WidgetsWrapper from "../../Component/DashboardFiles/Components/Dashboard/Default/WidgetsWraper";
+import OverallBalance from "../../Component/DashboardFiles/Components/Dashboard/Default/OverallBalance";
+import RecentOrders from "../../Component/DashboardFiles/Components/Dashboard/Default/RecentOrders";
+import ActivityCard from "../../Component/DashboardFiles/Components/Dashboard/Default/ActivityCard";
+import RecentSales from "../../Component/DashboardFiles/Components/Dashboard/Default/RecentSales";
+import TimelineCard from "../../Component/DashboardFiles/Components/Dashboard/Default/TimelineCard";
+import PreAccountCard from "../../Component/DashboardFiles/Components/Dashboard/Default/PreAccountCard";
+import TotalUserAndFollower from "../../Component/DashboardFiles/Components/Dashboard/Default/TotalUserAndFollower";
+import PaperNote from "../../Component/DashboardFiles/Components/Dashboard/Default/PaperNote";
+import '../../assets/scss/app.css'
+import '../../assets/scss/style.css'
+// import CryptoAnnotations from "../../Component/DashboardFiles/Components/Widgets/Chart/CryptoAnnotations";
 
+// import 'react-clock/dist/Clock.css';
 
 export default function DashBoard() {
 
@@ -25,7 +40,24 @@ export default function DashBoard() {
             <SideBar />
             <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
             
-
+   <Fragment>
+      <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
+      <Container fluid={true}>
+        <Row className="widget-grid">
+          <GreetingCard />
+          <WidgetsWrapper />
+          <OverallBalance />
+          <RecentOrders />
+          {/* <CryptoAnnotations /> */}
+          <ActivityCard />
+          <RecentSales />
+          <TimelineCard />
+          <PreAccountCard />
+          <TotalUserAndFollower />
+          <PaperNote />
+        </Row>
+      </Container>
+    </Fragment>
             </div>
 
           </div>

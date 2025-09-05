@@ -404,14 +404,14 @@ setIsModalOpen(false);
                                                 {users.map((user) => (
                                                     <div
                                                         key={user.id}
-                                                        className="group relative bg-white  w-[310px] border border-[#f10a0a50] rounded-xl overflow-hidden shadow-sm hover:shadow-xl h-[170px] transition-all duration-300"
+                                                        className="group relative bg-white  w-[350px] border !border-[#f10a0a50] rounded-xl overflow-hidden shadow-sm hover:shadow-xl h-[170px] transition-all duration-300"
                                                     >
                                                         {/* Card Header with Role Badge */}
                                                         <div className="absolute top-0 left-0 w-full h-[40px] bg-[#ff000026]"></div>
 
                                                         <div className="relative pt-3 px-4">
                                                             <div className="flex justify-between items-start mb-4">
-                                                                <div className="px-2 py-[2px] rounded-full text-[#c80404]  border border-[#f10a0aba]   mt-[-3px] font-[500]  bg-gradient-to-r text-[13px]  shadow-md">
+                                                                <div className="px-2 py-[2px] rounded-full text-[#c80404]  border !border-[#f10a0aba]   mt-[-9px] font-[500]  bg-gradient-to-r text-[13px]  shadow-md">
                                                                     {user.roleId?.roleName}
                                                                 </div>
                                                                 <div className="relative">
@@ -478,7 +478,7 @@ setIsModalOpen(false);
 
                                                             {/* User Info */}
                                                             <div className="flex items-center gap-4 ">
-                                                                <div className="w-[54px] h-[54px] rounded-2xl border-[2px] border-[#f10a0aba] overflow-hidden">
+                                                                <div className="!w-[54px] h-[54px] flex-shrink-0 rounded-2xl border-[1.5px] border-[#f10a0aba] overflow-hidden">
                                                                     {user.avatar ? (
                                                                         <img
                                                                             src={user.avatar || "/placeholder.svg"}
@@ -486,8 +486,8 @@ setIsModalOpen(false);
                                                                             className="w-full h-full object-cover rounded-xl"
                                                                         />
                                                                     ) : (
-                                                                        <div className="w-full h-full rounded-xl bg-white flex items-center justify-center">
-                                                                            <span className="text-3xl font-light text-transparent bg-clip-text  bg-[#f10a0aba]">
+                                                                        <div className=" w-[54px] h-[54px]  rounded-xl bg-white flex items-center justify-center">
+                                                                            <span className="text-3xl font- text-red-500  text-[#f10a0aba]">
                                                                                 {user.name.charAt(0).toUpperCase()}
                                                                             </span>
                                                                         </div>
