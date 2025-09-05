@@ -11,7 +11,7 @@ import {
   YAxis,
   Tooltip,
   Legend,
-  LineChart,
+  LineChart as RLineChart,
   Line,
   CartesianGrid,
 } from "recharts"
@@ -385,10 +385,10 @@ export default function IPDFeedbackDashboard() {
   }, [fetchOPD])
 
   useEffect(() => {
-    const { trendAvg, trendCount, bucket } = buildAutoTrendBoth(rows, dateFrom, dateTo);
+    const { trend, bucket } = buildAutoTrend(rows, dateFrom, dateTo);
     setTrendBucket(bucket);
-    setLineData(metric === "avg" ? trendAvg : trendCount);
-  }, [rows, dateFrom, dateTo, metric]);
+    setLineData(trend);
+  }, [rows, dateFrom, dateTo]);
 
 
 
@@ -496,7 +496,7 @@ export default function IPDFeedbackDashboard() {
   }
 
   // Line Chart Component
-  const LineChart = ({ data }) => {
+  const CustomLineChart = ({ data }) => {
     const width = 650
     const height = 290
     const padding = 50
@@ -623,7 +623,7 @@ export default function IPDFeedbackDashboard() {
                   </div>
 
                   {/* Charts Row */}
-                  <div className=" flex justify-between  items-center gap-6 mb-6">
+                  <div className=" flex justify-start  items-center gap-[150px] mb-6">
                     {/* Rating Distribution Donut Chart */}
                     <div className="bg-white  rounded-lg shadow-md p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
@@ -648,33 +648,35 @@ export default function IPDFeedbackDashboard() {
                       </div>
                     </div> */}
 
-<div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-    Average Rating Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
-  </h3>
-  <div className="h-72">
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-        <CartesianGrid stroke="#f3f4f6" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-        <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} /> {/* Rating scale */}
-        <Tooltip contentStyle={{ fontSize: 12 }} />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="value"
-          name="Average Rating"
-          stroke="#3B82F6"
-          strokeWidth={3}
-          dot={{ r: 3 }}
-          activeDot={{ r: 5 }}
-          isAnimationActive
-          animationDuration={600}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-</div>
+                      <div className="bg-white rounded-lg w-[700px] shadow-sm border border-gray-100 p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+                        </h3>
+                        <div className="h-72">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RLineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                              <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                              <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} /> {/* Rating scale */}
+                              <Tooltip contentStyle={{ fontSize: 12 }} />
+                              <Legend />
+                              <Line
+                                type="monotone"
+                                dataKey="value"
+                                name="Average Rating"
+                                stroke="#3B82F6"
+                                strokeWidth={3}
+                                dot={{ r: 3 }}
+                                activeDot={{ r: 5 }}
+                                isAnimationActive
+                                animationDuration={600}
+                              />
+                            </RLineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+
 
                   </div>
 
