@@ -973,7 +973,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Modal as NextUIModal, ModalContent } from "@nextui-org/react";
 
-// ⬇️ HPanel uploader
 import uploadToHPanel from '../../helper/hpanelUpload';
 
 export default function UserManageMent() {
