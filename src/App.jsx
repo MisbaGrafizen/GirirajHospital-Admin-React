@@ -120,6 +120,7 @@ import ExecutiveReport from "./pages/executive/ExecutiveReport";
 import FeedbackDetails from "./pages/reportsMain/FeedbackDetails";
 import RoleManage from "./pages/roleModule/RoleManage";
 import UserManageMent from "./pages/roleModule/UserManageMent";
+import LoginPage from "./pages/LoginPage";
 
 
 
@@ -130,7 +131,7 @@ function App() {
       <ScrollToTop />
       <div className="w-100 ease-soft-spring font-Poppins h-[100%]  !bg-[#F6FAFB]  duration-1000 ">
         <Routes>
-          <Route path="/" element={<DashBoard />} />
+          <Route path="/dashboard" element={<DashBoard />} />
           <Route path="/opd-feedback" element={<OpdFeedBack />} />
           <Route path="/ipd-feedback" element={<IPDFeedbackDashboard />} />
           <Route path="/complaint-dashboard" element={<ComplaintManagementDashboard />} />
@@ -140,6 +141,8 @@ function App() {
           <Route path="/feedback-details" element={<FeedbackDetails />} />
           <Route path="/role-manage" element={<RoleManage />} />
           <Route path="/user-manage" element={<UserManageMent />} />
+          <Route path="/" element={<LoginPage />} />
+
 
 
 
