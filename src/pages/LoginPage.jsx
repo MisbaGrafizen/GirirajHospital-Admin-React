@@ -216,7 +216,7 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const res = await fetch("https://server.grafizen.in/api/v2/icon/auth/admin/login", {
+      const res = await fetch("http://localhost:3000/api/v2/giriraj/auth/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -239,7 +239,7 @@ export default function LoginPage() {
         localStorage.setItem("rememberMe", "false")
       }
 
-      navigate("/heroSection")
+      navigate("/dashboard")
     } catch (err) {
       setError(err.message)
     } finally {

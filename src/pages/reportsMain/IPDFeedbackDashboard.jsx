@@ -82,10 +82,10 @@ export default function IPDFeedbackDashboard() {
   })
   const [chartData, setChartData] = useState([
     { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },   // 5
-    { label: "Very Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
-    { label: "Good", count: 0, percentage: 0, color: "#06B6D4" },        // 3
-    { label: "Average", count: 0, percentage: 0, color: "#EAB308" },     // 2
-    { label: "Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
+    { label: "Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
+    { label: "Average", count: 0, percentage: 0, color: "#06B6D4" },        // 3
+    { label: "Poor", count: 0, percentage: 0, color: "#EAB308" },     // 2
+    { label: "Very Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
   ])
 
   const defaultColors = [
@@ -97,70 +97,68 @@ export default function IPDFeedbackDashboard() {
     '#ec4899', // pink
   ]
 
-  // Line chart data
-  const lineChartData = [
-    { month: "OCT", value: 45 },
-    { month: "NOV", value: 65 },
-    { month: "DEC", value: 42 },
-    { month: "JAN", value: 40 },
-    { month: "FEB", value: 55 },
-    { month: "MAR", value: 15 },
-    { month: "APR", value: 35 },
-    { month: "MAY", value: 62 },
-    { month: "JUN", value: 75 },
-  ]
 
-  const serviceData = [
-    { service: "Appointment", excellent: 35, good: 30, average: 20, poor: 10, veryPoor: 5 },
-    { service: "Reception Staff", excellent: 40, good: 35, average: 15, poor: 7, veryPoor: 3 },
-    { service: "Diagnostic Services", excellent: 45, good: 25, average: 18, poor: 8, veryPoor: 4 },
-    { service: "Lab / Radio", excellent: 38, good: 32, average: 16, poor: 9, veryPoor: 5 },
-    { service: "Doctor Service", excellent: 50, good: 28, average: 12, poor: 7, veryPoor: 3 },
-    { service: "Security", excellent: 42, good: 30, average: 18, poor: 6, veryPoor: 4 },
-  ]
+function prettyKey(key = "") {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
+}
 
-  // Group OPD rating fields → table rows
-  const SERVICE_GROUPS = {
-    "Appointment": ["appointment", "appointmentBooking"],
-    "Reception Staff": ["reception", "receptionStaff"],
-    "Diagnostic Services": ["diagnostic"],
-    "Lab / Radio": ["laboratory", "labServices", "radiology", "radiologyServices"],
-    "Doctor Service": ["doctorServices", "consultant", "doctor"],
-    "Security": ["security"],
-  };
+const SERVICE_GROUPS = {
+  "Overall Experience": ["overallExperience"],
+  "Doctor Services": ["doctorServices"],
+  "Billing Services": ["billingServices"],
+  "Housekeeping": ["housekeeping"],
+  "Maintenance": ["maintenance"],
+  "Diagnostic Services": ["diagnosticServices"], 
+  "Dietitian Services": ["dietitianServices"],
+  "Security": ["security"],
+};
 
-  // Build % for each service (5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor)
-  function buildServiceSummary(rawItems = []) {
-    const rows = [];
+function toArray(maybeArray) {
+  if (Array.isArray(maybeArray)) return maybeArray;
+  return []; 
+}
 
-    for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
-      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      let total = 0;
+function buildServiceSummary(raw) {
+  const items = toArray(raw);
+  const rows = [];
 
-      for (const item of rawItems) {
-        const r = item?.ratings || {};
-        for (const k of keys) {
-          const v = Number(r[k]);
-          if (v >= 1 && v <= 5) {
-            counts[Math.round(v)] += 1;
-            total += 1;
-          }
+  for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
+    const usedKeySet = new Set();
+
+    for (const item of items) {
+      const r = item?.ratings || {};
+      for (const k of keys) {
+        const v = Number(r?.[k]);
+        if (v >= 1 && v <= 5) {
+          counts[Math.round(v)] += 1;
+          total += 1;
+          usedKeySet.add(k);
         }
       }
-
-      const denom = total || 1;
-      rows.push({
-        service,
-        excellent: Math.round((counts[5] / denom) * 100),
-        good: Math.round((counts[4] / denom) * 100),
-        average: Math.round((counts[3] / denom) * 100),
-        poor: Math.round((counts[2] / denom) * 100),
-        veryPoor: Math.round((counts[1] / denom) * 100),
-      });
     }
 
-    return rows;
+    const denom = total || 1;
+    rows.push({
+      service,
+      usedFields: Array.from(usedKeySet).map(prettyKey),
+      excellent: Math.round((counts[5] / denom) * 100),
+      good: Math.round((counts[4] / denom) * 100),
+      average: Math.round((counts[3] / denom) * 100),
+      poor: Math.round((counts[2] / denom) * 100),
+      veryPoor: Math.round((counts[1] / denom) * 100),
+    });
   }
+
+  return rows;
+}
+
 
 
   function pad2(n) { return String(n).padStart(2, "0"); }
@@ -230,46 +228,6 @@ export default function IPDFeedbackDashboard() {
     return { from: new Date(min), to: new Date(max) };
   }
 
-  function buildAutoTrendBoth(list, dateFrom, dateTo) {
-    // decide range (prefer dateFrom/dateTo if valid, else derive from data)
-    let from = dateFrom ? new Date(dateFrom) : null;
-    let to = dateTo ? new Date(dateTo) : null;
-    if (!from || !to || isNaN(from) || isNaN(to)) {
-      const r = getRangeFromRows(list);
-      from = r.from; to = r.to;
-    }
-
-    const bucket = pickBucket(from, to);
-    const map = new Map(); // key -> { sum, count, label }
-
-    for (const row of list) {
-      const d = new Date(row.createdAt);
-      if (isNaN(d)) continue;
-      const { key, label } = bucketKeyAndLabel(d, bucket);
-      if (!map.has(key)) map.set(key, { sum: 0, count: 0, label });
-      const b = map.get(key);
-      b.sum += (row.rating || 0);
-      b.count += 1;
-    }
-
-    let trendAvg = Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([, v]) => ({ date: v.label, value: v.count ? round1(v.sum / v.count) : 0 }));
-
-    let trendCount = Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([, v]) => ({ date: v.label, value: v.count }));
-
-    // keep the chart readable
-    const MAX_POINTS = 40;
-    if (trendAvg.length > MAX_POINTS) {
-      const step = Math.ceil(trendAvg.length / MAX_POINTS);
-      trendAvg = trendAvg.filter((_, i) => i % step === 0);
-      trendCount = trendCount.filter((_, i) => i % step === 0);
-    }
-
-    return { trendAvg, trendCount, bucket };
-  }
 
 
   function buildAutoTrend(list, dateFrom, dateTo) {
@@ -324,10 +282,10 @@ export default function IPDFeedbackDashboard() {
     const total = list.length || 1
     return [
       { label: "Excellent", count: buckets[5], percentage: Math.round((buckets[5] / total) * 100), color: "#10B981" },
-      { label: "Very Good", count: buckets[4], percentage: Math.round((buckets[4] / total) * 100), color: "#3B82F6" },
-      { label: "Good", count: buckets[3], percentage: Math.round((buckets[3] / total) * 100), color: "#06B6D4" },
-      { label: "Average", count: buckets[2], percentage: Math.round((buckets[2] / total) * 100), color: "#EAB308" },
-      { label: "Poor", count: buckets[1], percentage: Math.round((buckets[1] / total) * 100), color: "#F97316" },
+      { label: "Good", count: buckets[4], percentage: Math.round((buckets[4] / total) * 100), color: "#3B82F6" },
+      { label: "Average", count: buckets[3], percentage: Math.round((buckets[3] / total) * 100), color: "#06B6D4" },
+      { label: "Poor", count: buckets[2], percentage: Math.round((buckets[2] / total) * 100), color: "#EAB308" },
+      { label: "Very Poor", count: buckets[1], percentage: Math.round((buckets[1] / total) * 100), color: "#F97316" },
     ]
   }
 
@@ -356,9 +314,9 @@ export default function IPDFeedbackDashboard() {
       const nps = calcNpsPercent(data)
       const overallScore =
         avg >= 4.5 ? "Excellent" :
-          avg >= 4.0 ? "Very Good" :
-            avg >= 3.0 ? "Good" :
-              avg >= 2.0 ? "Average" : "Poor"
+          avg >= 4.0 ? "Good" :
+            avg >= 3.0 ? "Average" :
+              avg >= 2.0 ? "Poor" : "Very Poor"
 
       setRows(list)
       setKpiData({
@@ -405,9 +363,75 @@ export default function IPDFeedbackDashboard() {
   //   ))
   // }
 
-  const exportToExcel = () => {
-    alert("Export functionality would be implemented here")
+  // ✅ Export only what’s on screen (filteredFeedback) + Service-Wise Summary
+const exportToExcel = async () => {
+  const XLSX = await import("xlsx");
+
+  // ---- Sheet 1: Patient Feedback (uses the filtered table rows) ----
+  const feedbackRows = filteredFeedback.map((f) => ({
+    Date: formatDate(f.createdAt),
+    "Patient Name": f.patient,
+    Contact: f.contact,
+    "Average Rating (/5)": f.rating,
+    // include NPS if present in your data model
+    ...(typeof f.overallRecommendation === "number"
+      ? { "Overall Recommendation (NPS)": f.overallRecommendation }
+      : {}),
+  }));
+
+  // Build a worksheet (ensure headers even if no rows)
+  const feedbackHeaders = feedbackRows.length
+    ? Object.keys(feedbackRows[0])
+    : ["Date", "Patient Name", "Contact", "Average Rating (/5)"];
+
+  const wsFeedback = XLSX.utils.json_to_sheet(feedbackRows, { header: feedbackHeaders });
+
+  // Auto-size columns
+  const feedbackCols = feedbackHeaders.map((key) => {
+    const headerLen = String(key).length;
+    const maxCellLen = feedbackRows.reduce(
+      (m, r) => Math.max(m, String(r[key] ?? "").length),
+      0
+    );
+    return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) };
+  });
+  wsFeedback["!cols"] = feedbackCols;
+
+  // ---- Sheet 2: Service-Wise Summary (uses your serviceSummary array) ----
+  let wsSummary = null;
+  if (Array.isArray(serviceSummary) && serviceSummary.length) {
+    const summaryRows = serviceSummary.map((s) => ({
+      Service: s.service,
+      "Excellent %": s.excellent,
+      "Good %": s.good,
+      "Average %": s.average,
+      "Poor %": s.poor,
+      "Very Poor %": s.veryPoor,
+      // include underlying rating fields if you kept `usedFields` in buildServiceSummary
+      ...(Array.isArray(s.usedFields) ? { "Fields Used": s.usedFields.join(", ") } : {}),
+    }));
+    wsSummary = XLSX.utils.json_to_sheet(summaryRows);
+    // Optional: auto-size summary columns
+    const summaryHeaders = Object.keys(summaryRows[0] || { Service: "" });
+    wsSummary["!cols"] = summaryHeaders.map((key) => {
+      const headerLen = String(key).length;
+      const maxCellLen = summaryRows.reduce(
+        (m, r) => Math.max(m, String(r[key] ?? "").length),
+        0
+      );
+      return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) };
+    });
   }
+
+  // ---- Build & download workbook ----
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsFeedback, "Patient Feedback");
+  if (wsSummary) XLSX.utils.book_append_sheet(wb, wsSummary, "Service Summary");
+
+  const fileName = `IPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+};
+
 
   const DonutChart = ({ data }) => {
     const size = 220

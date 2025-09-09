@@ -14,6 +14,8 @@ import {
   LineChart as RLineChart,
   Line,
   CartesianGrid,
+  Bar,
+  BarChart,
 } from "recharts"
 
 
@@ -29,19 +31,12 @@ function round1(n) {
   return Math.round((Number(n) || 0) * 10) / 10
 }
 
-const RATING_KEYS = [
-  "appointment", "appointmentBooking",
-  "reception", "receptionStaff",
-  "diagnostic",
-  "laboratory", "labServices",
-  "radiology", "radiologyServices",
-  "doctorServices", "consultant", "doctor",
-  "security",
-]
+const OPD_RATING_KEYS = ["appointment", "receptionStaff", "diagnosticServices", "doctorServices", "security"]
+
 
 function calcRowAverage(ratings = {}) {
   const vals = []
-  for (const key of RATING_KEYS) {
+  for (const key of OPD_RATING_KEYS) {
     const v = ratings?.[key]
     if (typeof v === "number" && v >= 1 && v <= 5) vals.push(v)
   }
@@ -73,7 +68,9 @@ export default function OPDFeedbackDashboard() {
   const [lineData, setLineData] = useState([]);
   const [trendBucket, setTrendBucket] = useState("day"); // "day" | "week" | "month"
   const [serviceSummary, setServiceSummary] = useState([]);
-  const [metric, setMetric] = useState("avg"); // 'avg' | 'count'
+  const [opdServiceChart, setOpdServiceChart] = useState([]);
+  const [metric, setMetric] = useState("avg");
+  const [rawOPD, setRawOPD] = useState([])
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
     averageRating: 0,
@@ -82,10 +79,10 @@ export default function OPDFeedbackDashboard() {
   })
   const [chartData, setChartData] = useState([
     { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },   // 5
-    { label: "Very Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
-    { label: "Good", count: 0, percentage: 0, color: "#06B6D4" },        // 3
-    { label: "Average", count: 0, percentage: 0, color: "#EAB308" },     // 2
-    { label: "Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
+    { label: "Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
+    { label: "Average", count: 0, percentage: 0, color: "#06B6D4" },        // 3
+    { label: "Poor", count: 0, percentage: 0, color: "#EAB308" },     // 2
+    { label: "Very Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
   ])
 
   const defaultColors = [
@@ -119,15 +116,23 @@ export default function OPDFeedbackDashboard() {
     { service: "Security", excellent: 42, good: 30, average: 18, poor: 6, veryPoor: 4 },
   ]
 
-  // Group OPD rating fields → table rows
-  const SERVICE_GROUPS = {
-    "Appointment": ["appointment", "appointmentBooking"],
-    "Reception Staff": ["reception", "receptionStaff"],
-    "Diagnostic Services": ["diagnostic"],
-    "Lab / Radio": ["laboratory", "labServices", "radiology", "radiologyServices"],
-    "Doctor Service": ["doctorServices", "consultant", "doctor"],
-    "Security": ["security"],
-  };
+const SERVICE_GROUPS = {
+  "Appointment": ["appointment"],
+  "Reception Staff": ["receptionStaff"],
+  "Diagnostic Services": ["diagnosticServices"],
+  "Doctor Service": ["doctorServices"],
+  "Security": ["security"],
+}
+
+const OPD_SERVICE_LABELS = {
+  appointment: "Appointment",
+  receptionStaff: "Reception Staff",
+  diagnosticServices: "Diagnostic Services",
+  doctorServices: "Doctor Services",
+  security: "Security",
+};
+
+
 
   // Build % for each service (5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor)
   function buildServiceSummary(rawItems = []) {
@@ -161,6 +166,81 @@ export default function OPDFeedbackDashboard() {
 
     return rows;
   }
+
+  function buildOPDServiceChart(rawItems = []) {
+  const keys = Object.keys(OPD_SERVICE_LABELS);
+  const agg = {};
+
+  // init
+  keys.forEach((k) => {
+    agg[k] = { count: 0, sum: 0, c1: 0, c2: 0, c3: 0, c4: 0, c5: 0 };
+  });
+
+  // accumulate
+  for (const it of rawItems) {
+    const r = it?.ratings || {};
+    keys.forEach((k) => {
+      const v = Number(r[k]);
+      if (v >= 1 && v <= 5) {
+        agg[k].count += 1;
+        agg[k].sum += v;
+        agg[k][`c${v}`] += 1;
+      }
+    });
+  }
+
+  // to rows (% per rating bucket)
+  const rows = [];
+  keys.forEach((k) => {
+    const a = agg[k];
+    if (a.count === 0) return; // show only rated services
+
+    rows.push({
+      service: OPD_SERVICE_LABELS[k],
+      // 5→Excellent, 4→Good, 3→Average, 2→Poor, 1→Very Poor
+      excellent: Math.round((a.c5 / a.count) * 100),
+      good:      Math.round((a.c4 / a.count) * 100),
+      average:   Math.round((a.c3 / a.count) * 100),
+      poor:      Math.round((a.c2 / a.count) * 100),
+      veryPoor:  Math.round((a.c1 / a.count) * 100),
+      // optional: average if ever needed
+      avg: round1(a.sum / a.count),
+    });
+  });
+
+  return rows;
+}
+
+function buildServiceDistribution(rawItems = [], serviceLabel = "All Services") {
+  const groups = SERVICE_GROUPS
+  const selectedKeys =
+    serviceLabel === "All Services"
+      ? Object.values(groups).flat()
+      : (groups[serviceLabel] || [])
+
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  let total = 0
+
+  for (const item of rawItems) {
+    const r = item?.ratings || {}
+    for (const k of selectedKeys) {
+      const v = Number(r[k])
+      if (v >= 1 && v <= 5) {
+        counts[v] += 1
+        total += 1
+      }
+    }
+  }
+
+  const denom = total || 1
+  return [
+    { label: "Excellent", count: counts[5], percentage: Math.round((counts[5] / denom) * 100), color: "#10B981" },
+    { label: "Good", count: counts[4], percentage: Math.round((counts[4] / denom) * 100), color: "#3B82F6" },
+    { label: "Average",      count: counts[3], percentage: Math.round((counts[3] / denom) * 100), color: "#06B6D4" },
+    { label: "Poor",   count: counts[2], percentage: Math.round((counts[2] / denom) * 100), color: "#EAB308" },
+    { label: "Very Poor",      count: counts[1], percentage: Math.round((counts[1] / denom) * 100), color: "#F97316" },
+  ]
+}
 
 
   function pad2(n) { return String(n).padStart(2, "0"); }
@@ -324,10 +404,10 @@ export default function OPDFeedbackDashboard() {
     const total = list.length || 1
     return [
       { label: "Excellent", count: buckets[5], percentage: Math.round((buckets[5] / total) * 100), color: "#10B981" },
-      { label: "Very Good", count: buckets[4], percentage: Math.round((buckets[4] / total) * 100), color: "#3B82F6" },
-      { label: "Good", count: buckets[3], percentage: Math.round((buckets[3] / total) * 100), color: "#06B6D4" },
-      { label: "Average", count: buckets[2], percentage: Math.round((buckets[2] / total) * 100), color: "#EAB308" },
-      { label: "Poor", count: buckets[1], percentage: Math.round((buckets[1] / total) * 100), color: "#F97316" },
+      { label: "Good", count: buckets[4], percentage: Math.round((buckets[4] / total) * 100), color: "#3B82F6" },
+      { label: "Average", count: buckets[3], percentage: Math.round((buckets[3] / total) * 100), color: "#06B6D4" },
+      { label: "Poor", count: buckets[2], percentage: Math.round((buckets[2] / total) * 100), color: "#EAB308" },
+      { label: "Very Poor", count: buckets[1], percentage: Math.round((buckets[1] / total) * 100), color: "#F97316" },
     ]
   }
 
@@ -338,6 +418,8 @@ export default function OPDFeedbackDashboard() {
       const res = await ApiGet(`${API_URL}`)
       const data = Array.isArray(res) ? res : (res.data || [])
 
+      setRawOPD(data)
+
       // transform to table rows
       const list = data.map((d) => {
         const rating = calcRowAverage(d.ratings)
@@ -346,7 +428,7 @@ export default function OPDFeedbackDashboard() {
           createdAt: d.createdAt || d.date,
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
-          doctor: d.doctorName || d.consultant || d.consultantDoctor || "-",
+          doctor: d.consultantDoctorName || d.doctorName || d.consultant || "-",
           rating, // avg out of 5
           comment: d.comments || d.comment || "",
           overallRecommendation: d.overallRecommendation, // for NPS
@@ -358,9 +440,9 @@ export default function OPDFeedbackDashboard() {
       const nps = calcNpsPercent(data)
       const overallScore =
         avg >= 4.5 ? "Excellent" :
-          avg >= 4.0 ? "Very Good" :
-            avg >= 3.0 ? "Good" :
-              avg >= 2.0 ? "Average" : "Poor"
+          avg >= 4.0 ? "Good" :
+            avg >= 3.0 ? "Average" :
+              avg >= 2.0 ? "Poor" : "Very Poor"
 
       setRows(list)
       setKpiData({
@@ -369,8 +451,9 @@ export default function OPDFeedbackDashboard() {
         npsRating: nps,
         overallScore,
       })
-      setChartData(buildDistribution(list))
+      // setChartData(buildDistribution(list))
       setServiceSummary(buildServiceSummary(data));
+      setOpdServiceChart(buildOPDServiceChart(data));
     } catch (e) {
       console.error("Fetch OPD failed:", e)
       setError("Failed to load OPD feedback")
@@ -387,13 +470,14 @@ export default function OPDFeedbackDashboard() {
   }, [fetchOPD])
 
   useEffect(() => {
+  setChartData(buildServiceDistribution(rawOPD, selectedService))
+}, [rawOPD, selectedService])
+
+  useEffect(() => {
     const { trendAvg, trendCount, bucket } = buildAutoTrendBoth(rows, dateFrom, dateTo);
     setTrendBucket(bucket);
     setLineData(metric === "avg" ? trendAvg : trendCount);
   }, [rows, dateFrom, dateTo, metric]);
-
-
-
 
 
   const filteredFeedback = rows.filter(
@@ -403,15 +487,41 @@ export default function OPDFeedbackDashboard() {
       feedback.comment.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  // const getRatingStars = (rating) => {
-  //   return Array.from({ length: 5 }, (_, i) => (
-  //     <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-  //   ))
-  // }
+ // replace the old exportToExcel
+const exportToExcel = async () => {
+  // dynamic import so it only loads in the browser
+  const XLSX = await import("xlsx");
 
-  const exportToExcel = () => {
-    alert("Export functionality would be implemented here")
-  }
+  // build rows from what's visible on the page (filteredFeedback)
+  const rows = filteredFeedback.map((f) => ({
+    "Date": formatDate(f.createdAt),
+    "Patient Name": f.patient,
+    "Contact": f.contact,
+    "Doctor": f.doctor,
+    "Rating (/5)": f.rating,
+    "Comment": f.comment || "",
+  }));
+
+  // make worksheet + autosize columns
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  const colWidths = Object.keys(rows[0] || { " ": "" }).map((key, i) => {
+    const headerLen = String(key).length;
+    const maxCellLen = rows.reduce((m, r) => Math.max(m, String(r[key] ?? "").length), 0);
+    // add a little padding
+    return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) };
+  });
+  ws["!cols"] = colWidths;
+
+  // workbook
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Patient Feedback");
+
+  // download file
+  const fileName = `OPD_Feedback_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+};
+
 
   const DonutChart = ({ data }) => {
     const size = 220
@@ -724,7 +834,8 @@ export default function OPDFeedbackDashboard() {
                       </div>
                       <div className="overflow-x-auto">
                         <table className="min-w-full">
-                          <thead className="bg-gray-50">
+                          <thead clas
+                          sName="bg-gray-50">
                             <tr>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                 Service
