@@ -1,6 +1,6 @@
 // import React, { useEffect, useRef, useState } from 'react'
 // import Header from '../../Component/header/Header'
-// import SideBar from '../../Component/sidebar/SideBar'
+// import SideBar from '../../Component/sidebar/CubaSideBar'
 // import { Calendar, Clock, MoreVertical, X, Upload, User, Mail, Lock, UserPlus, Eye, EyeOff } from "lucide-react"
 // import { ApiDelete, ApiGet, ApiPost, ApiPut } from '../../helper/axios';
 // import { motion, AnimatePresence } from "framer-motion";
@@ -345,7 +345,7 @@
 
 
 //             <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-//                 <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+//                 <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
 //                     <Header pageName="  User Management" />
 //                     <div className="flex gap-[10px] w-[100%] h-[100%]">
 //                         <SideBar />
@@ -966,7 +966,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import Header from '../../Component/header/Header'
-import SideBar from '../../Component/sidebar/SideBar'
+import SideBar from '../../Component/sidebar/CubaSideBar'
 import { Calendar, Clock, MoreVertical, X, Upload, User, Mail, Lock, UserPlus, Eye, EyeOff } from "lucide-react"
 import { ApiDelete, ApiGet, ApiPost, ApiPut } from '../../helper/axios';
 import { motion, AnimatePresence } from "framer-motion";
@@ -1225,7 +1225,7 @@ export default function UserManageMent() {
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="  User Management" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />

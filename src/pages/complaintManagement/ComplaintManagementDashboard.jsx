@@ -20,8 +20,9 @@ import {
     CalendarIcon,
 } from "lucide-react"
 import Header from "../../Component/header/Header"
-import SideBar from "../../Component/sidebar/SideBar"
+import Sidebar from "../../Component/sidebar/CubaSideBar"
 import { useNavigate } from "react-router-dom"
+// import CubaSidebar from "../../Component/sidebar/CubaSidebar"
 
 export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState("2024-01-01")
@@ -458,11 +459,11 @@ const handlenavigate =()=>{
 
     return (
         <>
-            <section className="flex w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
+            <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
                 <div className="flex w-[100%] overflow-hidden flex-col gap-[14px] h-[96vh]">
                     <Header pageName="Complaint Management " />
                     <div className="flex overflow-hidden gap-[10px] w-[100%] h-[100%]">
-                        <SideBar />
+                        <Sidebar />
                         <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
 
                             <div className="">

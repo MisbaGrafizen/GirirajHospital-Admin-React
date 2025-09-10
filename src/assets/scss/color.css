@@ -4580,11 +4580,6 @@ body.modal-open .select2-container--open .select2-dropdown {
   color: #fff;
 }
 
-[class*="-gradien"]:hover {
-  background-size: 50% 100%;
-  transition: all 0.3s ease;
-  color: #fff;
-}
 
 .btn-square {
   border-radius: 0px;

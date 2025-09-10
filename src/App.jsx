@@ -49,7 +49,7 @@ function App() {
           <Route path="/feedback-details" element={<FeedbackDetails />} />
           <Route path="/role-manage" element={<RoleManage />} />
           <Route path="/user-manage" element={<UserManageMent />} />
-          <Route path="/super-dashboard" element={<SuperAdminDashboard />} />
+          <Route path="/dashboards/super-dashboard" element={<SuperAdminDashboard />} />
 
           <Route path="/" element={<LoginPage />} />
           <Route path="/role-login" element={<UserLoginPage />} />

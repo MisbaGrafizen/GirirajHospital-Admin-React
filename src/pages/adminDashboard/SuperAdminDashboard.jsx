@@ -38,7 +38,7 @@ import {
   User,
 } from "lucide-react"
 import Header from "../../Component/header/Header"
-import SideBar from "../../Component/sidebar/SideBar"
+import SideBar from "../../Component/sidebar/CubaSideBar"
 import { ApiGet } from "../../helper/axios"
 
 // ---------- animations (unchanged) ----------
@@ -324,8 +324,8 @@ export default function SuperAdminDashboard() {
 
   return (
     <>
-      <section className="flex w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+      <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="Dashboard" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
@@ -336,7 +336,7 @@ export default function SuperAdminDashboard() {
                   <motion.div variants={itemVariants} className="mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {/* Total Feedbacks */}
-                      <motion.div className="bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 rounded-xl shadow-xl p-3 text-white relative overflow-hidden" whileHover={{ scale: 1.02, y: -5 }} transition={{ duration: 0.3 }}>
+                      <motion.div className="bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 rounded-xl shadow-xl p-3 text-white relative overflow-hidden"  transition={{ duration: 0.3 }}>
                         <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
                         <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-8 -translate-x-8"></div>
                         <div className="relative z-10">

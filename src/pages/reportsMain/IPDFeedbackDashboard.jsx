@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
-import SideBar from '../../Component/sidebar/SideBar'
+import SideBar from '../../Component/sidebar/CubaSideBar'
 import {
   FileText,
   Download,
@@ -558,7 +558,7 @@ export default function IPDFeedbackDashboard() {
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />

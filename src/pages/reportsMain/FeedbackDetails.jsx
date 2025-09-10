@@ -1,5 +1,5 @@
 import React from 'react'
-import SideBar from '../../Component/sidebar/SideBar'
+import SideBar from '../../Component/sidebar/CubaSideBar'
 import Header from '../../Component/header/Header'
 
 
@@ -73,8 +73,8 @@ export default function FeedbackDetails() {
     return (
         <>
 
-            <section className="flex w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-                <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+            <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+                <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
                     <Header pageName="Feedback Details" />
                     <div className="flex gap-[10px] w-[100%] h-[100%]">
                         <SideBar />

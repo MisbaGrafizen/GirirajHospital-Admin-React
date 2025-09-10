@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import SideBar from "../../Component/sidebar/SideBar"
+import SideBar from "../../Component/sidebar/CubaSideBar"
 import Header from "../../Component/header/Header"
 
 import { Filter, Calendar, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Circle } from "lucide-react"
@@ -85,8 +85,8 @@ export default function ExecutiveReport() {
 
 
 
-            <section className="flex w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-                <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+            <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+                <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
                     <Header pageName="Executive Report" />
                     <div className="flex gap-[10px] w-[100%] h-[100%]">
                         <SideBar />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Header from '../../Component/header/Header'
-import SideBar from '../../Component/sidebar/SideBar'
+import SideBar from '../../Component/sidebar/CubaSideBar'
 import { motion, AnimatePresence } from "framer-motion"
 import {
     Calendar,
@@ -212,8 +212,8 @@ export default function ComplaintViewPage() {
 
 
 
-            <section className="flex w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-                <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+            <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+                <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
                     <Header pageName="Complaint Details" />
                     <div className="flex gap-[10px] w-[100%] h-[100%]">
                         <SideBar />

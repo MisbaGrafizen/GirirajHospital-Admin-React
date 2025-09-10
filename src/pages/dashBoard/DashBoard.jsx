@@ -3,7 +3,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { Container, Row } from "reactstrap";
 import { Breadcrumbs } from "../../AbstractElements";
 
-import SideBar from '../../Component/sidebar/SideBar';
+import SideBar from '../../Component/sidebar/CubaSideBar';
 import Header from '../../Component/header/Header';
 import GreetingCard from "../../Component/DashboardFiles/Components/Dashboard/Default/GreetingCard";
 import WidgetsWrapper from "../../Component/DashboardFiles/Components/Dashboard/Default/WidgetsWraper";
@@ -33,8 +33,8 @@ export default function DashBoard() {
   return (
     <>
 
-      <section className="flex w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
+      <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="Dashboard" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
