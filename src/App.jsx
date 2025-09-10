@@ -18,10 +18,21 @@ import RoleManage from "./pages/roleModule/RoleManage";
 import UserManageMent from "./pages/roleModule/UserManageMent";
 import LoginPage from "./pages/LoginPage";
 import SuperAdminDashboard from "./pages/adminDashboard/SuperAdminDashboard";
+import UserLoginPage from "./pages/UserLoginPage";
 
 
 
 function App() {
+
+    const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === "/") {
+      localStorage.setItem("loginType", "admin"); // full access
+    } else if (location.pathname === "/role-login") {
+      localStorage.setItem("loginType", "user"); // permission-based
+    }
+  }, [location.pathname]);
 
   return (
     <>
@@ -41,15 +52,7 @@ function App() {
           <Route path="/super-dashboard" element={<SuperAdminDashboard />} />
 
           <Route path="/" element={<LoginPage />} />
-
-
-
-
-
-
-
-
-
+          <Route path="/role-login" element={<UserLoginPage />} />
 
         </Routes>
       </div>

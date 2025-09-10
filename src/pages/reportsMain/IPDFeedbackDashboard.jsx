@@ -1,24 +1,34 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/SideBar'
-import { Calendar, FileText, Download, Search, Filter, Users, Star, ThumbsUp, Award, Phone, User, Clock } from "lucide-react"
+import {
+  FileText,
+  Download,
+  Search,
+  Star,
+  ThumbsUp,
+  Award,
+  Phone,
+  User,
+  Clock,
+} from "lucide-react"
 import { ApiGet } from '../../helper/axios'
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
   LineChart as RLineChart,
   Line,
+  XAxis,
+  YAxis,
   CartesianGrid,
+  Tooltip,
+  Legend,
 } from "recharts"
 
-
-
+// ------------------------------------------------------------------
+// Helpers
+// ------------------------------------------------------------------
 const API_URL = "/admin/ipd-patient"
+
 function formatDate(dateStr) {
   const d = new Date(dateStr)
   const day = String(d.getDate()).padStart(2, "0")
@@ -61,19 +71,60 @@ function calcNpsPercent(items) {
   return Math.round(((promoters - detractors) / n) * 100)
 }
 
+// ------------------------------------------------------------------
+// Permissions (mirrors your MainPoOrder pattern)
+// Looks for "ipd_feedback" module; also tries "ipd"/"feedback"/"reports".
+// ------------------------------------------------------------------
+function resolvePermissions() {
+  const loginType = localStorage.getItem("loginType")
+  const isAdmin = loginType === "admin"
 
+  let permsArray = []
+  try {
+    const parsed = JSON.parse(localStorage.getItem("rights"))
+    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+      permsArray = parsed.permissions
+    } else if (Array.isArray(parsed)) {
+      permsArray = parsed
+    }
+  } catch {
+    permsArray = []
+  }
+
+  const findPerm = (mod) =>
+    Array.isArray(permsArray) && permsArray.find((p) => p?.module === mod)
+
+  const modulePerm =
+    findPerm("ipd_feedback") ||
+    findPerm("ipd") ||
+    findPerm("feedback") ||
+    findPerm("reports") ||
+    null
+
+  const has = (perm) => isAdmin || modulePerm?.permissions?.includes(perm)
+
+  return {
+    isAdmin,
+    canViewFeedback: has("View"),
+    canExportFeedback: has("Download") || has("Export"),
+  }
+}
+
+// ------------------------------------------------------------------
+// Component
+// ------------------------------------------------------------------
 export default function IPDFeedbackDashboard() {
+  // Dates kept for future filtering; used by trend bucketing
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState("2024-01-31")
-  const [selectedService, setSelectedService] = useState("All Services")
+
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [rows, setRows] = useState([])
   const [lineData, setLineData] = useState([]);
-  const [trendBucket, setTrendBucket] = useState("day"); // "day" | "week" | "month"
+  const [trendBucket, setTrendBucket] = useState("day") // "day" | "week" | "month"
   const [serviceSummary, setServiceSummary] = useState([]);
-  const [metric, setMetric] = useState("avg"); // 'avg' | 'count'
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
     averageRating: 0,
@@ -82,10 +133,10 @@ export default function IPDFeedbackDashboard() {
   })
   const [chartData, setChartData] = useState([
     { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },   // 5
-    { label: "Good", count: 0, percentage: 0, color: "#3B82F6" },   // 4
-    { label: "Average", count: 0, percentage: 0, color: "#06B6D4" },        // 3
-    { label: "Poor", count: 0, percentage: 0, color: "#EAB308" },     // 2
-    { label: "Very Poor", count: 0, percentage: 0, color: "#F97316" },        // 1
+    { label: "Good", count: 0, percentage: 0, color: "#3B82F6" },        // 4
+    { label: "Average", count: 0, percentage: 0, color: "#06B6D4" },     // 3
+    { label: "Poor", count: 0, percentage: 0, color: "#EAB308" },        // 2
+    { label: "Very Poor", count: 0, percentage: 0, color: "#F97316" },   // 1
   ])
 
   const defaultColors = [
@@ -97,74 +148,74 @@ export default function IPDFeedbackDashboard() {
     '#ec4899', // pink
   ]
 
+  const { canViewFeedback, canExportFeedback } = resolvePermissions()
 
-function prettyKey(key = "") {
-  return key
-    .replace(/([A-Z])/g, " $1")
-    .replace(/_/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^./, (c) => c.toUpperCase());
-}
-
-const SERVICE_GROUPS = {
-  "Overall Experience": ["overallExperience"],
-  "Doctor Services": ["doctorServices"],
-  "Billing Services": ["billingServices"],
-  "Housekeeping": ["housekeeping"],
-  "Maintenance": ["maintenance"],
-  "Diagnostic Services": ["diagnosticServices"], 
-  "Dietitian Services": ["dietitianServices"],
-  "Security": ["security"],
-};
-
-function toArray(maybeArray) {
-  if (Array.isArray(maybeArray)) return maybeArray;
-  return []; 
-}
-
-function buildServiceSummary(raw) {
-  const items = toArray(raw);
-  const rows = [];
-
-  for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let total = 0;
-    const usedKeySet = new Set();
-
-    for (const item of items) {
-      const r = item?.ratings || {};
-      for (const k of keys) {
-        const v = Number(r?.[k]);
-        if (v >= 1 && v <= 5) {
-          counts[Math.round(v)] += 1;
-          total += 1;
-          usedKeySet.add(k);
-        }
-      }
-    }
-
-    const denom = total || 1;
-    rows.push({
-      service,
-      usedFields: Array.from(usedKeySet).map(prettyKey),
-      excellent: Math.round((counts[5] / denom) * 100),
-      good: Math.round((counts[4] / denom) * 100),
-      average: Math.round((counts[3] / denom) * 100),
-      poor: Math.round((counts[2] / denom) * 100),
-      veryPoor: Math.round((counts[1] / denom) * 100),
-    });
+  // ---------------- Service summary helpers ----------------
+  function prettyKey(key = "") {
+    return key
+      .replace(/([A-Z])/g, " $1")
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/^./, (c) => c.toUpperCase());
   }
 
-  return rows;
-}
+  const SERVICE_GROUPS = {
+    "Overall Experience": ["overallExperience"],
+    "Doctor Services": ["doctorServices"],
+    "Billing Services": ["billingServices"],
+    "Housekeeping": ["housekeeping"],
+    "Maintenance": ["maintenance"],
+    "Diagnostic Services": ["diagnosticServices"],
+    "Dietitian Services": ["dietitianServices"],
+    "Security": ["security"],
+  };
 
+  function toArray(maybeArray) {
+    if (Array.isArray(maybeArray)) return maybeArray;
+    return [];
+  }
 
+  function buildServiceSummary(raw) {
+    const items = toArray(raw);
+    const rows = [];
 
+    for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let total = 0;
+      const usedKeySet = new Set();
+
+      for (const item of items) {
+        const r = item?.ratings || {};
+        for (const k of keys) {
+          const v = Number(r?.[k]);
+          if (v >= 1 && v <= 5) {
+            counts[Math.round(v)] += 1;
+            total += 1;
+            usedKeySet.add(k);
+          }
+        }
+      }
+
+      const denom = total || 1;
+      rows.push({
+        service,
+        usedFields: Array.from(usedKeySet).map(prettyKey),
+        excellent: Math.round((counts[5] / denom) * 100),
+        good: Math.round((counts[4] / denom) * 100),
+        average: Math.round((counts[3] / denom) * 100),
+        poor: Math.round((counts[2] / denom) * 100),
+        veryPoor: Math.round((counts[1] / denom) * 100),
+      });
+    }
+
+    return rows;
+  }
+
+  // ---------------- Trend helpers ----------------
   function pad2(n) { return String(n).padStart(2, "0"); }
 
   function weekOfYear(d) {
-    // ISO-ish week number
     const a = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     const dayNum = a.getUTCDay() || 7;
     a.setUTCDate(a.getUTCDate() + 4 - dayNum);
@@ -186,13 +237,9 @@ function buildServiceSummary(raw) {
     const day = d.getDate();
 
     if (bucket === "day") {
-      // 👉 Sep 02 format
       return {
         key: `${y}-${pad2(m)}-${pad2(day)}`,
-        label: d.toLocaleDateString("en-US", {
-          month: "short",
-          day: "2-digit",
-        }),
+        label: d.toLocaleDateString("en-US", { month: "short", day: "2-digit" }),
       };
     }
 
@@ -201,16 +248,11 @@ function buildServiceSummary(raw) {
       return { key: `${y}-W${pad2(w)}`, label: `W${pad2(w)} ${y}` };
     }
 
-    // month bucket → Sep 2024
     return {
       key: `${y}-${pad2(m)}`,
-      label: d.toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
-      }),
+      label: d.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
     };
   }
-
 
   function getRangeFromRows(list) {
     let min = Infinity, max = -Infinity;
@@ -228,10 +270,7 @@ function buildServiceSummary(raw) {
     return { from: new Date(min), to: new Date(max) };
   }
 
-
-
   function buildAutoTrend(list, dateFrom, dateTo) {
-    // decide range (prefer dateFrom/dateTo if valid, else derive from data)
     let from = dateFrom ? new Date(dateFrom) : null;
     let to = dateTo ? new Date(dateTo) : null;
     if (!from || !to || isNaN(from) || isNaN(to)) {
@@ -240,7 +279,7 @@ function buildServiceSummary(raw) {
     }
 
     const bucket = pickBucket(from, to);
-    const map = new Map(); // key -> { sum, count, label }
+    const map = new Map();
 
     for (const row of list) {
       const d = new Date(row.createdAt);
@@ -256,7 +295,6 @@ function buildServiceSummary(raw) {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, v]) => ({ date: v.label, value: round1(v.sum / v.count) }));
 
-    // keep the chart readable
     const MAX_POINTS = 40;
     if (trend.length > MAX_POINTS) {
       const step = Math.ceil(trend.length / MAX_POINTS);
@@ -266,8 +304,9 @@ function buildServiceSummary(raw) {
     return { trend, bucket };
   }
 
+  // ---------------- UI helpers ----------------
   const getRatingStars = (rating) => {
-    const filled = Math.round(rating) // show out of 5
+    const filled = Math.round(rating)
     return Array.from({ length: 5 }, (_, i) => (
       <Star key={i} className={`w-4 h-4 ${i < filled ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
     ))
@@ -289,14 +328,15 @@ function buildServiceSummary(raw) {
     ]
   }
 
-  const fetchOPD = useCallback(async () => {
+  // ---------------- Data Fetch (permission-gated) ----------------
+  const fetchIPD = useCallback(async () => {
+    if (!canViewFeedback) return
     setLoading(true)
     setError(null)
     try {
       const res = await ApiGet(`${API_URL}`)
       const data = Array.isArray(res) ? res : (res.data || [])
 
-      // transform to table rows
       const list = data.map((d) => {
         const rating = calcRowAverage(d.ratings)
         return {
@@ -309,14 +349,13 @@ function buildServiceSummary(raw) {
         }
       })
 
-      // KPIs
       const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0
       const nps = calcNpsPercent(data)
       const overallScore =
         avg >= 4.5 ? "Excellent" :
-          avg >= 4.0 ? "Good" :
-            avg >= 3.0 ? "Average" :
-              avg >= 2.0 ? "Poor" : "Very Poor"
+        avg >= 4.0 ? "Good" :
+        avg >= 3.0 ? "Average" :
+        avg >= 2.0 ? "Poor" : "Very Poor"
 
       setRows(list)
       setKpiData({
@@ -326,113 +365,99 @@ function buildServiceSummary(raw) {
         overallScore,
       })
       setChartData(buildDistribution(list))
-      setServiceSummary(buildServiceSummary(data));
+      setServiceSummary(buildServiceSummary(data))
     } catch (e) {
-      console.error("Fetch OPD failed:", e)
-      setError("Failed to load OPD feedback")
+      console.error("Fetch IPD failed:", e)
+      setError("Failed to load IPD feedback")
       setRows([])
       setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" })
       setChartData(buildDistribution([]))
     } finally {
       setLoading(false)
     }
-  }, [dateFrom, dateTo])
+  }, [canViewFeedback])
 
   useEffect(() => {
-    fetchOPD()
-  }, [fetchOPD])
+    fetchIPD()
+  }, [fetchIPD])
 
   useEffect(() => {
     const { trend, bucket } = buildAutoTrend(rows, dateFrom, dateTo);
     setTrendBucket(bucket);
     setLineData(trend);
-  }, [rows, dateFrom, dateTo]);
+  }, [rows, dateFrom, dateTo])
 
-
-
-
-
-  const filteredFeedback = rows.filter(
-    (feedback) =>
-      feedback.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
+  // ---------------- Search + Export ----------------
+  const filteredFeedback = rows.filter((f) =>
+    f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
   )
 
-  // const getRatingStars = (rating) => {
-  //   return Array.from({ length: 5 }, (_, i) => (
-  //     <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-  //   ))
-  // }
+  const exportToExcel = async () => {
+    if (!canExportFeedback) {
+      alert("You don't have permission to download/export.")
+      return
+    }
 
-  // ✅ Export only what’s on screen (filteredFeedback) + Service-Wise Summary
-const exportToExcel = async () => {
-  const XLSX = await import("xlsx");
+    const XLSX = await import("xlsx")
 
-  // ---- Sheet 1: Patient Feedback (uses the filtered table rows) ----
-  const feedbackRows = filteredFeedback.map((f) => ({
-    Date: formatDate(f.createdAt),
-    "Patient Name": f.patient,
-    Contact: f.contact,
-    "Average Rating (/5)": f.rating,
-    // include NPS if present in your data model
-    ...(typeof f.overallRecommendation === "number"
-      ? { "Overall Recommendation (NPS)": f.overallRecommendation }
-      : {}),
-  }));
+    const feedbackRows = filteredFeedback.map((f) => ({
+      Date: formatDate(f.createdAt),
+      "Patient Name": f.patient,
+      Contact: f.contact,
+      "Average Rating (/5)": f.rating,
+      ...(typeof f.overallRecommendation === "number"
+        ? { "Overall Recommendation (NPS)": f.overallRecommendation }
+        : {}),
+    }))
 
-  // Build a worksheet (ensure headers even if no rows)
-  const feedbackHeaders = feedbackRows.length
-    ? Object.keys(feedbackRows[0])
-    : ["Date", "Patient Name", "Contact", "Average Rating (/5)"];
+    const feedbackHeaders = feedbackRows.length
+      ? Object.keys(feedbackRows[0])
+      : ["Date", "Patient Name", "Contact", "Average Rating (/5)"]
 
-  const wsFeedback = XLSX.utils.json_to_sheet(feedbackRows, { header: feedbackHeaders });
+    const wsFeedback = XLSX.utils.json_to_sheet(feedbackRows, { header: feedbackHeaders })
 
-  // Auto-size columns
-  const feedbackCols = feedbackHeaders.map((key) => {
-    const headerLen = String(key).length;
-    const maxCellLen = feedbackRows.reduce(
-      (m, r) => Math.max(m, String(r[key] ?? "").length),
-      0
-    );
-    return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) };
-  });
-  wsFeedback["!cols"] = feedbackCols;
-
-  // ---- Sheet 2: Service-Wise Summary (uses your serviceSummary array) ----
-  let wsSummary = null;
-  if (Array.isArray(serviceSummary) && serviceSummary.length) {
-    const summaryRows = serviceSummary.map((s) => ({
-      Service: s.service,
-      "Excellent %": s.excellent,
-      "Good %": s.good,
-      "Average %": s.average,
-      "Poor %": s.poor,
-      "Very Poor %": s.veryPoor,
-      // include underlying rating fields if you kept `usedFields` in buildServiceSummary
-      ...(Array.isArray(s.usedFields) ? { "Fields Used": s.usedFields.join(", ") } : {}),
-    }));
-    wsSummary = XLSX.utils.json_to_sheet(summaryRows);
-    // Optional: auto-size summary columns
-    const summaryHeaders = Object.keys(summaryRows[0] || { Service: "" });
-    wsSummary["!cols"] = summaryHeaders.map((key) => {
-      const headerLen = String(key).length;
-      const maxCellLen = summaryRows.reduce(
+    const feedbackCols = feedbackHeaders.map((key) => {
+      const headerLen = String(key).length
+      const maxCellLen = feedbackRows.reduce(
         (m, r) => Math.max(m, String(r[key] ?? "").length),
         0
-      );
-      return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) };
-    });
+      )
+      return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) }
+    })
+    wsFeedback["!cols"] = feedbackCols
+
+    let wsSummary = null
+    if (Array.isArray(serviceSummary) && serviceSummary.length) {
+      const summaryRows = serviceSummary.map((s) => ({
+        Service: s.service,
+        "Excellent %": s.excellent,
+        "Good %": s.good,
+        "Average %": s.average,
+        "Poor %": s.poor,
+        "Very Poor %": s.veryPoor,
+        ...(Array.isArray(s.usedFields) ? { "Fields Used": s.usedFields.join(", ") } : {}),
+      }))
+      wsSummary = XLSX.utils.json_to_sheet(summaryRows)
+      const summaryHeaders = Object.keys(summaryRows[0] || { Service: "" })
+      wsSummary["!cols"] = summaryHeaders.map((key) => {
+        const headerLen = String(key).length
+        const maxCellLen = summaryRows.reduce(
+          (m, r) => Math.max(m, String(r[key] ?? "").length),
+          0
+        )
+        return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) }
+      })
+    }
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, wsFeedback, "Patient Feedback")
+    if (wsSummary) XLSX.utils.book_append_sheet(wb, wsSummary, "Service Summary")
+
+    const fileName = `IPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`
+    XLSX.writeFile(wb, fileName)
   }
 
-  // ---- Build & download workbook ----
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, wsFeedback, "Patient Feedback");
-  if (wsSummary) XLSX.utils.book_append_sheet(wb, wsSummary, "Service Summary");
-
-  const fileName = `IPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  XLSX.writeFile(wb, fileName);
-};
-
-
+  // ---------------- Small components ----------------
   const DonutChart = ({ data }) => {
     const size = 220
     const strokeWidth = 45
@@ -443,7 +468,7 @@ const exportToExcel = async () => {
     const [hoverIndex, setHoverIndex] = useState(null)
 
     useEffect(() => {
-      const timeout = setTimeout(() => setAnimated(true), 100) // delay for animation
+      const timeout = setTimeout(() => setAnimated(true), 100)
       return () => clearTimeout(timeout)
     }, [])
 
@@ -452,7 +477,7 @@ const exportToExcel = async () => {
     return (
       <div className="flex flex-col items-center">
         <svg width={size} height={size} className="transform -rotate-90">
-          {/* Base Circle */}
+          {/* Base ring */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -461,7 +486,7 @@ const exportToExcel = async () => {
             stroke="#e5e7eb"
             strokeWidth={strokeWidth}
           />
-          {/* Donut Segments */}
+          {/* Segments */}
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             const dash = (item.percentage / 100) * circumference
@@ -492,15 +517,14 @@ const exportToExcel = async () => {
           })}
         </svg>
 
-        {/* Info Grid */}
+        {/* Legend */}
         <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             return (
               <div
                 key={index}
-                className={`flex items-center transition-all duration-200 ${hoverIndex === index ? 'scale-[1.02]' : ''
-                  }`}
+                className={`flex items-center transition-all duration-200 ${hoverIndex === index ? 'scale-[1.02]' : ''}`}
                 onMouseEnter={() => setHoverIndex(index)}
                 onMouseLeave={() => setHoverIndex(null)}
               >
@@ -509,7 +533,7 @@ const exportToExcel = async () => {
                   style={{ backgroundColor: color }}
                 />
                 <span className="text-gray-800">
-                  {item.label}: <strong className=" font-[500]">{item.count}</strong> ({item.percentage}%)
+                  {item.label}: <strong className="font-[500]">{item.count}</strong> ({item.percentage}%)
                 </span>
               </div>
             )
@@ -519,87 +543,35 @@ const exportToExcel = async () => {
     )
   }
 
-  // Line Chart Component
-  const CustomLineChart = ({ data }) => {
-    const width = 650
-    const height = 290
-    const padding = 50
-
-    const maxValue = Math.max(...data.map((d) => d.value))
-    const minValue = Math.min(...data.map((d) => d.value))
-    const valueRange = maxValue - minValue || 1
-
-    const points = data.map((item, index) => {
-      const x = padding + (index * (width - 2 * padding)) / (data.length - 1)
-      const y = height - padding - ((item.value - minValue) / valueRange) * (height - 2 * padding)
-      return { x, y, value: item.value, date: item.date }
-    })
-
-    const pathData = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ")
-
-    return (
-      <div className="w-full">
-        <svg width={width} height={height} className="w-full h-auto">
-          {/* Grid lines */}
-          {[0, 1, 2, 3, 4].map((i) => {
-            const y = padding + (i * (height - 2 * padding)) / 4
-            return <line key={i} x1={padding} y1={y} x2={width - padding} y2={y} stroke="#f3f4f6" strokeWidth="1" />
-          })}
-
-          {/* Y-axis labels */}
-          {[0, 1, 2, 3, 4].map((i) => {
-            const y = padding + (i * (height - 2 * padding)) / 4
-            const value = (maxValue - (i * valueRange) / 4).toFixed(1)
-            return (
-              <text key={i} x={padding - 10} y={y + 5} textAnchor="end" className="text-xs fill-gray-500">
-                {value}
-              </text>
-            )
-          })}
-
-          {/* Line */}
-          <path
-            d={pathData}
-            fill="none"
-            stroke="#3B82F6"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Points */}
-          {points.map((point, index) => (
-            <circle key={index} cx={point.x} cy={point.y} r="5" fill="#3B82F6" stroke="white" strokeWidth="2" />
-          ))}
-
-          {/* X-axis labels */}
-          {points.map((point, index) => (
-            <text key={index} x={point.x} y={height - 15} textAnchor="middle" className="text-xs fill-gray-500">
-              {point.date}
-            </text>
-          ))}
-        </svg>
+  const PermissionDenied = () => (
+    <div className="flex items-center justify-center h-[70vh]">
+      <div className="bg-white border rounded-xl p-8 shadow-sm text-center max-w-md">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Permission required</h2>
+        <p className="text-gray-600">
+          You don’t have access to view IPD Feedback. Please contact an administrator.
+        </p>
       </div>
-    )
-  }
-  // const { areaData, lineData1 } = useMemo(() => aggregateTrends(filteredRecords, dates), [filteredRecords, dates])
+    </div>
+  )
 
+  // ---------------- Render ----------------
   return (
     <>
-      <section className="flex  font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
+      <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[14px] h-[96vh]">
           <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
-              <div className="">
-                <div className=" mx-auto">
-                  {/* Header */}
 
-
-                  {/* KPI Cards - Non-box style */}
+            {!canViewFeedback ? (
+              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+                <PermissionDenied />
+              </div>
+            ) : (
+              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+                <div className="mx-auto w-full">
                   {/* KPI Cards */}
-                  <div className="  pt-[5px] flex gap-6  mb-4">
+                  <div className="pt-[5px] flex gap-6 mb-4">
                     <div className="bg-white rounded-lg min-w-[240px] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
@@ -611,7 +583,7 @@ const exportToExcel = async () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white  min-w-[240px] rounded-lg  border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
+                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <Star className="w-8 h-8 text-yellow-600" />
@@ -622,7 +594,7 @@ const exportToExcel = async () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white  min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6  border-l-4 border-l-green-500">
+                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <ThumbsUp className="w-8 h-8 text-green-600" />
@@ -633,7 +605,7 @@ const exportToExcel = async () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white  min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
+                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <Award className="w-8 h-8 text-purple-600" />
@@ -647,68 +619,52 @@ const exportToExcel = async () => {
                   </div>
 
                   {/* Charts Row */}
-                  <div className=" flex justify-start  items-center gap-[150px] mb-6">
+                  <div className="flex justify-start items-center gap-[150px] mb-6">
                     {/* Rating Distribution Donut Chart */}
-                    <div className="bg-white  rounded-lg shadow-md p-4">
+                    <div className="bg-white rounded-lg shadow-md p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
-                      <div className="flex ">
+                      <div className="flex">
                         <DonutChart data={chartData} />
                       </div>
                     </div>
 
                     {/* Average Rating Trend Line Chart */}
-                    {/* <div className="bg-white rounded-lg  p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Rating Trend</h3>
-                      <div className="flex justify-center">
-                        <LineChart data={lineChartData} />
-                      </div>
-                    </div> */}
-                    {/* <div className="bg-white rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Average Rating Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+                    <div className="bg-white rounded-lg w-[700px] shadow-sm border border-gray-100 p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
                       </h3>
-                      <div className="flex justify-center">
-                        <LineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} />
+                      <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RLineChart
+                            data={lineData.length ? lineData : [{ date: "-", value: 0 }]}
+                            margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
+                          >
+                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                            <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
+                            <Tooltip contentStyle={{ fontSize: 12 }} />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              name="Average Rating"
+                              stroke="#3B82F6"
+                              strokeWidth={3}
+                              dot={{ r: 3 }}
+                              activeDot={{ r: 5 }}
+                              isAnimationActive
+                              animationDuration={600}
+                            />
+                          </RLineChart>
+                        </ResponsiveContainer>
                       </div>
-                    </div> */}
-
-                      <div className="bg-white rounded-lg w-[700px] shadow-sm border border-gray-100 p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                          Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
-                        </h3>
-                        <div className="h-72">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RLineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                              <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                              <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} /> {/* Rating scale */}
-                              <Tooltip contentStyle={{ fontSize: 12 }} />
-                              <Legend />
-                              <Line
-                                type="monotone"
-                                dataKey="value"
-                                name="Average Rating"
-                                stroke="#3B82F6"
-                                strokeWidth={3}
-                                dot={{ r: 3 }}
-                                activeDot={{ r: 5 }}
-                                isAnimationActive
-                                animationDuration={600}
-                              />
-                            </RLineChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-
-
-
+                    </div>
                   </div>
 
-
                   {/* Word Cloud */}
-                  <div className="bg-white  border-b-[1.7px] border-dashed p-3 mb-6">
+                  <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
-                    <div className="flex flex-wrap gap-3 ">
+                    <div className="flex flex-wrap gap-3">
                       {[
                         "Excellent",
                         "Nurse",
@@ -728,30 +684,30 @@ const exportToExcel = async () => {
                       ].map((word, index) => (
                         <span
                           key={index}
-                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
-                            ? "bg-blue-100 border-blue-800 text-blue-800"
-                            : index % 6 === 1
+                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${
+                            index % 6 === 0
+                              ? "bg-blue-100 border-blue-800 text-blue-800"
+                              : index % 6 === 1
                               ? "bg-green-100 border-green-800 text-green-800"
                               : index % 6 === 2
-                                ? "bg-yellow-100 border-yellow-800 text-yellow-800"
-                                : index % 6 === 3
-                                  ? "bg-purple-100 border-purple-800 text-purple-800"
-                                  : index % 6 === 4
-                                    ? "bg-red-100 border-red-800 text-red-800"
-                                    : "bg-indigo-100 border-indigo-800 text-indigo-800"
-                            }`}
-
+                              ? "bg-yellow-100 border-yellow-800 text-yellow-800"
+                              : index % 6 === 3
+                              ? "bg-purple-100 border-purple-800 text-purple-800"
+                              : index % 6 === 4
+                              ? "bg-red-100 border-red-800 text-red-800"
+                              : "bg-indigo-100 border-indigo-800 text-indigo-800"
+                          }`}
                         >
                           {word}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className=" flex w-[100%]  mb-[40px] gap-[30px]">
 
-
+                  {/* Service Summary + Extra Donut */}
+                  <div className="flex w-[100%] mb-[40px] gap-[30px]">
                     {/* Service-Wise Summary Table */}
-                    <div className="bg-white rounded-xl border  w-[60%]  shadow-lg overflow-hidden ">
+                    <div className="bg-white rounded-xl border w-[60%] shadow-lg overflow-hidden">
                       <div className="px-6 py-2 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
                       </div>
@@ -820,15 +776,17 @@ const exportToExcel = async () => {
                       </div>
                     </div>
 
-                    <div className="flex ">
-                      <div className="bg-white  w-[100%] rounded-lg shadow-md p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4"> Service-Wise Chart</h3>
-                        <div className="flex ">
+                    {/* Extra Donut (optional) */}
+                    <div className="flex">
+                      <div className="bg-white w-[100%] rounded-lg shadow-md p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
+                        <div className="flex">
                           <DonutChart data={chartData} />
                         </div>
                       </div>
                     </div>
                   </div>
+
                   {/* Patient-Wise Feedback Table */}
                   <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -844,13 +802,17 @@ const exportToExcel = async () => {
                             className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-                        <button
-                          onClick={exportToExcel}
-                          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Export to Excel
-                        </button>
+
+                        {/* Export only if permitted */}
+                        {canExportFeedback && (
+                          <button
+                            onClick={exportToExcel}
+                            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Export to Excel
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -867,15 +829,9 @@ const exportToExcel = async () => {
                             <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Contact
                             </th>
-                            {/* <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Doctor
-                            </th> */}
                             <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Rating
                             </th>
-                            {/* <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Comment
-                            </th> */}
                           </tr>
                         </thead>
                         <tbody className="bg-white">
@@ -902,35 +858,31 @@ const exportToExcel = async () => {
                                   {feedback.contact}
                                 </div>
                               </td>
-                              {/* <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td> */}
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   {getRatingStars(feedback.rating)}
                                   <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
                                 </div>
                               </td>
-                              {/* <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                                <div className="truncate" title={feedback.comment}>
-                                  {feedback.comment}
-                                </div>
-                              </td> */}
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
+
+                  {/* Error state (optional) */}
+                  {error && (
+                    <div className="text-red-600 text-sm mt-3 px-2">
+                      {error}
+                    </div>
+                  )}
                 </div>
               </div>
-
-            </div>
-
+            )}
           </div>
         </div>
       </section>
-
-
-
     </>
   )
 }

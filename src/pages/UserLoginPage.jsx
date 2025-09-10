@@ -2,23 +2,28 @@
 
 import React, { useState, useEffect } from "react"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
-import logo from "../../public/imges/GirirajFeedBackLogo.jpg"
+import logo from "../../public/imges/GirirajFeedBackLogo.jpg" // keep your path
+import axios from "axios"
 import { useNavigate } from "react-router-dom"
 
-export default function LoginPage() {
+export default function UserLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")         // role user logs in with USERNAME
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
+  // Pre-fill username when "Remember me" is on
   useEffect(() => {
-    const savedEmail = localStorage.getItem("savedEmail")
+    // mark this route as a role user login (optional, if your app reads it)
+    localStorage.setItem("loginType", "user")
+
+    const savedUsername = localStorage.getItem("savedUsername")
     const savedRemember = localStorage.getItem("rememberMe") === "true"
-    if (savedRemember && savedEmail) {
-      setEmail(savedEmail)
+    if (savedRemember && savedUsername) {
+      setUsername(savedUsername)
       setRememberMe(true)
     }
   }, [])
@@ -29,39 +34,49 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const res = await fetch("http://localhost:3000/api/v2/giriraj/auth/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
+      const { data } = await axios.post(
+        "http://localhost:3000/api/v2/giriraj/auth/role-user/login",
+        { name: username, password }
+      )
 
-      if (!res.ok) {
-        const { message } = await res.json()
-        throw new Error(message || "Login failed")
+      const { token, user, permissions } = data || {}
+      if (!token || !user) {
+        throw new Error("Login failed: missing token or user.")
       }
 
-      const { token } = await res.json()
+      // Persist auth + role info
+      localStorage.setItem("authToken", token)
+      localStorage.setItem("userType", "roleUser") // <-- key for ProtectedRoute checks
+      localStorage.setItem("user", JSON.stringify(user?._id))
+      localStorage.setItem("rights", JSON.stringify(user?.roleId || [])) // your existing structure
+      if (permissions) {
+        // if backend also returns granular permission keys (e.g. ["opd.view", "ipd.view"])
+        localStorage.setItem("permissions", JSON.stringify(permissions))
+      }
+      if (user?.companyId) {
+        localStorage.setItem("selectedCompanyId", user?.companyId?._id || user?.companyId)
+        localStorage.setItem("selectedCompanyName", user?.companyId?.firmName || "")
+      }
 
+      // Remember me (only username is saved for convenience)
       if (rememberMe) {
-        localStorage.setItem("authToken", token)
-        localStorage.setItem("savedEmail", email)
+        localStorage.setItem("savedUsername", username)
         localStorage.setItem("rememberMe", "true")
       } else {
-        sessionStorage.setItem("authToken", token)
-        localStorage.removeItem("savedEmail")
+        localStorage.removeItem("savedUsername")
         localStorage.setItem("rememberMe", "false")
       }
 
-      navigate("/super-dashboard")
+      navigate("/dashboard")
     } catch (err) {
-      setError(err.message)
+      setError(err?.response?.data?.message || err.message || "Login failed")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bs-giri font-Poppins  flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bs-giri font-Poppins flex items-center justify-center p-4 relative">
 
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div
@@ -82,7 +97,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <img src={logo} alt="logo" className="mx-auto rounded-[8px] w-32" />
           <h1 className="text-3xl font-bold text-white mt-2">Welcome Back</h1>
-          <p className="text-gray-300">Sign in to your account</p>
+          <p className="text-gray-300">Sign in to your role account</p>
         </div>
 
         {error && (
@@ -92,38 +107,41 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Username */}
           <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300" />
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
-              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:ring-1 focus:ring-white hover:bg-white/10 transition"
+              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-300 focus:ring-1 focus:ring-white hover:bg-white/10 transition"
             />
           </div>
 
+          {/* Password */}
           <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300" />
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              className="w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:ring-1 focus:ring-white hover:bg-white/10 transition"
+              className="w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-300 focus:ring-1 focus:ring-white hover:bg-white/10 transition"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
 
-          <label className="flex items-center cursor-pointer text-sm text-gray-200 ">
+          {/* Remember me */}
+          <label className="flex items-center cursor-pointer text-sm text-gray-200 select-none">
             <input
               type="checkbox"
               checked={rememberMe}
@@ -132,17 +150,11 @@ export default function LoginPage() {
             />
             <span
               className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${
-                rememberMe
-                  ? "bg-white"
-                  : "border-gray-400"
+                rememberMe ? "bg-white" : "border-gray-400"
               }`}
             >
               {rememberMe && (
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-6 h-6 text-red-500"
-                >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-red-500">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
@@ -154,10 +166,11 @@ export default function LoginPage() {
             Remember me
           </label>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 bg-gradient-to-r text-[20px] from-[#af3535] to-[#6d0101] rounded-xl text-white font-semibold shadow-lg transform hover:scale-[1.02] focus:ring-2 focus:ring-offset-2  disabled:opacity-50"
+            className="w-full py-2 bg-gradient-to-r text-[20px] from-[#af3535] to-[#6d0101] rounded-xl text-white font-semibold shadow-lg transform hover:scale-[1.02] focus:ring-2 focus:ring-offset-2 disabled:opacity-50"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
@@ -168,6 +181,14 @@ export default function LoginPage() {
               "Sign In"
             )}
           </button>
+
+          {/* Switch to Admin login link (optional) */}
+          <p className="text-center text-sm text-gray-200">
+            Admin?{" "}
+            <a href="/" className="underline">
+              Login here
+            </a>
+          </p>
         </form>
       </div>
     </div>
