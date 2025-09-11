@@ -1440,8 +1440,8 @@ export default function UserManageMent() {
                                 </div>
 
                                 {/* Role + Login toggle */}
-                                <div className="grid grid-cols-1 items-center md:grid-cols-2 gap-6 mt-6">
-                                  <div className="space-y-2 relative">
+                                <div className="grid grid-cols-1 items-center md:grid-cols-2 gap-6">
+                                  <div className="space-y-1 relative">
                                     <label className="block text-gray-700 font-medium">
                                       User Role<span className="text-rose-500">*</span>
                                     </label>
@@ -1490,7 +1490,7 @@ export default function UserManageMent() {
 
                                 {/* Password */}
                                 {formData.loginEnabled && (
-                                  <div className="mt-6 w-full md:w-1/2">
+                                  <div className=" w-full md:w-1/2">
                                     <label className="block text-gray-700 font-medium">
                                       Password<span className="text-rose-500">*</span>
                                     </label>

@@ -40,15 +40,15 @@ function App() {
       <div className="w-100 ease-soft-spring font-Poppins h-[100%]  !bg-[#F6FAFB]  duration-1000 ">
         <Routes>
           <Route path="/dashboard" element={<DashBoard />} />
-          <Route path="/opd-feedback" element={<OpdFeedBack />} />
-          <Route path="/ipd-feedback" element={<IPDFeedbackDashboard />} />
-          <Route path="/complaint-dashboard" element={<ComplaintManagementDashboard />} />
-          <Route path="/complaint-details" element={<ComplaintViewPage />} />
-          <Route path="/nps-dashboard" element={<NpsDashboard />} />
-          <Route path="/executive-report" element={<ExecutiveReport />} />
+          <Route path="/dashboards/opd-feedback" element={<OpdFeedBack />} />
+          <Route path="/dashboards/ipd-feedback" element={<IPDFeedbackDashboard />} />
+          <Route path="/dashboards/complaint-dashboard" element={<ComplaintManagementDashboard />} />
+          <Route path="/dashboards/complaint-details" element={<ComplaintViewPage />} />
+          <Route path="/dashboards/nps-dashboard" element={<NpsDashboard />} />
+          <Route path="/dashboards/executive-report" element={<ExecutiveReport />} />
           <Route path="/feedback-details" element={<FeedbackDetails />} />
-          <Route path="/role-manage" element={<RoleManage />} />
-          <Route path="/user-manage" element={<UserManageMent />} />
+          <Route path="/dashboards/role-manage" element={<RoleManage />} />
+          <Route path="/dashboards/user-manage" element={<UserManageMent />} />
           <Route path="/dashboards/super-dashboard" element={<SuperAdminDashboard />} />
 
           <Route path="/" element={<LoginPage />} />

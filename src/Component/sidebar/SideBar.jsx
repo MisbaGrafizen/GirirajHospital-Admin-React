@@ -14,7 +14,7 @@ export default function SideBar() {
   const navigate = useNavigate();
 
   const menuItems = [
-    { name: "Dashboard", icon: dashboard, path: "/super-dashboard" },
+    { name: "Dashboard", icon: dashboard, path: "/dashboard" },
     { name: "OPD ", icon: expan, path: "/opd-feedback" },
     { name: "IPD", icon: inventory, path: "/ipd-feedback" },
     { name: "Complaint", icon: sales,path: "/complaint-dashboard"  },

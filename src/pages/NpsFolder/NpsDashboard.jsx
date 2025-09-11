@@ -364,7 +364,7 @@ export default function NpsDashboard() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 mb-3">
-          <div className="grid grid-cols-1 pt-[3px] md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 pt-[3px] md:grid-cols-5 gap-x-4">
             {/* From date */}
             <div className=" relative">
               <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
