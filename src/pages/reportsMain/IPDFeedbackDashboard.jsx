@@ -23,6 +23,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts"
+import { useNavigate } from 'react-router-dom'
 
 // ------------------------------------------------------------------
 // Helpers
@@ -110,6 +111,15 @@ function resolvePermissions() {
   }
 }
 
+function hasAnyRating(ratings = {}) {
+  for (const key of RATING_KEYS) {
+    const v = Number(ratings?.[key]);
+    if (v >= 1 && v <= 5) return true;
+  }
+  return false;
+}
+
+
 // ------------------------------------------------------------------
 // Component
 // ------------------------------------------------------------------
@@ -117,7 +127,7 @@ export default function IPDFeedbackDashboard() {
   // Dates kept for future filtering; used by trend bucketing
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState("2024-01-31")
-
+const navigate =useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -328,54 +338,63 @@ export default function IPDFeedbackDashboard() {
     ]
   }
 
-  // ---------------- Data Fetch (permission-gated) ----------------
   const fetchIPD = useCallback(async () => {
-    if (!canViewFeedback) return
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await ApiGet(`${API_URL}`)
-      const data = Array.isArray(res) ? res : (res.data || [])
+  if (!canViewFeedback) return;
+  setLoading(true);
+  setError(null);
 
-      const list = data.map((d) => {
-        const rating = calcRowAverage(d.ratings)
-        return {
-          id: d._id || d.id,
-          createdAt: d.createdAt || d.date,
-          patient: d.patientName || d.name || "-",
-          contact: d.contact || "-",
-          rating, // avg out of 5
-          overallRecommendation: d.overallRecommendation, // for NPS
-        }
-      })
+  try {
+    const res = await ApiGet(`${API_URL}`);
+    const raw = Array.isArray(res) ? res : (res.data || []);
 
-      const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0
-      const nps = calcNpsPercent(data)
-      const overallScore =
-        avg >= 4.5 ? "Excellent" :
-        avg >= 4.0 ? "Good" :
-        avg >= 3.0 ? "Average" :
-        avg >= 2.0 ? "Poor" : "Very Poor"
+    // ✅ keep ONLY items that have at least one valid rating
+    const data = raw.filter((d) => hasAnyRating(d.ratings));
 
-      setRows(list)
-      setKpiData({
-        totalFeedback: list.length,
-        averageRating: avg,
-        npsRating: nps,
-        overallScore,
-      })
-      setChartData(buildDistribution(list))
-      setServiceSummary(buildServiceSummary(data))
-    } catch (e) {
-      console.error("Fetch IPD failed:", e)
-      setError("Failed to load IPD feedback")
-      setRows([])
-      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" })
-      setChartData(buildDistribution([]))
-    } finally {
-      setLoading(false)
-    }
-  }, [canViewFeedback])
+    const list = data.map((d) => {
+      const rating = calcRowAverage(d.ratings);
+      return {
+        id: String(d._id || d.id),
+        createdAt: d.createdAt || d.date,
+        patient: d.patientName || d.name || "-",
+        contact: d.contact || "-",
+        rating, // avg out of 5
+        overallRecommendation: d.overallRecommendation, // for NPS
+      };
+    });
+
+    const avg = list.length
+      ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
+      : 0;
+
+    // NPS from the same rated set; change to `raw` if you want all
+    const nps = calcNpsPercent(data);
+
+    const overallScore =
+      avg >= 4.5 ? "Excellent" :
+      avg >= 4.0 ? "Good" :
+      avg >= 3.0 ? "Average" :
+      avg >= 2.0 ? "Poor" : "Very Poor";
+
+    setRows(list);                                    // table shows only rated items
+    setKpiData({
+      totalFeedback: list.length,                     // count of rated items
+      averageRating: avg,
+      npsRating: nps,
+      overallScore,
+    });
+    setChartData(buildDistribution(list));            // charts from rated items
+    setServiceSummary(buildServiceSummary(data));     // summary from rated items
+  } catch (e) {
+    console.error("Fetch IPD failed:", e);
+    setError("Failed to load IPD feedback");
+    setRows([]);
+    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+    setChartData(buildDistribution([]));
+  } finally {
+    setLoading(false);
+  }
+}, [canViewFeedback]);
+
 
   useEffect(() => {
     fetchIPD()
@@ -456,6 +475,19 @@ export default function IPDFeedbackDashboard() {
     const fileName = `IPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`
     XLSX.writeFile(wb, fileName)
   }
+
+    const handleIpdFeedbackDetails = useCallback((row) => {
+    const id = row?.id || row?._id;
+    if (!id) {
+      console.error("No id on IPD row:", row);
+      alert("No id found for this feedback.");
+      return;
+    }
+    // ✅ pass id (and the shallow row) via navigation state; no id in URL
+    navigate("/ipd-feedback-details", {
+      state: { id, feedback: row, from: "ipd" },
+    });
+  }, [navigate]);
 
   // ---------------- Small components ----------------
   const DonutChart = ({ data }) => {
@@ -559,7 +591,7 @@ export default function IPDFeedbackDashboard() {
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
-          <Header pageName="OPD Feedback" />
+          <Header pageName="Ipd Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
 
@@ -838,7 +870,8 @@ export default function IPDFeedbackDashboard() {
                           {filteredFeedback.map((feedback, index) => (
                             <tr
                               key={feedback.id}
-                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50  cursor-pointer transition-colors`}
+                              onClick={() => handleIpdFeedbackDetails(feedback)}
                             >
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">

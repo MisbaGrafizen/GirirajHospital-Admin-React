@@ -19,6 +19,7 @@ import UserManageMent from "./pages/roleModule/UserManageMent";
 import LoginPage from "./pages/LoginPage";
 import SuperAdminDashboard from "./pages/adminDashboard/SuperAdminDashboard";
 import UserLoginPage from "./pages/UserLoginPage";
+import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
 
 
 
@@ -43,10 +44,11 @@ function App() {
           <Route path="/dashboards/opd-feedback" element={<OpdFeedBack />} />
           <Route path="/dashboards/ipd-feedback" element={<IPDFeedbackDashboard />} />
           <Route path="/dashboards/complaint-dashboard" element={<ComplaintManagementDashboard />} />
-          <Route path="/dashboards/complaint-details" element={<ComplaintViewPage />} />
+          <Route path="/complaint-details" element={<ComplaintViewPage />} />
           <Route path="/dashboards/nps-dashboard" element={<NpsDashboard />} />
           <Route path="/dashboards/executive-report" element={<ExecutiveReport />} />
-          <Route path="/feedback-details" element={<FeedbackDetails />} />
+          <Route path="/feedback-details" element={<FeedbackDetails />} />  
+          <Route path="/ipd-feedback-details" element={<IpdFeedbackDetails />} />
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
           <Route path="/dashboards/super-dashboard" element={<SuperAdminDashboard />} />

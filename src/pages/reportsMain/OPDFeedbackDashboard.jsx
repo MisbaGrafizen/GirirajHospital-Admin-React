@@ -13,6 +13,7 @@ import {
   Line,
   CartesianGrid,
 } from "recharts"
+import { useNavigate } from 'react-router-dom'
 
 // ------------------------------------------------------------------
 // Config / Helpers
@@ -91,13 +92,18 @@ function resolvePermissions() {
     canExportFeedback: has("Download") || has("Export"),
   }
 }
+const normId = (v) =>
+  typeof v === 'object' && v !== null
+    ? (v.$oid ?? v._id ?? v.toString?.() ?? '')
+    : (v ?? '');
+const normDate = (v) =>
+  typeof v === 'object' && v !== null && '$date' in v ? v.$date : v;
 
-// ------------------------------------------------------------------
-// Component
-// ------------------------------------------------------------------
+
 export default function OPDFeedbackDashboard() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState("2024-01-31")
+  const navigate = useNavigate();
   const [selectedService, setSelectedService] = useState("All Services")
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
@@ -343,26 +349,28 @@ export default function OPDFeedbackDashboard() {
       setRawOPD(data)
 
       const list = data.map((d) => {
-        const rating = calcRowAverage(d.ratings)
+        const id = normId(d._id ?? d.id);
+        const rating = calcRowAverage(d.ratings);
         return {
-          id: d._id || d.id,
-          createdAt: d.createdAt || d.date,
+          id,
+          _id: id, // keep for safety
+          createdAt: normDate(d.createdAt ?? d.date),
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
           doctor: d.consultantDoctorName || d.doctorName || d.consultant || "-",
           rating,
           comment: d.comments || d.comment || "",
           overallRecommendation: d.overallRecommendation,
-        }
-      })
+        };
+      });
 
       const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0
       const nps = calcNpsPercent(data)
       const overallScore =
         avg >= 4.5 ? "Excellent" :
-        avg >= 4.0 ? "Good" :
-        avg >= 3.0 ? "Average" :
-        avg >= 2.0 ? "Poor" : "Very Poor"
+          avg >= 4.0 ? "Good" :
+            avg >= 3.0 ? "Average" :
+              avg >= 2.0 ? "Poor" : "Very Poor"
 
       setRows(list)
       setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore })
@@ -422,9 +430,26 @@ export default function OPDFeedbackDashboard() {
     ws["!cols"] = colWidths
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Patient Feedback")
-    const fileName = `OPD_Feedback_${new Date().toISOString().slice(0,10)}.xlsx`
+    const fileName = `OPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`
     XLSX.writeFile(wb, fileName)
   }
+
+const openFeedbackDetails = useCallback((fb) => {
+  const id = normId(fb?._id ?? fb?.id)
+  if (!id) {
+    console.error("No ID on feedback row:", fb)
+    alert("No ID found for this feedback.")
+    return
+  }
+  sessionStorage.setItem(
+    'opdFeedback:last',
+    JSON.stringify({ id, preview: fb })
+  )
+
+  navigate('/feedback-details', {
+    state: { id, feedback: fb }
+  })
+}, [navigate])
 
   // -------- Small components --------
   const DonutChart = ({ data }) => {
@@ -596,19 +621,18 @@ export default function OPDFeedbackDashboard() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
                     <div className="flex flex-wrap gap-3">
                       {[
-                        "Excellent","Nurse","Professional","Clean","Comfortable","Doctor","Care","Staff",
-                        "Treatment","Service","Billing","Food","Room","Pharmacy","Housekeeping",
+                        "Excellent", "Nurse", "Professional", "Clean", "Comfortable", "Doctor", "Care", "Staff",
+                        "Treatment", "Service", "Billing", "Food", "Room", "Pharmacy", "Housekeeping",
                       ].map((word, index) => (
                         <span
                           key={index}
-                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${
-                            index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
+                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
                             index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
-                            index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
-                            index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
-                            index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
-                                              "bg-indigo-100 border-indigo-800 text-indigo-800"
-                          }`}
+                              index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
+                                index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
+                                  index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
+                                    "bg-indigo-100 border-indigo-800 text-indigo-800"
+                            }`}
                         >
                           {word}
                         </span>
@@ -713,9 +737,14 @@ export default function OPDFeedbackDashboard() {
                         <tbody className="bg-white">
                           {filteredFeedback.map((feedback, index) => (
                             <tr
-                              key={feedback.id}
-                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                              key={feedback.id || feedback._id}
+                              onClick={() => openFeedbackDetails(feedback)}
+                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors cursor-pointer`}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => { if (e.key === "Enter") openFeedbackDetails(feedback); }}
                             >
+
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <Clock className="w-4 h-4 text-gray-400 mr-2" />
