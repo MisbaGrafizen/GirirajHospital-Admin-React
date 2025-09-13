@@ -23,7 +23,7 @@ export default function Header({ pageName = "" }) {
   return (
     <>
       <section className=" flex  w-[100%] border-b-[1.5px] ">
-        <div className=" gap-[30px]  flex items-center  justify-between px-[0px]  pb-[25px] pt-[10px] bg h-[42px]">
+        <div className=" gap-[30px]  flex items-center  justify-between px-[0px]  pb-[25px] pt-[19px] bg h-[42px]">
           <div className=" flex  w-fit  cursor-pointer items-center gap-[5px]  ">
             <img
               className=" flex w-[27px] h-[27px]"

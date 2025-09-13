@@ -27696,7 +27696,7 @@ select.crypto-select.primary {
 }
 
 .widget-1 {
-  background-image: url(../../images/dashboard/widget-bg.png);
+  background-image: url();
   background-size: cover;
   margin-bottom: 25px;
 }

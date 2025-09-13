@@ -9,7 +9,7 @@ export default function AnimatedDropdown({ label, icon: Icon, options = [], sele
     <div className="relative">
       <label className="block text-[8px] rounded-[10px] px-[5px] top-[-8px] left-[10px]  border z-10 bg-white  ] absolute font-medium text-gray-700 mb-1">{label}</label>
       <div
-        className="flex items-center w-full pl-10 pr-3 py-1 border border-gray-300 rounded-md bg-white cursor-pointer relative"
+        className="flex items-center w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer relative"
         onClick={() => setIsOpen(!isOpen)}
       >
         {Icon && <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />}

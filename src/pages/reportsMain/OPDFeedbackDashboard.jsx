@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSideBar'
-import { FileText, Download, Search, Star, ThumbsUp, Award, Phone, User, Clock } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
+import { FileText, Download, Star,ThumbsUp, Award, Phone, Clock } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
 import {
   ResponsiveContainer,
@@ -14,6 +16,7 @@ import {
   CartesianGrid,
 } from "recharts"
 import { useNavigate } from 'react-router-dom'
+import OpdFilter from '../../Component/ReportFilter/OpdFilter'
 
 // ------------------------------------------------------------------
 // Config / Helpers
@@ -489,7 +492,7 @@ const openFeedbackDetails = useCallback((fb) => {
             )
           })}
         </svg>
-        <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             return (
@@ -500,8 +503,8 @@ const openFeedbackDetails = useCallback((fb) => {
                 onMouseLeave={() => setHoverIndex(null)}
               >
                 <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: color }} />
-                <span className="text-gray-800">
-                  {item.label}: <strong className=" font-[500]">{item.count}</strong> ({item.percentage}%)
+                <span className=" text-[13px] text-gray-800">
+                  {item.label}: <strong className="   text-[13px] font-[500]">{item.count}</strong> ({item.percentage}%)
                 </span>
               </div>
             )
@@ -525,7 +528,7 @@ const openFeedbackDetails = useCallback((fb) => {
   // -------- Render --------
   return (
     <>
-      <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
+      <section className="flex font-Poppins w-[100%] h-[100%] select-none  min-h-screen overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
@@ -536,11 +539,13 @@ const openFeedbackDetails = useCallback((fb) => {
                 <PermissionDenied />
               </div>
             ) : (
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
                 <div className="mx-auto w-full">
-                  {/* KPI Cards */}
-                  <div className="pt-[5px] flex gap-6 mb-4">
-                    <div className="bg-white rounded-lg min-w-[240px] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
+    <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
+              <OpdFilter />
+                </div>
+                  <div className="pt-[5px] flex gap-6 mb-3">
+                    <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0"><FileText className="w-8 h-8 text-blue-600" /></div>
                         <div className="ml-4">
@@ -549,7 +554,7 @@ const openFeedbackDetails = useCallback((fb) => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
+                    <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0"><Star className="w-8 h-8 text-yellow-600" /></div>
                         <div className="ml-4">
@@ -558,7 +563,7 @@ const openFeedbackDetails = useCallback((fb) => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
+                    <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0"><ThumbsUp className="w-8 h-8 text-green-600" /></div>
                         <div className="ml-4">
@@ -567,7 +572,7 @@ const openFeedbackDetails = useCallback((fb) => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
+                    <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0"><Award className="w-8 h-8 text-purple-600" /></div>
                         <div className="ml-4">
@@ -579,15 +584,15 @@ const openFeedbackDetails = useCallback((fb) => {
                   </div>
 
                   {/* Charts Row */}
-                  <div className="flex justify-start items-center gap-[150px] mb-6">
-                    <div className="bg-white rounded-lg shadow-md p-4">
+                  <div className="flex justify-start gap-[20px] mb-2">
+                    <div className="bg-white border  rounded-lg shadow-md p-3">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
                       <div className="flex">
                         <DonutChart data={chartData} />
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-lg w-[700px] shadow-sm border border-gray-100 p-4">
+                    <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
                         Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
                       </h3>
@@ -641,8 +646,8 @@ const openFeedbackDetails = useCallback((fb) => {
                   </div>
 
                   {/* Service Summary + Extra Donut */}
-                  <div className="flex w-[100%] mb-[40px] gap-[30px]">
-                    <div className="bg-white rounded-xl border w-[60%] shadow-lg overflow-hidden">
+                  <div className="flex w-[100%] mb-[30px] gap-[30px]">
+                    <div className="bg-white rounded-xl border w-[70%] shadow-md overflow-hidden">
                       <div className="px-6 py-2 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
                       </div>
@@ -650,31 +655,31 @@ const openFeedbackDetails = useCallback((fb) => {
                         <table className="min-w-full">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Excellent %</th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Good %</th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Average %</th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Poor %</th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Very Poor %</th>
+                              <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
+                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Excellent %</th>
+                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Good %</th>
+                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Average %</th>
+                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Poor %</th>
+                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Very Poor %</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white">
                             {serviceSummary.map((service, index) => (
                               <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
-                                <td className="px-6 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{service.excellent}%</span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{service.good}%</span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{service.average}%</span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">{service.poor}%</span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm">
+                                <td className="px-6 py-[10px] text-center text-sm">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{service.veryPoor}%</span>
                                 </td>
                               </tr>
@@ -685,7 +690,7 @@ const openFeedbackDetails = useCallback((fb) => {
                     </div>
 
                     <div className="flex">
-                      <div className="bg-white w-[100%] rounded-lg shadow-md p-4">
+                      <div className="bg-white w-[100%] rounded-lg border shadow-md p-3">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
                         <div className="flex">
                           <DonutChart data={chartData} />
@@ -695,9 +700,9 @@ const openFeedbackDetails = useCallback((fb) => {
                   </div>
 
                   {/* Patient-Wise Feedback Table */}
-                  <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Patient Feedback Details</h3>
+                  <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+                    <div className="px-3 py-2 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                      <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -706,14 +711,14 @@ const openFeedbackDetails = useCallback((fb) => {
                             placeholder="Search feedback..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="pl-10 pr-3 py-[4px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
 
                         {canExportFeedback && (
                           <button
                             onClick={exportToExcel}
-                            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            className="flex items-center px-4 py-[4px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                           >
                             <Download className="w-4 h-4 mr-2" />
                             Export to Excel
@@ -726,12 +731,12 @@ const openFeedbackDetails = useCallback((fb) => {
                       <table className="min-w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Patient Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Contact</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
+                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Patient Name</th>
+                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Contact</th>
+                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th>
+                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
+                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white">
@@ -751,7 +756,7 @@ const openFeedbackDetails = useCallback((fb) => {
                                   {formatDate(feedback.createdAt)}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-sm font-medium text-gray-900 border-r border-gray-200">
+                              <td className="px-6 py-[7px] text-sm font-medium text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <User className="w-4 h-4 text-gray-400 mr-2" />
                                   {feedback.patient}
@@ -770,7 +775,7 @@ const openFeedbackDetails = useCallback((fb) => {
                                   <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                              <td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">
                                 <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
                               </td>
                             </tr>

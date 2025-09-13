@@ -52,7 +52,7 @@ export default function LoginPage() {
         localStorage.setItem("rememberMe", "false")
       }
 
-      navigate("/dashboard")
+      navigate("/dashboards/super-dashboard")
     } catch (err) {
       setError(err.message)
     } finally {

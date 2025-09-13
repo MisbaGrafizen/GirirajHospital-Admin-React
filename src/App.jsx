@@ -40,7 +40,7 @@ function App() {
       <ScrollToTop />
       <div className="w-100 ease-soft-spring font-Poppins h-[100%]  !bg-[#F6FAFB]  duration-1000 ">
         <Routes>
-          <Route path="/dashboard" element={<DashBoard />} />
+          <Route path="/dashboards/super-dashboard" element={<DashBoard />} />
           <Route path="/dashboards/opd-feedback" element={<OpdFeedBack />} />
           <Route path="/dashboards/ipd-feedback" element={<IPDFeedbackDashboard />} />
           <Route path="/dashboards/complaint-dashboard" element={<ComplaintManagementDashboard />} />
@@ -51,7 +51,7 @@ function App() {
           <Route path="/ipd-feedback-details" element={<IpdFeedbackDetails />} />
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
-          <Route path="/dashboards/super-dashboard" element={<SuperAdminDashboard />} />
+          {/* <Route path="/dashboards/super-dashboard" element={<SuperAdminDashboard />} /> */}
 
           <Route path="/" element={<LoginPage />} />
           <Route path="/role-login" element={<UserLoginPage />} />

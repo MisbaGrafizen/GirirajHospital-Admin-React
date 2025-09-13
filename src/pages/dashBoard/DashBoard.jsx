@@ -33,12 +33,12 @@ export default function DashBoard() {
   return (
     <>
 
-      <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="Dashboard" />
-          <div className="flex gap-[10px] w-[100%] h-[100%]">
+          <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px]  bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
             
    <Fragment>
       <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />

@@ -1,6 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useMemo, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSideBar'
+import { motion, AnimatePresence } from "framer-motion"
+
 import {
   FileText,
   Download,
@@ -9,10 +11,12 @@ import {
   ThumbsUp,
   Award,
   Phone,
-  User,
+
   Clock,
 } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
+
 import {
   ResponsiveContainer,
   LineChart as RLineChart,
@@ -30,6 +34,10 @@ import { useNavigate } from 'react-router-dom'
 // ------------------------------------------------------------------
 const API_URL = "/admin/ipd-patient"
 
+const DOCTORS_BY_DEPT = {
+  OPD: ["Dr. Sharma", "Dr. Mehta", "Dr. Patel", "Dr. Gupta"],
+  IPD: ["Dr. Rao", "Dr. Singh", "Dr. Das", "Dr. Iyer"],
+}
 function formatDate(dateStr) {
   const d = new Date(dateStr)
   const day = String(d.getDate()).padStart(2, "0")
@@ -118,6 +126,176 @@ function hasAnyRating(ratings = {}) {
   }
   return false;
 }
+function AnimatedDropdown({ label, options, selected, onSelect, icon: Icon, disabled = false }) {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const onEsc = (e) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("keydown", onEsc)
+    return () => window.removeEventListener("keydown", onEsc)
+  }, [open])
+
+  return (
+    <div className="relative">
+      {label && <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">{label}</label>}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-white transition-colors ${disabled
+            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+            : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          }`}
+      >
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-gray-400" />}
+          <span className="text-gray-900 text-[14px]">{selected}</span>
+        </div>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
+          <ChevronDown className="w-4 h-4 text-gray-400" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {open && !disabled && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18 }}
+            className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+          >
+            {options.map((opt, idx) => (
+              <motion.button
+                key={opt}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.02 }}
+                onClick={() => {
+                  onSelect(opt)
+                  setOpen(false)
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-sky-50 focus:bg-sky-50 focus:outline-none text-gray-900"
+              >
+                {opt}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function generateNpsDataset({ from, to, department, doctor }) {
+  const dates = getDateRange(from, to)
+  const depts = department === "Both" ? ["OPD", "IPD"] : [department]
+  const doctorsPool =
+    department === "Both" ? [...DOCTORS_BY_DEPT.OPD, ...DOCTORS_BY_DEPT.IPD] : DOCTORS_BY_DEPT[department] || []
+
+  const records = []
+
+  dates.forEach((date) => {
+    depts.forEach((dept) => {
+      const docList = doctor && doctor !== "All Doctors" ? [doctor] : DOCTORS_BY_DEPT[dept] || []
+      docList.forEach((doc) => {
+        const seed = hashString(`${date}-${dept}-${doc}`)
+        const rng = mulberry32(seed)
+        const count = Math.floor(rng() * 10) + 10 // 10-19 entries per doc per day
+
+        for (let i = 0; i < count; i++) {
+          const r = Math.floor(rng() * 11) // 0..10
+          const time = `${String(Math.floor(rng() * 24)).padStart(2, "0")}:${String(Math.floor(rng() * 60)).padStart(
+            2,
+            "0",
+          )}`
+          const cat = categoryFromRating(r)
+          const pt = makePatientName(rng)
+          const rm = roomFor(dept, rng)
+          const comment =
+            rng() > 0.75
+              ? cat === "Detractor"
+                ? "Wait time was too long."
+                : cat === "Promoter"
+                  ? "Great care and attention."
+                  : "Average experience."
+              : ""
+          records.push({
+            date,
+            datetime: `${date} ${time}`,
+            patient: pt,
+            room: rm,
+            doctor: doc,
+            department: dept,
+            rating: r,
+            category: cat,
+            comment,
+          })
+        }
+      })
+    })
+  })
+
+  return records
+}
+
+function getDateRange(from, to) {
+  const start = new Date(from)
+  const end = new Date(to)
+  const days = []
+  const d = new Date(start)
+  while (d <= end) {
+    days.push(d.toISOString().slice(0, 10))
+    d.setDate(d.getDate() + 1)
+  }
+  return days
+}
+
+function hashString(str) {
+  let h = 2166136261
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)
+  }
+  return h >>> 0
+}
+
+function mulberry32(a) {
+  return () => {
+    let t = (a += 0x6d2b79f5)
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+const PATIENT_FIRST = ["Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Reyansh", "Mohammed", "Krishna", "Ishaan"]
+const PATIENT_LAST = ["Sharma", "Patel", "Gupta", "Kumar", "Verma", "Reddy", "Shah", "Sinha", "Joshi"]
+
+function makePatientName(rng) {
+  const f = PATIENT_FIRST[Math.floor(rng() * PATIENT_FIRST.length)]
+  const l = PATIENT_LAST[Math.floor(rng() * PATIENT_LAST.length)]
+  return `${f} ${l}`
+}
+
+function categoryFromRating(r) {
+  if (r >= 9) return "Promoter"
+  if (r >= 7) return "Passive"
+  return "Detractor"
+}
+
+
+
+function roomFor(dept, rng) {
+  if (dept === "OPD") {
+    return `OPD-${Math.floor(rng() * 50 + 1)}`
+  }
+  // IPD rooms like A-101 to D-520
+  const wing = ["A", "B", "C", "D"][Math.floor(rng() * 4)]
+  return `${wing}-${Math.floor(rng() * 420 + 100)}`
+}
 
 
 // ------------------------------------------------------------------
@@ -127,7 +305,8 @@ export default function IPDFeedbackDashboard() {
   // Dates kept for future filtering; used by trend bucketing
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState("2024-01-31")
-const navigate =useNavigate()
+  const navigate = useNavigate()
+  const [room, setRoom] = useState("All Rooms")
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -135,12 +314,39 @@ const navigate =useNavigate()
   const [lineData, setLineData] = useState([]);
   const [trendBucket, setTrendBucket] = useState("day") // "day" | "week" | "month"
   const [serviceSummary, setServiceSummary] = useState([]);
+  const [department, setDepartment] = useState("Both")
+  const [doctor, setDoctor] = useState("All Doctors")
+
+  const doctorOptions = useMemo(() => {
+    if (department === "Both") return ["All Doctors", ...DOCTORS_BY_DEPT.OPD, ...DOCTORS_BY_DEPT.IPD]
+    return ["All Doctors", ...(DOCTORS_BY_DEPT[department] || [])]
+  }, [department])
+
+  const deptOptions = ["OPD", "IPD", "Both"]
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
     averageRating: 0,
     npsRating: 0,
     overallScore: "-",
   })
+
+  const depts = department === "Both" ? ["OPD", "IPD"] : [department]
+  const baseRecords = useMemo(() => {
+    const deptParam = department
+    const doctorParam = doctor === "All Doctors" ? undefined : doctor
+    return generateNpsDataset({ from: dateFrom, to: dateTo, department: deptParam, doctor: doctorParam })
+  }, [dateFrom, dateTo, department, doctor])
+
+  const roomOptions = useMemo(() => {
+    const rooms = Array.from(new Set(baseRecords.map((r) => r.room))).sort((a, b) => a.localeCompare(b))
+    return ["All Rooms", ...rooms.slice(0, 200)] // limit to keep dropdown manageable
+  }, [baseRecords])
+
+  // Ensure selected room remains valid
+  useEffect(() => {
+    if (!roomOptions.includes(room)) setRoom("All Rooms")
+  }, [roomOptions, room])
+
   const [chartData, setChartData] = useState([
     { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },   // 5
     { label: "Good", count: 0, percentage: 0, color: "#3B82F6" },        // 4
@@ -339,61 +545,61 @@ const navigate =useNavigate()
   }
 
   const fetchIPD = useCallback(async () => {
-  if (!canViewFeedback) return;
-  setLoading(true);
-  setError(null);
+    if (!canViewFeedback) return;
+    setLoading(true);
+    setError(null);
 
-  try {
-    const res = await ApiGet(`${API_URL}`);
-    const raw = Array.isArray(res) ? res : (res.data || []);
+    try {
+      const res = await ApiGet(`${API_URL}`);
+      const raw = Array.isArray(res) ? res : (res.data || []);
 
-    // ✅ keep ONLY items that have at least one valid rating
-    const data = raw.filter((d) => hasAnyRating(d.ratings));
+      // ✅ keep ONLY items that have at least one valid rating
+      const data = raw.filter((d) => hasAnyRating(d.ratings));
 
-    const list = data.map((d) => {
-      const rating = calcRowAverage(d.ratings);
-      return {
-        id: String(d._id || d.id),
-        createdAt: d.createdAt || d.date,
-        patient: d.patientName || d.name || "-",
-        contact: d.contact || "-",
-        rating, // avg out of 5
-        overallRecommendation: d.overallRecommendation, // for NPS
-      };
-    });
+      const list = data.map((d) => {
+        const rating = calcRowAverage(d.ratings);
+        return {
+          id: String(d._id || d.id),
+          createdAt: d.createdAt || d.date,
+          patient: d.patientName || d.name || "-",
+          contact: d.contact || "-",
+          rating, // avg out of 5
+          overallRecommendation: d.overallRecommendation, // for NPS
+        };
+      });
 
-    const avg = list.length
-      ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
-      : 0;
+      const avg = list.length
+        ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
+        : 0;
 
-    // NPS from the same rated set; change to `raw` if you want all
-    const nps = calcNpsPercent(data);
+      // NPS from the same rated set; change to `raw` if you want all
+      const nps = calcNpsPercent(data);
 
-    const overallScore =
-      avg >= 4.5 ? "Excellent" :
-      avg >= 4.0 ? "Good" :
-      avg >= 3.0 ? "Average" :
-      avg >= 2.0 ? "Poor" : "Very Poor";
+      const overallScore =
+        avg >= 4.5 ? "Excellent" :
+          avg >= 4.0 ? "Good" :
+            avg >= 3.0 ? "Average" :
+              avg >= 2.0 ? "Poor" : "Very Poor";
 
-    setRows(list);                                    // table shows only rated items
-    setKpiData({
-      totalFeedback: list.length,                     // count of rated items
-      averageRating: avg,
-      npsRating: nps,
-      overallScore,
-    });
-    setChartData(buildDistribution(list));            // charts from rated items
-    setServiceSummary(buildServiceSummary(data));     // summary from rated items
-  } catch (e) {
-    console.error("Fetch IPD failed:", e);
-    setError("Failed to load IPD feedback");
-    setRows([]);
-    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
-    setChartData(buildDistribution([]));
-  } finally {
-    setLoading(false);
-  }
-}, [canViewFeedback]);
+      setRows(list);                                    // table shows only rated items
+      setKpiData({
+        totalFeedback: list.length,                     // count of rated items
+        averageRating: avg,
+        npsRating: nps,
+        overallScore,
+      });
+      setChartData(buildDistribution(list));            // charts from rated items
+      setServiceSummary(buildServiceSummary(data));     // summary from rated items
+    } catch (e) {
+      console.error("Fetch IPD failed:", e);
+      setError("Failed to load IPD feedback");
+      setRows([]);
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+      setChartData(buildDistribution([]));
+    } finally {
+      setLoading(false);
+    }
+  }, [canViewFeedback]);
 
 
   useEffect(() => {
@@ -476,7 +682,7 @@ const navigate =useNavigate()
     XLSX.writeFile(wb, fileName)
   }
 
-    const handleIpdFeedbackDetails = useCallback((row) => {
+  const handleIpdFeedbackDetails = useCallback((row) => {
     const id = row?.id || row?._id;
     if (!id) {
       console.error("No id on IPD row:", row);
@@ -550,7 +756,7 @@ const navigate =useNavigate()
         </svg>
 
         {/* Legend */}
-        <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             return (
@@ -564,8 +770,8 @@ const navigate =useNavigate()
                   className="w-3 h-3 rounded-full mr-2"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-gray-800">
-                  {item.label}: <strong className="font-[500]">{item.count}</strong> ({item.percentage}%)
+                <span className="text-gray-800 text-[14px]">
+                  {item.label}: <strong className=" font-[500]">{item.count}</strong> ({item.percentage}%)
                 </span>
               </div>
             )
@@ -589,10 +795,10 @@ const navigate =useNavigate()
   // ---------------- Render ----------------
   return (
     <>
-      <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
+      <section className="flex font-Poppins w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="Ipd Feedback" />
-          <div className="flex gap-[10px] w-[100%] h-[100%]">
+          <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
             {!canViewFeedback ? (
@@ -600,11 +806,69 @@ const navigate =useNavigate()
                 <PermissionDenied />
               </div>
             ) : (
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 ">
+                  <div className="grid grid-cols-1  md:grid-cols-5 gap-x-2">
+                    {/* From date */}
+                    <div className=" relative">
+                      <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
+                      <div className="relative">
+                        <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="date"
+                          value={dateFrom}
+                          max={dateTo}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                          className="w-full pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                      </div>
+                    </div>
+                    {/* To date */}
+                    <div className=" relative">
+                      <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
+                      <div className="relative">
+                        <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="date"
+                          value={dateTo}
+                          min={dateFrom}
+                          onChange={(e) => setDateTo(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                      </div>
+                    </div>
+                    {/* Department */}
+                    <AnimatedDropdown
+                      label="Department"
+                      options={deptOptions}
+                      selected={department}
+                      onSelect={setDepartment}
+                      icon={Hospital}
+                    />
+                    {/* Doctor */}
+                    <AnimatedDropdown
+                      label="Doctor Name"
+                      options={doctorOptions}
+                      selected={doctor}
+                      onSelect={setDoctor}
+                      icon={User}
+                    />
+                    {/* Room */}
+                    <AnimatedDropdown
+                      label="Room No"
+                      options={roomOptions}
+                      selected={room}
+                      onSelect={setRoom}
+                      icon={Activity}
+                      disabled={roomOptions.length === 0}
+                    />
+                  </div>
+                </div>
                 <div className="mx-auto w-full">
                   {/* KPI Cards */}
-                  <div className="pt-[5px] flex gap-6 mb-4">
-                    <div className="bg-white rounded-lg min-w-[240px] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
+                  <div className="pt-[5px] flex gap-3 mb-3">
+                    <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <FileText className="w-8 h-8 text-blue-600" />
@@ -615,7 +879,7 @@ const navigate =useNavigate()
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
+                    <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <Star className="w-8 h-8 text-yellow-600" />
@@ -626,7 +890,7 @@ const navigate =useNavigate()
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
+                    <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <ThumbsUp className="w-8 h-8 text-green-600" />
@@ -637,7 +901,7 @@ const navigate =useNavigate()
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white min-w-[240px] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
+                    <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <Award className="w-8 h-8 text-purple-600" />
@@ -651,9 +915,9 @@ const navigate =useNavigate()
                   </div>
 
                   {/* Charts Row */}
-                  <div className="flex justify-start items-center gap-[150px] mb-6">
+                  <div className="flex justify-start  gap-[20px] mb-2  ">
                     {/* Rating Distribution Donut Chart */}
-                    <div className="bg-white rounded-lg shadow-md p-4">
+                    <div className="bg-white rounded-lg  border shadow-md p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
                       <div className="flex">
                         <DonutChart data={chartData} />
@@ -661,7 +925,7 @@ const navigate =useNavigate()
                     </div>
 
                     {/* Average Rating Trend Line Chart */}
-                    <div className="bg-white rounded-lg w-[700px] shadow-sm border border-gray-100 p-4">
+                    <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
                         Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
                       </h3>
@@ -716,19 +980,18 @@ const navigate =useNavigate()
                       ].map((word, index) => (
                         <span
                           key={index}
-                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${
-                            index % 6 === 0
+                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
                               ? "bg-blue-100 border-blue-800 text-blue-800"
                               : index % 6 === 1
-                              ? "bg-green-100 border-green-800 text-green-800"
-                              : index % 6 === 2
-                              ? "bg-yellow-100 border-yellow-800 text-yellow-800"
-                              : index % 6 === 3
-                              ? "bg-purple-100 border-purple-800 text-purple-800"
-                              : index % 6 === 4
-                              ? "bg-red-100 border-red-800 text-red-800"
-                              : "bg-indigo-100 border-indigo-800 text-indigo-800"
-                          }`}
+                                ? "bg-green-100 border-green-800 text-green-800"
+                                : index % 6 === 2
+                                  ? "bg-yellow-100 border-yellow-800 text-yellow-800"
+                                  : index % 6 === 3
+                                    ? "bg-purple-100 border-purple-800 text-purple-800"
+                                    : index % 6 === 4
+                                      ? "bg-red-100 border-red-800 text-red-800"
+                                      : "bg-indigo-100 border-indigo-800 text-indigo-800"
+                            }`}
                         >
                           {word}
                         </span>
@@ -737,9 +1000,9 @@ const navigate =useNavigate()
                   </div>
 
                   {/* Service Summary + Extra Donut */}
-                  <div className="flex w-[100%] mb-[40px] gap-[30px]">
+                  <div className="flex w-[100%] mb-[19px] gap-[30px]">
                     {/* Service-Wise Summary Table */}
-                    <div className="bg-white rounded-xl border w-[60%] shadow-lg overflow-hidden">
+                    <div className="bg-white rounded-xl border w-[70%] shadow-md overflow-hidden">
                       <div className="px-6 py-2 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
                       </div>
@@ -773,30 +1036,30 @@ const navigate =useNavigate()
                                 key={index}
                                 className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                               >
-                                <td className="px-6 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">
+                                <td className="px-6 py-2 text-sm font-medium text-gray-900 border-r border-gray-200">
                                   {service.service}
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     {service.excellent}%
                                   </span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     {service.good}%
                                   </span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                     {service.average}%
                                   </span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm border-r border-gray-200">
+                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                                     {service.poor}%
                                   </span>
                                 </td>
-                                <td className="px-6 py-3 text-center text-sm">
+                                <td className="px-6 py-2 text-center text-sm">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                     {service.veryPoor}%
                                   </span>
@@ -810,7 +1073,7 @@ const navigate =useNavigate()
 
                     {/* Extra Donut (optional) */}
                     <div className="flex">
-                      <div className="bg-white w-[100%] rounded-lg shadow-md p-4">
+                      <div className="bg-white w-[100%] rounded-lg border shadow-md p-4">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
                         <div className="flex">
                           <DonutChart data={chartData} />
@@ -820,9 +1083,9 @@ const navigate =useNavigate()
                   </div>
 
                   {/* Patient-Wise Feedback Table */}
-                  <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Patient Feedback Details</h3>
+                  <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+                    <div className="px-6 py-2 items-center border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
+                      <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -852,16 +1115,16 @@ const navigate =useNavigate()
                       <table className="min-w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Date & Time
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Patient Name
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Contact
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Rating
                             </th>
                           </tr>
@@ -879,7 +1142,7 @@ const navigate =useNavigate()
                                   {formatDate(feedback.createdAt)}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-sm font-medium text-gray-900 border-r border-gray-200">
+                              <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
                                   <User className="w-4 h-4 text-gray-400 mr-2" />
                                   {feedback.patient}

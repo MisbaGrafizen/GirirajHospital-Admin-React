@@ -11,7 +11,7 @@ export default function OpdFilter() {
 
   return (
     <div className="">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6">
         <ModernDatePicker label="From Date" selectedDate={dateFrom} setSelectedDate={setDateFrom} />
         <ModernDatePicker label="To Date" selectedDate={dateTo} setSelectedDate={setDateTo} />
         <AnimatedDropdown

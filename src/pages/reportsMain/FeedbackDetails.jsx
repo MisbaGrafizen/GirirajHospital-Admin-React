@@ -134,7 +134,7 @@ export default function FeedbackDetails() {
   if (!model) return null
 
   return (
-    <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
+    <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
       <div className="flex w-[100%] flex-col gap-[0px] h-[98vh]">
         <Header pageName="Feedback Details" />
         <div className="flex gap-[10px] w-[100%] h-[100%]">

@@ -22,6 +22,7 @@ import {
 import Header from "../../Component/header/Header"
 import Sidebar from "../../Component/sidebar/CubaSideBar"
 import { useNavigate } from "react-router-dom"
+import OpdFilter from "../../Component/ReportFilter/OpdFilter"
 // import CubaSidebar from "../../Component/sidebar/CubaSidebar"
 
 export default function ComplaintManagementDashboard() {
@@ -459,46 +460,21 @@ const handlenavigate =()=>{
 
     return (
         <>
-            <section className="flex w-[100%] h-[100%] select-none py-[15px] pr-[15px] overflow-hidden">
-                <div className="flex w-[100%] overflow-hidden flex-col gap-[14px] h-[96vh]">
+            <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
+                <div className="flex w-[100%] overflow-hidden flex-col  h-[96vh]">
                     <Header pageName="Complaint Management " />
-                    <div className="flex overflow-hidden gap-[10px] w-[100%] h-[100%]">
+                    <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
-                        <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+                        <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
 
                             <div className="">
                                 <div className="">
-                                    {/* Header */}
-                                    {/* <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
-                                     
-                                            <div className="flex flex-col sm:flex-row gap-3">
-                                                <div className="relative">
-                                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search complaints..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                                <button
-                                                    onClick={exportToExcel}
-                                                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                                                >
-                                                    <Download className="w-4 h-4 mr-2" />
-                                                    Export in Excel Format
-                                                </button>
-                                            </div>
-                                        </div>
-
-                      
-                                
-                                    </div> */}
+            <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
+                        <OpdFilter />
+                          </div>
 
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-6 gap-4 mb-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-5 gap-2 mb-2">
                                         <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-blue-500">
                                             <div className="flex items-center">
                                                 <AlertTriangle className="w-6 h-6 text-blue-600 mr-3" />
@@ -540,11 +516,11 @@ const handlenavigate =()=>{
                                                 <Clock className="w-6 h-6 text-purple-600 mr-3" />
                                                 <div>
                                                     <p className="text-xs font-medium text-gray-600">Avg Resolution</p>
-                                                    <p className="text-lg font-[600] text-gray-900">{kpiData.avgResolutionTime}</p>
+                                                    <p className="text-[15px] font-[600] text-gray-900">{kpiData.avgResolutionTime}</p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-indigo-500">
+                                        {/* <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-indigo-500">
                                             <div className="flex items-center">
                                                 <AlertTriangle className="w-6 h-6 text-indigo-600 mr-3" />
                                                 <div>
@@ -552,7 +528,7 @@ const handlenavigate =()=>{
                                                     <p className="text-xl font-[600] text-gray-900">{kpiData.inProgress}</p>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
 
                                     {/* Charts Row */}

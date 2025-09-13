@@ -1224,7 +1224,7 @@ export default function UserManageMent() {
 
   return (
     <>
-      <section className="flex font-Poppins w-[100%] h-[100%] select-none p-[15px] overflow-hidden">
+      <section className="flex font-Poppins w-[100%] h-[100%] select-none overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
           <Header pageName="  User Management" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">

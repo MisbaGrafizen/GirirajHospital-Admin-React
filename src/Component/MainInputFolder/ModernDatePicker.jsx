@@ -13,7 +13,7 @@ export default function ModernDatePicker({ label = "Select Date", selectedDate, 
       <div className="relative">
         <div
           onClick={() => setOpen(!open)}
-          className="flex items-center pl-10 pr-3 py-1 border border-gray-300 rounded-md bg-white cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
+          className="flex items-center pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
         >
           <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <span className="text-gray-700 text-sm">

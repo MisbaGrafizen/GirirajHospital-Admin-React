@@ -4682,6 +4682,7 @@ body.modal-open .select2-container--open .select2-dropdown {
 ==========================**/
 .card {
   margin-bottom: 30px;
+  min-height: 87px;
   border: none;
   transition: all 0.3s ease;
   letter-spacing: 0.5px;
@@ -16524,7 +16525,7 @@ select.crypto-select.primary {
 .widget-1 {
   background-image: url(../../images/dashboard/widget-bg.png);
   background-size: cover;
-  margin-bottom: 25px;
+  margin-bottom: 15px;
 }
 .widget-1 i {
   font-weight: 700;
@@ -16544,6 +16545,10 @@ select.crypto-select.primary {
   justify-content: space-between;
   align-items: flex-end;
   padding: 18px 25px;
+  border :1px solid #ececec ;
+  overflow: hidden;
+  border-radius: 10px;
+
 }
 @media (max-width: 1720px) {
   .widget-1 .card-body {
@@ -16634,6 +16639,7 @@ select.crypto-select.primary {
 
 .widget-with-chart .card-body {
   align-items: center;
+  
 }
 
 .profile-box {

@@ -19,8 +19,8 @@ import textlogo from "../../../public/imges/onlyText.png"
 import { useNavigate, useLocation } from "react-router-dom";
 
 const CubaSidebar = () => {
- const [expandedMenu, setExpandedMenu] = useState(null)
-  const [isCollapsed, setIsCollapsed] = useState(true) // Start collapsed
+const [expandedMenu, setExpandedMenu] = useState("dashboards");
+const [isCollapsed, setIsCollapsed] = useState(false);
 const navigate = useNavigate();
 const location = useLocation();
 
@@ -311,14 +311,15 @@ const location = useLocation();
     // },
   ]
 
-  const handleMenuClick = (item) => {
-    if (item.hasSubmenu) {
-      setExpandedMenu(expandedMenu === item.id ? null : item.id)
-    } else {
-      navigate(item.href)
-      setExpandedMenu(null)
-    }
+const handleMenuClick = (item) => {
+  if (item.hasSubmenu) {
+    setExpandedMenu(item.id); // always switch, never null
+  } else {
+    navigate(item.href);
+    setExpandedMenu("dashboards"); // fallback stays expanded
   }
+};
+
 
   const handleSubmenuClick = (href) => {
     navigate(href)
@@ -338,12 +339,14 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
     return false
   }
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed)
-    if (!isCollapsed) {
-      setExpandedMenu(null) // Close all submenus when collapsing
-    }
+const toggleSidebar = () => {
+  setIsCollapsed((prev) => !prev);
+  if (isCollapsed) {
+    // when reopening, restore default expanded menu
+    setExpandedMenu("dashboards");
   }
+};
+
 
   // Framer Motion variants
   const sidebarVariants = {
@@ -395,10 +398,10 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
     collapsed: {
       height: 0,
       opacity: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
+      // transition: {
+      //   duration: 0.3,
+      //   ease: "easeInOut",
+      // },
     },
   }
 
@@ -410,7 +413,7 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
       {/* Sidebar */}
       <motion.div
         className="bg-white shadow-sm flex flex-col border-r border-gray-200 relative"
-        variants={sidebarVariants}
+        // variants={sidebarVariants}
         animate={isCollapsed ? "collapsed" : "expanded"}
         initial={false}
       >
@@ -424,9 +427,9 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
                   <motion.span
                     className="text-xl font-bold text-gray-800 tracking-tight"
                     variants={contentVariants}
-                    initial="collapsed"
-                    animate="expanded"
-                    exit="collapsed"
+                    // initial="collapsed"
+                    // animate="expanded"
+                    // exit="collapsed"
                   >
 <img className=" w-[100px]" src={textlogo} />
                   </motion.span>
@@ -447,10 +450,10 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
                 {!isCollapsed && (
                   <motion.div
                     className="px-6 mb-2"
-                    variants={contentVariants}
-                    initial="collapsed"
-                    animate="expanded"
-                    exit="collapsed"
+                    // variants={contentVariants}
+                    // initial="collapsed"
+                    // animate="expanded"
+                    // exit="collapsed"
                   >
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{section.title}</h3>
                   </motion.div>
@@ -492,10 +495,10 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
                           {!isCollapsed && (
                             <motion.div
                               className="flex-1 flex items-center justify-between"
-                              variants={contentVariants}
-                              initial="collapsed"
-                              animate="expanded"
-                              exit="collapsed"
+                              // variants={contentVariants}
+                              // initial="collapsed"
+                              // animate="expanded"
+                              // exit="collapsed"
                             >
                               <span className="text-left">{item.label}</span>
                               <div className="flex items-center space-x-2">
@@ -524,10 +527,10 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
                       <AnimatePresence>
                         {item.hasSubmenu && !isCollapsed && expanded && (
                           <motion.div
-                            variants={submenuVariants}
-                            initial="collapsed"
-                            animate="expanded"
-                            exit="collapsed"
+                            // variants={submenuVariants}
+                            // initial="collapsed"
+                            // animate="expanded"
+                            // exit="collapsed"
                             className="overflow-hidden"
                           >
                             <div className="ml-6 mt-1 border-l border-gray-200 pl-4 space-y-1">
@@ -543,9 +546,9 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
                                         ? "bg-blue-50 text-blue-700 font-medium"
                                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                     }`}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
+                                    // initial={{ opacity: 0, x: -10 }}
+                                    // animate={{ opacity: 1, x: 0 }}
+                                    // transition={{ delay: index * 0.05 }}
                                   >
                                     <span className="flex-1 text-left">{subItem.label}</span>
                                     {subItem.isNew && (
