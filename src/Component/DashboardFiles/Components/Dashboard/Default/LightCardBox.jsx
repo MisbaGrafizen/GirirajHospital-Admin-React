@@ -17,7 +17,7 @@ const LightCardBox = ({ data }) => {
       </div>
       <div className='ms-auto text-end'>
         <DropdownCommon dropdownMain={{ className: 'icon-dropdown', direction: 'start' }} options={DailyDropdown} iconName='icon-more-alt' btn={{ tag: 'span' }} />
-        {data.gros && <span className={`d-inline-block mt-1 font-${data.color}`}>{data.gros}</span>}
+        {/* {data.gros && <span className={`d-inline-block mt-1 font-${data.color}`}>{data.gros}</span>} */}
       </div>
     </div>
   );

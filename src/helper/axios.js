@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 
 // export const BaseURL = "http://localhost:3000/api/v2/giriraj";
 export const BaseURL = "https://server.grafizen.in/api/v2/giriraj";
-// 
+
 const defaultHeaders = {
   isAuth: true,
   AdditionalParams: {}, 

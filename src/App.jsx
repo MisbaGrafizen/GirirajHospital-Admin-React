@@ -51,7 +51,7 @@ function App() {
           <Route path="/ipd-feedback-details" element={<IpdFeedbackDetails />} />
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
-          {/* <Route path="/dashboards/super-dashboard" element={<SuperAdminDashboard />} /> */}
+          <Route path="/dashboard" element={<SuperAdminDashboard />} />
 
           <Route path="/" element={<LoginPage />} />
           <Route path="/role-login" element={<UserLoginPage />} />

@@ -836,6 +836,58 @@ export const CurrencyChartData = {
   },
 };
 
+// export const CurrencyChartData = (ipdData = [], opdData = [], categories = []) => {
+//   return {
+//     series: [
+//       { name: "IPD Feedback", data: ipdData },
+//       { name: "OPD Feedback", data: opdData },
+//     ],
+//     options: {
+//       chart: {
+//         type: "bar",
+//         height: 300,
+//         stacked: true,
+//         toolbar: { show: false },
+//         dropShadow: {
+//           enabled: true,
+//           top: 8,
+//           left: 0,
+//           blur: 10,
+//           color: "#7064F5",
+//           opacity: 0.1,
+//         },
+//       },
+//       plotOptions: { bar: { horizontal: false, columnWidth: "25px", borderRadius: 0 } },
+//       grid: { show: true, borderColor: "var(--chart-border)" },
+//       dataLabels: { enabled: false },
+//       stroke: { width: 2, colors: "#fff" },
+//       fill: { opacity: 1 },
+//       legend: { show: false },
+//       colors: [primary, "#AAAFCB"],
+//       yaxis: {
+//         tickAmount: 3,
+//         labels: { show: true, style: { fontFamily: "Rubik, sans-serif" } },
+//         axisBorder: { show: false },
+//         axisTicks: { show: false },
+//       },
+//       xaxis: {
+//         categories: categories, // ✅ now dynamic
+//         labels: { style: { fontFamily: "Rubik, sans-serif" } },
+//         axisBorder: { show: false },
+//         axisTicks: { show: false },
+//       },
+//       responsive: [
+//         { breakpoint: 1661, options: { chart: { height: 290 } } },
+//         { breakpoint: 767, options: { plotOptions: { bar: { columnWidth: "35px" } }, yaxis: { labels: { show: false } } } },
+//         { breakpoint: 481, options: { chart: { height: 200 } } },
+//         { breakpoint: 420, options: { chart: { height: 170 }, plotOptions: { bar: { columnWidth: "40px" } } } },
+//       ],
+//     },
+//   };
+// };
+
+
+
 // Recent Order Chart //
 export const RecentOrderChart = {
   series: [100],

@@ -6,7 +6,13 @@ import { Cancelled,  Delivered, LastMonth, profit, profit2, RecentOrdersTitle, W
 import { RecentOrderChart } from '../../../Data/DefaultDashboard/Chart';
 import DropdownCommon from '../../Common/Dropdown';
 
-const RecentOrders = () => {
+const RecentOrders = ({ overallNps = 0 }) => {
+   const displayNps = Number(overallNps) || 0;         
+  const seriesValue =
+    displayNps <= 10 ? Math.max(0, Math.min(100, displayNps * 10)) 
+                      : Math.max(0, Math.min(100, displayNps));     
+  const avg5 = +(displayNps / 2).toFixed(1);            
+  
   return (
     <Col xxl='4' xl='7' md='6' sm='5' className='box-col-6'>
       <Card className='height-equal'>
@@ -22,7 +28,29 @@ const RecentOrders = () => {
           <Row className='recent-wrapper'>
             <Col xl='6'>
               <div className='recent-chart'>
-                <ReactApexChart type='radialBar' height={290} options={RecentOrderChart.options} series={RecentOrderChart.series} />
+                {/* <ReactApexChart type='radialBar' height={290} options={RecentOrderChart.options} series={RecentOrderChart.series} /> */}
+               <ReactApexChart
+                  type='radialBar'
+                  height={290}
+                  options={{
+                    ...RecentOrderChart.options,
+                    labels: ['NPS'],
+                    plotOptions: {
+                      ...RecentOrderChart.options?.plotOptions,
+                      radialBar: {
+                        ...RecentOrderChart.options?.plotOptions?.radialBar,
+                        dataLabels: {
+                          ...RecentOrderChart.options?.plotOptions?.radialBar?.dataLabels,
+                          value: {
+                            ...(RecentOrderChart.options?.plotOptions?.radialBar?.dataLabels?.value || {}),
+                            formatter: () => `${displayNps.toFixed(1)}`,
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  series={[seriesValue]}
+                />
               </div>
             </Col>
             <Col xl='6'>
@@ -30,20 +58,30 @@ const RecentOrders = () => {
                 <LI>
                   <span className='recent-circle bg-primary'> </span>
                   <div>
-                    <span className='f-light f-w-500'>{Cancelled} </span>
+                    {/* <span className='f-light f-w-500'>{Cancelled} </span>
                     <H4 attrH4={{ className: 'mt-1 mb-0' }}>
                       {profit}
                       <span className='f-light f-14 f-w-400 ms-1'>({LastMonth}) </span>
+                    </H4> */}
+                     <span className='f-light f-w-500'>All Over NPS</span>
+                    <H4 attrH4={{ className: 'mt-1 mb-0' }}>
+                      {displayNps.toFixed(1)}
+                      <span className='f-light f-14 f-w-400 ms-1'>(out of 10)</span>
                     </H4>
                   </div>
                 </LI>
                 <LI>
                   <span className='recent-circle bg-info' />
                   <div>
-                    <span className='f-light f-w-500'>{Delivered}</span>
+                    {/* <span className='f-light f-w-500'>{Delivered}</span>
                     <H4 attrH4={{ className: 'mt-1 mb-0' }}>
                       {profit2}
                       <span className='f-light f-14 f-w-400 ms-1'>({LastMonth})</span>
+                    </H4> */}
+                     <span className='f-light f-w-500'>Average Rating</span>
+                    <H4 attrH4={{ className: 'mt-1 mb-0' }}>
+                      {avg5}
+                      <span className='f-light f-14 f-w-400 ms-1'>(out of 5)</span>
                     </H4>
                   </div>
                 </LI>

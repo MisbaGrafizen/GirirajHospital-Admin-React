@@ -13,6 +13,7 @@ import {
   Phone,
 
   Clock,
+  Bed,
 } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
 import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
@@ -551,10 +552,9 @@ export default function IPDFeedbackDashboard() {
 
     try {
       const res = await ApiGet(`${API_URL}`);
-      const raw = Array.isArray(res) ? res : (res.data || []);
+      const data = Array.isArray(res) ? res : (res.data || []);
 
-      // ✅ keep ONLY items that have at least one valid rating
-      const data = raw.filter((d) => hasAnyRating(d.ratings));
+      // const data = raw.filter((d) => hasAnyRating(d.ratings));
 
       const list = data.map((d) => {
         const rating = calcRowAverage(d.ratings);
@@ -563,6 +563,8 @@ export default function IPDFeedbackDashboard() {
           createdAt: d.createdAt || d.date,
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
+          bedNo: d.bedNo || "-",
+          consultantDoctorName: d.consultantDoctorName || "-",
           rating, // avg out of 5
           overallRecommendation: d.overallRecommendation, // for NPS
         };
@@ -629,6 +631,8 @@ export default function IPDFeedbackDashboard() {
       Date: formatDate(f.createdAt),
       "Patient Name": f.patient,
       Contact: f.contact,
+      "Bed No": f.bedNo,
+      "Doctor Name": f.consultantDoctorName,
       "Average Rating (/5)": f.rating,
       ...(typeof f.overallRecommendation === "number"
         ? { "Overall Recommendation (NPS)": f.overallRecommendation }
@@ -637,7 +641,7 @@ export default function IPDFeedbackDashboard() {
 
     const feedbackHeaders = feedbackRows.length
       ? Object.keys(feedbackRows[0])
-      : ["Date", "Patient Name", "Contact", "Average Rating (/5)"]
+      : ["Date", "Patient Name", "Contact", "Bed No", "Doctor Name", "Average Rating (/5)"]
 
     const wsFeedback = XLSX.utils.json_to_sheet(feedbackRows, { header: feedbackHeaders })
 
@@ -1125,6 +1129,12 @@ export default function IPDFeedbackDashboard() {
                               Contact
                             </th>
                             <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Bed No
+                            </th>
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Doctor Name
+                            </th>
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Rating
                             </th>
                           </tr>
@@ -1152,6 +1162,18 @@ export default function IPDFeedbackDashboard() {
                                 <div className="flex items-center">
                                   <Phone className="w-4 h-4 text-gray-400 mr-2" />
                                   {feedback.contact}
+                                </div>
+                              </td>
+                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                                <div className="flex items-center">
+                                  <Bed className="w-4 h-4 text-gray-400 mr-2" />
+                                  {feedback.bedNo}
+                                </div>
+                              </td>
+                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                                <div className="flex items-center">
+                                  <User className="w-4 h-4 text-gray-400 mr-2" />
+                                  {feedback.consultantDoctorName}
                                 </div>
                               </td>
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">

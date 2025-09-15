@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
     Calendar,
     Download,
@@ -23,250 +23,432 @@ import Header from "../../Component/header/Header"
 import Sidebar from "../../Component/sidebar/CubaSideBar"
 import { useNavigate } from "react-router-dom"
 import OpdFilter from "../../Component/ReportFilter/OpdFilter"
-// import CubaSidebar from "../../Component/sidebar/CubaSidebar"
+import { ApiGet } from "../../helper/axios"
 
+
+// ===================== CONSTANTS / LABELS =====================
+const CONCERN_KEYS = [
+    "doctorServices",
+    "billingServices",
+    "housekeeping",
+    "maintenance",
+    "diagnosticServices",
+    "dietitianServices",
+    "security",
+    "overall",
+]
+
+const DEPT_LABEL = {
+    doctorServices: "Doctor Services",
+    billingServices: "Billing Services",
+    housekeeping: "Housekeeping",
+    maintenance: "Maintenance",
+    diagnosticServices: "Diagnostic Services",
+    dietitianServices: "Dietitian Services",
+    security: "Security",
+    overall: "Overall",
+}
+
+const DEPT_COLORS = {
+    "Doctor Services": "#3B82F6",
+    "Billing Services": "#EAB308",
+    "Housekeeping": "#10B981",
+    "Maintenance": "#EF4444",
+    "Diagnostic Services": "#8B5CF6",
+    "Dietitian Services": "#F59E0B",
+    "Security": "#22C55E",
+    "Overall": "#6B7280",
+}
+
+// ===================== DATE HELPERS =====================
+const pad2 = (n) => String(n).padStart(2, "0")
+const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+const firstDayOfThisMonth = () => {
+    const d = new Date()
+    return ymd(new Date(d.getFullYear(), d.getMonth(), 1))
+}
+const today = () => ymd(new Date())
+const fmtDateLabel = (iso) => {
+    const d = new Date(iso)
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+}
+
+// ===================== STATUS / PRIORITY UI =====================
+const mapStatusUI = (status) => {
+    if (status === "resolved") return "Resolved"
+    if (status === "in_progress") return "In Progress"
+    return "Pending"
+}
+const getStatusColor = (status) => {
+    switch (status) {
+        case "Pending":
+            return "bg-yellow-100 text-yellow-800"
+        case "Resolved":
+            return "bg-green-100 text-green-800"
+        case "In Progress":
+            return "bg-blue-100 text-blue-800"
+        default:
+            return "bg-gray-100 text-gray-800"
+    }
+}
+const getPriorityColor = (priority) => {
+    switch (priority) {
+        case "Critical":
+            return "bg-red-100 text-red-800"
+        case "Urgent":
+            return "bg-orange-100 text-orange-800"
+        case "Medium":
+            return "bg-yellow-100 text-yellow-800"
+        case "Low":
+            return "bg-green-100 text-green-800"
+        default:
+            return "bg-gray-100 text-gray-800"
+    }
+}
+
+// ===================== TRANSFORMS =====================
+// Flatten one concern document into table rows (one per filled area)
+function flattenConcernDoc(doc) {
+    const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString()
+    const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ")
+
+    // collect all departments that have text or attachments
+    const departments = []
+    CONCERN_KEYS.forEach((k) => {
+        const block = doc?.[k]
+        if (!block) return
+        const hasText = block.text && String(block.text).trim().length > 0
+        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0
+        if (hasText || hasAttachments) {
+            departments.push(DEPT_LABEL[k])
+        }
+    })
+
+    if (departments.length === 0) return []
+
+    return [
+        {
+            id: doc._id,
+            date: dateStr,
+            department: departments.join(", "),
+            doctor: doc.consultantDoctorName || "-",
+            bedNo: doc.bedNo || "-",
+            patient: doc.patientName || "-",
+            contact: doc.contact || "-",
+            status: mapStatusUI(doc.status),
+            priority: doc.priority || "Normal",
+            assignedTo: "-",
+            details: "-", // you can combine text if you want
+            actions: [],
+            category: "Multiple",
+            expectedResolution: "-",
+            createdAt,
+        },
+    ]
+
+}
+
+function flattenConcernDocForTable(doc) {
+    const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
+    const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
+
+    const departments = [];
+    CONCERN_KEYS.forEach((k) => {
+        const block = doc?.[k];
+        if (!block) return;
+        const hasText = block.text && String(block.text).trim().length > 0;
+        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+        if (hasText || hasAttachments) {
+            departments.push(DEPT_LABEL[k]);
+        }
+    });
+
+    if (departments.length === 0) return [];
+
+    return [
+        {
+            id: doc._id,
+            date: dateStr,
+            department: departments.join(", "),   // 👈 all in one row
+            patient: doc.patientName || "-",
+            bedNo: doc.bedNo || "-",
+            doctor: doc.consultantDoctorName || "-",
+            contact: doc.contact || "-",
+            status: mapStatusUI(doc.status),
+            priority: doc.priority || "Normal",
+            createdAt,
+        },
+    ];
+}
+
+
+function flattenConcernDocForStats(doc) {
+    const results = [];
+
+    CONCERN_KEYS.forEach((k) => {
+        const block = doc?.[k];
+        if (!block) return;
+
+        const hasText = block.text && String(block.text).trim().length > 0;
+        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+
+        if (hasText || hasAttachments) {
+            results.push({
+                department: DEPT_LABEL[k],
+                // Approx resolution time placeholder (needs backend for real data)
+                resolutionTime: doc.status === "resolved" ? 1 : 0,
+                escalated: doc.priority === "Urgent" || doc.priority === "Critical",
+            });
+        }
+    });
+
+    return results; // array of objects
+}
+
+
+// Build multi-line chart series from rows
+function buildTrendData(rows) {
+    const byDay = {}
+    const presentDepartments = new Set()
+
+    rows.forEach((r) => {
+        const day = fmtDateLabel(r.createdAt || r.date)
+        byDay[day] ||= {}
+        byDay[day][r.department] = (byDay[day][r.department] || 0) + 1
+        presentDepartments.add(r.department)
+    })
+
+    let days = Object.keys(byDay)
+    // Sort day labels in a stable way
+    days.sort((a, b) => {
+        const pa = Date.parse(a + " 2020")
+        const pb = Date.parse(b + " 2020")
+        return pa - pb
+    })
+    // Ensure at least 2 points for nice lines
+    if (days.length === 1) {
+        const d = new Date()
+        d.setDate(d.getDate() - 1)
+        const prev = fmtDateLabel(d.toISOString())
+        byDay[prev] ||= {}
+        days = [prev, ...days]
+    }
+
+    const result = days.map((day) => {
+        const obj = { date: day }
+        presentDepartments.forEach((dept) => {
+            obj[dept] = byDay[day]?.[dept] || 0
+        })
+        return obj
+    })
+
+    const colors = {}
+    presentDepartments.forEach((d) => {
+        colors[d] = DEPT_COLORS[d] || "#6B7280"
+    })
+
+    return { data: result, colors }
+}
+
+// KPIs from rows
+function computeKpis(rows) {
+    const total = rows.length
+    const pending = rows.filter((r) => r.status === "Pending").length
+    const inProgress = rows.filter((r) => r.status === "In Progress").length
+    const resolved = rows.filter((r) => r.status === "Resolved").length
+    const escalated = rows.filter((r) => r.priority === "Urgent").length
+
+    // Fake average resolution time (needs backend duration to be accurate)
+    const resolvedRows = rows.filter((r) => r.status === "Resolved")
+    let avgResolutionStr = "—"
+    if (resolvedRows.length) {
+        const mins = Math.round(
+            resolvedRows.reduce((acc, r) => {
+                const start = new Date(r.createdAt).getTime()
+                const end = new Date().getTime()
+                return acc + Math.max(0, end - start) / 60000
+            }, 0) / resolvedRows.length,
+        )
+        const h = Math.floor(mins / 60)
+        const m = mins % 60
+        avgResolutionStr = `${h} HR ${m} MIN`
+    }
+
+    return {
+        totalComplaints: total,
+        pending,
+        resolved,
+        escalated,
+        avgResolutionTime: avgResolutionStr,
+        inProgress,
+    }
+}
+
+// Safe JSON fetch (avoids the "<!doctype" crash and ignores AbortError)
+async function getConcerns(from, to) {
+    const res = await ApiGet(`/admin/ipd-concern`)
+    return Array.isArray(res?.data) ? res.data : [res?.data].filter(Boolean)
+}
+
+
+// ===================== COMPONENT =====================
 export default function ComplaintManagementDashboard() {
-    const [dateFrom, setDateFrom] = useState("2024-01-01")
-    const [dateTo, setDateTo] = useState("2024-01-31")
+    const [dateFrom, setDateFrom] = useState(firstDayOfThisMonth())
+    const [dateTo, setDateTo] = useState(today())
+
     const [selectedStatus, setSelectedStatus] = useState("All Status")
     const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedComplaint, setSelectedComplaint] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [chartAnimated, setChartAnimated] = useState(false)
-const navigate = useNavigate()
+    const [top5Departments, setTop5Departments] = useState([]);
+
+    console.log('top5Departments', top5Departments)
 
 
-const handlenavigate =()=>{
-    navigate("/complaint-details")
-}
-    // Trigger chart animation on mount
+    const [rows, setRows] = useState([])
+    const [kpiData, setKpiData] = useState({
+        totalComplaints: 0,
+        pending: 0,
+        resolved: 0,
+        escalated: 0,
+        avgResolutionTime: "—",
+        inProgress: 0,
+    })
+    const [trendData, setTrendData] = useState([])
+    const [departmentColors, setDepartmentColors] = useState({})
+
+    const navigate = useNavigate()
+    const handlenavigate = () => navigate("/complaint-details")
+
     useEffect(() => {
-        const timer = setTimeout(() => setChartAnimated(true), 500)
-        return () => clearTimeout(timer)
+        const t = setTimeout(() => setChartAnimated(true), 500)
+        return () => clearTimeout(t)
     }, [])
 
-    // Sample data
-    const kpiData = {
-        totalComplaints: 35,
-        pending: 5,
-        resolved: 17,
-        escalated: 11,
-        avgResolutionTime: "2 HR 32 MIN",
-        inProgress: 3,
-    }
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            try {
+                const docs = await getConcerns(dateFrom, dateTo);
+                if (!alive) return;
 
-    // Line chart data for complaint trends
-    const trendData = [
-        { date: "Jan 15", OPD: 8, Canteen: 5, HK: 3, Nursing: 6 },
-        { date: "Jan 16", OPD: 12, Canteen: 7, HK: 4, Nursing: 8 },
-        { date: "Jan 17", OPD: 6, Canteen: 9, HK: 2, Nursing: 5 },
-        { date: "Jan 18", OPD: 10, Canteen: 4, HK: 6, Nursing: 7 },
-        { date: "Jan 19", OPD: 15, Canteen: 8, HK: 5, Nursing: 9 },
-        { date: "Jan 20", OPD: 9, Canteen: 6, HK: 3, Nursing: 4 },
-        { date: "Jan 21", OPD: 11, Canteen: 10, HK: 7, Nursing: 8 },
-    ]
+                // Flatten rows for table
+                const flattened = docs.flatMap(d => flattenConcernDoc(d));
+                setRows(flattened);
 
-    const departmentColors = {
-        OPD: "#3B82F6",
-        Canteen: "#EAB308",
-        HK: "#10B981",
-        Nursing: "#8B5CF6",
-    }
+                // KPI cards
+                setKpiData(computeKpis(flattened));
 
-    // Top 5 departments data
-    const topDepartments = [
-        { rank: 1, department: "Nursing", complaints: 150, avgResolution: "3 HR 15 MIN", escalations: 25 },
-        { rank: 2, department: "Canteen", complaints: 115, avgResolution: "1 HR 45 MIN", escalations: 18 },
-        { rank: 3, department: "OPD", complaints: 98, avgResolution: "2 HR 30 MIN", escalations: 15 },
-        { rank: 4, department: "Housekeeping", complaints: 87, avgResolution: "4 HR 20 MIN", escalations: 22 },
-        { rank: 5, department: "Pharmacy", complaints: 65, avgResolution: "1 HR 30 MIN", escalations: 8 },
-    ]
+                // Trend chart
+                const { data: trend, colors } = buildTrendData(flattened);
+                setTrendData(trend);
+                setDepartmentColors(colors);
 
-    // Floor-wise complaints pie chart data
-    const floorData = [
-        { label: "General", count: 45, percentage: 35, color: "#3B82F6" },
-        { label: "ICU", count: 32, percentage: 25, color: "#EF4444" },
-        { label: "Special", count: 25, percentage: 20, color: "#10B981" },
-        { label: "Deluxe", count: 18, percentage: 14, color: "#F59E0B" },
-        { label: "Emergency", count: 8, percentage: 6, color: "#8B5CF6" },
-    ]
+                // 🔥 Top-5 departments with stats
+                const deptStats = {};
 
-    // Enhanced complaint details data with more information
-    const complaintDetails = [
-        {
-            id: "CMP001",
-            date: "2024-01-15 10:30",
-            department: "Nursing",
-            doctor: "Dr. Sharma",
-            bedNo: "A-101",
-            patient: "John Smith",
-            contact: "+91 9876543210",
-            status: "Pending",
-            priority: "High",
-            assignedTo: "Nurse Manager - Sarah Johnson",
-            details:
-                "Staff response time is slow during night shift. Patient had to wait 45 minutes for assistance when calling for help. This is affecting patient satisfaction and recovery.",
-            actions: [
-                { date: "2024-01-15 10:30", action: "Complaint registered", by: "Reception" },
-                { date: "2024-01-15 11:00", action: "Assigned to Nursing Manager", by: "Admin" },
-                { date: "2024-01-15 14:30", action: "Investigation started", by: "Sarah Johnson" },
-            ],
-            category: "Service Quality",
-            expectedResolution: "2024-01-17 18:00",
-        },
-        {
-            id: "CMP002",
-            date: "2024-01-15 14:45",
-            department: "Canteen",
-            doctor: "Dr. Patel",
-            bedNo: "B-205",
-            patient: "Mary Johnson",
-            contact: "+91 9876543211",
-            status: "Resolved",
-            priority: "Medium",
-            assignedTo: "Canteen Manager - Raj Kumar",
-            details:
-                "Food quality complaint - too spicy. Patient requested mild food but received very spicy curry which caused discomfort. Patient has dietary restrictions due to gastric issues.",
-            actions: [
-                { date: "2024-01-15 14:45", action: "Complaint registered", by: "Nursing Staff" },
-                { date: "2024-01-15 15:00", action: "Assigned to Canteen Manager", by: "Admin" },
-                { date: "2024-01-15 16:30", action: "Kitchen staff briefed", by: "Raj Kumar" },
-                { date: "2024-01-16 08:00", action: "New meal provided", by: "Kitchen" },
-                { date: "2024-01-16 12:00", action: "Patient satisfied - Resolved", by: "Raj Kumar" },
-            ],
-            category: "Food Service",
-            expectedResolution: "2024-01-16 18:00",
-        },
-        {
-            id: "CMP003",
-            date: "2024-01-16 09:20",
-            department: "Housekeeping",
-            doctor: "Dr. Kumar",
-            bedNo: "C-301",
-            patient: "Robert Brown",
-            contact: "+91 9876543212",
-            status: "In Progress",
-            priority: "High",
-            assignedTo: "Housekeeping Supervisor - Priya Sharma",
-            details:
-                "Room cleaning not done properly, AC not working. Patient reported that bathroom was not cleaned for 2 days and air conditioning unit is making loud noise and not cooling properly.",
-            actions: [
-                { date: "2024-01-16 09:20", action: "Complaint registered", by: "Patient" },
-                { date: "2024-01-16 10:00", action: "Assigned to Housekeeping", by: "Admin" },
-                { date: "2024-01-16 11:30", action: "Room inspection done", by: "Priya Sharma" },
-                { date: "2024-01-16 14:00", action: "AC technician called", by: "Maintenance" },
-            ],
-            category: "Facility Management",
-            expectedResolution: "2024-01-18 16:00",
-        },
-        {
-            id: "CMP004",
-            date: "2024-01-16 16:30",
-            department: "OPD",
-            doctor: "Dr. Singh",
-            bedNo: "A-102",
-            patient: "Sarah Davis",
-            contact: "+91 9876543213",
-            status: "Escalated",
-            priority: "Critical",
-            assignedTo: "OPD Head - Dr. Mehta",
-            details:
-                "Long waiting time for consultation. Patient waited for 3 hours despite having an appointment. This caused significant distress as patient had to take time off work.",
-            actions: [
-                { date: "2024-01-16 16:30", action: "Complaint registered", by: "Patient" },
-                { date: "2024-01-16 17:00", action: "Assigned to OPD Manager", by: "Admin" },
-                { date: "2024-01-17 09:00", action: "Escalated to OPD Head", by: "OPD Manager" },
-                { date: "2024-01-17 11:00", action: "Meeting scheduled with patient", by: "Dr. Mehta" },
-            ],
-            category: "Appointment Management",
-            expectedResolution: "2024-01-19 17:00",
-        },
-        {
-            id: "CMP005",
-            date: "2024-01-17 11:15",
-            department: "Pharmacy",
-            doctor: "Dr. Sharma",
-            bedNo: "B-206",
-            patient: "Michael Wilson",
-            contact: "+91 9876543214",
-            status: "Resolved",
-            priority: "Medium",
-            assignedTo: "Chief Pharmacist - Dr. Gupta",
-            details:
-                "Medicine not available, had to wait 2 hours. Prescribed medication was out of stock and patient had to wait while alternative was arranged.",
-            actions: [
-                { date: "2024-01-17 11:15", action: "Complaint registered", by: "Patient" },
-                { date: "2024-01-17 11:30", action: "Assigned to Chief Pharmacist", by: "Admin" },
-                { date: "2024-01-17 12:00", action: "Alternative medicine arranged", by: "Dr. Gupta" },
-                { date: "2024-01-17 13:30", action: "Medicine provided - Resolved", by: "Pharmacy" },
-            ],
-            category: "Medication Management",
-            expectedResolution: "2024-01-17 18:00",
-        },
-    ]
-
-    const filteredComplaints = complaintDetails.filter(
-        (complaint) =>
-            complaint.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            complaint.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            complaint.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            complaint.id.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "Pending":
-                return "bg-yellow-100 text-yellow-800"
-            case "Resolved":
-                return "bg-green-100 text-green-800"
-            case "Escalated":
-                return "bg-red-100 text-red-800"
-            case "In Progress":
-                return "bg-blue-100 text-blue-800"
-            default:
-                return "bg-gray-100 text-gray-800"
+                docs.forEach(doc => {
+    const depts = flattenConcernDocForStats(doc);
+    depts.forEach(d => {
+        if (!d.department) return;
+        if (!deptStats[d.department]) {
+            deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
         }
-    }
+        deptStats[d.department].complaints += 1;
+        deptStats[d.department].totalResolution += d.resolutionTime || 0;
+        if (d.escalated) deptStats[d.department].escalations += 1;
+    });
+});
 
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case "Critical":
-                return "bg-red-100 text-red-800"
-            case "High":
-                return "bg-orange-100 text-orange-800"
-            case "Medium":
-                return "bg-yellow-100 text-yellow-800"
-            case "Low":
-                return "bg-green-100 text-green-800"
-            default:
-                return "bg-gray-100 text-gray-800"
-        }
-    }
+
+                const statsArray = Object.entries(deptStats).map(([department, stats]) => ({
+                    department,
+                    complaints: stats.complaints,
+                    avgResolution: stats.complaints
+                        ? (stats.totalResolution / stats.complaints).toFixed(1) + " days"
+                        : "-",
+                    escalations: stats.escalations,
+                }));
+
+                const top5 = statsArray
+                    .sort((a, b) => b.complaints - a.complaints)
+                    .slice(0, 5)
+                    .map((dept, idx) => ({
+                        rank: idx + 1,
+                        ...dept,
+                    }));
+
+                setTop5Departments(top5);
+            } catch (e) {
+                if (!alive) return;
+                console.error("Failed to load concerns", e);
+                setRows([]);
+                setKpiData(computeKpis([]));
+                setTrendData([]);
+                setDepartmentColors({});
+                setTop5Departments([]);
+            }
+        })();
+        return () => {
+            alive = false;
+        };
+    }, [dateFrom, dateTo]);
+
+
+
+
+    // ====== DERIVED ======
+    const filteredComplaints = useMemo(() => {
+        return rows
+            .filter((c) =>
+                [c.patient, c.department, c.details, c.id].some((v) =>
+                    String(v || "").toLowerCase().includes(searchTerm.toLowerCase()),
+                ),
+            )
+            .filter((c) => (selectedStatus === "All Status" ? true : c.status === selectedStatus))
+            .filter((c) => (selectedDepartment === "All Departments" ? true : c.department === selectedDepartment))
+    }, [rows, searchTerm, selectedStatus, selectedDepartment])
+
+    // const top5Departments = useMemo(() => {
+    //     const counts = {}
+    //     rows.forEach((r) => {
+    //         counts[r.department] = (counts[r.department] || 0) + 1
+    //     })
+    //     return Object.entries(counts)
+    //         .map(([department, complaints], i) => ({
+    //             rank: i + 1,
+    //             department,
+    //             complaints,
+    //             avgResolution: "—",
+    //             escalations: rows.filter((r) => r.department === department && r.priority === "Urgent").length,
+    //         }))
+    //         .sort((a, b) => b.complaints - a.complaints)
+    //         .slice(0, 5)
+    //         .map((x, i) => ({ ...x, rank: i + 1 }))
+    // }, [rows])
 
     const openModal = (complaint) => {
         setSelectedComplaint(complaint)
         setIsModalOpen(true)
         document.body.style.overflow = "hidden"
     }
-
     const closeModal = () => {
         setIsModalOpen(false)
         setSelectedComplaint(null)
         document.body.style.overflow = ""
     }
-
     const exportToExcel = () => {
         alert("Export functionality would be implemented here")
     }
 
-    // Animated Donut Chart Component
+    // ===================== CHARTS (design preserved) =====================
     const AnimatedDonutChart = ({ data }) => {
         const size = 200
         const strokeWidth = 40
         const radius = (size - strokeWidth) / 2
         const circumference = radius * 2 * Math.PI
-
         let cumulativePercentage = 0
 
         return (
@@ -317,30 +499,35 @@ const handlenavigate =()=>{
         )
     }
 
-    // Animated Multi-line Chart Component
     const AnimatedMultiLineChart = ({ data, colors }) => {
         const width = 500
         const height = 250
         const padding = 50
 
         const departments = Object.keys(colors)
-        const allValues = data.flatMap((d) => departments.map((dept) => d[dept]))
-        const maxValue = Math.max(...allValues)
-        const minValue = Math.min(...allValues)
-        const valueRange = maxValue - minValue || 1
+        if (departments.length === 0) {
+            return (
+                <div className="w-full">
+                    <svg width={width} height={height} className="w-full h-auto"></svg>
+                </div>
+            )
+        }
 
-        const getPoints = (department) => {
-            return data.map((item, index) => {
-                const x = padding + (index * (width - 2 * padding)) / (data.length - 1)
+        const allValues = data.flatMap((d) => departments.map((dept) => d[dept] ?? 0))
+        const maxValue = Math.max(1, ...allValues)
+        const minValue = Math.min(0, ...allValues)
+        const valueRange = Math.max(1, maxValue - minValue)
+
+        const getPoints = (department) =>
+            data.map((item, index) => {
+                const x = padding + (index * (width - 2 * padding)) / Math.max(1, data.length - 1)
                 const y = height - padding - ((item[department] - minValue) / valueRange) * (height - 2 * padding)
                 return { x, y, value: item[department], date: item.date }
             })
-        }
 
         return (
             <div className="w-full">
                 <svg width={width} height={height} className="w-full h-auto">
-                    {/* Animated Grid lines */}
                     {[0, 1, 2, 3, 4].map((i) => {
                         const y = padding + (i * (height - 2 * padding)) / 4
                         return (
@@ -353,15 +540,11 @@ const handlenavigate =()=>{
                                 stroke="#f3f4f6"
                                 strokeWidth="1"
                                 className="transition-all duration-1000"
-                                style={{
-                                    strokeDasharray: chartAnimated ? "none" : "5,5",
-                                    opacity: chartAnimated ? 1 : 0.3,
-                                }}
+                                style={{ strokeDasharray: chartAnimated ? "none" : "5,5", opacity: chartAnimated ? 1 : 0.3 }}
                             />
                         )
                     })}
 
-                    {/* Y-axis labels */}
                     {[0, 1, 2, 3, 4].map((i) => {
                         const y = padding + (i * (height - 2 * padding)) / 4
                         const value = Math.round(maxValue - (i * valueRange) / 4)
@@ -371,8 +554,7 @@ const handlenavigate =()=>{
                                 x={padding - 10}
                                 y={y + 5}
                                 textAnchor="end"
-                                className={`text-xs fill-gray-500 transition-all duration-500 ${chartAnimated ? "opacity-100" : "opacity-0"
-                                    }`}
+                                className={`text-xs fill-gray-500 transition-all duration-500 ${chartAnimated ? "opacity-100" : "opacity-0"}`}
                                 style={{ transitionDelay: `${i * 100}ms` }}
                             >
                                 {value}
@@ -380,11 +562,9 @@ const handlenavigate =()=>{
                         )
                     })}
 
-                    {/* Animated Lines for each department */}
                     {departments.map((department, deptIndex) => {
                         const points = getPoints(department)
-                        const pathData = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ")
-
+                        const pathData = points.map((pt, idx) => `${idx === 0 ? "M" : "L"} ${pt.x} ${pt.y}`).join(" ")
                         return (
                             <g key={department}>
                                 <path
@@ -401,11 +581,11 @@ const handlenavigate =()=>{
                                         transitionDelay: `${deptIndex * 300}ms`,
                                     }}
                                 />
-                                {points.map((point, index) => (
+                                {points.map((pt, idx) => (
                                     <circle
-                                        key={index}
-                                        cx={point.x}
-                                        cy={point.y}
+                                        key={idx}
+                                        cx={pt.x}
+                                        cy={pt.y}
                                         r="4"
                                         fill={colors[department]}
                                         stroke="white"
@@ -413,7 +593,7 @@ const handlenavigate =()=>{
                                         className="transition-all duration-500 ease-out"
                                         style={{
                                             transform: chartAnimated ? "scale(1)" : "scale(0)",
-                                            transitionDelay: `${deptIndex * 300 + index * 100}ms`,
+                                            transitionDelay: `${deptIndex * 300 + idx * 100}ms`,
                                         }}
                                     />
                                 ))}
@@ -421,9 +601,8 @@ const handlenavigate =()=>{
                         )
                     })}
 
-                    {/* X-axis labels */}
                     {data.map((item, index) => {
-                        const x = padding + (index * (width - 2 * padding)) / (data.length - 1)
+                        const x = padding + (index * (width - 2 * padding)) / Math.max(1, data.length - 1)
                         return (
                             <text
                                 key={index}
@@ -440,7 +619,6 @@ const handlenavigate =()=>{
                     })}
                 </svg>
 
-                {/* Animated Legend */}
                 <div className="flex justify-center mt-4 space-x-6">
                     {departments.map((dept, index) => (
                         <div
@@ -458,6 +636,7 @@ const handlenavigate =()=>{
         )
     }
 
+    // ===================== UI (design unchanged) =====================
     return (
         <>
             <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
@@ -469,10 +648,9 @@ const handlenavigate =()=>{
 
                             <div className="">
                                 <div className="">
-            <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
-                        <OpdFilter />
-                          </div>
-
+                                    <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
+                                        <OpdFilter />
+                                    </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-5 gap-2 mb-2">
                                         <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-blue-500">
@@ -520,20 +698,10 @@ const handlenavigate =()=>{
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-indigo-500">
-                                            <div className="flex items-center">
-                                                <AlertTriangle className="w-6 h-6 text-indigo-600 mr-3" />
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-600">In Progress</p>
-                                                    <p className="text-xl font-[600] text-gray-900">{kpiData.inProgress}</p>
-                                                </div>
-                                            </div>
-                                        </div> */}
                                     </div>
 
                                     {/* Charts Row */}
                                     <div className=" flex mt-[20px]  gap-6 mb-6">
-                                        {/* Complaint Trend Graph */}
                                         <div className="bg-white border rounded-lg shadow-sm p-4">
                                             <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
                                             <div className="flex justify-center">
@@ -541,14 +709,22 @@ const handlenavigate =()=>{
                                             </div>
                                         </div>
 
-                                        {/* Floor-wise Complaints Pie Chart */}
                                         <div className="bg-white  rounded-lg  border shadow-sm p-4">
                                             <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
                                             <div className="flex justify-center">
-                                                <AnimatedDonutChart data={floorData} />
+                                                <AnimatedDonutChart
+                                                    data={[
+                                                        { label: "General", count: 45, percentage: 35, color: "#3B82F6" },
+                                                        { label: "ICU", count: 32, percentage: 25, color: "#EF4444" },
+                                                        { label: "Special", count: 25, percentage: 20, color: "#10B981" },
+                                                        { label: "Deluxe", count: 18, percentage: 14, color: "#F59E0B" },
+                                                        { label: "Emergency", count: 8, percentage: 6, color: "#8B5CF6" },
+                                                    ]}
+                                                />
                                             </div>
                                         </div>
                                     </div>
+
                                     <div className=" flex items-start gap-[10px]">
                                         <div className="bg-white border shadow-sm rounded-lg  overflow-hidden mb-6">
                                             <div className="px-6 py-2 border-b border-gray-200">
@@ -576,31 +752,40 @@ const handlenavigate =()=>{
                                                         </tr>
                                                     </thead>
                                                     <tbody className="bg-white">
-                                                        {topDepartments.map((dept, index) => (
-                                                            <tr
-                                                
-                                                                key={index}
-                                                                className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
-                                                            >
-                                                                <td className="px-6 py-2 text-sm font-[600] text-gray-900">
-                                                                    <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full">
-                                                                        {dept.rank}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">{dept.department}</td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-red-100 text-red-800">
-                                                                        {dept.complaints}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">{dept.avgResolution}</td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-orange-100 text-orange-800">
-                                                                        {dept.escalations}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
+                                                        {top5Departments.map((dept) => (
+  <tr
+    key={dept.rank}
+    className={`${dept.rank % 2 === 1 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+  >
+    <td className="px-6 py-2 text-sm font-[600] text-gray-900">
+      <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full">
+        {dept.rank}
+      </span>
+    </td>
+
+    {/* ✅ only show text if department is defined */}
+    <td className="px-6 py-2 text-sm font-medium text-gray-900">
+      {dept.department || ""}
+    </td>
+
+    <td className="px-6 py-2 text-sm text-gray-900">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-red-100 text-red-800">
+        {dept.complaints}
+      </span>
+    </td>
+    <td className="px-6 py-2 text-sm text-gray-900">
+      {dept.avgResolution || ""}
+    </td>
+    <td className="px-6 py-2 text-sm text-gray-900">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-orange-100 text-orange-800">
+        {dept.escalations}
+      </span>
+    </td>
+  </tr>
+))}
+
+
+
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -641,7 +826,6 @@ const handlenavigate =()=>{
                                                                             ? "bg-purple-100 border border-purple-800 text-purple-800"
                                                                             : "bg-indigo-100 border border-indigo-800 text-indigo-800"
                                                             }`}
-
                                                     >
                                                         {word}
                                                     </span>
@@ -690,7 +874,7 @@ const handlenavigate =()=>{
                                                     {filteredComplaints.map((complaint, index) => (
                                                         <tr
                                                             key={complaint.id}
-                                                                        onClick={handlenavigate}
+                                                            onClick={handlenavigate}
                                                             className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                         >
                                                             <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.id}</td>
@@ -716,14 +900,19 @@ const handlenavigate =()=>{
                                                             <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
                                                             <td className="px-6 py-2 text-sm">
                                                                 <span
-                                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(complaint.status)}`}
+                                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
+                                                                        complaint.status,
+                                                                    )}`}
                                                                 >
                                                                     {complaint.status}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-2 text-sm text-gray-900">
                                                                 <button
-                                                                    onClick={() => openModal(complaint)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        openModal(complaint)
+                                                                    }}
                                                                     className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                                                                 >
                                                                     <Eye className="w-4 h-4 mr-1" />
@@ -732,6 +921,13 @@ const handlenavigate =()=>{
                                                             </td>
                                                         </tr>
                                                     ))}
+                                                    {filteredComplaints.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                No complaints found for the selected range.
+                                                            </td>
+                                                        </tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -813,7 +1009,9 @@ const handlenavigate =()=>{
                                                                         <div className="flex items-center">
                                                                             <span className="text-sm text-gray-600 mr-3">Status:</span>
                                                                             <span
-                                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(selectedComplaint.status)}`}
+                                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
+                                                                                    selectedComplaint.status,
+                                                                                )}`}
                                                                             >
                                                                                 {selectedComplaint.status}
                                                                             </span>
@@ -821,7 +1019,9 @@ const handlenavigate =()=>{
                                                                         <div className="flex items-center">
                                                                             <span className="text-sm text-gray-600 mr-3">Priority:</span>
                                                                             <span
-                                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getPriorityColor(selectedComplaint.priority)}`}
+                                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getPriorityColor(
+                                                                                    selectedComplaint.priority,
+                                                                                )}`}
                                                                             >
                                                                                 {selectedComplaint.priority}
                                                                             </span>
@@ -846,13 +1046,13 @@ const handlenavigate =()=>{
                                                             <div className="space-y-4 mb-[15px]">
                                                                 <div className="bg-gray-50 border h-[182px] p-3 rounded-lg">
                                                                     <h4 className="text-lg font-semibold text-gray-900 mb-3">Complaint Details</h4>
-                                                                    <p className="text-gray-600 leading-[21px] text-[14px] " >{selectedComplaint.details}</p>
+                                                                    <p className="text-gray-600 leading-[21px] text-[14px] ">{selectedComplaint.details}</p>
                                                                 </div>
 
                                                                 <div className="bg-gray-50 p-3 border rounded-lg">
                                                                     <h4 className="text-lg font-semibold text-gray-900 mb-3">Action History</h4>
                                                                     <div className="space-y-3">
-                                                                        {selectedComplaint.actions.map((action, index) => (
+                                                                        {(selectedComplaint.actions || []).map((action, index) => (
                                                                             <div key={index} className="flex items-start space-x-3">
                                                                                 <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                                                                                 <div className="flex-1">
@@ -869,36 +1069,17 @@ const handlenavigate =()=>{
                                                             </div>
                                                         </div>
                                                     </div>
-{/* 
-                                                    <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                                        <button
-                                                            onClick={closeModal}
-                                                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                                                        >
-                                                            Close
-                                                        </button>
-                                                        <button
-                                                            onClick={() => alert("Update status functionality would be implemented here")}
-                                                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                                                        >
-                                                            Update Status
-                                                        </button>
-                                                    </div> */}
                                                 </div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        </div>
 
+                        </div>
                     </div>
                 </div>
             </section>
-
-
-
-
         </>
     )
 }

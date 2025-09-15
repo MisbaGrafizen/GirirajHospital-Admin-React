@@ -6,7 +6,10 @@ import LightCard from './LitghtCard';
 import ReactApexChart from 'react-apexcharts';
 import { CurrencyChartData } from '../../../Data/DefaultDashboard/Chart';
 import { LightCardData } from '../../../Data/DefaultDashboard';
-const OverallBalance = () => {
+const OverallBalance = ({ kpis, opdSummary }) => {
+   const totalAll = Number(kpis?.totalFeedback?.value ?? kpis?.totalFeedback ?? 0);
+   const totalOPD = Number(opdSummary?.responses ?? 0);
+   const totalIPD = Math.max(0, totalAll - totalOPD);
   return (
     <Col xxl='8' lg='12' className='box-col-12'>
       <Card>
@@ -23,22 +26,46 @@ const OverallBalance = () => {
                       <UL attrUL={{ horizontal: true, className: 'd-flex balance-data' }}>
                         <LI>
                           <span className='circle bg-warning'> </span>
-                          <span className='f-light ms-1'>{Earning}</span>
+                          <span className='f-light ms-1'>IPD</span>
                         </LI>
                         <LI>
                           <span className='circle bg-primary'> </span>
-                          <span className='f-light ms-1'>{Expense}</span>
+                          <span className='f-light ms-1'>OPD</span>
                         </LI>
                       </UL>
                       <div className='current-sale-container'>
-                        <ReactApexChart type='bar' height={300} options={CurrencyChartData.options} series={CurrencyChartData.series} />
+                        {/* <ReactApexChart type='bar' height={300} options={CurrencyChartData.options} series={CurrencyChartData.series} /> */}
+                         <ReactApexChart
+                         type='bar'
+                         height={300}
+                         options={{
+                           ...CurrencyChartData.options,
+                           xaxis: {
+                             ...CurrencyChartData.options.xaxis,
+                             // use backend labels if present
+                             categories: (kpis?.earning?.labels?.length
+                               ? kpis.earning.labels
+                               : CurrencyChartData.options.xaxis.categories),
+                           },
+                         }}
+                         series={[
+                           {
+                             name: 'IPD',
+                             data: Array.isArray(kpis?.earning?.series) ? kpis.earning.series : [],
+                           },
+                           {
+                             name: 'OPD',
+                             data: Array.isArray(kpis?.expense?.series) ? kpis.expense.series : [],
+                           },
+                         ]}
+                       />
                       </div>
                     </CardBody>
                   </Col>
                 </Row>
               </div>
             </Col>
-            <LightCard LightCardData={LightCardData} />
+            <LightCard LightCardData={LightCardData} totals={{ ipd: totalIPD, opd: totalOPD }} />
           </Row>
         </CardBody>
       </Card>
