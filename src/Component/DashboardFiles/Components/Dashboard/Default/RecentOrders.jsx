@@ -18,7 +18,7 @@ const RecentOrders = () => {
             </div>
           </div>
         </CardHeader>
-        <CardBody className='pt-0'>
+        <CardBody className='pt-0 pb-1'>
           <Row className='recent-wrapper'>
             <Col xl='6'>
               <div className='recent-chart'>
