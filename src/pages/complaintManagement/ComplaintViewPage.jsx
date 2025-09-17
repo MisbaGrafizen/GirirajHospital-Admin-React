@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSideBar'
 import { motion, AnimatePresence } from "framer-motion"
@@ -37,22 +37,25 @@ const DEPT_LABEL = {
 
 // a block is "present" if it has any content (topic/mode/text/attachments)
 function blockHasContent(block) {
-    if (!block || typeof block !== "object") return false;
-    const hasText = typeof block.text === "string" && block.text.trim().length > 0;
-    const hasTopic = typeof block.topic === "string" && block.topic.trim().length > 0;
-    const hasMode = typeof block.mode === "string" && block.mode.trim().length > 0;
-    const hasFiles = Array.isArray(block.attachments) && block.attachments.length > 0;
-    return hasText || hasTopic || hasMode || hasFiles;
+  if (!block) return false;
+
+  const hasText = block.text && block.text.trim() !== "";
+  const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+
+  return hasText || hasAttachments;
 }
+
 
 
 function mapStatusUI(status) {
     const s = String(status || "").toLowerCase();
-    if (s === "open") return "Pending";
+    if (s === "open") return "Open";
     if (s === "in_progress") return "In Progress";
-    if (s === "resolved" || s === "closed") return "Closed";
-    return status || "Pending";
+    if (s === "resolved") return "Resolved";
+    if (s === "escalated") return "Escalated";
+    return "Pending"; // fallback for unexpected status
 }
+
 
 const ServiceBlock = ({ label, block }) => {
     return (
@@ -195,6 +198,7 @@ export default function ComplaintViewPage() {
 
     const complaint = {
         id: row.id || row._id || fullDoc?._id || "—",
+        complaintId: row.complaintId || fullDoc?.complaintId || "—",
         date: row.date || row.createdAt || fullDoc?.createdAt || "—",
         patient: row.patient || fullDoc?.patientName || "—",
         bedNo: row.bedNo || fullDoc?.bedNo || "—",
@@ -458,6 +462,35 @@ export default function ComplaintViewPage() {
         }
     };
 
+    useEffect(() => {
+        if (!complaint.id) return;
+        (async () => {
+            try {
+                setLoadingHistory(true);
+                const data = await fetchConcernHistory(complaint.id);
+                setHistoryData(data);
+            } catch (err) {
+                console.error("History Error:", err);
+            } finally {
+                setLoadingHistory(false);
+            }
+        })();
+    }, [complaint.id]);
+
+    // Get latest forwarded department
+    const latestForward = React.useMemo(() => {
+        if (!Array.isArray(historyData)) return null;
+        const last = [...historyData].reverse().find(h => h.type === "forwarded");
+        return last ? DEPT_LABEL[last.department] || last.department : null;
+    }, [historyData]);
+
+    // Get latest escalation
+    const latestEscalation = React.useMemo(() => {
+        if (!Array.isArray(historyData)) return null;
+        const last = [...historyData].reverse().find(h => h.type === "escalated");
+        return last ? last.level : null;
+    }, [historyData]);
+
 
     const handleFileUpload = (event) => {
         const file = event.target.files[0]
@@ -618,8 +651,10 @@ export default function ComplaintViewPage() {
                                                     {/* Service Feedback Section */}
                                                     <div className="space-y-4">
                                                         {Object.keys(fullDoc).map((key) => {
-                                                            if (!DEPT_LABEL[key]) return null; // only known service keys
+                                                            if (!DEPT_LABEL[key]) return null;
                                                             const block = fullDoc[key];
+                                                            if (!blockHasContent(block)) return null;
+
                                                             return (
                                                                 <div key={key} className="bg-gray-50 rounded-lg p-4 mb-3">
                                                                     <h3 className="text-md font-semibold text-gray-900 mb-2">{DEPT_LABEL[key]}</h3>
@@ -635,36 +670,34 @@ export default function ComplaintViewPage() {
                                                                         </p>
                                                                     )}
 
-                                                                    {Array.isArray(block?.attachments) && block.attachments.length > 0 ? (
+                                                                    {Array.isArray(block?.attachments) && block.attachments.length > 0 && (
                                                                         <div className="mt-2 space-y-2">
-                                                                            {block.attachments.map((att, i) => (
-                                                                                <div key={i} className="p-2 bg-white border rounded-md">
-                                                                                    {/\.(jpg|jpeg|png|gif)$/i.test(att) ? (
-                                                                                        <img
-                                                                                            src={att}
-                                                                                            alt="attachment"
-                                                                                            className="w-48 h-auto rounded-md border"
-                                                                                        />
-                                                                                    ) : /\.(mp3|wav|ogg)$/i.test(att) ? (
-                                                                                        <audio controls className="w-full">
-                                                                                            <source src={att} />
-                                                                                            Your browser does not support audio playback.
-                                                                                        </audio>
-                                                                                    ) : (
-                                                                                        <a
-                                                                                            href={att}
-                                                                                            target="_blank"
-                                                                                            rel="noopener noreferrer"
-                                                                                            className="text-blue-600 underline"
-                                                                                        >
-                                                                                            {att}
-                                                                                        </a>
-                                                                                    )}
-                                                                                </div>
-                                                                            ))}
+                                                                            {block.attachments.map((att, i) => {
+                                                                                const url = att.trim().toLowerCase();
+                                                                                const isImage = /\.(jpg|jpeg|png|gif)$/i.test(url);
+                                                                                const isAudio = /\.(mp3|wav|ogg)$/i.test(url) || att.endsWith(".");
+                                                                                const isPDF = /\.pdf$/i.test(url);
+
+                                                                                return (
+                                                                                    <div key={i} className="p-2 bg-white border rounded-md">
+                                                                                        {isImage ? (
+                                                                                            <img src={att} alt="attachment" className="w-48 h-auto rounded-md border" />
+                                                                                        ) : isAudio ? (
+                                                                                            <audio controls className="w-full">
+                                                                                                <source src={att} type="audio/mpeg" />
+                                                                                                Your browser does not support audio playback.
+                                                                                            </audio>
+                                                                                        ) : isPDF ? (
+                                                                                            <embed src={att} type="application/pdf" className="w-full h-64 border rounded-md" />
+                                                                                        ) : (
+                                                                                            <a href={att} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                                                                                                {att}
+                                                                                            </a>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
                                                                         </div>
-                                                                    ) : (
-                                                                        <p className="text-sm text-gray-400 italic">No attachments</p>
                                                                     )}
                                                                 </div>
                                                             );
@@ -672,21 +705,27 @@ export default function ComplaintViewPage() {
 
 
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="p-3 bg-blue-50 rounded-lg">
-                                                                <p className="text-sm text-blue-600 font-medium">Assigned To</p>
-                                                                <p className="text-blue-900">{complaint.assignedTo}</p>
-                                                            </div>
-                                                            <div className="p-3 bg-orange-50 rounded-lg">
-                                                                <p className="text-sm text-orange-600 font-medium">Expected Resolution</p>
-                                                                <p className="text-orange-900">{complaint.expectedResolution}</p>
-                                                            </div>
-                                                        </div>
 
-                                                        <div className="p-4 bg-yellow-50 rounded-lg">
-                                                            <h3 className="font-medium text-yellow-900 mb-2">Escalation Remarks</h3>
-                                                            <p className="text-yellow-800">{complaint.escalationRemarks}</p>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {latestForward && (
+                                                                <div className="p-3 bg-blue-50 rounded-lg">
+                                                                    <p className="text-sm text-blue-600 font-medium">Assigned To</p>
+                                                                    <p className="text-blue-900">{latestForward}</p>
+                                                                </div>
+                                                            )}
+                                                            {latestEscalation && (
+                                                                <div className="p-3 bg-orange-50 rounded-lg">
+                                                                    <p className="text-sm text-orange-600 font-medium">Expected Resolution</p>
+                                                                    <p className="text-orange-900">{latestEscalation}</p>
+                                                                </div>
+                                                            )}
                                                         </div>
+                                                        {complaint.escalationRemarks && (
+                                                            <div className="p-4 bg-yellow-50 rounded-lg">
+                                                                <h3 className="font-medium text-yellow-900 mb-2">Escalation Remarks</h3>
+                                                                <p className="text-yellow-800">{complaint.escalationRemarks}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
 
 

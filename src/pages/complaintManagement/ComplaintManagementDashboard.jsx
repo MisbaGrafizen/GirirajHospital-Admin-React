@@ -75,10 +75,20 @@ const fmtDateLabel = (iso) => {
 
 // ===================== STATUS / PRIORITY UI =====================
 const mapStatusUI = (status) => {
-    if (status === "resolved") return "Resolved"
-    if (status === "in_progress") return "In Progress"
-    return "Pending"
-}
+  switch (status) {
+    case "resolved":
+      return "Resolved";
+    case "in_progress":
+      return "In Progress";
+    case "escalated":
+      return "Escalated";
+    case "open":
+      return "Open";
+    default:
+      return "Pending"; 
+  }
+};
+
 const getStatusColor = (status) => {
     switch (status) {
         case "Pending":
@@ -129,6 +139,7 @@ function flattenConcernDoc(doc) {
     return [
         {
             id: doc._id,
+            complaintId: doc.complaintId,
             date: dateStr,
             department: departments.join(", "),
             doctor: doc.consultantDoctorName || "-",
@@ -443,6 +454,8 @@ export default function ComplaintManagementDashboard() {
             )
             .filter((c) => (selectedStatus === "All Status" ? true : c.status === selectedStatus));
     }, [rows, searchTerm, selectedStatus]);
+
+    console.log('filteredComplaints', filteredComplaints)
 
 
     useEffect(() => {
