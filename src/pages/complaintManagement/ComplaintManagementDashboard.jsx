@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import {
     Calendar,
     Download,
@@ -148,6 +148,21 @@ function flattenConcernDoc(doc) {
 
 }
 
+const hasConcernContent = (b) => {
+  if (!b || typeof b !== "object") return false;
+  const hasText = typeof b.text === "string" && b.text.trim().length > 0;
+  const hasFiles = Array.isArray(b.attachments) && b.attachments.length > 0;
+  return hasText || hasFiles;
+};
+
+// Collect department labels as comma-separated string
+const getDepartmentsString = (doc) =>
+  CONCERN_KEYS
+    .filter((k) => hasConcernContent(doc?.[k]))
+    .map((k) => DEPT_LABEL[k])
+    .join(", ");
+
+
 function flattenConcernDocForTable(doc) {
     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
     const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
@@ -290,6 +305,14 @@ async function getConcerns(from, to) {
     return Array.isArray(res?.data) ? res.data : [res?.data].filter(Boolean)
 }
 
+// Reverse map: "Doctor Services" -> "doctorServices"
+const LABEL_TO_KEY = Object.fromEntries(
+    Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
+);
+
+// pick a date field from a concern doc
+const getDocDate = (d) => d?.createdAt || d?.updatedAt || d?.date || null;
+
 
 // ===================== COMPONENT =====================
 export default function ComplaintManagementDashboard() {
@@ -303,6 +326,14 @@ export default function ComplaintManagementDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [chartAnimated, setChartAnimated] = useState(false)
     const [top5Departments, setTop5Departments] = useState([]);
+    const [rawConcerns, setRawConcerns] = useState([]);
+    const [filters, setFilters] = useState({
+        from: '',                 // "YYYY-MM-DD"
+        to: '',                   // "YYYY-MM-DD"
+        service: 'All Services',  // matches your UI labels
+        doctor: '',               // blank means All Doctors
+    });
+
 
     console.log('top5Departments', top5Departments)
 
@@ -320,114 +351,217 @@ export default function ComplaintManagementDashboard() {
     const [departmentColors, setDepartmentColors] = useState({})
 
     const navigate = useNavigate()
-    const handlenavigate = () => navigate("/complaint-details")
+    const handlenavigate = (complaintRow, fullDoc) => {
+  navigate("/complaint-details", { state: { complaint: complaintRow, doc: fullDoc } });
+};
+
 
     useEffect(() => {
         const t = setTimeout(() => setChartAnimated(true), 500)
         return () => clearTimeout(t)
     }, [])
 
-    useEffect(() => {
-        let alive = true;
-        (async () => {
-            try {
-                const docs = await getConcerns(dateFrom, dateTo);
-                if (!alive) return;
+    //     useEffect(() => {
+    //         let alive = true;
+    //         (async () => {
+    //             try {
+    //                 const docs = await getConcerns(dateFrom, dateTo);
+    //                 if (!alive) return;
 
-                // Flatten rows for table
-                const flattened = docs.flatMap(d => flattenConcernDoc(d));
-                setRows(flattened);
+    //                 // Flatten rows for table
+    //                 const flattened = docs.flatMap(d => flattenConcernDoc(d));
+    //                 setRows(flattened);
 
-                // KPI cards
-                setKpiData(computeKpis(flattened));
+    //                 // KPI cards
+    //                 setKpiData(computeKpis(flattened));
 
-                // Trend chart
-                const { data: trend, colors } = buildTrendData(flattened);
-                setTrendData(trend);
-                setDepartmentColors(colors);
+    //                 // Trend chart
+    //                 const { data: trend, colors } = buildTrendData(flattened);
+    //                 setTrendData(trend);
+    //                 setDepartmentColors(colors);
 
-                // 🔥 Top-5 departments with stats
-                const deptStats = {};
+    //                 // 🔥 Top-5 departments with stats
+    //                 const deptStats = {};
 
-                docs.forEach(doc => {
-    const depts = flattenConcernDocForStats(doc);
-    depts.forEach(d => {
-        if (!d.department) return;
-        if (!deptStats[d.department]) {
-            deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-        }
-        deptStats[d.department].complaints += 1;
-        deptStats[d.department].totalResolution += d.resolutionTime || 0;
-        if (d.escalated) deptStats[d.department].escalations += 1;
-    });
-});
+    //                 docs.forEach(doc => {
+    //     const depts = flattenConcernDocForStats(doc);
+    //     depts.forEach(d => {
+    //         if (!d.department) return;
+    //         if (!deptStats[d.department]) {
+    //             deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+    //         }
+    //         deptStats[d.department].complaints += 1;
+    //         deptStats[d.department].totalResolution += d.resolutionTime || 0;
+    //         if (d.escalated) deptStats[d.department].escalations += 1;
+    //     });
+    // });
 
 
-                const statsArray = Object.entries(deptStats).map(([department, stats]) => ({
-                    department,
-                    complaints: stats.complaints,
-                    avgResolution: stats.complaints
-                        ? (stats.totalResolution / stats.complaints).toFixed(1) + " days"
-                        : "-",
-                    escalations: stats.escalations,
-                }));
+    //                 const statsArray = Object.entries(deptStats).map(([department, stats]) => ({
+    //                     department,
+    //                     complaints: stats.complaints,
+    //                     avgResolution: stats.complaints
+    //                         ? (stats.totalResolution / stats.complaints).toFixed(1) + " days"
+    //                         : "-",
+    //                     escalations: stats.escalations,
+    //                 }));
 
-                const top5 = statsArray
-                    .sort((a, b) => b.complaints - a.complaints)
-                    .slice(0, 5)
-                    .map((dept, idx) => ({
-                        rank: idx + 1,
-                        ...dept,
-                    }));
+    //                 const top5 = statsArray
+    //                     .sort((a, b) => b.complaints - a.complaints)
+    //                     .slice(0, 5)
+    //                     .map((dept, idx) => ({
+    //                         rank: idx + 1,
+    //                         ...dept,
+    //                     }));
 
-                setTop5Departments(top5);
-            } catch (e) {
-                if (!alive) return;
-                console.error("Failed to load concerns", e);
-                setRows([]);
-                setKpiData(computeKpis([]));
-                setTrendData([]);
-                setDepartmentColors({});
-                setTop5Departments([]);
-            }
-        })();
-        return () => {
-            alive = false;
-        };
-    }, [dateFrom, dateTo]);
+    //                 setTop5Departments(top5);
+    //             } catch (e) {
+    //                 if (!alive) return;
+    //                 console.error("Failed to load concerns", e);
+    //                 setRows([]);
+    //                 setKpiData(computeKpis([]));
+    //                 setTrendData([]);
+    //                 setDepartmentColors({});
+    //                 setTop5Departments([]);
+    //             }
+    //         })();
+    //         return () => {
+    //             alive = false;
+    //         };
+    //     }, [dateFrom, dateTo]);
 
 
 
 
     // ====== DERIVED ======
     const filteredComplaints = useMemo(() => {
+        const q = (searchTerm || "").toLowerCase();
         return rows
             .filter((c) =>
-                [c.patient, c.department, c.details, c.id].some((v) =>
-                    String(v || "").toLowerCase().includes(searchTerm.toLowerCase()),
-                ),
+                [c.patient, c.department, c.details, c.id]
+                    .some((v) => String(v || "").toLowerCase().includes(q)),
             )
-            .filter((c) => (selectedStatus === "All Status" ? true : c.status === selectedStatus))
-            .filter((c) => (selectedDepartment === "All Departments" ? true : c.department === selectedDepartment))
-    }, [rows, searchTerm, selectedStatus, selectedDepartment])
+            .filter((c) => (selectedStatus === "All Status" ? true : c.status === selectedStatus));
+    }, [rows, searchTerm, selectedStatus]);
 
-    // const top5Departments = useMemo(() => {
-    //     const counts = {}
-    //     rows.forEach((r) => {
-    //         counts[r.department] = (counts[r.department] || 0) + 1
-    //     })
-    //     return Object.entries(counts)
-    //         .map(([department, complaints], i) => ({
-    //             rank: i + 1,
-    //             department,
-    //             complaints,
-    //             avgResolution: "—",
-    //             escalations: rows.filter((r) => r.department === department && r.priority === "Urgent").length,
-    //         }))
-    //         .sort((a, b) => b.complaints - a.complaints)
-    //         .slice(0, 5)
-    //         .map((x, i) => ({ ...x, rank: i + 1 }))
-    // }, [rows])
+
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            try {
+                const docs = await getConcerns();
+                if (!alive) return;
+                setRawConcerns(Array.isArray(docs) ? docs : []);
+            } catch (e) {
+                if (!alive) return;
+                console.error("Failed to load concerns", e);
+                setRawConcerns([]);
+            }
+        })();
+        return () => { alive = false; };
+    }, []);
+
+
+
+    useEffect(() => {
+        // Nothing to do until the first fetch is done
+        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+            setRows([]);
+            setKpiData({ totalComplaints: 0, pending: 0, resolved: 0, escalated: 0, avgResolutionTime: "—", inProgress: 0 });
+            setTrendData([]);
+            setDepartmentColors({});
+            setTop5Departments([]);
+            return;
+        }
+
+        // Build date range (inclusive)
+        const start = filters.from ? new Date(filters.from) : null;
+        const end = filters.to ? new Date(filters.to) : null;
+        if (start) start.setHours(0, 0, 0, 0);
+        if (end) end.setHours(23, 59, 59, 999);
+
+        const serviceLabel = filters.service || "All Services";
+        const doctorQuery = (filters.doctor || "").trim().toLowerCase();
+
+        // Filter raw docs first
+        const filteredDocs = rawConcerns.filter((d) => {
+            // date filter
+            const dt = getDocDate(d);
+            const nd = dt ? new Date(dt) : null;
+            if (!nd || isNaN(nd)) return false;
+            if (start && nd < start) return false;
+            if (end && nd > end) return false;
+
+            // service (department) filter — must have at least one filled block for selected service
+            if (serviceLabel !== "All Services") {
+                const key = LABEL_TO_KEY[serviceLabel];
+                if (!key) return false;
+                const block = d?.[key];
+                const hasText = !!(block?.text && String(block.text).trim().length > 0);
+                const hasFiles = Array.isArray(block?.attachments) && block.attachments.length > 0;
+                if (!hasText && !hasFiles) return false;
+            }
+
+            // doctor filter (substring match)
+            if (doctorQuery) {
+                const docName = (d.consultantDoctorName || d.doctorName || d.consultant || "").toLowerCase();
+                if (!docName.includes(doctorQuery)) return false;
+            }
+
+            return true;
+        });
+
+        // Build table rows (your existing row shape)
+        const list = filteredDocs.flatMap((d) => flattenConcernDoc(d));
+
+        // KPIs from filtered rows
+        setRows(list);
+        setKpiData(computeKpis(list));
+
+        // Trend + colors from filtered rows
+        const { data: tData, colors } = buildTrendData(list);
+        setTrendData(tData);
+        setDepartmentColors(colors);
+
+        // Top-5 departments (from filtered docs)
+        const deptStats = {};
+        filteredDocs.forEach((doc) => {
+            const parts = flattenConcernDocForStats(doc); // [{ department, resolutionTime, escalated }]
+            parts.forEach((p) => {
+                if (!p.department) return;
+                if (!deptStats[p.department]) {
+                    deptStats[p.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+                }
+                deptStats[p.department].complaints += 1;
+                deptStats[p.department].totalResolution += p.resolutionTime || 0;
+                if (p.escalated) deptStats[p.department].escalations += 1;
+            });
+        });
+
+        const top = Object.entries(deptStats)
+            .map(([department, s]) => ({
+                department,
+                complaints: s.complaints,
+                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+                escalations: s.escalations,
+            }))
+            .sort((a, b) => b.complaints - a.complaints)
+            .slice(0, 5)
+            .map((x, i) => ({ rank: i + 1, ...x }));
+
+        setTop5Departments(top);
+
+        // Keep your existing local states in sync (so charts use same dates/labels)
+        setDateFrom(filters.from || "");
+        setDateTo(filters.to || "");
+        setSelectedDepartment(serviceLabel === "All Services" ? "All Departments" : serviceLabel);
+    }, [filters, rawConcerns]);
+
+
+    const handleFilterChange = useCallback((next) => {
+        setFilters((prev) => ({ ...prev, ...next }));
+    }, []);
+
 
     const openModal = (complaint) => {
         setSelectedComplaint(complaint)
@@ -649,7 +783,12 @@ export default function ComplaintManagementDashboard() {
                             <div className="">
                                 <div className="">
                                     <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
-                                        <OpdFilter />
+                                        <OpdFilter
+                                            value={filters}
+                                            onChange={handleFilterChange}
+                                            serviceVariant="concern"
+                                        />
+
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-5 gap-2 mb-2">
@@ -753,36 +892,36 @@ export default function ComplaintManagementDashboard() {
                                                     </thead>
                                                     <tbody className="bg-white">
                                                         {top5Departments.map((dept) => (
-  <tr
-    key={dept.rank}
-    className={`${dept.rank % 2 === 1 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
-  >
-    <td className="px-6 py-2 text-sm font-[600] text-gray-900">
-      <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full">
-        {dept.rank}
-      </span>
-    </td>
+                                                            <tr
+                                                                key={dept.rank}
+                                                                className={`${dept.rank % 2 === 1 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                                                            >
+                                                                <td className="px-6 py-2 text-sm font-[600] text-gray-900">
+                                                                    <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full">
+                                                                        {dept.rank}
+                                                                    </span>
+                                                                </td>
 
-    {/* ✅ only show text if department is defined */}
-    <td className="px-6 py-2 text-sm font-medium text-gray-900">
-      {dept.department || ""}
-    </td>
+                                                                {/* ✅ only show text if department is defined */}
+                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">
+                                                                    {dept.department || ""}
+                                                                </td>
 
-    <td className="px-6 py-2 text-sm text-gray-900">
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-red-100 text-red-800">
-        {dept.complaints}
-      </span>
-    </td>
-    <td className="px-6 py-2 text-sm text-gray-900">
-      {dept.avgResolution || ""}
-    </td>
-    <td className="px-6 py-2 text-sm text-gray-900">
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-orange-100 text-orange-800">
-        {dept.escalations}
-      </span>
-    </td>
-  </tr>
-))}
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-red-100 text-red-800">
+                                                                        {dept.complaints}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    {dept.avgResolution || ""}
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-orange-100 text-orange-800">
+                                                                        {dept.escalations}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
 
 
 
@@ -851,7 +990,7 @@ export default function ComplaintManagementDashboard() {
                                                             Date & Time
                                                         </th>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Department
+                                                            Patient Name
                                                         </th>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Doctor Name
@@ -860,7 +999,7 @@ export default function ComplaintManagementDashboard() {
                                                             Bed No.
                                                         </th>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Patient Name
+                                                            Department
                                                         </th>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
@@ -871,20 +1010,22 @@ export default function ComplaintManagementDashboard() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
-                                                    {filteredComplaints.map((complaint, index) => (
+                                                    {filteredComplaints.map((complaint, index) => {
+                                                        const fullDoc = rawConcerns.find(d => d._id === complaint.id); 
+                                                          return (
                                                         <tr
                                                             key={complaint.id}
-                                                            onClick={handlenavigate}
+                                                            // onClick={handlenavigate}
                                                             className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                         >
-                                                            <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.id}</td>
+                                                            <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
                                                             <td className="px-6 py-2 text-sm text-gray-900">
                                                                 <div className="flex items-center">
                                                                     <Clock className="w-4 h-4 text-gray-400 mr-2" />
                                                                     {complaint.date}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">{complaint.department}</td>
+                                                            <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
                                                             <td className="px-6 py-2 text-sm text-gray-900">
                                                                 <div className="flex items-center">
                                                                     <User className="w-4 h-4 text-gray-400 mr-2" />
@@ -897,7 +1038,7 @@ export default function ComplaintManagementDashboard() {
                                                                     {complaint.bedNo}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
+                                                            <td className="px-6 py-2 text-sm text-gray-900">{fullDoc ? getDepartmentsString(fullDoc) : "-"}</td>
                                                             <td className="px-6 py-2 text-sm">
                                                                 <span
                                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
@@ -909,10 +1050,7 @@ export default function ComplaintManagementDashboard() {
                                                             </td>
                                                             <td className="px-6 py-2 text-sm text-gray-900">
                                                                 <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        openModal(complaint)
-                                                                    }}
+                                                                    onClick={() => handlenavigate(complaint, fullDoc)}
                                                                     className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                                                                 >
                                                                     <Eye className="w-4 h-4 mr-1" />
@@ -920,7 +1058,8 @@ export default function ComplaintManagementDashboard() {
                                                                 </button>
                                                             </td>
                                                         </tr>
-                                                    ))}
+                                                          )
+                                                        })}
                                                     {filteredComplaints.length === 0 && (
                                                         <tr>
                                                             <td colSpan={8} className="px-6 py-6 text-center text-gray-500">

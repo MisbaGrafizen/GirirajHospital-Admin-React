@@ -215,7 +215,7 @@ export default function DashBoard() {
               rating: Number(r.rating || 0),
               department: "-", // not provided
               time: new Date(r.createdAt || Date.now()).toLocaleTimeString(),
-              room: "-", // not provided
+              room: r.bedNo, // not provided
               doctor: r.doctor || "-",
               age: "-", // not provided
               contact: r.contact || "-",
@@ -401,10 +401,10 @@ export default function DashBoard() {
                                         </div>
                                         <div>
                                           <div className="font-semibold text-gray-900">{feedback.name}</div>
-                                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                                          {/* <div className="flex items-center gap-2 text-xs text-gray-500">
                                             <User className="w-3 h-3" />
                                             <span>Age: {feedback.age}</span>
-                                          </div>
+                                          </div> */}
                                           <div className="flex items-center gap-2 text-xs text-gray-500">
                                             <Phone className="w-3 h-3" />
                                             <span>{feedback.contact}</span>
@@ -417,11 +417,11 @@ export default function DashBoard() {
                                         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${feedback.type === "IPD" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
                                           {feedback.type}
                                         </span>
-                                        <div className="text-sm text-gray-600">{feedback.department}</div>
-                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        {/* <div className="text-sm text-gray-600">{feedback.department}</div> */}
+                                        {/* <div className="flex items-center gap-2 text-xs text-gray-500">
                                           <MapPin className="w-3 h-3" />
                                           <span>{feedback.room}</span>
-                                        </div>
+                                        </div> */}
                                         <div className="flex items-center gap-2 text-xs text-gray-500">
                                           <Timer className="w-3 h-3" />
                                           <span>{feedback.time}</span>
@@ -431,8 +431,8 @@ export default function DashBoard() {
                                     <td className="px-6 py-4">
                                       <div className="space-y-1">
                                         <div className="text-sm font-medium text-gray-900">{feedback.doctor}</div>
-                                        <div className="text-sm text-gray-600">Complaint: {feedback.complaint}</div>
-                                        <div className="text-xs text-gray-500">Duration: {feedback.duration}</div>
+                                        {/* <div className="text-sm text-gray-600">Complaint: {feedback.complaint}</div> */}
+                                        {/* <div className="text-xs text-gray-500">Duration: {feedback.duration}</div> */}
                                       </div>
                                     </td>
                                     <td className="px-6 py-4">

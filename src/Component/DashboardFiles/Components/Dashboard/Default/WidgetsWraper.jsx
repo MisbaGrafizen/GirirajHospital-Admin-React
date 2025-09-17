@@ -77,7 +77,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: npsRating,
                 total: npsRating,
                 color: "info",
-                icon: "star",
+                icon: "cart",
               }}
             />
           </Col>
@@ -88,7 +88,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: totalConcern,
                 total: totalConcern,
                 color: "secondary",
-                icon: "alert",
+                icon: "return-box",
               }}
             />
           </Col>

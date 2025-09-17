@@ -124,6 +124,13 @@ export default function OPDFeedbackDashboard() {
     npsRating: 0,
     overallScore: "-",
   })
+const [filters, setFilters] = useState({
+  from: '',                 // "YYYY-MM-DD"
+  to: '',                   // "YYYY-MM-DD"
+  service: 'All Services',  // matches your UI labels
+  doctor: '',               // blank means All Doctors
+});
+
   const [chartData, setChartData] = useState([
     { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },
     { label: "Good", count: 0, percentage: 0, color: "#3B82F6" },
@@ -437,6 +444,100 @@ export default function OPDFeedbackDashboard() {
     XLSX.writeFile(wb, fileName)
   }
 
+  const handleFilterChange = useCallback((next) => {
+  // next looks like: { from, to, service, doctor }
+  setFilters((prev) => ({ ...prev, ...next }));
+}, []);
+
+useEffect(() => {
+  // Nothing to do until the first fetch is done
+  if (!Array.isArray(rawOPD) || !rawOPD.length) {
+    setRows([]);
+    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: '-' });
+    setServiceSummary([]);
+    setChartData(buildServiceDistribution([], 'All Services'));
+    return;
+  }
+
+  // Build date range (inclusive)
+  const start = filters.from ? new Date(filters.from) : null;
+  const end   = filters.to   ? new Date(filters.to)   : null;
+  if (start) start.setHours(0, 0, 0, 0);
+  if (end)   end.setHours(23, 59, 59, 999);
+
+  // Service key map (uses your SERVICE_GROUPS)
+  const serviceLabel = filters.service || 'All Services';
+  const keysForService =
+    serviceLabel === 'All Services' ? null : (SERVICE_GROUPS[serviceLabel] || []);
+
+  const doctorQuery = (filters.doctor || '').trim().toLowerCase();
+
+  // Filter raw docs first
+  const filteredDocs = rawOPD.filter((d) => {
+    // date filter
+    const dt = new Date(normDate(d.createdAt ?? d.date));
+    if (isNaN(dt)) return false;
+    if (start && dt < start) return false;
+    if (end && dt > end) return false;
+
+    // service filter (record must have at least one rating in that service group)
+    if (keysForService) {
+      const r = d?.ratings || {};
+      const hasRating = keysForService.some((k) => typeof r[k] === 'number' && r[k] >= 1 && r[k] <= 5);
+      if (!hasRating) return false;
+    }
+
+    // doctor filter (substring match)
+    if (doctorQuery) {
+      const docName = (d.consultantDoctorName || d.doctorName || '').toLowerCase();
+      if (!docName.includes(doctorQuery)) return false;
+    }
+
+    return true;
+  });
+
+  // Build table rows (your existing shape)
+  const list = filteredDocs.map((d) => {
+    const id = normId(d._id ?? d.id);
+    const rating = calcRowAverage(d.ratings);
+    return {
+      id,
+      _id: id,
+      createdAt: normDate(d.createdAt ?? d.date),
+      patient: d.patientName || d.name || '-',
+      contact: d.contact || '-',
+      doctor: d.consultantDoctorName || d.doctorName || d.consultant || '-',
+      rating,
+      comment: d.comments || d.comment || '',
+      overallRecommendation: d.overallRecommendation,
+    };
+  });
+
+  // KPIs
+  const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
+  const nps = calcNpsPercent(filteredDocs);
+  const overallScore =
+    avg >= 4.5 ? 'Excellent' :
+    avg >= 4.0 ? 'Good' :
+    avg >= 3.0 ? 'Average' :
+    avg >= 2.0 ? 'Poor' : 'Very Poor';
+
+  setRows(list);
+  setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
+
+  // Summary + charts
+  setServiceSummary(buildServiceSummary(filteredDocs));
+  setOpdServiceChart(buildOPDServiceChart(filteredDocs));
+  setChartData(buildServiceDistribution(filteredDocs, serviceLabel));
+
+  // Keep your existing local states in sync (so Trend uses the same dates)
+  setDateFrom(filters.from || '');
+  setDateTo(filters.to || '');
+  setSelectedService(serviceLabel);
+}, [filters, rawOPD]);
+
+
+
 const openFeedbackDetails = useCallback((fb) => {
   const id = normId(fb?._id ?? fb?.id)
   if (!id) {
@@ -542,7 +643,7 @@ const openFeedbackDetails = useCallback((fb) => {
               <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
                 <div className="mx-auto w-full">
     <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
-              <OpdFilter />
+              <OpdFilter value={filters} onChange={handleFilterChange} />
                 </div>
                   <div className="pt-[5px] flex gap-6 mb-3">
                     <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">

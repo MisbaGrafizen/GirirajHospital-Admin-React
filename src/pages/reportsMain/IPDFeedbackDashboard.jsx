@@ -304,8 +304,8 @@ function roomFor(dept, rng) {
 // ------------------------------------------------------------------
 export default function IPDFeedbackDashboard() {
   // Dates kept for future filtering; used by trend bucketing
-  const [dateFrom, setDateFrom] = useState("2024-01-01")
-  const [dateTo, setDateTo] = useState("2024-01-31")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const navigate = useNavigate()
   const [room, setRoom] = useState("All Rooms")
   const [searchTerm, setSearchTerm] = useState("")
@@ -317,11 +317,32 @@ export default function IPDFeedbackDashboard() {
   const [serviceSummary, setServiceSummary] = useState([]);
   const [department, setDepartment] = useState("Both")
   const [doctor, setDoctor] = useState("All Doctors")
+  const [rawIPD, setRawIPD] = useState([]);
 
-  const doctorOptions = useMemo(() => {
-    if (department === "Both") return ["All Doctors", ...DOCTORS_BY_DEPT.OPD, ...DOCTORS_BY_DEPT.IPD]
-    return ["All Doctors", ...(DOCTORS_BY_DEPT[department] || [])]
-  }, [department])
+
+// Build doctor list from data (keeps "All Doctors" at top)
+const doctorOptions = useMemo(() => {
+  const set = new Set();
+  rawIPD.forEach(d => {
+    const name = d?.consultantDoctorName || d?.doctorName;
+    if (name) set.add(String(name));
+  });
+  return ["All Doctors", ...Array.from(set).sort((a,b) => a.localeCompare(b))];
+}, [rawIPD]);
+
+const roomOptions = useMemo(() => {
+  const set = new Set();
+  rawIPD.forEach(d => {
+    const bed = d?.bedNo;
+    if (bed != null && bed !== "") set.add(String(bed));
+  });
+  return ["All Rooms", ...Array.from(set).sort((a,b) => a.localeCompare(b))];
+}, [rawIPD]);
+
+useEffect(() => {
+  if (!roomOptions.includes(room)) setRoom("All Rooms");
+}, [roomOptions, room]);
+
 
   const deptOptions = ["OPD", "IPD", "Both"]
   const [kpiData, setKpiData] = useState({
@@ -338,10 +359,10 @@ export default function IPDFeedbackDashboard() {
     return generateNpsDataset({ from: dateFrom, to: dateTo, department: deptParam, doctor: doctorParam })
   }, [dateFrom, dateTo, department, doctor])
 
-  const roomOptions = useMemo(() => {
-    const rooms = Array.from(new Set(baseRecords.map((r) => r.room))).sort((a, b) => a.localeCompare(b))
-    return ["All Rooms", ...rooms.slice(0, 200)] // limit to keep dropdown manageable
-  }, [baseRecords])
+  // const roomOptions = useMemo(() => {
+  //   const rooms = Array.from(new Set(baseRecords.map((r) => r.room))).sort((a, b) => a.localeCompare(b))
+  //   return ["All Rooms", ...rooms.slice(0, 200)] // limit to keep dropdown manageable
+  // }, [baseRecords])
 
   // Ensure selected room remains valid
   useEffect(() => {
@@ -546,67 +567,144 @@ export default function IPDFeedbackDashboard() {
   }
 
   const fetchIPD = useCallback(async () => {
-    if (!canViewFeedback) return;
-    setLoading(true);
-    setError(null);
+  if (!canViewFeedback) return;
+  setLoading(true);
+  setError(null);
 
-    try {
-      const res = await ApiGet(`${API_URL}`);
-      const data = Array.isArray(res) ? res : (res.data || []);
+  try {
+    const res = await ApiGet(`${API_URL}`);
+    const data = Array.isArray(res) ? res : (res.data || []);
 
-      // const data = raw.filter((d) => hasAnyRating(d.ratings));
+    // ✅ keep raw server data for filtering
+    setRawIPD(data);
 
-      const list = data.map((d) => {
-        const rating = calcRowAverage(d.ratings);
-        return {
-          id: String(d._id || d.id),
-          createdAt: d.createdAt || d.date,
-          patient: d.patientName || d.name || "-",
-          contact: d.contact || "-",
-          bedNo: d.bedNo || "-",
-          consultantDoctorName: d.consultantDoctorName || "-",
-          rating, // avg out of 5
-          overallRecommendation: d.overallRecommendation, // for NPS
-        };
-      });
+    // (You can keep your existing mapping here if you want an initial view;
+    // the filter effect below will update it once filters are present.)
+    const list = data.map((d) => {
+      const rating = calcRowAverage(d.ratings);
+      return {
+        id: String(d._id || d.id),
+        createdAt: d.createdAt || d.date,
+        patient: d.patientName || d.name || "-",
+        contact: d.contact || "-",
+        bedNo: d.bedNo || "-",
+        consultantDoctorName: d.consultantDoctorName || "-",
+        rating,
+        overallRecommendation: d.overallRecommendation,
+      };
+    });
 
-      const avg = list.length
-        ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
-        : 0;
+    const avg = list.length
+      ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
+      : 0;
 
-      // NPS from the same rated set; change to `raw` if you want all
-      const nps = calcNpsPercent(data);
+    const nps = calcNpsPercent(data);
+    const overallScore =
+      avg >= 4.5 ? "Excellent" :
+      avg >= 4.0 ? "Good" :
+      avg >= 3.0 ? "Average" :
+      avg >= 2.0 ? "Poor" : "Very Poor";
 
-      const overallScore =
-        avg >= 4.5 ? "Excellent" :
-          avg >= 4.0 ? "Good" :
-            avg >= 3.0 ? "Average" :
-              avg >= 2.0 ? "Poor" : "Very Poor";
-
-      setRows(list);                                    // table shows only rated items
-      setKpiData({
-        totalFeedback: list.length,                     // count of rated items
-        averageRating: avg,
-        npsRating: nps,
-        overallScore,
-      });
-      setChartData(buildDistribution(list));            // charts from rated items
-      setServiceSummary(buildServiceSummary(data));     // summary from rated items
-    } catch (e) {
-      console.error("Fetch IPD failed:", e);
-      setError("Failed to load IPD feedback");
-      setRows([]);
-      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
-      setChartData(buildDistribution([]));
-    } finally {
-      setLoading(false);
-    }
-  }, [canViewFeedback]);
+    setRows(list);
+    setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
+    setChartData(buildDistribution(list));
+    setServiceSummary(buildServiceSummary(data));
+  } catch (e) {
+    console.error("Fetch IPD failed:", e);
+    setError("Failed to load IPD feedback");
+    setRows([]);
+    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+    setChartData(buildDistribution([]));
+  } finally {
+    setLoading(false);
+  }
+}, [canViewFeedback]);
 
 
   useEffect(() => {
     fetchIPD()
   }, [fetchIPD])
+
+  useEffect(() => {
+  // 1) Guard
+  if (!Array.isArray(rawIPD) || !rawIPD.length) {
+    setRows([]);
+    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+    setChartData(buildDistribution([]));
+    setServiceSummary([]);
+    setLineData([]);
+    return;
+  }
+
+  // 2) Build inclusive date range
+  const start = dateFrom ? new Date(dateFrom) : null;
+  const end   = dateTo   ? new Date(dateTo)   : null;
+  if (start) start.setHours(0, 0, 0, 0);
+  if (end)   end.setHours(23, 59, 59, 999);
+
+  // 3) Normalize filters
+  const doctorFilter = (doctor || "").trim();
+  const roomFilter   = (room || "").trim();
+
+  // 4) Filter raw docs
+  const filteredDocs = rawIPD.filter((d) => {
+    // date
+    const dt = new Date(d.createdAt || d.date);
+    if (isNaN(dt)) return false;
+    if (start && dt < start) return false;
+    if (end   && dt > end)   return false;
+
+    // doctor (matches consultantDoctorName/doctorName)
+    if (doctorFilter && doctorFilter !== "All Doctors") {
+      const nm = (d.consultantDoctorName || d.doctorName || "").trim();
+      if (!nm || nm !== doctorFilter) return false;
+    }
+
+    // room (maps to bedNo)
+    if (roomFilter && roomFilter !== "All Rooms") {
+      const b = String(d.bedNo ?? "");
+      if (b !== roomFilter) return false;
+    }
+
+    return true;
+  });
+
+  // 5) Map into your row shape
+  const list = filteredDocs.map((d) => {
+    const rating = calcRowAverage(d.ratings);
+    return {
+      id: String(d._id || d.id),
+      createdAt: d.createdAt || d.date,
+      patient: d.patientName || d.name || "-",
+      contact: d.contact || "-",
+      bedNo: d.bedNo || "-",
+      consultantDoctorName: d.consultantDoctorName || "-",
+      rating,
+      overallRecommendation: d.overallRecommendation,
+    };
+  });
+
+  // 6) KPIs
+  const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
+  const nps = calcNpsPercent(filteredDocs);
+  const overallScore =
+    avg >= 4.5 ? "Excellent" :
+    avg >= 4.0 ? "Good" :
+    avg >= 3.0 ? "Average" :
+    avg >= 2.0 ? "Poor" : "Very Poor";
+
+  setRows(list);
+  setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
+
+  // 7) Charts / summaries from filtered set
+  setChartData(buildDistribution(list));
+  setServiceSummary(buildServiceSummary(filteredDocs));
+
+  // 8) Trend uses the filtered rows + current date range
+  const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
+  setTrendBucket(bucket);
+  setLineData(trend);
+}, [rawIPD, dateFrom, dateTo, doctor, room]);
 
   useEffect(() => {
     const { trend, bucket } = buildAutoTrend(rows, dateFrom, dateTo);
@@ -812,8 +910,8 @@ export default function IPDFeedbackDashboard() {
             ) : (
               <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 ">
-                  <div className="grid grid-cols-1  md:grid-cols-5 gap-x-2">
+                <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
+                  <div className="grid grid-cols-1  md:grid-cols-4 gap-x-2">
                     {/* From date */}
                     <div className=" relative">
                       <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
@@ -842,14 +940,6 @@ export default function IPDFeedbackDashboard() {
                         />
                       </div>
                     </div>
-                    {/* Department */}
-                    <AnimatedDropdown
-                      label="Department"
-                      options={deptOptions}
-                      selected={department}
-                      onSelect={setDepartment}
-                      icon={Hospital}
-                    />
                     {/* Doctor */}
                     <AnimatedDropdown
                       label="Doctor Name"
