@@ -14,7 +14,7 @@ const OverallBalance = ({ kpis, opdSummary }) => {
     <Col xxl='8' lg='12' className='box-col-12'>
       <Card>
         <CardHeader className='card-no-border'>
-          <H5>{OverallBalanceTitle}</H5>
+          <H5>Overall Ratings</H5>
         </CardHeader>
         <CardBody className='pt-0'>
           <Row className='m-0 overall-card'>
