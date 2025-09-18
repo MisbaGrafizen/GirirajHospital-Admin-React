@@ -173,24 +173,21 @@ export default function DashBoard() {
           )
 
           // ----- Concerns donut -----
-          const counts = data?.concerns?.counts || { Open: 0, "In Progress": 0, Resolved: 0 }
+          // ----- Concerns donut (week-wise) -----
+          const latestConcerns = Array.isArray(data?.concerns) ? data.concerns.at(-1) : null;
+          const counts = latestConcerns?.counts || { Open: 0, "In Progress": 0, Resolved: 0 };
+
           setConcernData(
             ["Open", "In Progress", "Resolved"].map((k) => ({
               name: k,
               value: Number(counts[k] || 0),
               color: CONCERN_COLORS[k],
-              details:
-                k === "Open"
-                  ? `Urgent: ${data?.kpis?.openIssues?.urgent || 0}, Normal: ${data?.kpis?.openIssues?.normal || 0}`
-                  : "",
-              avgResolutionTime: "", // not provided; keep field for tooltip
-              priority: { high: 0, medium: 0, low: 0 },
+              details: k === "Open" ? `Week: ${latestConcerns?.weekLabel || "—"}` : "",
             }))
-          )
+          );
+
 
           // ----- Department bars -----
-          // Backend returns [{department, value (avg rating 0..5)}]
-          // Your chart uses `concerns` for bar height → map avg rating to a 0..100 scale to keep the design.
           const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : []
           setDepartmentData(
             dept.map((d) => ({
