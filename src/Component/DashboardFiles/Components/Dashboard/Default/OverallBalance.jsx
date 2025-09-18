@@ -25,12 +25,12 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                     <CardBody className='p-0'>
                       <UL attrUL={{ horizontal: true, className: 'd-flex balance-data' }}>
                         <LI>
-                          <span className='circle bg-warning'> </span>
-                          <span className='f-light ms-1'>IPD</span>
+                          <span className='circle bg-[#aaafcb]'> </span>
+                          <span className='f-light ms-1'>OPD</span>
                         </LI>
                         <LI>
                           <span className='circle bg-primary'> </span>
-                          <span className='f-light ms-1'>OPD</span>
+                          <span className='f-light ms-1'>IPD</span>
                         </LI>
                       </UL>
                       <div className='current-sale-container'>

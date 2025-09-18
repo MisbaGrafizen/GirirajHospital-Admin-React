@@ -640,7 +640,7 @@ export default function SuperAdminDashboard() {
                       </div>
                     </div>
 
-                    <motion.div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
+                    <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-teal-500/10">

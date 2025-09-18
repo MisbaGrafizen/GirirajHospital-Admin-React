@@ -4,6 +4,16 @@ import { Widgets2Data, Widgets2Data2 } from '../../../Data/DefaultDashboard';
 import Widgets1 from '../../Common/CommonWidgets/Widgets1';
 import Widgets2 from '../../Common/CommonWidgets/Widgets2';
 
+// Import icons from lucide-react
+import {
+  MessageSquare,   // Feedback
+  Star,            // Average Rating
+  AlertCircle,     // Open Issues
+  Activity,        // Response Rate
+  TrendingUp,      // NPS Rating
+  ClipboardList,   // Total Concerns
+} from "lucide-react";
+
 const WidgetsWrapper = ({ kpis }) => {
   const totalFeedback = kpis?.totalFeedback || 0;
   const avgRating = kpis?.averageRating?.value?.toFixed(1) || "0.0";
@@ -23,7 +33,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: totalFeedback,
                 total: totalFeedback,
                 color: "primary",
-                icon: "cart",
+                  icon: <MessageSquare className="w-5 text-[#7366ff]  primary h-5" />,
               }}
             />
           </Col>
@@ -34,7 +44,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: avgRating,
                 total: avgRating,
                 color: "warning",
-                icon: "return-box",
+                icon: <Star className="w-5  text-[#ffaa06] h-5" />,
               }}
             />
           </Col>
@@ -49,8 +59,8 @@ const WidgetsWrapper = ({ kpis }) => {
                 title: "Open Issues",
                 gros: openIssues,
                 total: openIssues,
-                color: "danger",
-                icon: "tag",
+                color: "warning",
+                icon: <AlertCircle className="w-5  text-[#ffaa06] h-5" />,
               }}
             />
           </Col>
@@ -61,7 +71,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: responseRate,
                 total: responseRate + "%",
                 color: "success",
-                icon: "rate",
+                icon: <Activity className="w-5 text-[#55ba4a] h-5" />,
               }}
             />
           </Col>
@@ -77,7 +87,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: npsRating,
                 total: npsRating,
                 color: "info",
-                icon: "cart",
+                icon: <TrendingUp className="w-5 h-5" />,
               }}
             />
           </Col>
@@ -88,7 +98,7 @@ const WidgetsWrapper = ({ kpis }) => {
                 gros: totalConcern,
                 total: totalConcern,
                 color: "secondary",
-                icon: "return-box",
+                icon: <ClipboardList className="w-5 text-[#f83164] h-5" />,
               }}
             />
           </Col>

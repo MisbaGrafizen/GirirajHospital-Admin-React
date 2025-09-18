@@ -9,7 +9,7 @@ const LightCardBox = ({ data }) => {
   return (
     <div className='light-card balance-card widget-hover'>
       <div className='svg-box'>
-        <SvgIcon className='svg-fill' iconId={data.icon} />
+        {data.icon}
       </div>
       <div>
         <span className='f-light'>{data.title}</span>

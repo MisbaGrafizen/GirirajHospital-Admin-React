@@ -649,13 +649,13 @@ export default function ComplaintManagementDashboard() {
     const AnimatedMultiLineChart = ({ data, colors }) => {
         const width = 500
         const height = 250
-        const padding = 50
+        const padding = 30
 
         const departments = Object.keys(colors)
         if (departments.length === 0) {
             return (
                 <div className="w-full">
-                    <svg width={width} height={height} className="w-full h-auto"></svg>
+                    <svg width={width} height={height} className="w-full"></svg>
                 </div>
             )
         }
@@ -674,7 +674,7 @@ export default function ComplaintManagementDashboard() {
 
         return (
             <div className="w-full">
-                <svg width={width} height={height} className="w-full h-auto">
+                <svg width={width} height={height} className="w-full">
                     {[0, 1, 2, 3, 4].map((i) => {
                         const y = padding + (i * (height - 2 * padding)) / 4
                         return (
@@ -944,7 +944,7 @@ export default function ComplaintManagementDashboard() {
                                         </div>
 
                                         {/* Word Cloud */}
-                                        <div className="bg-white border  rounded-lg pt-[6px] h-[312px] shadow-sm w-[400px]">
+                                        <div className="bg-white border  rounded-lg pt-[6px] mb-[20px] h-[250px] shadow-sm w-[400px]">
                                             <h3 className="text-lg ml-[19px] font-semibold text-gray-900 mb-1">Frequent Complaint Keywords</h3>
                                             <div className="flex border-t flex-wrap gap-2 p-[20px] ">
                                                 {[

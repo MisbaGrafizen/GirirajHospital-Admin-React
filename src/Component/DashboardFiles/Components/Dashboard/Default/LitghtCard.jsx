@@ -2,6 +2,14 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 
 import LightCardBox from './LightCardBox';
+import { icon } from 'leaflet';
+
+import {
+  Building2,
+  UserCheck,
+  MessageSquareText,
+  ClipboardCheck,
+} from "lucide-react";
 
 const LightCard = ({ LightCardData, totals = {} }) => {
   return (
@@ -20,7 +28,8 @@ const LightCard = ({ LightCardData, totals = {} }) => {
                number: Number(totals.ipd || 0),
                count: Number(totals.ipd || 0),
                amount: Number(totals.ipd || 0),
-               badgeClass: 'bg-warning',
+               badgeClass: 'bg-[#fff]',
+               icon:<i className="fa-regular text-[21px] fa-comment"></i>
              }}
            />
          </Col>
@@ -38,6 +47,7 @@ const LightCard = ({ LightCardData, totals = {} }) => {
                count: Number(totals.opd || 0),
                amount: Number(totals.opd || 0),
                badgeClass: 'bg-primary',
+                              icon:<i className="fa-regular text-[21px] fa-comment"></i>
              }}
            />
          </Col>

@@ -173,7 +173,8 @@ export default function DashBoard() {
             }))
           )
 
-          // ----- Concerns donut (last 7 days ending today) -----
+
+          // ----- Concerns donut -----
           const today = dayjs().endOf("day");
           const weekAgo = today.subtract(6, "day"); // 7-day window
 
@@ -394,16 +395,16 @@ export default function DashBoard() {
                           </div>
                         </div>
 
-                        <motion.div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
+                        <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-teal-500/10">
                                 <tr>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Patient Details</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Visit Info</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Medical Details</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Rating</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Feedback</th>
+                                  <th className="px-6 py-2 text-left text-sm font-bold text-gray-900">Patient Details</th>
+                                  <th className="px-6 py-2 text-left text-sm font-bold text-gray-900">Visit Info</th>
+                                  <th className="px-6 py-2 text-left text-sm font-bold text-gray-900">Medical Details</th>
+                                  <th className="px-6 py-2 text-left text-sm font-bold text-gray-900">Rating</th>
+                                  <th className="px-6 py-2 text-left text-sm font-bold text-gray-900">Feedback</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-100">
@@ -449,20 +450,20 @@ export default function DashBoard() {
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="space-y-1">
                                         <div className="text-sm font-medium text-gray-900">{feedback.doctor}</div>
                                         {/* <div className="text-sm text-gray-600">Complaint: {feedback.complaint}</div> */}
                                         {/* <div className="text-xs text-gray-500">Duration: {feedback.duration}</div> */}
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="flex flex-col items-center gap-2">
                                         <StarRating rating={Math.round(feedback.rating || 0)} />
                                         <span className="text-sm font-semibold text-gray-900">{Number(feedback.rating || 0).toFixed(1)}/5</span>
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="max-w-xs">
                                         <p className="text-sm text-gray-700 line-clamp-3">{feedback.feedback}</p>
                                       </div>
@@ -472,7 +473,7 @@ export default function DashBoard() {
                               </tbody>
                             </table>
                           </div>
-                          <div className="px-6 py-4 bg-gray-50/50 border-top border-gray-200">
+                          <div className="px-6 py-2 bg-gray-50/50 border-top border-gray-200">
                             <div className="flex items-center justify-between text-sm text-gray-600">
                               <span>Showing {recentFeedbacks.length} recent feedbacks</span>
                               <div className="flex items-center gap-4">
