@@ -53,6 +53,7 @@ import PaperNote from "../../Component/DashboardFiles/Components/Dashboard/Defau
 import '../../assets/scss/app.css'
 import '../../assets/scss/style.css'
 import { ApiGet } from "../../helper/axios";
+import dayjs from "dayjs";
 // import CryptoAnnotations from "../../Component/DashboardFiles/Components/Widgets/Chart/CryptoAnnotations";
 
 // import 'react-clock/dist/Clock.css';
@@ -172,17 +173,40 @@ export default function DashBoard() {
             }))
           )
 
-          // ----- Concerns donut -----
-          // ----- Concerns donut (week-wise) -----
-          const latestConcerns = Array.isArray(data?.concerns) ? data.concerns.at(-1) : null;
-          const counts = latestConcerns?.counts || { Open: 0, "In Progress": 0, Resolved: 0 };
+          // ----- Concerns donut (last 7 days ending today) -----
+          const today = dayjs().endOf("day");
+          const weekAgo = today.subtract(6, "day"); // 7-day window
 
+          const concernsArr = Array.isArray(data?.concerns) ? data.concerns : [];
+
+          // Try filtering by date if available
+          let filteredConcerns = concernsArr.filter((c) =>
+            c.date ? dayjs(c.date).isBetween(weekAgo, today, "day", "[]") : true // if no date, keep entry
+          );
+
+          // If nothing matched, fall back to the latest entry
+          if (filteredConcerns.length === 0 && concernsArr.length > 0) {
+            filteredConcerns = [concernsArr.at(-1)];
+          }
+
+          // Aggregate counts
+          const counts = filteredConcerns.reduce(
+            (acc, c) => {
+              acc.Open += Number(c.counts?.Open || 0);
+              acc["In Progress"] += Number(c.counts?.["In Progress"] || 0);
+              acc.Resolved += Number(c.counts?.Resolved || 0);
+              return acc;
+            },
+            { Open: 0, "In Progress": 0, Resolved: 0 }
+          );
+
+          // Update chart data
           setConcernData(
             ["Open", "In Progress", "Resolved"].map((k) => ({
               name: k,
-              value: Number(counts[k] || 0),
+              value: counts[k],
               color: CONCERN_COLORS[k],
-              details: k === "Open" ? `Week: ${latestConcerns?.weekLabel || "—"}` : "",
+              details: `Last 7 days (ending ${today.format("DD MMM YYYY")})`,
             }))
           );
 
