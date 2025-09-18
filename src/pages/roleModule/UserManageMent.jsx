@@ -653,7 +653,7 @@
 //                                                                             </AnimatePresence>
 
 
-                                                                    
+
 
 //                                                                         </div>
 
@@ -975,7 +975,61 @@ import { Modal as NextUIModal, ModalContent } from "@nextui-org/react";
 
 import uploadToHPanel from '../../helper/hpanelUpload';
 
+function resolvePermissions() {
+  const loginType = localStorage.getItem("loginType")
+  const isAdmin = loginType === "admin"
+
+  let permsArray = []
+  try {
+    const parsed = JSON.parse(localStorage.getItem("rights"))
+    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+      permsArray = parsed.permissions
+    } else if (Array.isArray(parsed)) {
+      permsArray = parsed
+    }
+  } catch {
+    permsArray = []
+  }
+
+  const findPerm = (mod) =>
+    Array.isArray(permsArray) && permsArray.find((p) => p?.module === mod)
+
+  const modulePerm =
+    findPerm("role_management") ||
+    findPerm("admin") ||
+    findPerm("dashboard") ||
+    null
+
+  const has = (perm) => isAdmin || modulePerm?.permissions?.includes(perm)
+
+  return {
+    isAdmin,
+    canView: has("View"),
+    canCreate: has("Create"),
+    canUpdate: has("Update"),
+    canDelete: has("Delete"),
+  }
+}
+
+function PermissionDenied() {
+  return (
+    <div className="flex items-center justify-center h-[70vh]">
+      <div className="bg-white border rounded-xl p-8 shadow-sm text-center max-w-md">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Permission required
+        </h2>
+        <p className="text-gray-600">
+          You don’t have access to view Role Management. Please contact an
+          administrator.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function UserManageMent() {
+  const { canView, canCreate, canUpdate, canDelete } = resolvePermissions()
+
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([
@@ -1024,6 +1078,9 @@ export default function UserManageMent() {
     setFormData((prev) => ({ ...prev, role: roleName }));
     setDropdownOpen(false);
   };
+  useEffect(() => {
+    if (canView) fetchRoles()
+  }, [canView])
 
   const fetchRoles = async () => {
     try {
@@ -1222,6 +1279,17 @@ export default function UserManageMent() {
     }
   };
 
+
+  if (!canView) {
+    return (
+      <section className="flex w-full min-h-screen">
+        <Header pageName="Role Management" />
+        <SideBar />
+        <PermissionDenied />
+      </section>
+    )
+  }
+
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none overflow-hidden">
@@ -1239,16 +1307,17 @@ export default function UserManageMent() {
                         <div>
                           <h1 className="text-[24px] font-[600]">Manage User</h1>
                         </div>
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="px-5 py-2 bs-spj text-white rounded-[8px] hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-                            disabled={isSavingUser || isUploadingAvatar}
-                          >
-                            <UserPlus size={18} />
-                            <span>Add User</span>
-                          </button>
-                        </div>
+                        {canCreate && (
+                          <div className="flex justify-end mb-5">
+                            <button
+                              onClick={() => setIsModalOpen(true)}
+                              className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg"
+                            >
+                              <UserPlus className="w-5 h-5" />
+                              Create Role
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Loading users */}
@@ -1290,45 +1359,49 @@ export default function UserManageMent() {
                                           >
                                             View details
                                           </button>
-                                          <button
-                                            onClick={() => {
-                                              setFormData({
-                                                name: user.name,
-                                                email: user.email,
-                                                role: user.roleId?.roleName,
-                                                password: "",
-                                                loginEnabled: user.loginEnabled ?? true,
-                                                avatar: user.avatar,
-                                              });
-                                              if (Array.isArray(user.companyId)) {
-                                                const matched = companies.filter(c => user.companyId.includes(c._id));
-                                                setSelectedCompanies(matched);
-                                              } else {
-                                                setSelectedCompanies([]);
-                                              }
-                                              setScreenshot(user.avatar || null);
-                                              setEditingUser(user);
-                                              setIsModalOpen(true);
-                                            }}
-                                            className="block w-full text-left px-4 py-1.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
-                                          >
-                                            Edit User
-                                          </button>
-                                          <button
-                                            onClick={async () => {
-                                              if (window.confirm("Are you sure you want to delete this user?")) {
-                                                try {
-                                                  await ApiDelete(`/admin/role-user/${user._id}`);
-                                                  fetchUsers();
-                                                } catch (err) {
-                                                  console.error("Delete error", err);
+                                          {canUpdate && (
+                                            <button
+                                              onClick={() => {
+                                                setFormData({
+                                                  name: user.name,
+                                                  email: user.email,
+                                                  role: user.roleId?.roleName,
+                                                  password: "",
+                                                  loginEnabled: user.loginEnabled ?? true,
+                                                  avatar: user.avatar,
+                                                });
+                                                if (Array.isArray(user.companyId)) {
+                                                  const matched = companies.filter(c => user.companyId.includes(c._id));
+                                                  setSelectedCompanies(matched);
+                                                } else {
+                                                  setSelectedCompanies([]);
                                                 }
-                                              }
-                                            }}
-                                            className="block w-full text-left px-4 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                          >
-                                            Delete User
-                                          </button>
+                                                setScreenshot(user.avatar || null);
+                                                setEditingUser(user);
+                                                setIsModalOpen(true);
+                                              }}
+                                              className="block w-full text-left px-4 py-1.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
+                                            >
+                                              Edit User
+                                            </button>
+                                          )}
+                                          {canDelete && (
+                                            <button
+                                              onClick={async () => {
+                                                if (window.confirm("Are you sure you want to delete this user?")) {
+                                                  try {
+                                                    await ApiDelete(`/admin/role-user/${user._id}`);
+                                                    fetchUsers();
+                                                  } catch (err) {
+                                                    console.error("Delete error", err);
+                                                  }
+                                                }
+                                              }}
+                                              className="block w-full text-left px-4 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                              Delete User
+                                            </button>
+                                          )}
                                         </div>
                                       </div>
                                     )}
@@ -1562,9 +1635,8 @@ export default function UserManageMent() {
                                       <button
                                         type="button"
                                         onClick={handleScreenshotCapture}
-                                        className={`w-full h-36 border-2 border-dashed rounded-md flex flex-col items-center justify-center transition-colors ${
-                                          isUploadingAvatar ? "border-gray-200 cursor-not-allowed opacity-70" : "border-red-200 hover:border-red-300"
-                                        }`}
+                                        className={`w-full h-36 border-2 border-dashed rounded-md flex flex-col items-center justify-center transition-colors ${isUploadingAvatar ? "border-gray-200 cursor-not-allowed opacity-70" : "border-red-200 hover:border-red-300"
+                                          }`}
                                         disabled={isUploadingAvatar}
                                       >
                                         <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
@@ -1597,9 +1669,8 @@ export default function UserManageMent() {
 
                                 <button
                                   type="submit"
-                                  className={`px-6 py-2 bs-spj text-white rounded-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 ${
-                                    isSavingUser || isUploadingAvatar ? "opacity-80 cursor-not-allowed" : ""
-                                  }`}
+                                  className={`px-6 py-2 bs-spj text-white rounded-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 ${isSavingUser || isUploadingAvatar ? "opacity-80 cursor-not-allowed" : ""
+                                    }`}
                                   disabled={isSavingUser || isUploadingAvatar}
                                 >
                                   {isSavingUser && (
@@ -1680,10 +1751,10 @@ export default function UserManageMent() {
                         <div className="flex flex-wrap gap-2">
                           {Array.isArray(selectedUserData?.companyId)
                             ? selectedUserData?.companyId.map((c, idx) => (
-                                <div key={idx} className="flex items-center gap-1 px-3 py-2 bg-gray-100 rounded-md border">
-                                  <span className="text-sm">{c.firmName}</span>
-                                </div>
-                              ))
+                              <div key={idx} className="flex items-center gap-1 px-3 py-2 bg-gray-100 rounded-md border">
+                                <span className="text-sm">{c.firmName}</span>
+                              </div>
+                            ))
                             : (
                               <div className="flex items-center gap-1 px-3 py-2 bg-gray-100 rounded-md border">
                                 <span className="text-sm">{selectedUserData?.companyId?.firmName}</span>

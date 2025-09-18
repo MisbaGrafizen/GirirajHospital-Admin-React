@@ -13,6 +13,58 @@ import {
   Circle,
 } from "lucide-react"
 
+
+function resolvePermissions() {
+  const loginType = localStorage.getItem("loginType")
+  const isAdmin = loginType === "admin"
+
+  let permsArray = []
+  try {
+    const parsed = JSON.parse(localStorage.getItem("rights"))
+    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+      permsArray = parsed.permissions
+    } else if (Array.isArray(parsed)) {
+      permsArray = parsed
+    }
+  } catch {
+    permsArray = []
+  }
+
+  const findPerm = (mod) =>
+    Array.isArray(permsArray) && permsArray.find((p) => p?.module === mod)
+
+  const modulePerm =
+    findPerm("executive_report") || // 👈 Executive module
+    findPerm("reports") ||
+    null
+
+  const has = (perm) => isAdmin || modulePerm?.permissions?.includes(perm)
+
+  return {
+    isAdmin,
+    canView: has("View"),
+    canExport: has("Download") || has("Export"),
+  }
+}
+
+// ---------------- Permission Denied ----------------
+function PermissionDenied() {
+  return (
+    <div className="flex items-center justify-center h-[70vh]">
+      <div className="bg-white border rounded-xl p-8 shadow-sm text-center max-w-md">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Permission required
+        </h2>
+        <p className="text-gray-600">
+          You don’t have access to view the Executive Report. Please contact an
+          administrator.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+
 // ---------- Date helpers (local-time safe) ----------
 const toLocalISO = (d) => {
   const tz = d.getTimezoneOffset() * 60000
@@ -150,6 +202,8 @@ function TrendIcon({ direction }) {
 
 // ---------- Component ----------
 export default function ExecutiveReport() {
+    const { canView } = resolvePermissions()
+
   // Filters
   const [fromDate, setFromDate] = useState(() => monthStartLocalISO()) // first day of current month
   const [toDate, setToDate] = useState(() => todayLocalISO()) // today
@@ -324,6 +378,22 @@ export default function ExecutiveReport() {
   const handleFilter = (e) => {
     e.preventDefault()
     // All metrics auto-update on date change
+  }
+
+    if (!canView) {
+    return (
+      <section className="flex w-full h-full select-none pr-[15px] overflow-hidden">
+        <div className="flex w-full flex-col gap-0 h-[96vh]">
+          <Header pageName="Executive Report" />
+          <div className="flex w-full h-full">
+            <SideBar />
+            <div className="flex flex-col w-full max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+              <PermissionDenied />
+            </div>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (

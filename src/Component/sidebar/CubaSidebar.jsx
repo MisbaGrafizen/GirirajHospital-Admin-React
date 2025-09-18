@@ -18,11 +18,42 @@ import textlogo from "../../../public/imges/onlyText.png"
 
 import { useNavigate, useLocation } from "react-router-dom";
 
+
+function resolvePermissions() {
+  const loginType = localStorage.getItem("loginType");
+  const isAdmin = loginType === "admin";
+
+  let permsArray = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem("rights"));
+    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+      permsArray = parsed.permissions;
+    } else if (Array.isArray(parsed)) {
+      permsArray = parsed;
+    }
+  } catch {
+    permsArray = [];
+  }
+
+  return { isAdmin, permsArray };
+}
+
+
 const CubaSidebar = () => {
 const [expandedMenu, setExpandedMenu] = useState("dashboards");
 const [isCollapsed, setIsCollapsed] = useState(false);
 const navigate = useNavigate();
 const location = useLocation();
+const { isAdmin } = resolvePermissions();
+let roleName = "User";
+ try {
+   const rights = JSON.parse(localStorage.getItem("rights"));
+   if (rights?.roleName) {
+     roleName = rights.roleName;
+   }
+ } catch {
+   roleName = "User";
+ }
 
 
   // Custom SVG Icons
@@ -154,15 +185,16 @@ const location = useLocation();
     </svg>
   )
 
+
   const menuSections = [
     {
-      title: "Super Admin",
+      title: roleName,
       items: [
         {
           id: "dashboards",
           label: "FeedBacks",
           icon: React.createElement(HomeIcon),
-          badge: "13",
+          // badge: "13",
           hasSubmenu: true,
           href: "/dashboards",
           submenu: [
@@ -173,8 +205,12 @@ const location = useLocation();
 
             { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard" },
             { id: "nft", label: "Executive Report", href: "/dashboards/executive-report" },
-            { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage" },
-            { id: "pos", label: "User Mana..", href: "/dashboards/user-manage" },
+            ...(isAdmin
+            ? [
+                { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage" },
+                { id: "pos", label: "User Mana..", href: "/dashboards/user-manage" },
+              ]
+            : []),
             // { id: "crm", label: "CRM", href: "/dashboards/crm", isNew: true },
             // { id: "analytics", label: "Analytics", href: "/dashboards/analytics", isNew: true },
             // { id: "hr", label: "HR", href: "/dashboards/hr", isNew: true },

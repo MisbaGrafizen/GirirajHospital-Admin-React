@@ -23,6 +23,55 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiGet, ApiPost } from '../../helper/axios'
 import uploadToHPanel from '../../helper/hpanelUpload'
 
+// map backend module ids to your DEPT_LABEL keys
+const MODULE_TO_BLOCK = {
+    doctor_service: "doctorServices",
+    diagnostic_service: "diagnosticServices",
+    nursing: "nursing",
+    dietetics: "dietetics",
+    maintenance: "maintenance",
+    security: "security",
+    billing_service: "billingServices",
+    housekeeping: "housekeeping",
+    overall: "overall",
+};
+
+function resolvePermissions() {
+    const loginType = localStorage.getItem("loginType");
+    const isAdmin = loginType === "admin";
+
+    let permsArray = [];
+    try {
+        const parsed = JSON.parse(localStorage.getItem("rights"));
+        if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+            permsArray = parsed.permissions;
+        } else if (Array.isArray(parsed)) {
+            permsArray = parsed;
+        }
+    } catch {
+        permsArray = [];
+    }
+
+    const permissionsByBlock = {};
+    if (isAdmin) {
+        Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
+            permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
+        });
+    } else {
+        permsArray.forEach((p) => {
+            const blockKey = MODULE_TO_BLOCK[p.module];
+            if (blockKey) {
+                permissionsByBlock[blockKey] = p.permissions.map((x) =>
+                    x.toLowerCase()
+                );
+            }
+        });
+    }
+
+    return { isAdmin, permissionsByBlock };
+}
+
+
 
 const DEPT_LABEL = {
     doctorServices: "Doctor Services",
@@ -37,14 +86,13 @@ const DEPT_LABEL = {
 
 // a block is "present" if it has any content (topic/mode/text/attachments)
 function blockHasContent(block) {
-  if (!block) return false;
+    if (!block) return false;
 
-  const hasText = block.text && block.text.trim() !== "";
-  const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+    const hasText = block.text && block.text.trim() !== "";
+    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
 
-  return hasText || hasAttachments;
+    return hasText || hasAttachments;
 }
-
 
 
 function mapStatusUI(status) {
@@ -255,6 +303,16 @@ export default function ComplaintViewPage() {
     const DEPT_KEY = Object.fromEntries(
         Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
     );
+    
+    const { permissionsByBlock } = resolvePermissions();
+
+    // normalize department string to match keys
+    const deptKey = Object.keys(DEPT_LABEL).find(
+        (k) => DEPT_LABEL[k] === complaint.department
+    );
+
+    const currentPerms = permissionsByBlock[deptKey] || [];
+
 
     const forwardDepartments = presentLabels;
 
@@ -652,12 +710,16 @@ export default function ComplaintViewPage() {
                                                     <div className="space-y-4">
                                                         {Object.keys(fullDoc).map((key) => {
                                                             if (!DEPT_LABEL[key]) return null;
+                                                            // ✅ only show if user has rights for this block
+                                                            if (!permissionsByBlock[key]) return null;
                                                             const block = fullDoc[key];
                                                             if (!blockHasContent(block)) return null;
 
                                                             return (
                                                                 <div key={key} className="bg-gray-50 rounded-lg p-4 mb-3">
-                                                                    <h3 className="text-md font-semibold text-gray-900 mb-2">{DEPT_LABEL[key]}</h3>
+                                                                    <h3 className="text-md font-semibold text-gray-900 mb-2">
+                                                                        {DEPT_LABEL[key]}
+                                                                    </h3>
 
                                                                     {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
@@ -892,39 +954,45 @@ export default function ComplaintViewPage() {
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <div className="bg-white px-6 pt-6 pb-4">
-                                                            <div className="flex justify-between items-center mb-6">
-                                                                <h3 className="text-xl font-bold text-gray-900">Forward to Another Department</h3>
-                                                                <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                                                    <X className="w-6 h-6" />
-                                                                </button>
-                                                            </div>
+                                                            {currentPerms.includes("forward") && (
+                                                                <div className="flex justify-between items-center mb-6">
+                                                                    <h3 className="text-xl font-bold text-gray-900">Forward to Another Department</h3>
+                                                                    <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                                                        <X className="w-6 h-6" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
 
                                                             <div className="space-y-6">
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Department</label>
-                                                                    <AnimatedDropdown
-                                                                        isOpen={isForwardDeptDropdownOpen}
-                                                                        setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                        selected={forwardDepartment || "Select Department"}
-                                                                        setSelected={setForwardDepartment}
-                                                                        options={forwardDepartments}
-                                                                        placeholder="Select Department"
-                                                                        icon={MapPin}
-                                                                    />
-                                                                </div>
+                                                                {currentPerms.includes("escalate") && (
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Select Department</label>
+                                                                        <AnimatedDropdown
+                                                                            isOpen={isForwardDeptDropdownOpen}
+                                                                            setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                            selected={forwardDepartment || "Select Department"}
+                                                                            setSelected={setForwardDepartment}
+                                                                            options={forwardDepartments}
+                                                                            placeholder="Select Department"
+                                                                            icon={MapPin}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                {currentPerms.includes("resolve") && (
 
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                        Reason for Forwarding <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <textarea
-                                                                        value={forwardReason}
-                                                                        onChange={(e) => setForwardReason(e.target.value)}
-                                                                        rows={4}
-                                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                                                        placeholder="Please provide reason for forwarding this complaint..."
-                                                                    />
-                                                                </div>
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Reason for Forwarding <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <textarea
+                                                                            value={forwardReason}
+                                                                            onChange={(e) => setForwardReason(e.target.value)}
+                                                                            rows={4}
+                                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                                            placeholder="Please provide reason for forwarding this complaint..."
+                                                                        />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
 

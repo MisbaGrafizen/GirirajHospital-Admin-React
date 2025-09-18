@@ -567,7 +567,6 @@ useEffect(() => {
   }
 
   const fetchIPD = useCallback(async () => {
-  if (!canViewFeedback) return;
   setLoading(true);
   setError(null);
 
@@ -618,7 +617,7 @@ useEffect(() => {
   } finally {
     setLoading(false);
   }
-}, [canViewFeedback]);
+}, []);
 
 
   useEffect(() => {
@@ -718,10 +717,6 @@ useEffect(() => {
   )
 
   const exportToExcel = async () => {
-    if (!canExportFeedback) {
-      alert("You don't have permission to download/export.")
-      return
-    }
 
     const XLSX = await import("xlsx")
 
@@ -903,11 +898,6 @@ useEffect(() => {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-            {!canViewFeedback ? (
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
-                <PermissionDenied />
-              </div>
-            ) : (
               <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
 
                 <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
@@ -1057,19 +1047,19 @@ useEffect(() => {
                     <div className="flex flex-wrap gap-3">
                       {[
                         "Excellent",
-                        "Nurse",
-                        "Professional",
+                        // "Nurse",
+                        // "Professional",
                         "Clean",
-                        "Comfortable",
-                        "Doctor",
-                        "Care",
-                        "Staff",
-                        "Treatment",
+                        // "Comfortable",
+                        // "Doctor",
+                        // "Care",
+                        // "Staff",
+                        // "Treatment",
                         "Service",
-                        "Billing",
+                        // "Billing",
                         "Food",
-                        "Room",
-                        "Pharmacy",
+                        // "Room",
+                        // "Pharmacy",
                         "Housekeeping",
                       ].map((word, index) => (
                         <span
@@ -1193,7 +1183,6 @@ useEffect(() => {
                         </div>
 
                         {/* Export only if permitted */}
-                        {canExportFeedback && (
                           <button
                             onClick={exportToExcel}
                             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -1201,7 +1190,7 @@ useEffect(() => {
                             <Download className="w-4 h-4 mr-2" />
                             Export to Excel
                           </button>
-                        )}
+
                       </div>
                     </div>
 
@@ -1287,7 +1276,6 @@ useEffect(() => {
                   )}
                 </div>
               </div>
-            )}
           </div>
         </div>
       </section>

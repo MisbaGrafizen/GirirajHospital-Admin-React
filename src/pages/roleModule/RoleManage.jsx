@@ -5,6 +5,60 @@ import Header from "../../Component/header/Header"
 import { ApiDelete, ApiGet, ApiPost, ApiPut } from "../../helper/axios"
 import { Modal as NextUIModal, ModalContent } from "@nextui-org/react"
 
+
+function resolvePermissions() {
+  const loginType = localStorage.getItem("loginType")
+  const isAdmin = loginType === "admin"
+
+  let permsArray = []
+  try {
+    const parsed = JSON.parse(localStorage.getItem("rights"))
+    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+      permsArray = parsed.permissions
+    } else if (Array.isArray(parsed)) {
+      permsArray = parsed
+    }
+  } catch {
+    permsArray = []
+  }
+
+  const findPerm = (mod) =>
+    Array.isArray(permsArray) && permsArray.find((p) => p?.module === mod)
+
+  const modulePerm =
+    findPerm("role_management") ||
+    findPerm("admin") ||
+    findPerm("dashboard") ||
+    null
+
+  const has = (perm) => isAdmin || modulePerm?.permissions?.includes(perm)
+
+  return {
+    isAdmin,
+    canView: has("View"),
+    canCreate: has("Create"),
+    canUpdate: has("Update"),
+    canDelete: has("Delete"),
+  }
+}
+
+function PermissionDenied() {
+  return (
+    <div className="flex items-center justify-center h-[70vh]">
+      <div className="bg-white border rounded-xl p-8 shadow-sm text-center max-w-md">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Permission required
+        </h2>
+        <p className="text-gray-600">
+          You don’t have access to view Role Management. Please contact an
+          administrator.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+
 /* ---------------------------------- */
 /* Pretty names for chips/cards       */
 /* ---------------------------------- */
@@ -26,11 +80,7 @@ const MODULE_NAME_BY_ID = {
   pgro: "PGRO",
 }
 
-/* ---------------------------------- */
-/* Modules                            */
-/* ---------------------------------- */
 
-// Core apps with full CRUD
 const CORE_APPS = [
   { id: "dashboard", name: "Dashboard", permissions: ["View", "Create", "Read", "Update", "Delete"] },
   { id: "ipd", name: "IPD", permissions: ["View", "Create", "Read", "Update", "Delete", "Download"] },
@@ -40,14 +90,16 @@ const CORE_APPS = [
 
 // Departments from your note (we include CRUD + View to be flexible)
 const DEPARTMENT_MODULES = [
-  { id: "medical_admin", name: "Medical Admin", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "nursing", name: "Nursing", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "dietetics", name: "Dietetics", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "maintenance", name: "Maintenance", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "security", name: "Security", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "front_desk", name: "Front Desk (Billing/Admission/TPA)", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Create", "Read", "Update", "Delete"] },
-  { id: "pgro", name: "PGRO / Complaints (All Dept + Others)", permissions: ["View", "Create", "Read", "Update", "Delete"] },
+  { id: "doctor_service", name: "Doctor Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "nursing", name: "Nursing", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "dietetics", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "maintenance", name: "Maintenance", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "security", name: "Security", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "overall", name: "Overall Experience", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+
 ]
 
 // final ordered list shown in modal: core first, then departments
@@ -57,6 +109,8 @@ const ALL_MODULES = [...CORE_APPS, ...DEPARTMENT_MODULES]
 /*                               MAIN PAGE                                */
 /* ====================================================================== */
 export default function RoleManage() {
+    const { canView, canCreate, canUpdate, canDelete } = resolvePermissions()
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [roleList, setRoleList] = useState([])
   const [editingRole, setEditingRole] = useState(null)
@@ -112,6 +166,23 @@ export default function RoleManage() {
   }
 
   const closeDeleteModal = () => setModalOpen1(false)
+    if (!canView) {
+    return (
+      <section className="flex font-Poppins w-full min-h-screen select-none overflow-hidden">
+        <div className="flex w-full flex-col h-[96vh]">
+          <Header pageName="Role Management" />
+          <div className="flex w-full h-full">
+            <SideBar />
+            <div className="flex w-full bg-[#fff] p-10">
+              <PermissionDenied />
+            </div>
+          </div>
+        </div>
+      </section>
+
+    )
+  }
+
 
   return (
     <>
@@ -123,15 +194,17 @@ export default function RoleManage() {
  <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
               <div className="flex w-[100%] flex-col gap-[20px] py-[10px]">
                 <div className="w-[100%] mx-auto">
-                  <div className="mb-6 flex w-[100%] justify-end">
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Create New Role
-                    </button>
-                  </div>
+                   {canCreate && (
+                    <div className="mb-6 flex w-full justify-end">
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Create New Role
+                      </button>
+                    </div>
+                  )}
 
                   {/* Roles grid */}
                   <div className="flex gap-[13px] flex-wrap">
@@ -159,9 +232,9 @@ export default function RoleManage() {
                               </span>
                             ))}
                           </div>
-
                           <div className="flex absolute bottom-0 border-t border-l px-[10px] gap-[10px] border-[#df040450] right-0 justify-end rounded-tl-[8px]">
-                            <button
+                           {canUpdate && (
+                              <button
                               onClick={() => {
                                 setEditingRole(role)
                                 setIsModalOpen(true)
@@ -170,10 +243,14 @@ export default function RoleManage() {
                             >
                               <i className="fa-regular fa-pen-to-square"></i>
                             </button>
-                            <button onClick={() => openDeleteModal(role._id)} className="text-sm text-[#ff2828] h-[35px] rounded-r-[5px]">
+
+                            )}
+                            {canDelete && (
+                              <button onClick={() => openDeleteModal(role._id)} className="text-sm text-[#ff2828] h-[35px] rounded-r-[5px]">
                               <i className="fa-regular text-[17px] fa-trash"></i>
                             </button>
-                          </div>
+                            )}
+                            </div>
                         </div>
                       ))
                     ) : (
@@ -333,7 +410,7 @@ function RoleModal({ onClose, onSave, editingRole }) {
           <h3 className="font-medium text-gray-700 mb-3">Assign Permissions</h3>
 
           {/* Core apps */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
+          {/* <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
             <div className="px-4 py-2 bg-[#f9fafb] border-b text-sm font-semibold text-gray-700">All</div>
             <table className="w-full">
               <thead>
@@ -378,7 +455,7 @@ function RoleModal({ onClose, onSave, editingRole }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </div> */}
 
           {/* Departments */}
           <div className="border border-gray-200 rounded-xl overflow-hidden">

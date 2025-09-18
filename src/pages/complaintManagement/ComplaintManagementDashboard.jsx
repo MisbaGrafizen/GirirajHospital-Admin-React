@@ -25,6 +25,63 @@ import { useNavigate } from "react-router-dom"
 import OpdFilter from "../../Component/ReportFilter/OpdFilter"
 import { ApiGet } from "../../helper/axios"
 
+const MODULE_TO_BLOCK = {
+    doctor_service: "doctorServices",
+    billing_service: "billingServices",
+    housekeeping: "housekeeping",
+    maintenance: "maintenance",
+    diagnostic_service: "diagnosticServices",
+    dietetics: "dietitianServices",
+    nursing: "nursing", // if you have it
+    security: "security",
+    overall: "overall",
+};
+
+
+function resolvePermissions() {
+    const loginType = localStorage.getItem("loginType");
+    const isAdmin = loginType === "admin";
+
+    let permsArray = [];
+    try {
+        const parsed = JSON.parse(localStorage.getItem("rights"));
+        if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+            permsArray = parsed.permissions;
+        } else if (Array.isArray(parsed)) {
+            permsArray = parsed;
+        }
+    } catch {
+        permsArray = [];
+    }
+
+    // 🔑 collect allowed department blocks
+    const allowedBlocks = isAdmin
+        ? Object.values(MODULE_TO_BLOCK)
+        : permsArray.map((p) => MODULE_TO_BLOCK[p.module]).filter(Boolean);
+
+    return {
+        isAdmin,
+        allowedBlocks,
+    };
+}
+
+
+
+function PermissionDenied() {
+    return (
+        <div className="flex items-center justify-center h-[70vh]">
+            <div className="bg-white border rounded-xl p-8 shadow-sm text-center max-w-md">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Permission required
+                </h2>
+                <p className="text-gray-600">
+                    You don’t have access to view Complaint Dashboard. Please contact an
+                    administrator.
+                </p>
+            </div>
+        </div>
+    )
+}
 
 // ===================== CONSTANTS / LABELS =====================
 const CONCERN_KEYS = [
@@ -60,6 +117,7 @@ const DEPT_COLORS = {
     "Overall": "#6B7280",
 }
 
+
 // ===================== DATE HELPERS =====================
 const pad2 = (n) => String(n).padStart(2, "0")
 const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
@@ -75,18 +133,18 @@ const fmtDateLabel = (iso) => {
 
 // ===================== STATUS / PRIORITY UI =====================
 const mapStatusUI = (status) => {
-  switch (status) {
-    case "resolved":
-      return "Resolved";
-    case "in_progress":
-      return "In Progress";
-    case "escalated":
-      return "Escalated";
-    case "open":
-      return "Open";
-    default:
-      return "Pending"; 
-  }
+    switch (status) {
+        case "resolved":
+            return "Resolved";
+        case "in_progress":
+            return "In Progress";
+        case "escalated":
+            return "Escalated";
+        case "open":
+            return "Open";
+        default:
+            return "Pending";
+    }
 };
 
 const getStatusColor = (status) => {
@@ -117,69 +175,12 @@ const getPriorityColor = (priority) => {
 }
 
 // ===================== TRANSFORMS =====================
-// Flatten one concern document into table rows (one per filled area)
-function flattenConcernDoc(doc) {
-    const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString()
-    const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ")
-
-    // collect all departments that have text or attachments
-    const departments = []
-    CONCERN_KEYS.forEach((k) => {
-        const block = doc?.[k]
-        if (!block) return
-        const hasText = block.text && String(block.text).trim().length > 0
-        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0
-        if (hasText || hasAttachments) {
-            departments.push(DEPT_LABEL[k])
-        }
-    })
-
-    if (departments.length === 0) return []
-
-    return [
-        {
-            id: doc._id,
-            complaintId: doc.complaintId,
-            date: dateStr,
-            department: departments.join(", "),
-            doctor: doc.consultantDoctorName || "-",
-            bedNo: doc.bedNo || "-",
-            patient: doc.patientName || "-",
-            contact: doc.contact || "-",
-            status: mapStatusUI(doc.status),
-            priority: doc.priority || "Normal",
-            assignedTo: "-",
-            details: "-", // you can combine text if you want
-            actions: [],
-            category: "Multiple",
-            expectedResolution: "-",
-            createdAt,
-        },
-    ]
-
-}
-
-const hasConcernContent = (b) => {
-  if (!b || typeof b !== "object") return false;
-  const hasText = typeof b.text === "string" && b.text.trim().length > 0;
-  const hasFiles = Array.isArray(b.attachments) && b.attachments.length > 0;
-  return hasText || hasFiles;
-};
-
-// Collect department labels as comma-separated string
-const getDepartmentsString = (doc) =>
-  CONCERN_KEYS
-    .filter((k) => hasConcernContent(doc?.[k]))
-    .map((k) => DEPT_LABEL[k])
-    .join(", ");
-
-
-function flattenConcernDocForTable(doc) {
+function flattenConcernDoc(doc, allowedBlocks) {
     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
     const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
 
     const departments = [];
-    CONCERN_KEYS.forEach((k) => {
+    allowedBlocks.forEach((k) => {
         const block = doc?.[k];
         if (!block) return;
         const hasText = block.text && String(block.text).trim().length > 0;
@@ -194,18 +195,39 @@ function flattenConcernDocForTable(doc) {
     return [
         {
             id: doc._id,
+            complaintId: doc.complaintId,
             date: dateStr,
-            department: departments.join(", "),   // 👈 all in one row
-            patient: doc.patientName || "-",
-            bedNo: doc.bedNo || "-",
+            department: departments.join(", "),
             doctor: doc.consultantDoctorName || "-",
+            bedNo: doc.bedNo || "-",
+            patient: doc.patientName || "-",
             contact: doc.contact || "-",
             status: mapStatusUI(doc.status),
             priority: doc.priority || "Normal",
+            assignedTo: "-",
+            details: "-",
+            actions: [],
+            category: "Multiple",
+            expectedResolution: "-",
             createdAt,
         },
     ];
 }
+
+
+const hasConcernContent = (b) => {
+    if (!b || typeof b !== "object") return false;
+    const hasText = typeof b.text === "string" && b.text.trim().length > 0;
+    const hasFiles = Array.isArray(b.attachments) && b.attachments.length > 0;
+    return hasText || hasFiles;
+};
+
+// Collect department labels as comma-separated string
+const getDepartmentsString = (doc, allowedBlocks) =>
+    allowedBlocks
+        .filter((k) => hasConcernContent(doc?.[k]))
+        .map((k) => DEPT_LABEL[k])
+        .join(", ");
 
 
 function flattenConcernDocForStats(doc) {
@@ -329,6 +351,8 @@ const getDocDate = (d) => d?.createdAt || d?.updatedAt || d?.date || null;
 export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState(firstDayOfThisMonth())
     const [dateTo, setDateTo] = useState(today())
+    const { isAdmin, allowedBlocks } = resolvePermissions();
+
 
     const [selectedStatus, setSelectedStatus] = useState("All Status")
     const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
@@ -363,8 +387,8 @@ export default function ComplaintManagementDashboard() {
 
     const navigate = useNavigate()
     const handlenavigate = (complaintRow, fullDoc) => {
-  navigate("/complaint-details", { state: { complaint: complaintRow, doc: fullDoc } });
-};
+        navigate("/complaint-details", { state: { complaint: complaintRow, doc: fullDoc } });
+    };
 
 
     useEffect(() => {
@@ -525,7 +549,7 @@ export default function ComplaintManagementDashboard() {
         });
 
         // Build table rows (your existing row shape)
-        const list = filteredDocs.flatMap((d) => flattenConcernDoc(d));
+        const list = filteredDocs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
 
         // KPIs from filtered rows
         setRows(list);
@@ -585,9 +609,6 @@ export default function ComplaintManagementDashboard() {
         setIsModalOpen(false)
         setSelectedComplaint(null)
         document.body.style.overflow = ""
-    }
-    const exportToExcel = () => {
-        alert("Export functionality would be implemented here")
     }
 
     // ===================== CHARTS (design preserved) =====================
@@ -949,19 +970,19 @@ export default function ComplaintManagementDashboard() {
                                             <div className="flex border-t flex-wrap gap-2 p-[20px] ">
                                                 {[
                                                     "Food",
-                                                    "Discharge",
-                                                    "AC",
-                                                    "Spicy",
-                                                    "Fan",
-                                                    "Mosquito",
+                                                    // "Discharge",
+                                                    // "AC",
+                                                    // "Spicy",
+                                                    // "Fan",
+                                                    // "Mosquito",
                                                     "Cleaning",
                                                     "Staff",
-                                                    "Waiting",
-                                                    "Billing",
-                                                    "Medicine",
-                                                    "Nurse",
-                                                    "Doctor",
-                                                    "Room",
+                                                    // "Waiting",
+                                                    // "Billing",
+                                                    // "Medicine",
+                                                    // "Nurse",
+                                                    // "Doctor",
+                                                    // "Room",
                                                     "Service",
                                                 ].map((word, index) => (
                                                     <span
@@ -1024,55 +1045,58 @@ export default function ComplaintManagementDashboard() {
                                                 </thead>
                                                 <tbody className="bg-white">
                                                     {filteredComplaints.map((complaint, index) => {
-                                                        const fullDoc = rawConcerns.find(d => d._id === complaint.id); 
-                                                          return (
-                                                        <tr
-                                                            key={complaint.id}
-                                                            // onClick={handlenavigate}
-                                                            className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
-                                                        >
-                                                            <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
-                                                                <div className="flex items-center">
-                                                                    <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                                                    {complaint.date}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
-                                                                <div className="flex items-center">
-                                                                    <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                    {complaint.doctor}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
-                                                                <div className="flex items-center">
-                                                                    <Bed className="w-4 h-4 text-gray-400 mr-2" />
-                                                                    {complaint.bedNo}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">{fullDoc ? getDepartmentsString(fullDoc) : "-"}</td>
-                                                            <td className="px-6 py-2 text-sm">
-                                                                <span
-                                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
-                                                                        complaint.status,
-                                                                    )}`}
-                                                                >
-                                                                    {complaint.status}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
-                                                                <button
-                                                                    onClick={() => handlenavigate(complaint, fullDoc)}
-                                                                    className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                                                                >
-                                                                    <Eye className="w-4 h-4 mr-1" />
-                                                                    View
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                          )
-                                                        })}
+                                                        const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                        return (
+                                                            <tr
+                                                                key={complaint.id}
+                                                                // onClick={handlenavigate}
+                                                                className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                                                            >
+                                                                <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <div className="flex items-center">
+                                                                        <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                                                        {complaint.date}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <div className="flex items-center">
+                                                                        <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                        {complaint.doctor}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <div className="flex items-center">
+                                                                        <Bed className="w-4 h-4 text-gray-400 mr-2" />
+                                                                        {complaint.bedNo}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
+                                                                </td>
+
+                                                                <td className="px-6 py-2 text-sm">
+                                                                    <span
+                                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
+                                                                            complaint.status,
+                                                                        )}`}
+                                                                    >
+                                                                        {complaint.status}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <button
+                                                                        onClick={() => handlenavigate(complaint, fullDoc)}
+                                                                        className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                    >
+                                                                        <Eye className="w-4 h-4 mr-1" />
+                                                                        View
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
                                                     {filteredComplaints.length === 0 && (
                                                         <tr>
                                                             <td colSpan={8} className="px-6 py-6 text-center text-gray-500">

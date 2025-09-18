@@ -350,7 +350,6 @@ const [filters, setFilters] = useState({
 
   // -------- Data Fetch (permission-gated) --------
   const fetchOPD = useCallback(async () => {
-    if (!canViewFeedback) return
     setLoading(true)
     setError(null)
     try {
@@ -395,7 +394,7 @@ const [filters, setFilters] = useState({
     } finally {
       setLoading(false)
     }
-  }, [canViewFeedback, dateFrom, dateTo])
+  }, [dateFrom, dateTo])
 
   useEffect(() => { fetchOPD() }, [fetchOPD])
 
@@ -418,10 +417,6 @@ const [filters, setFilters] = useState({
 
   // -------- Export (permission-gated) --------
   const exportToExcel = async () => {
-    if (!canExportFeedback) {
-      alert("You don't have permission to download/export.")
-      return
-    }
     const XLSX = await import("xlsx")
     const rows = filteredFeedback.map((f) => ({
       "Date": formatDate(f.createdAt),
@@ -634,12 +629,6 @@ const openFeedbackDetails = useCallback((fb) => {
           <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
-
-            {!canViewFeedback ? (
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
-                <PermissionDenied />
-              </div>
-            ) : (
               <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
                 <div className="mx-auto w-full">
     <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
@@ -727,8 +716,21 @@ const openFeedbackDetails = useCallback((fb) => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
                     <div className="flex flex-wrap gap-3">
                       {[
-                        "Excellent", "Nurse", "Professional", "Clean", "Comfortable", "Doctor", "Care", "Staff",
-                        "Treatment", "Service", "Billing", "Food", "Room", "Pharmacy", "Housekeeping",
+                        "Excellent", 
+                        // "Nurse", 
+                        // "Professional", 
+                        "Clean", 
+                        // "Comfortable", 
+                        // "Doctor", 
+                        // "Care", 
+                        "Staff",
+                        // "Treatment", 
+                        "Service", 
+                        // "Billing", 
+                        "Food", 
+                        // "Room", 
+                        // "Pharmacy", 
+                        // "Housekeeping",
                       ].map((word, index) => (
                         <span
                           key={index}
@@ -816,7 +818,6 @@ const openFeedbackDetails = useCallback((fb) => {
                           />
                         </div>
 
-                        {canExportFeedback && (
                           <button
                             onClick={exportToExcel}
                             className="flex items-center px-4 py-[4px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -824,7 +825,7 @@ const openFeedbackDetails = useCallback((fb) => {
                             <Download className="w-4 h-4 mr-2" />
                             Export to Excel
                           </button>
-                        )}
+
                       </div>
                     </div>
 
@@ -889,7 +890,6 @@ const openFeedbackDetails = useCallback((fb) => {
                   </div>
                 </div>
               </div>
-            )}
           </div>
         </div>
       </section>
