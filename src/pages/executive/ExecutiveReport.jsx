@@ -240,16 +240,16 @@ export default function ExecutiveReport() {
   }, [])
 
   // Build current window + previous window slices
-  const { opdNow, ipdNow, opdPrev, ipdPrev } = useMemo(() => {
-    // Current window
-    const curFrom = new Date(fromDate)
-    const curTo = new Date(toDate)
-    const days = Math.max(1, Math.round((curTo - curFrom) / 86400000) + 1)
+    const { opdNow, ipdNow, opdPrev, ipdPrev } = useMemo(() => {
+    const now = new Date()
 
-    const prevTo = new Date(curFrom)
-    prevTo.setDate(prevTo.getDate() - 1)
-    const prevFrom = new Date(prevTo)
-    prevFrom.setDate(prevFrom.getDate() - (days - 1))
+    // Current month (1st → last day)
+    const curFrom = new Date(now.getFullYear(), now.getMonth(), 1)
+    const curTo = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+    // Previous month (1st → last day)
+    const prevFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const prevTo = new Date(now.getFullYear(), now.getMonth(), 0)
 
     const curFromISO = toLocalISO(curFrom)
     const curToISO = toLocalISO(curTo)
@@ -258,7 +258,9 @@ export default function ExecutiveReport() {
 
     const slice = (arr, fromISO, toISO) =>
       arr.filter((d) => {
-        const dtISO = toISODateOnly(normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn))
+        const dtISO = toISODateOnly(
+          normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
+        )
         return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
       })
 
@@ -268,7 +270,8 @@ export default function ExecutiveReport() {
       opdPrev: slice(opd, prevFromISO, prevToISO),
       ipdPrev: slice(ipd, prevFromISO, prevToISO),
     }
-  }, [opd, ipd, fromDate, toDate])
+  }, [opd, ipd])
+
 
   // Compute metrics for a given slice
   function computeFor(opdSlice, ipdSlice) {
@@ -306,15 +309,32 @@ export default function ExecutiveReport() {
   // Build table rows with trends + statuses
   const metrics = useMemo(() => {
     const rows = []
+        function pctChange(current, previous) {
+      if (!previous || previous === 0) return "—"
+      const diff = ((current - previous) / previous) * 100
+      return diff
+    }
+
+    function statusFromChange(diff) {
+      if (diff > 5) return { type: "improving", label: "Improving" }
+      if (diff >= -5 && diff <= 5) return { type: "stable", label: "Stable" }
+      if (diff < -10) return { type: "attention", label: "Needs Attention" }
+      return { type: "declining", label: "Declining" }
+    }
+
 
     // Overall OPD
-    const diffOPD = cur.opdPct - (prev.opdPct ?? 0)
+        const diffOPD = pctChange(cur.opdPct, prev.opdPct)
     rows.push({
       metric: "Overall OPD Feedback",
       value: `${cur.opdPct}%`,
-      trend: { value: `${diffOPD >= 0 ? "+" : ""}${diffOPD.toFixed(1)}%`, direction: diffOPD < 0 ? "down" : "up" },
-      status: statusForPercent(cur.opdPct),
+      trend: { 
+        value: `${diffOPD === "—" ? "—" : diffOPD.toFixed(1) + "%"}`, 
+        direction: diffOPD < 0 ? "down" : "up" 
+      },
+      status: statusFromChange(diffOPD === "—" ? 0 : diffOPD),
     })
+
 
     // Overall IPD
     const diffIPD = cur.ipdPct - (prev.ipdPct ?? 0)
