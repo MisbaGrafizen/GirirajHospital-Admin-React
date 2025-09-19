@@ -52,7 +52,7 @@ let roleName = "User";
      roleName = rights.roleName;
    }
  } catch {
-   roleName = "User";
+   roleName = "Super Admin";
  }
 
 
