@@ -76,9 +76,7 @@ export default function OpdFilter({
   onChange,
   /** NEW: choose which service set to show: 'opd' (default) | 'concern' */
   serviceVariant = 'opd',
-  /** OPTIONAL: override services completely (array of strings) */
   services,
-  /** OPTIONAL: override doctors completely (array of strings) */
   doctors,
 }) {
   // Local UI state (pre-filled from parent value if provided)
