@@ -41,7 +41,7 @@ function StarRating({ score = 0, label = "Rating" }) {
   return (
     <div className="flex items-center gap-2" aria-label={`${label}: ${s} out of 5`} role="img">
       <div className="flex items-center">
-        {[1,2,3,4,5].map(i =>
+        {[1, 2, 3, 4, 5].map(i =>
           i <= s
             ? <Star key={i} className="w-5 h-5 text-yellow-500" strokeWidth={1.5} fill="currentColor" />
             : <Star key={i} className="w-5 h-5 text-gray-300" strokeWidth={1.5} fill="none" />
@@ -97,24 +97,23 @@ export default function IpdFeedbackDetails() {
 
   useEffect(() => {
     if (!id) return
-    ;(async () => {
-      try {
-        setLoading(true); setError(null)
-        const res = await ApiGet(`/admin/ipd-patient/${encodeURIComponent(id)}`)
-        setDoc(res?.data ?? res)
-      } catch (e) {
-        console.error('Fetch IPD feedback by id failed:', e)
-        setError('Failed to load feedback.')
-      } finally {
-        setLoading(false)
-      }
-    })()
+      ; (async () => {
+        try {
+          setLoading(true); setError(null)
+          const res = await ApiGet(`/admin/ipd-patient/${encodeURIComponent(id)}`)
+          console.log('res', res)
+          setDoc(res?.data ?? res)
+        } catch (e) {
+          console.error('Fetch IPD feedback by id failed:', e)
+          setError('Failed to load feedback.')
+        } finally {
+          setLoading(false)
+        }
+      })()
   }, [id])
 
   const model = useMemo(() => {
     if (!doc) return null
-    const ratings = doc.ratings ?? {}
-
     return {
       id: String(normId(doc._id ?? doc.id) || ''),
       dateTime: normDate(doc.createdAt ?? doc.date ?? doc.dateTime ?? doc.createdOn) || '',
@@ -123,13 +122,19 @@ export default function IpdFeedbackDetails() {
       doctorName: doc.consultantDoctorName ?? doc.doctor ?? doc.doctorName ?? doc.consultant ?? '-',
       department: doc.department ?? doc.dept ?? 'IPD',
       bedNo: doc.bedNo ?? doc.bed ?? '',
-      // department-wise scores (scan many possible field names)
       ratings: {
-        appointment: getScore(ratings, ['appointment', 'appointmentBooking']),
-        nursing: getScore(ratings, ['nursing', 'nursingStaff', 'reception', 'receptionStaff', 'receptionServices', 'nurse']),
-        diagnosticServices: getScore(ratings, ['diagnosticServices', 'diagnostics', 'lab', 'laboratory', 'radiology', 'radiologyServices', 'labServices']),
-        doctorServices: getScore(ratings, ['doctorServices', 'doctor', 'doctorService', 'consultant', 'consultation']),
-        security: getScore(ratings, ['security', 'securityServices', 'guard', 'safety']),
+        overallExperience: to05(doc.ratings?.overallExperience),
+        doctorServices: to05(doc.ratings?.doctorServices),
+        billingServices: to05(doc.ratings?.billingServices),
+        housekeeping: to05(doc.ratings?.housekeeping),
+        maintenance: to05(doc.ratings?.maintenance),
+        diagnosticServices: to05(doc.ratings?.diagnosticServices),
+        dietitianServices: to05(doc.ratings?.dietitianServices),
+        security: to05(doc.ratings?.security),
+      },
+      extra: {
+        doctorType: doc.doctorType ?? "",
+        diagnosticType: doc.diagnosticType ?? "",
       },
       comments: doc.comments ?? doc.comment ?? '',
     }
@@ -149,7 +154,7 @@ export default function IpdFeedbackDetails() {
           <Header pageName="Ipd Feedback Details" />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-         <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
               <section className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-4">
                   {/* Top info */}
@@ -168,31 +173,27 @@ export default function IpdFeedbackDetails() {
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-4">Department-wise Ratings</h3>
                     <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div><p className="text-sm font-medium text-gray-900">Appointment</p></div>
-                        <StarRating score={model.ratings.appointment} label="Appointment" />
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div><p className="text-sm font-medium text-gray-900">Nursing / Reception</p></div>
-                        <StarRating score={model.ratings.nursing} label="Nursing / Reception" />
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div><p className="text-sm font-medium text-gray-900">Diagnostic Services</p></div>
-                        <StarRating score={model.ratings.diagnosticServices} label="Diagnostic Services" />
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div><p className="text-sm font-medium text-gray-900">Doctor Services</p></div>
-                        <StarRating score={model.ratings.doctorServices} label="Doctor Services" />
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div><p className="text-sm font-medium text-gray-900">Security</p></div>
-                        <StarRating score={model.ratings.security} label="Security" />
-                      </div>
+                      {[
+                        { key: "overallExperience", label: "Overall Experience" },
+                        { key: "doctorServices", label: `Doctor Services ${model.extra.doctorType ? `(${model.extra.doctorType})` : ""}` },
+                        { key: "billingServices", label: "Billing Services" },
+                        { key: "housekeeping", label: "Housekeeping" },
+                        { key: "maintenance", label: "Maintenance" },
+                        { key: "diagnosticServices", label: `Diagnostic Services ${model.extra.diagnosticType ? `(${model.extra.diagnosticType})` : ""}` },
+                        { key: "dietitianServices", label: "Dietitian (Food, Canteen)" },
+                        { key: "security", label: "Security" },
+                      ].map(({ key, label }) => (
+                        <div
+                          key={key}
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                        >
+                          <div><p className="text-sm font-medium text-gray-900">{label}</p></div>
+                          <StarRating score={model.ratings[key]} label={label} />
+                        </div>
+                      ))}
                     </div>
+
+
                   </div>
 
                   <div className="my-6 h-px bg-gray-100" />

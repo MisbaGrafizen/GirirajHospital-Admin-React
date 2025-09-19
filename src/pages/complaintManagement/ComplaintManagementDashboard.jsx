@@ -175,43 +175,103 @@ const getPriorityColor = (priority) => {
 }
 
 // ===================== TRANSFORMS =====================
+// function flattenConcernDoc(doc, allowedBlocks) {
+//     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
+//     const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
+
+//     const departments = [];
+//     allowedBlocks.forEach((k) => {
+//         const block = doc?.[k];
+//         if (!block) return;
+//         const hasText = block.text && String(block.text).trim().length > 0;
+//         const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+//         if (hasText || hasAttachments) {
+//             departments.push(DEPT_LABEL[k]);
+//         }
+//     });
+
+//     if (departments.length === 0) return [];
+
+//     return [
+//         {
+//             id: doc._id,
+//             complaintId: doc.complaintId,
+//             date: dateStr,
+//             department: departments.join(", "),
+//             doctor: doc.consultantDoctorName || "-",
+//             bedNo: doc.bedNo || "-",
+//             patient: doc.patientName || "-",
+//             contact: doc.contact || "-",
+//             status: mapStatusUI(doc.status),
+//             priority: doc.priority || "Normal",
+//             assignedTo: "-",
+//             details: "-",
+//             actions: [],
+//             category: "Multiple",
+//             expectedResolution: "-",
+//             createdAt,
+//         },
+//     ];
+// }
+
 function flattenConcernDoc(doc, allowedBlocks) {
-    const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
-    const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
+  const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
+  const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
 
-    const departments = [];
-    allowedBlocks.forEach((k) => {
-        const block = doc?.[k];
-        if (!block) return;
-        const hasText = block.text && String(block.text).trim().length > 0;
-        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
-        if (hasText || hasAttachments) {
-            departments.push(DEPT_LABEL[k]);
-        }
-    });
+  const departments = [];
+  allowedBlocks.forEach((k) => {
+    const block = doc?.[k];
+    if (!block) return;
+    const hasText = block.text && String(block.text).trim().length > 0;
+    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+    if (hasText || hasAttachments) {
+      departments.push(DEPT_LABEL[k]);
+    }
+  });
 
-    if (departments.length === 0) return [];
+  if (departments.length === 0) return [];
 
-    return [
-        {
-            id: doc._id,
-            complaintId: doc.complaintId,
-            date: dateStr,
-            department: departments.join(", "),
-            doctor: doc.consultantDoctorName || "-",
-            bedNo: doc.bedNo || "-",
-            patient: doc.patientName || "-",
-            contact: doc.contact || "-",
-            status: mapStatusUI(doc.status),
-            priority: doc.priority || "Normal",
-            assignedTo: "-",
-            details: "-",
-            actions: [],
-            category: "Multiple",
-            expectedResolution: "-",
-            createdAt,
-        },
-    ];
+  return [{
+    id: doc._id,
+    complaintId: doc.complaintId,
+    date: dateStr,
+    department: departments.join(", "),  // 👈 one row with joined departments
+    doctor: doc.consultantDoctorName || "-",
+    bedNo: doc.bedNo || "-",
+    patient: doc.patientName || "-",
+    contact: doc.contact || "-",
+    status: mapStatusUI(doc.status),
+    priority: doc.priority || "Normal",
+    assignedTo: "-",
+    details: "-",
+    actions: [],
+    category: "Multiple",
+    expectedResolution: "-",
+    createdAt,
+  }];
+}
+
+function flattenConcernDocForStats(doc) {
+  const results = [];
+
+  CONCERN_KEYS.forEach((k) => {
+    const block = doc?.[k];
+    if (!block) return;
+
+    const hasText = block.text && String(block.text).trim().length > 0;
+    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+
+    if (hasText || hasAttachments) {
+      results.push({
+        department: DEPT_LABEL[k],          // 👈 one per department
+        resolutionTime: doc.status === "resolved" ? 1 : 0, // fake example
+        escalated: doc.priority === "Urgent" || doc.priority === "Critical",
+        createdAt: doc.createdAt || doc.updatedAt || new Date().toISOString(), // 👈 needed for trend
+      });
+    }
+  });
+
+  return results;
 }
 
 
@@ -230,28 +290,28 @@ const getDepartmentsString = (doc, allowedBlocks) =>
         .join(", ");
 
 
-function flattenConcernDocForStats(doc) {
-    const results = [];
+// function flattenConcernDocForStats(doc) {
+//     const results = [];
 
-    CONCERN_KEYS.forEach((k) => {
-        const block = doc?.[k];
-        if (!block) return;
+//     CONCERN_KEYS.forEach((k) => {
+//         const block = doc?.[k];
+//         if (!block) return;
 
-        const hasText = block.text && String(block.text).trim().length > 0;
-        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+//         const hasText = block.text && String(block.text).trim().length > 0;
+//         const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
 
-        if (hasText || hasAttachments) {
-            results.push({
-                department: DEPT_LABEL[k],
-                // Approx resolution time placeholder (needs backend for real data)
-                resolutionTime: doc.status === "resolved" ? 1 : 0,
-                escalated: doc.priority === "Urgent" || doc.priority === "Critical",
-            });
-        }
-    });
+//         if (hasText || hasAttachments) {
+//             results.push({
+//                 department: DEPT_LABEL[k],
+//                 // Approx resolution time placeholder (needs backend for real data)
+//                 resolutionTime: doc.status === "resolved" ? 1 : 0,
+//                 escalated: doc.priority === "Urgent" || doc.priority === "Critical",
+//             });
+//         }
+//     });
 
-    return results; // array of objects
-}
+//     return results; // array of objects
+// }
 
 
 // Build multi-line chart series from rows
@@ -396,78 +456,7 @@ export default function ComplaintManagementDashboard() {
         return () => clearTimeout(t)
     }, [])
 
-    //     useEffect(() => {
-    //         let alive = true;
-    //         (async () => {
-    //             try {
-    //                 const docs = await getConcerns(dateFrom, dateTo);
-    //                 if (!alive) return;
-
-    //                 // Flatten rows for table
-    //                 const flattened = docs.flatMap(d => flattenConcernDoc(d));
-    //                 setRows(flattened);
-
-    //                 // KPI cards
-    //                 setKpiData(computeKpis(flattened));
-
-    //                 // Trend chart
-    //                 const { data: trend, colors } = buildTrendData(flattened);
-    //                 setTrendData(trend);
-    //                 setDepartmentColors(colors);
-
-    //                 // 🔥 Top-5 departments with stats
-    //                 const deptStats = {};
-
-    //                 docs.forEach(doc => {
-    //     const depts = flattenConcernDocForStats(doc);
-    //     depts.forEach(d => {
-    //         if (!d.department) return;
-    //         if (!deptStats[d.department]) {
-    //             deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-    //         }
-    //         deptStats[d.department].complaints += 1;
-    //         deptStats[d.department].totalResolution += d.resolutionTime || 0;
-    //         if (d.escalated) deptStats[d.department].escalations += 1;
-    //     });
-    // });
-
-
-    //                 const statsArray = Object.entries(deptStats).map(([department, stats]) => ({
-    //                     department,
-    //                     complaints: stats.complaints,
-    //                     avgResolution: stats.complaints
-    //                         ? (stats.totalResolution / stats.complaints).toFixed(1) + " days"
-    //                         : "-",
-    //                     escalations: stats.escalations,
-    //                 }));
-
-    //                 const top5 = statsArray
-    //                     .sort((a, b) => b.complaints - a.complaints)
-    //                     .slice(0, 5)
-    //                     .map((dept, idx) => ({
-    //                         rank: idx + 1,
-    //                         ...dept,
-    //                     }));
-
-    //                 setTop5Departments(top5);
-    //             } catch (e) {
-    //                 if (!alive) return;
-    //                 console.error("Failed to load concerns", e);
-    //                 setRows([]);
-    //                 setKpiData(computeKpis([]));
-    //                 setTrendData([]);
-    //                 setDepartmentColors({});
-    //                 setTop5Departments([]);
-    //             }
-    //         })();
-    //         return () => {
-    //             alive = false;
-    //         };
-    //     }, [dateFrom, dateTo]);
-
-
-
-
+  
     // ====== DERIVED ======
     const filteredComplaints = useMemo(() => {
         const q = (searchTerm || "").toLowerCase();
@@ -501,98 +490,55 @@ export default function ComplaintManagementDashboard() {
 
 
     useEffect(() => {
-        // Nothing to do until the first fetch is done
-        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
-            setRows([]);
-            setKpiData({ totalComplaints: 0, pending: 0, resolved: 0, escalated: 0, avgResolutionTime: "—", inProgress: 0 });
-            setTrendData([]);
-            setDepartmentColors({});
-            setTop5Departments([]);
-            return;
-        }
+  if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+    setRows([]);
+    setKpiData(computeKpis([]));
+    setTrendData([]);
+    setDepartmentColors({});
+    setTop5Departments([]);
+    return;
+  }
 
-        // Build date range (inclusive)
-        const start = filters.from ? new Date(filters.from) : null;
-        const end = filters.to ? new Date(filters.to) : null;
-        if (start) start.setHours(0, 0, 0, 0);
-        if (end) end.setHours(23, 59, 59, 999);
+  // ✅ build table rows (one row per complaint)
+  const list = rawConcerns.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+  setRows(list);
 
-        const serviceLabel = filters.service || "All Services";
-        const doctorQuery = (filters.doctor || "").trim().toLowerCase();
+  // ✅ build stats (multi-department)
+  const statsDocs = rawConcerns.flatMap((d) => flattenConcernDocForStats(d));
 
-        // Filter raw docs first
-        const filteredDocs = rawConcerns.filter((d) => {
-            // date filter
-            const dt = getDocDate(d);
-            const nd = dt ? new Date(dt) : null;
-            if (!nd || isNaN(nd)) return false;
-            if (start && nd < start) return false;
-            if (end && nd > end) return false;
+  // KPIs
+  setKpiData(computeKpis(list));
 
-            // service (department) filter — must have at least one filled block for selected service
-            if (serviceLabel !== "All Services") {
-                const key = LABEL_TO_KEY[serviceLabel];
-                if (!key) return false;
-                const block = d?.[key];
-                const hasText = !!(block?.text && String(block.text).trim().length > 0);
-                const hasFiles = Array.isArray(block?.attachments) && block.attachments.length > 0;
-                if (!hasText && !hasFiles) return false;
-            }
+  // Trend chart
+  const { data: tData, colors } = buildTrendData(statsDocs);
+  setTrendData(tData);
+  setDepartmentColors(colors);
 
-            // doctor filter (substring match)
-            if (doctorQuery) {
-                const docName = (d.consultantDoctorName || d.doctorName || d.consultant || "").toLowerCase();
-                if (!docName.includes(doctorQuery)) return false;
-            }
+  // Top-5 departments
+  const deptStats = {};
+  statsDocs.forEach((d) => {
+    if (!deptStats[d.department]) {
+      deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+    }
+    deptStats[d.department].complaints += 1;
+    deptStats[d.department].totalResolution += d.resolutionTime || 0;
+    if (d.escalated) deptStats[d.department].escalations += 1;
+  });
 
-            return true;
-        });
+  const top = Object.entries(deptStats)
+    .map(([department, s]) => ({
+      department,
+      complaints: s.complaints,
+      avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+      escalations: s.escalations,
+    }))
+    .sort((a, b) => b.complaints - a.complaints)
+    .slice(0, 5)
+    .map((x, i) => ({ rank: i + 1, ...x }));
 
-        // Build table rows (your existing row shape)
-        const list = filteredDocs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+  setTop5Departments(top);
+}, [rawConcerns, allowedBlocks]);
 
-        // KPIs from filtered rows
-        setRows(list);
-        setKpiData(computeKpis(list));
-
-        // Trend + colors from filtered rows
-        const { data: tData, colors } = buildTrendData(list);
-        setTrendData(tData);
-        setDepartmentColors(colors);
-
-        // Top-5 departments (from filtered docs)
-        const deptStats = {};
-        filteredDocs.forEach((doc) => {
-            const parts = flattenConcernDocForStats(doc); // [{ department, resolutionTime, escalated }]
-            parts.forEach((p) => {
-                if (!p.department) return;
-                if (!deptStats[p.department]) {
-                    deptStats[p.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-                }
-                deptStats[p.department].complaints += 1;
-                deptStats[p.department].totalResolution += p.resolutionTime || 0;
-                if (p.escalated) deptStats[p.department].escalations += 1;
-            });
-        });
-
-        const top = Object.entries(deptStats)
-            .map(([department, s]) => ({
-                department,
-                complaints: s.complaints,
-                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-                escalations: s.escalations,
-            }))
-            .sort((a, b) => b.complaints - a.complaints)
-            .slice(0, 5)
-            .map((x, i) => ({ rank: i + 1, ...x }));
-
-        setTop5Departments(top);
-
-        // Keep your existing local states in sync (so charts use same dates/labels)
-        setDateFrom(filters.from || "");
-        setDateTo(filters.to || "");
-        setSelectedDepartment(serviceLabel === "All Services" ? "All Departments" : serviceLabel);
-    }, [filters, rawConcerns]);
 
 
     const handleFilterChange = useCallback((next) => {

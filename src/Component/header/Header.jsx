@@ -2,14 +2,11 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import backArrow from "../../../public/imges/main/back-arrow.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import ModernDatePicker from "../MainInputFolder/ModernDatePicker";
+import dayjs from "dayjs";
 
 function Header({
   pageName = "",
-  value,
-  onChange,
-  serviceVariant = "opd",
-  services,
-  doctors,
+  onDateRangeChange,
 }) {
   const navigate = useNavigate();
   const location = useLocation(); // 👈 to get current route
@@ -20,6 +17,16 @@ function Header({
 
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
+
+
+  useEffect(() => {
+    if (onDateRangeChange) {
+      onDateRangeChange({
+        from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+        to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+      });
+    }
+  }, [dateFrom, dateTo]);
 
   return (
     <>
@@ -47,13 +54,21 @@ function Header({
               <ModernDatePicker
                 label="From Date"
                 selectedDate={dateFrom}
-                setSelectedDate={setDateFrom}
-              />
+                setSelectedDate={(d) => {
+                  setDateFrom(d);
+                  if (d && dateTo && onDateRangeChange) {
+                    onDateRangeChange({ from: d, to: dateTo });
+                  }
+                }} />
               <ModernDatePicker
                 label="To Date"
                 selectedDate={dateTo}
-                setSelectedDate={setDateTo}
-              />
+                setSelectedDate={(d) => {
+                  setDateTo(d);
+                  if (dateFrom && d && onDateRangeChange) {
+                    onDateRangeChange({ from: dateFrom, to: d });
+                  }
+                }} />
             </div>
           )}
         </div>

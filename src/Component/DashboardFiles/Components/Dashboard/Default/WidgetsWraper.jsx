@@ -18,7 +18,7 @@ const WidgetsWrapper = ({ kpis }) => {
   const totalFeedback = kpis?.totalFeedback || 0;
   const avgRating = kpis?.averageRating?.value?.toFixed(1) || "0.0";
   const responseRate = kpis?.responseRate?.percent != null ? kpis.responseRate.percent : "—";
-  const openIssues = kpis?.openIssues?.count || 0;
+  const openIssues = kpis?.openIssues || 0;
   const npsRating = kpis?.npsRating?.value?.toFixed(1) || "0.0";
   const totalConcern = kpis?.totalConcern || 0;
 

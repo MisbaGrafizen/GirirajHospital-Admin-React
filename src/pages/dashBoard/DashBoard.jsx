@@ -96,6 +96,7 @@ const CONCERN_COLORS = { Open: "#ef4444", "In Progress": "#f59e0b", Resolved: "#
 export default function DashBoard() {
 
   const [dashboardData, setDashboardData] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [ipdFeedbackTrend, setIpdFeedbackTrend] = useState([])
   const [opdFeedbackData, setOpdFeedbackData] = useState([])
   const [opdSummary, setOpdSummary] = useState({ avgRating: 0, positivePercent: 0, responses: 0 })
@@ -104,13 +105,16 @@ export default function DashBoard() {
   const [error, setError] = useState(null)
   const [concernData, setConcernData] = useState([])
   const [kpis, setKpis] = useState({
-    totalFeedback: 0,
-    averageRating: 0,
-    earning: { weeklyAverage: 0, series: [], labels: [] },
-    expense: { weeklyAverage: 0, series: [], labels: [] },
-    openIssues: { count: 0, urgent: 0, normal: 0, delta: 0 },
-    responseRate: { percent: null, target: 90, delta: null },
-  })
+  totalFeedback: 0,
+  averageRating: { value: 0 },
+  npsRating: { value: 0 },
+  openIssues: 0,         
+  resolvedIssues: 0, 
+  totalConcern: 0,        
+  earning: { weeklyAverage: 0, series: [], labels: [] },
+  expense: { weeklyAverage: 0, series: [], labels: [] },
+});
+
 
   const [recentFeedbacks, setRecentFeedbacks] = useState([])
 
@@ -124,7 +128,12 @@ export default function DashBoard() {
           setLoading(true)
           setError(null)
 
-          const res = await ApiGet("/admin/dashboard")
+          const query = [];
+          if (dateRange.from) query.push(`from=${dateRange.from}`);
+          if (dateRange.to) query.push(`to=${dateRange.to}`);
+          const qs = query.length ? `?${query.join("&")}` : "";
+
+          const res = await ApiGet(`/admin/dashboard${qs}`);
           console.log('res', res)
           const data = res?.data?.data || res?.data || {}
 
@@ -174,16 +183,17 @@ export default function DashBoard() {
           )
 
           // ----- Concerns donut (last 7 days ending today) -----
-const concerns = data?.concerns || { counts: {}, totalIssues: 0, resolvedPercent: 0 };
+          const weeks = Array.isArray(data?.concerns) ? data.concerns : [];
+          const latest = weeks.at(-1) || { counts: {}, total: 0 };
 
-setConcernData(
-  ["Open", "In Progress", "Resolved"].map((k) => ({
-    name: k,
-    value: Number(concerns.counts?.[k] || 0),
-    color: CONCERN_COLORS[k],
-    details: `Total issues: ${concerns.totalIssues} • Resolved: ${concerns.resolvedPercent}%`,
-  }))
-);
+          setConcernData(
+            ["Open", "In Progress", "Resolved"].map((k) => ({
+              name: k,
+              value: Number(latest.counts?.[k] || 0),
+              color: CONCERN_COLORS[k],
+              details: `Week: ${latest.weekLabel || "-"} • Total: ${latest.total || 0}`,
+            }))
+          );
 
 
           // ----- Department bars -----
@@ -230,7 +240,7 @@ setConcernData(
     return () => {
       mounted = false
     }
-  }, [])
+  }, [dateRange])
 
   console.log('ipdTrendFeedback', ipdFeedbackTrend)
 
@@ -240,7 +250,7 @@ setConcernData(
 
       <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
-          <Header pageName="Dashboard" />
+          <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
             <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px]  bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
