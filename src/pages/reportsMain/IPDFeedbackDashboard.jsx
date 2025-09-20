@@ -147,8 +147,8 @@ function AnimatedDropdown({ label, options, selected, onSelect, icon: Icon, disa
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
         className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-white transition-colors ${disabled
-            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-            : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+          : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
           }`}
       >
         <div className="flex items-center gap-2">
@@ -320,28 +320,28 @@ export default function IPDFeedbackDashboard() {
   const [rawIPD, setRawIPD] = useState([]);
 
 
-// Build doctor list from data (keeps "All Doctors" at top)
-const doctorOptions = useMemo(() => {
-  const set = new Set();
-  rawIPD.forEach(d => {
-    const name = d?.consultantDoctorName || d?.doctorName;
-    if (name) set.add(String(name));
-  });
-  return ["All Doctors", ...Array.from(set).sort((a,b) => a.localeCompare(b))];
-}, [rawIPD]);
+  // Build doctor list from data (keeps "All Doctors" at top)
+  const doctorOptions = useMemo(() => {
+    const set = new Set();
+    rawIPD.forEach(d => {
+      const name = d?.consultantDoctorName || d?.doctorName;
+      if (name) set.add(String(name));
+    });
+    return ["All Doctors", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [rawIPD]);
 
-const roomOptions = useMemo(() => {
-  const set = new Set();
-  rawIPD.forEach(d => {
-    const bed = d?.bedNo;
-    if (bed != null && bed !== "") set.add(String(bed));
-  });
-  return ["All Rooms", ...Array.from(set).sort((a,b) => a.localeCompare(b))];
-}, [rawIPD]);
+  const roomOptions = useMemo(() => {
+    const set = new Set();
+    rawIPD.forEach(d => {
+      const bed = d?.bedNo;
+      if (bed != null && bed !== "") set.add(String(bed));
+    });
+    return ["All Rooms", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [rawIPD]);
 
-useEffect(() => {
-  if (!roomOptions.includes(room)) setRoom("All Rooms");
-}, [roomOptions, room]);
+  useEffect(() => {
+    if (!roomOptions.includes(room)) setRoom("All Rooms");
+  }, [roomOptions, room]);
 
 
   const deptOptions = ["OPD", "IPD", "Both"]
@@ -567,19 +567,109 @@ useEffect(() => {
   }
 
   const fetchIPD = useCallback(async () => {
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  try {
-    const res = await ApiGet(`${API_URL}`);
-    const data = Array.isArray(res) ? res : (res.data || []);
+    try {
+      const res = await ApiGet(`${API_URL}`);
+      const data = Array.isArray(res) ? res : (res.data || []);
 
-    // ✅ keep raw server data for filtering
-    setRawIPD(data);
+      // ✅ keep raw server data for filtering
+      setRawIPD(data);
 
-    // (You can keep your existing mapping here if you want an initial view;
-    // the filter effect below will update it once filters are present.)
-    const list = data.map((d) => {
+      // (You can keep your existing mapping here if you want an initial view;
+      // the filter effect below will update it once filters are present.)
+      const list = data.map((d) => {
+        const rating = calcRowAverage(d.ratings);
+        return {
+          id: String(d._id || d.id),
+          createdAt: d.createdAt || d.date,
+          patient: d.patientName || d.name || "-",
+          contact: d.contact || "-",
+          bedNo: d.bedNo || "-",
+          consultantDoctorName: d.consultantDoctorName || "-",
+          rating,
+          overallRecommendation: d.overallRecommendation,
+        };
+      });
+
+      const avg = list.length
+        ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
+        : 0;
+
+      const nps = calcNpsPercent(data);
+      const overallScore =
+        avg >= 4.5 ? "Excellent" :
+          avg >= 4.0 ? "Good" :
+            avg >= 3.0 ? "Average" :
+              avg >= 2.0 ? "Poor" : "Very Poor";
+
+      setRows(list);
+      setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
+      setChartData(buildDistribution(list));
+      setServiceSummary(buildServiceSummary(data));
+    } catch (e) {
+      console.error("Fetch IPD failed:", e);
+      setError("Failed to load IPD feedback");
+      setRows([]);
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+      setChartData(buildDistribution([]));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    fetchIPD()
+  }, [fetchIPD])
+
+  useEffect(() => {
+    // 1) Guard
+    if (!Array.isArray(rawIPD) || !rawIPD.length) {
+      setRows([]);
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+      setChartData(buildDistribution([]));
+      setServiceSummary([]);
+      setLineData([]);
+      return;
+    }
+
+    // 2) Build inclusive date range
+    const start = dateFrom ? new Date(dateFrom) : null;
+    const end = dateTo ? new Date(dateTo) : null;
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(23, 59, 59, 999);
+
+    // 3) Normalize filters
+    const doctorFilter = (doctor || "").trim();
+    const roomFilter = (room || "").trim();
+
+    // 4) Filter raw docs
+    const filteredDocs = rawIPD.filter((d) => {
+      // date
+      const dt = new Date(d.createdAt || d.date);
+      if (isNaN(dt)) return false;
+      if (start && dt < start) return false;
+      if (end && dt > end) return false;
+
+      // doctor (matches consultantDoctorName/doctorName)
+      if (doctorFilter && doctorFilter !== "All Doctors") {
+        const nm = (d.consultantDoctorName || d.doctorName || "").trim();
+        if (!nm || nm !== doctorFilter) return false;
+      }
+
+      // room (maps to bedNo)
+      if (roomFilter && roomFilter !== "All Rooms") {
+        const b = String(d.bedNo ?? "");
+        if (b !== roomFilter) return false;
+      }
+
+      return true;
+    });
+
+    // 5) Map into your row shape
+    const list = filteredDocs.map((d) => {
       const rating = calcRowAverage(d.ratings);
       return {
         id: String(d._id || d.id),
@@ -593,117 +683,27 @@ useEffect(() => {
       };
     });
 
-    const avg = list.length
-      ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
-      : 0;
-
-    const nps = calcNpsPercent(data);
+    // 6) KPIs
+    const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
+    const nps = calcNpsPercent(filteredDocs);
     const overallScore =
       avg >= 4.5 ? "Excellent" :
-      avg >= 4.0 ? "Good" :
-      avg >= 3.0 ? "Average" :
-      avg >= 2.0 ? "Poor" : "Very Poor";
+        avg >= 4.0 ? "Good" :
+          avg >= 3.0 ? "Average" :
+            avg >= 2.0 ? "Poor" : "Very Poor";
 
     setRows(list);
     setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
+
+    // 7) Charts / summaries from filtered set
     setChartData(buildDistribution(list));
-    setServiceSummary(buildServiceSummary(data));
-  } catch (e) {
-    console.error("Fetch IPD failed:", e);
-    setError("Failed to load IPD feedback");
-    setRows([]);
-    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
-    setChartData(buildDistribution([]));
-  } finally {
-    setLoading(false);
-  }
-}, []);
+    setServiceSummary(buildServiceSummary(filteredDocs));
 
-
-  useEffect(() => {
-    fetchIPD()
-  }, [fetchIPD])
-
-  useEffect(() => {
-  // 1) Guard
-  if (!Array.isArray(rawIPD) || !rawIPD.length) {
-    setRows([]);
-    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
-    setChartData(buildDistribution([]));
-    setServiceSummary([]);
-    setLineData([]);
-    return;
-  }
-
-  // 2) Build inclusive date range
-  const start = dateFrom ? new Date(dateFrom) : null;
-  const end   = dateTo   ? new Date(dateTo)   : null;
-  if (start) start.setHours(0, 0, 0, 0);
-  if (end)   end.setHours(23, 59, 59, 999);
-
-  // 3) Normalize filters
-  const doctorFilter = (doctor || "").trim();
-  const roomFilter   = (room || "").trim();
-
-  // 4) Filter raw docs
-  const filteredDocs = rawIPD.filter((d) => {
-    // date
-    const dt = new Date(d.createdAt || d.date);
-    if (isNaN(dt)) return false;
-    if (start && dt < start) return false;
-    if (end   && dt > end)   return false;
-
-    // doctor (matches consultantDoctorName/doctorName)
-    if (doctorFilter && doctorFilter !== "All Doctors") {
-      const nm = (d.consultantDoctorName || d.doctorName || "").trim();
-      if (!nm || nm !== doctorFilter) return false;
-    }
-
-    // room (maps to bedNo)
-    if (roomFilter && roomFilter !== "All Rooms") {
-      const b = String(d.bedNo ?? "");
-      if (b !== roomFilter) return false;
-    }
-
-    return true;
-  });
-
-  // 5) Map into your row shape
-  const list = filteredDocs.map((d) => {
-    const rating = calcRowAverage(d.ratings);
-    return {
-      id: String(d._id || d.id),
-      createdAt: d.createdAt || d.date,
-      patient: d.patientName || d.name || "-",
-      contact: d.contact || "-",
-      bedNo: d.bedNo || "-",
-      consultantDoctorName: d.consultantDoctorName || "-",
-      rating,
-      overallRecommendation: d.overallRecommendation,
-    };
-  });
-
-  // 6) KPIs
-  const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
-  const nps = calcNpsPercent(filteredDocs);
-  const overallScore =
-    avg >= 4.5 ? "Excellent" :
-    avg >= 4.0 ? "Good" :
-    avg >= 3.0 ? "Average" :
-    avg >= 2.0 ? "Poor" : "Very Poor";
-
-  setRows(list);
-  setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
-
-  // 7) Charts / summaries from filtered set
-  setChartData(buildDistribution(list));
-  setServiceSummary(buildServiceSummary(filteredDocs));
-
-  // 8) Trend uses the filtered rows + current date range
-  const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
-  setTrendBucket(bucket);
-  setLineData(trend);
-}, [rawIPD, dateFrom, dateTo, doctor, room]);
+    // 8) Trend uses the filtered rows + current date range
+    const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
+    setTrendBucket(bucket);
+    setLineData(trend);
+  }, [rawIPD, dateFrom, dateTo, doctor, room]);
 
   useEffect(() => {
     const { trend, bucket } = buildAutoTrend(rows, dateFrom, dateTo);
@@ -893,389 +893,380 @@ useEffect(() => {
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none  overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Ipd Feedback" />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
 
-                <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
-                  <div className="grid grid-cols-1  md:grid-cols-4 gap-x-2">
-                    {/* From date */}
-                    <div className=" relative">
-                      <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
-                      <div className="relative">
-                        <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="date"
-                          value={dateFrom}
-                          max={dateTo}
-                          onChange={(e) => setDateFrom(e.target.value)}
-                          className="w-full pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
+              <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
+                <div className="grid grid-cols-1  md:grid-cols-4 gap-x-2">
+                  {/* From date */}
+                  <div className=" relative">
+                    <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
+                    <div className="relative">
+                      <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        max={dateTo}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
+                  </div>
+                  {/* To date */}
+                  <div className=" relative">
+                    <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
+                    <div className="relative">
+                      <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="date"
+                        value={dateTo}
+                        min={dateFrom}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
+                  </div>
+                  {/* Doctor */}
+                  <AnimatedDropdown
+                    label="Doctor Name"
+                    options={doctorOptions}
+                    selected={doctor}
+                    onSelect={setDoctor}
+                    icon={User}
+                  />
+                  {/* Room */}
+                  <AnimatedDropdown
+                    label="Room No"
+                    options={roomOptions}
+                    selected={room}
+                    onSelect={setRoom}
+                    icon={Activity}
+                    disabled={roomOptions.length === 0}
+                  />
+                </div>
+              </div>
+              <div className="mx-auto w-full">
+                {/* KPI Cards */}
+                <div className="pt-[5px] flex gap-3 mb-3">
+                  <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <FileText className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Feedback</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.totalFeedback}</p>
                       </div>
                     </div>
-                    {/* To date */}
-                    <div className=" relative">
-                      <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
-                      <div className="relative">
-                        <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="date"
-                          value={dateTo}
-                          min={dateFrom}
-                          onChange={(e) => setDateTo(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
+                  </div>
+                  <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Star className="w-8 h-8 text-yellow-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Average Rating</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.averageRating} / 5</p>
                       </div>
                     </div>
-                    {/* Doctor */}
-                    <AnimatedDropdown
-                      label="Doctor Name"
-                      options={doctorOptions}
-                      selected={doctor}
-                      onSelect={setDoctor}
-                      icon={User}
-                    />
-                    {/* Room */}
-                    <AnimatedDropdown
-                      label="Room No"
-                      options={roomOptions}
-                      selected={room}
-                      onSelect={setRoom}
-                      icon={Activity}
-                      disabled={roomOptions.length === 0}
-                    />
+                  </div>
+                  <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <ThumbsUp className="w-8 h-8 text-green-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">NPS Rating</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.npsRating}%</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Award className="w-8 h-8 text-purple-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Overall Score</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.overallScore}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="mx-auto w-full">
-                  {/* KPI Cards */}
-                  <div className="pt-[5px] flex gap-3 mb-3">
-                    <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <FileText className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Total Feedback</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.totalFeedback}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <Star className="w-8 h-8 text-yellow-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.averageRating} / 5</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <ThumbsUp className="w-8 h-8 text-green-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">NPS Rating</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.npsRating}%</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <Award className="w-8 h-8 text-purple-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Overall Score</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.overallScore}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Charts Row */}
-                  <div className="flex justify-start  gap-[20px] mb-2  ">
-                    {/* Rating Distribution Donut Chart */}
-                    <div className="bg-white rounded-lg  border shadow-md p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
-                      <div className="flex">
-                        <DonutChart data={chartData} />
-                      </div>
-                    </div>
-
-                    {/* Average Rating Trend Line Chart */}
-                    <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
-                      </h3>
-                      <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RLineChart
-                            data={lineData.length ? lineData : [{ date: "-", value: 0 }]}
-                            margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
-                          >
-                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
-                            <Tooltip contentStyle={{ fontSize: 12 }} />
-                            <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              name="Average Rating"
-                              stroke="#3B82F6"
-                              strokeWidth={3}
-                              dot={{ r: 3 }}
-                              activeDot={{ r: 5 }}
-                              isAnimationActive
-                              animationDuration={600}
-                            />
-                          </RLineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Word Cloud */}
-                  <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {[
-                        "Excellent",
-                        // "Nurse",
-                        // "Professional",
-                        "Clean",
-                        // "Comfortable",
-                        // "Doctor",
-                        // "Care",
-                        // "Staff",
-                        // "Treatment",
-                        "Service",
-                        // "Billing",
-                        "Food",
-                        // "Room",
-                        // "Pharmacy",
-                        "Housekeeping",
-                      ].map((word, index) => (
-                        <span
-                          key={index}
-                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
-                              ? "bg-blue-100 border-blue-800 text-blue-800"
-                              : index % 6 === 1
-                                ? "bg-green-100 border-green-800 text-green-800"
-                                : index % 6 === 2
-                                  ? "bg-yellow-100 border-yellow-800 text-yellow-800"
-                                  : index % 6 === 3
-                                    ? "bg-purple-100 border-purple-800 text-purple-800"
-                                    : index % 6 === 4
-                                      ? "bg-red-100 border-red-800 text-red-800"
-                                      : "bg-indigo-100 border-indigo-800 text-indigo-800"
-                            }`}
-                        >
-                          {word}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Service Summary + Extra Donut */}
-                  <div className="flex w-[100%] mb-[19px] gap-[30px]">
-                    {/* Service-Wise Summary Table */}
-                    <div className="bg-white rounded-xl border w-[70%] shadow-md overflow-hidden">
-                      <div className="px-6 py-2 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                Service
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                Excellent %
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                Good %
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                Average %
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                Poor %
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Very Poor %
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white">
-                            {serviceSummary.map((service, index) => (
-                              <tr
-                                key={index}
-                                className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
-                              >
-                                <td className="px-6 py-2 text-sm font-medium text-gray-900 border-r border-gray-200">
-                                  {service.service}
-                                </td>
-                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    {service.excellent}%
-                                  </span>
-                                </td>
-                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    {service.good}%
-                                  </span>
-                                </td>
-                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                    {service.average}%
-                                  </span>
-                                </td>
-                                <td className="px-6 py-2 text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                    {service.poor}%
-                                  </span>
-                                </td>
-                                <td className="px-6 py-2 text-center text-sm">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    {service.veryPoor}%
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {/* Extra Donut (optional) */}
+                {/* Charts Row */}
+                <div className="flex justify-start  gap-[20px] mb-2  ">
+                  {/* Rating Distribution Donut Chart */}
+                  <div className="bg-white rounded-lg  border shadow-md p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
                     <div className="flex">
-                      <div className="bg-white w-[100%] rounded-lg border shadow-md p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
-                        <div className="flex">
-                          <DonutChart data={chartData} />
-                        </div>
-                      </div>
+                      <DonutChart data={chartData} />
                     </div>
                   </div>
 
-                  {/* Patient-Wise Feedback Table */}
-                  <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-                    <div className="px-6 py-2 items-center border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
-                      <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
-                            type="text"
-                            placeholder="Search feedback..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  {/* Average Rating Trend Line Chart */}
+                  <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+                    </h3>
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RLineChart
+                          data={lineData.length ? lineData : [{ date: "-", value: 0 }]}
+                          margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
+                        >
+                          <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                          <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
+                          <Tooltip contentStyle={{ fontSize: 12 }} />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            name="Average Rating"
+                            stroke="#3B82F6"
+                            strokeWidth={3}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                            isAnimationActive
+                            animationDuration={600}
                           />
-                        </div>
-
-                        {/* Export only if permitted */}
-                          <button
-                            onClick={exportToExcel}
-                            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Export to Excel
-                          </button>
-
-                      </div>
+                        </RLineChart>
+                      </ResponsiveContainer>
                     </div>
+                  </div>
+                </div>
 
+                {/* Word Cloud */}
+                <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      "Excellent",
+                      // "Nurse",
+                      // "Professional",
+                      "Clean",
+                      // "Comfortable",
+                      // "Doctor",
+                      // "Care",
+                      // "Staff",
+                      // "Treatment",
+                      "Service",
+                      // "Billing",
+                      "Food",
+                      // "Room",
+                      // "Pharmacy",
+                      "Housekeeping",
+                    ].map((word, index) => (
+                      <span
+                        key={index}
+                        className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
+                          ? "bg-blue-100 border-blue-800 text-blue-800"
+                          : index % 6 === 1
+                            ? "bg-green-100 border-green-800 text-green-800"
+                            : index % 6 === 2
+                              ? "bg-yellow-100 border-yellow-800 text-yellow-800"
+                              : index % 6 === 3
+                                ? "bg-purple-100 border-purple-800 text-purple-800"
+                                : index % 6 === 4
+                                  ? "bg-red-100 border-red-800 text-red-800"
+                                  : "bg-indigo-100 border-indigo-800 text-indigo-800"
+                          }`}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Service Summary + Extra Donut */}
+                <div className="flex w-[100%] mb-[19px] gap-[30px]">
+                  {/* Service-Wise Summary Table */}
+                  <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
+                    <div className="px-6 py-2 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
+                    </div>
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Date & Time
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Service
                             </th>
-                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Patient Name
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Excellent %
                             </th>
-                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Contact
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Good %
                             </th>
-                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Bed No
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Average %
                             </th>
-                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Doctor Name
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                              Poor %
                             </th>
-                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                              Rating
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Very Poor %
                             </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white">
-                          {filteredFeedback.map((feedback, index) => (
-                            <tr
-                              key={feedback.id}
-                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50  cursor-pointer transition-colors`}
-                              onClick={() => handleIpdFeedbackDetails(feedback)}
-                            >
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                  {formatDate(feedback.createdAt)}
-                                </div>
-                              </td>
-                              <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <User className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.patient}
-                                </div>
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.contact}
-                                </div>
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <Bed className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.bedNo}
-                                </div>
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <User className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.consultantDoctorName}
-                                </div>
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  {getRatingStars(feedback.rating)}
-                                  <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
-                                </div>
-                              </td>
-                            </tr>
+                          {serviceSummary.map((service, index) => (
+                               <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
+                                <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
+                                </td>
+                              </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
 
-                  {/* Error state (optional) */}
-                  {error && (
-                    <div className="text-red-600 text-sm mt-3 px-2">
-                      {error}
+                  {/* Extra Donut (optional) */}
+                  {/* <div className="flex">
+                    <div className="bg-white w-[100%] rounded-lg border shadow-md p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
+                      <div className="flex">
+                        <DonutChart data={chartData} />
+                      </div>
                     </div>
-                  )}
+                  </div> */}
                 </div>
+
+                {/* Patient-Wise Feedback Table */}
+                <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+                  <div className="px-6 py-2 items-center border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
+                    <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Search feedback..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Export only if permitted */}
+                      <button
+                        onClick={exportToExcel}
+                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Export to Excel
+                      </button>
+
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Date & Time
+                          </th>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Patient Name
+                          </th>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Contact
+                          </th>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Bed No
+                          </th>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Doctor Name
+                          </th>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Rating
+                          </th>
+                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white">
+                        {filteredFeedback.map((feedback, index) => (
+                          <tr
+                            key={feedback.id}
+                            className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50  cursor-pointer transition-colors`}
+                            onClick={() => handleIpdFeedbackDetails(feedback)}
+                          >
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                {formatDate(feedback.createdAt)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                {feedback.patient}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <Phone className="w-4 h-4 text-gray-400 mr-2" />
+                                {feedback.contact}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <Bed className="w-4 h-4 text-gray-400 mr-2" />
+                                {feedback.bedNo}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                {feedback.consultantDoctorName}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                {getRatingStars(feedback.rating)}
+                                <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900  border-gray-200">
+                              <div className="flex  text-[12px] items-center">
+Okay , hi , sdjipasdjasdDA SDLSDN ASD 
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Error state (optional) */}
+                {error && (
+                  <div className="text-red-600 text-sm mt-3 px-2">
+                    {error}
+                  </div>
+                )}
               </div>
+            </div>
           </div>
         </div>
       </section>

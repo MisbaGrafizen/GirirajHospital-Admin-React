@@ -369,7 +369,7 @@ export default function NpsDashboard() {
   return (
     <>
       <section className="flex w-[100%] h-[100%] select-none pr-[15px] overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="NPS Trends (OPD + IPD)" />
           <div className="flex w-[100%] h-[100%]">
             <SideBar />

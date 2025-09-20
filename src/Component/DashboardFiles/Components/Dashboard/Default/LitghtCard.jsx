@@ -29,7 +29,7 @@ const LightCard = ({ LightCardData, totals = {} }) => {
                count: Number(totals.ipd || 0),
                amount: Number(totals.ipd || 0),
                badgeClass: 'bg-[#fff]',
-               icon:<i className="fa-regular text-[21px] fa-comment"></i>
+               icon:<i class="fa-regular text-[21px] fa-bed-pulse"></i>
              }}
            />
          </Col>
@@ -47,7 +47,7 @@ const LightCard = ({ LightCardData, totals = {} }) => {
                count: Number(totals.opd || 0),
                amount: Number(totals.opd || 0),
                badgeClass: 'bg-primary',
-                              icon:<i className="fa-regular text-[21px] fa-comment"></i>
+                              icon:<i class="fa-light text-[21px]  fa-hospital-user"></i>
              }}
            />
          </Col>

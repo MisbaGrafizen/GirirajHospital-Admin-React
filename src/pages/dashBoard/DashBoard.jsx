@@ -54,6 +54,7 @@ import '../../assets/scss/app.css'
 import '../../assets/scss/style.css'
 import { ApiGet } from "../../helper/axios";
 import dayjs from "dayjs";
+import ConcernSummaryDonutChart from "../../Component/MainInputFolder/ConcernSummaryDonutChart";
 // import CryptoAnnotations from "../../Component/DashboardFiles/Components/Widgets/Chart/CryptoAnnotations";
 
 // import 'react-clock/dist/Clock.css';
@@ -249,11 +250,11 @@ export default function DashBoard() {
     <>
 
       <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px]  bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[96%] pb-[50px] py-[10px]  bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
 
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -279,7 +280,7 @@ export default function DashBoard() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         {/* Concerns Status */}
-                        <motion.div variants={itemVariants}>
+                        {/* <motion.div variants={itemVariants}>
                           <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
                             <div className="flex items-center justify-between mb-6">
                               <div className="flex items-center gap-3">
@@ -323,7 +324,9 @@ export default function DashBoard() {
                               </ResponsiveContainer>
                             </div>
                           </motion.div>
-                        </motion.div>
+                        </motion.div> */}
+
+                        <ConcernSummaryDonutChart data={concernData} />
 
                         {/* Department Analysis */}
                         <motion.div variants={itemVariants}>

@@ -14,6 +14,7 @@ import {
     Bed,
     Eye,
     MapPin,
+    RefreshCw,
     X,
     Phone,
     FileText,
@@ -290,73 +291,45 @@ const getDepartmentsString = (doc, allowedBlocks) =>
         .join(", ");
 
 
-// function flattenConcernDocForStats(doc) {
-//     const results = [];
-
-//     CONCERN_KEYS.forEach((k) => {
-//         const block = doc?.[k];
-//         if (!block) return;
-
-//         const hasText = block.text && String(block.text).trim().length > 0;
-//         const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
-
-//         if (hasText || hasAttachments) {
-//             results.push({
-//                 department: DEPT_LABEL[k],
-//                 // Approx resolution time placeholder (needs backend for real data)
-//                 resolutionTime: doc.status === "resolved" ? 1 : 0,
-//                 escalated: doc.priority === "Urgent" || doc.priority === "Critical",
-//             });
-//         }
-//     });
-
-//     return results; // array of objects
-// }
-
-
 // Build multi-line chart series from rows
 function buildTrendData(rows) {
-    const byDay = {}
-    const presentDepartments = new Set()
+  const byDay = {};
+  // ✅ ensure all departments always exist in chart
+  const presentDepartments = new Set(CONCERN_KEYS.map((k) => DEPT_LABEL[k]));
 
-    rows.forEach((r) => {
-        const day = fmtDateLabel(r.createdAt || r.date)
-        byDay[day] ||= {}
-        byDay[day][r.department] = (byDay[day][r.department] || 0) + 1
-        presentDepartments.add(r.department)
-    })
+  rows.forEach((r) => {
+    const day = fmtDateLabel(r.createdAt || r.date);
+    byDay[day] ||= {};
+    byDay[day][r.department] = (byDay[day][r.department] || 0) + 1;
+  });
 
-    let days = Object.keys(byDay)
-    // Sort day labels in a stable way
-    days.sort((a, b) => {
-        const pa = Date.parse(a + " 2020")
-        const pb = Date.parse(b + " 2020")
-        return pa - pb
-    })
-    // Ensure at least 2 points for nice lines
-    if (days.length === 1) {
-        const d = new Date()
-        d.setDate(d.getDate() - 1)
-        const prev = fmtDateLabel(d.toISOString())
-        byDay[prev] ||= {}
-        days = [prev, ...days]
-    }
+  let days = Object.keys(byDay);
+  days.sort((a, b) => Date.parse(a + " 2020") - Date.parse(b + " 2020"));
 
-    const result = days.map((day) => {
-        const obj = { date: day }
-        presentDepartments.forEach((dept) => {
-            obj[dept] = byDay[day]?.[dept] || 0
-        })
-        return obj
-    })
+  if (days.length === 1) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const prev = fmtDateLabel(d.toISOString());
+    byDay[prev] ||= {};
+    days = [prev, ...days];
+  }
 
-    const colors = {}
-    presentDepartments.forEach((d) => {
-        colors[d] = DEPT_COLORS[d] || "#6B7280"
-    })
+  const result = days.map((day) => {
+    const obj = { date: day };
+    presentDepartments.forEach((dept) => {
+      obj[dept] = byDay[day]?.[dept] || 0;
+    });
+    return obj;
+  });
 
-    return { data: result, colors }
+  const colors = {};
+  presentDepartments.forEach((d) => {
+    colors[d] = DEPT_COLORS[d] || "#6B7280";
+  });
+
+  return { data: result, colors };
 }
+
 
 // KPIs from rows
 function computeKpis(rows) {
@@ -733,7 +706,7 @@ export default function ComplaintManagementDashboard() {
                     })}
                 </svg>
 
-                <div className="flex justify-center mt-4 space-x-6">
+                <div className="grid grid-cols-4 justify-center  mt-4 space-x-2">
                     {departments.map((dept, index) => (
                         <div
                             key={dept}
@@ -742,7 +715,7 @@ export default function ComplaintManagementDashboard() {
                             style={{ transitionDelay: `${index * 200 + 1000}ms` }}
                         >
                             <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: colors[dept] }}></div>
-                            <span className="text-sm text-gray-700">{dept}</span>
+                            <span className="text-sm flex-shrink-0 text-gray-700">{dept}</span>
                         </div>
                     ))}
                 </div>
@@ -771,7 +744,7 @@ export default function ComplaintManagementDashboard() {
 
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-5 gap-2 mb-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-6 gap-2 mb-2">
                                         <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-blue-500">
                                             <div className="flex items-center">
                                                 <AlertTriangle className="w-6 h-6 text-blue-600 mr-3" />
@@ -817,6 +790,16 @@ export default function ComplaintManagementDashboard() {
                                                 </div>
                                             </div>
                                         </div>
+                                           <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-purple-500">
+  <div className="flex items-center">
+    <RefreshCw className="w-6 h-6 text-purple-600 mr-3" />
+    <div>
+      <p className="text-xs font-medium text-gray-600">In Progress</p>
+      <p className="text-[15px] font-[600] text-gray-900">{kpiData.inProgress}</p>
+    </div>
+  </div>
+</div>
+
                                     </div>
 
                                     {/* Charts Row */}

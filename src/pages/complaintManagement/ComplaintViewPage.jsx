@@ -193,6 +193,19 @@ export default function ComplaintViewPage() {
     const [uploadedFile, setUploadedFile] = useState(null)
     const [historyData, setHistoryData] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+  const [status, setStatus] = useState("IN-PROGRESS")
+  const [isEditing, setIsEditing] = useState(false)
+  const [complaintText, setComplaintText] = useState(
+    "Patient complained about post-operative pain following dental implant procedure. Initial assessment completed and pain management protocol initiated. Prescribed additional pain medication and scheduled follow-up appointment. Patient education provided regarding normal healing process and warning signs to monitor."
+  )
+    const [isOpen, setIsOpen] = useState(false)
+  const [tempText, setTempText] = useState(complaintText)
+
+  const statusConfig = {
+    OPEN: { color: "bg-red-100 text-red-800 border-red-200", label: "OPEN" },
+    "IN-PROGRESS": { color: "bg-yellow-100 text-yellow-800 border-yellow-200", label: "IN-PROGRESS" },
+    RESOLVED: { color: "bg-green-100 text-green-800 border-green-200", label: "RESOLVED" },
+  }
 
 
     const escalationLevels = ["PGRO", "CEO", "Board of Directors", "Medical Director"]
@@ -303,7 +316,7 @@ export default function ComplaintViewPage() {
     const DEPT_KEY = Object.fromEntries(
         Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
     );
-    
+
     const { permissionsByBlock } = resolvePermissions();
 
     // normalize department string to match keys
@@ -611,7 +624,7 @@ export default function ComplaintViewPage() {
 
 
             <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
-                <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
+                <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
                     <Header pageName="Complaint Details" />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
@@ -842,6 +855,13 @@ export default function ComplaintViewPage() {
                                             <div className="bg-white border rounded-xl shadow-sm p-4">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
                                                 <div className="space-y-3">
+                                                                 <button
+                                                        onClick={() => openModal("resolve")}
+                                                        className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                                    >
+                                                        <CheckCircle className="w-5 h-5 mr-2" />
+                                                        Mark as Resolved
+                                                    </button>
                                                     <button
                                                         onClick={() => openModal("forward")}
                                                         className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -856,12 +876,13 @@ export default function ComplaintViewPage() {
                                                         <TrendingUp className="w-5 h-5 mr-2" />
                                                         Escalate to Higher Authority
                                                     </button>
+                                   
                                                     <button
-                                                        onClick={() => openModal("resolve")}
-                                                        className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                        onClick={() => setIsOpen(true)}
+                                                        className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-gray-700 transition-colors"
                                                     >
-                                                        <CheckCircle className="w-5 h-5 mr-2" />
-                                                        Mark as Resolved
+                                                        <TrendingUp className="w-5 h-5 mr-2" />
+                                         Progress Remark
                                                     </button>
                                                     <button
                                                         onClick={() => openModal("history")}
@@ -1339,6 +1360,309 @@ export default function ComplaintViewPage() {
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
+
+
+ <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+            >
+              {/* Header */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+              >
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Complaint History (OPD / IPD)</h2>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      Patient ID: #12345
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {new Date().toLocaleDateString()} - {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => setIsOpen(false)}className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
+
+              {/* Content */}
+              <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+                {/* Patient Info */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <h3 className="font-semibold text-blue-900">Patient Information</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="font-medium text-blue-800">Name:</span>{" "}
+                      <span className="text-blue-700">John Smith</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-800">Age:</span>{" "}
+                      <span className="text-blue-700">45 years</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-800">Department:</span>{" "}
+                      <span className="text-blue-700">Dental Surgery</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-800">Doctor:</span>{" "}
+                      <span className="text-blue-700">Dr. Sarah Wilson</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Section 1: Complaint Update */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mb-6"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+             
+                      <h3 className="text-lg font-semibold text-gray-900">Update about the complaint / action taken</h3>
+                    </div>
+
+                    {!isEditing && (
+                      <button
+                        onClick={() => {
+                          setIsEditing(true)
+                          setTempText(complaintText)
+                        }}
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
+                        title="Edit complaint details"
+                      >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    {isEditing ? (
+                      <div className="p-4 bg-white">
+                        <textarea
+                          value={tempText}
+                          onChange={(e) => setTempText(e.target.value)}
+                          className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                          placeholder="Enter complaint details and actions taken..."
+                          autoFocus
+                        />
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
+                          <p className="text-sm text-gray-500">
+                            <span className="font-medium">Last updated:</span> {new Date().toLocaleString()}
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setIsEditing(false)
+                                setTempText(complaintText)
+                              }}
+                              className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors rounded-lg hover:bg-gray-100"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => {
+                                setComplaintText(tempText)
+                                setIsEditing(false)
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-gray-50 min-h-[120px]">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{complaintText}</p>
+                        <div className="mt-4 pt-3 border-t border-gray-200">
+                          <p className="text-sm text-gray-500">
+                            <span className="font-medium">Last updated:</span> {new Date().toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Section 2: Status */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mb-6"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-900">Current Status</h3>
+                  </div>
+                  <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                    <p className="text-gray-700 mb-3">
+                      Status of complaint changes to{" "}
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border ${statusConfig[status].color} ml-1`}
+                      >
+                        {statusConfig[status].label}
+                      </span>
+                    </p>
+
+                    {/* Status Change Buttons */}
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {Object.keys(statusConfig).map((statusKey) => (
+                        <button
+                          key={statusKey}
+                          onClick={() => setStatus(statusKey)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-all hover:scale-105 ${
+                            status === statusKey
+                              ? statusConfig[statusKey].color
+                              : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                          }`}
+                        >
+                          {statusConfig[statusKey].label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Timeline */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mb-4"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-900">Activity Timeline</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { time: "2 hours ago", action: "Complaint registered", status: "OPEN" },
+                      { time: "1 hour ago", action: "Assigned to Dr. Sarah Wilson", status: "IN-PROGRESS" },
+                      { time: "30 min ago", action: "Initial assessment completed", status: "IN-PROGRESS" },
+                    ].map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100"
+                      >
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{item.action}</p>
+                          <p className="text-xs text-gray-500">{item.time}</p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[item.status].color}`}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Footer */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="px-6 py-2 border-t mt-[-60px] border-gray-100 justify-end bg-gray-50 flex  gap-3"
+              >
+                <button
+        onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                >
+                  Close
+                </button>
+                <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
+                  Save Changes
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
                                 </div>
                             </div>
 

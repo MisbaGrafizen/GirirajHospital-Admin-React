@@ -30,7 +30,7 @@ function Header({
 
   return (
     <>
-      <section className="flex w-[100%] border-b-[1.5px]">
+      <section className="flex w-[100%] justify-between items-center border-b-[1.5px]">
         <div className="gap-[30px] flex items-center justify-between px-[0px] pb-[25px] pt-[32px] bg h-[42px]">
           {/* Left side back + title */}
           <div className="flex w-fit cursor-pointer items-center gap-[5px]">
@@ -72,6 +72,15 @@ function Header({
             </div>
           )}
         </div>
+
+            <div className="relative mr-[40px] inline-block">
+      <i className="fa-solid fa-bell text-gray-700 text-2xl"></i>
+   
+        <span className="absolute -top-1 -right-3 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full">
+          3
+        </span>
+      
+    </div>
       </section>
     </>
   );

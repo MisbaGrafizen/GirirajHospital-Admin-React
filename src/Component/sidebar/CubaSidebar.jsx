@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion"
 import logofevicon from "../../../public/imges/fevicon.png"
-import textlogo from "../../../public/imges/onlyText.png"
+import textlogo from "../../../public/imges/onlyText.jpeg"
 
 
 import { useNavigate, useLocation } from "react-router-dom";
@@ -457,7 +457,7 @@ const toggleSidebar = () => {
         <div className="px-3  py-[10px] border-b border-gray-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-            <img className=" w-[30px]" src={logofevicon} />
+            {/* <img className=" w-[30px]" src={logofevicon} /> */}
               <AnimatePresence>
                 {!isCollapsed && (
                   <motion.span
@@ -530,13 +530,13 @@ const toggleSidebar = () => {
                         <AnimatePresence>
                           {!isCollapsed && (
                             <motion.div
-                              className="flex-1 flex items-center justify-between"
+                              className="flex-1 flex items-center flex-shrink-0 justify-between"
                               // variants={contentVariants}
                               // initial="collapsed"
                               // animate="expanded"
                               // exit="collapsed"
                             >
-                              <span className="text-left">{item.label}</span>
+                              <span className="text-left flex-shrink-0">{item.label}</span>
                               <div className="flex items-center space-x-2">
                                 {item.badge && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
@@ -586,7 +586,7 @@ const toggleSidebar = () => {
                                     // animate={{ opacity: 1, x: 0 }}
                                     // transition={{ delay: index * 0.05 }}
                                   >
-                                    <span className="flex-1 text-left">{subItem.label}</span>
+                                    <span className="flex-1 flex-shrink-0 text-left">{subItem.label}</span>
                                     {subItem.isNew && (
                                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 ml-2">
                                         New

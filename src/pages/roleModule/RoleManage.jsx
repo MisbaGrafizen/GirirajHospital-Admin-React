@@ -187,7 +187,7 @@ export default function RoleManage() {
   return (
     <>
       <section className="flex font-Poppins w-[100%] min-h-screen select-none  overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Role Management" />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />

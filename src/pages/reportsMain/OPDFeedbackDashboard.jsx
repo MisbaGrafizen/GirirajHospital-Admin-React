@@ -625,7 +625,7 @@ const openFeedbackDetails = useCallback((fb) => {
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none  min-h-screen overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[0px] h-[96vh]">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
@@ -750,7 +750,7 @@ const openFeedbackDetails = useCallback((fb) => {
 
                   {/* Service Summary + Extra Donut */}
                   <div className="flex w-[100%] mb-[30px] gap-[30px]">
-                    <div className="bg-white rounded-xl border w-[70%] shadow-md overflow-hidden">
+                    <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
                       <div className="px-6 py-2 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
                       </div>
@@ -771,19 +771,19 @@ const openFeedbackDetails = useCallback((fb) => {
                               <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
                                 <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
                                 <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{service.excellent}%</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
                                 </td>
                                 <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{service.good}%</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
                                 </td>
                                 <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{service.average}%</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
                                 </td>
                                 <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">{service.poor}%</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
                                 </td>
                                 <td className="px-6 py-[10px] text-center text-sm">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{service.veryPoor}%</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
                                 </td>
                               </tr>
                             ))}
@@ -791,7 +791,7 @@ const openFeedbackDetails = useCallback((fb) => {
                         </table>
                       </div>
                     </div>
-
+{/* 
                     <div className="flex">
                       <div className="bg-white w-[100%] rounded-lg border shadow-md p-3">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
@@ -799,7 +799,7 @@ const openFeedbackDetails = useCallback((fb) => {
                           <DonutChart data={chartData} />
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Patient-Wise Feedback Table */}
