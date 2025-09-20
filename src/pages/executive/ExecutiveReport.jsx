@@ -324,7 +324,7 @@ export default function ExecutiveReport() {
 
 
     // Overall OPD
-        const diffOPD = pctChange(cur.opdPct, prev.opdPct)
+    const diffOPD = pctChange(cur.opdPct, prev.opdPct)
     rows.push({
       metric: "Overall OPD Feedback",
       value: `${cur.opdPct}%`,
