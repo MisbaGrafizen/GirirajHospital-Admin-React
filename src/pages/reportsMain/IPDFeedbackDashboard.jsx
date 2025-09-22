@@ -15,8 +15,30 @@ import {
   Clock,
   Bed,
 } from "lucide-react"
+import {
+  Stethoscope,
+  Building2,
+  ShieldCheck,
+
+  DollarSign,
+
+  Wrench,
+  Utensils,
+
+} from "lucide-react";
+
+const serviceIcons = {
+  "Overall Experience": Star,
+  "Doctor Services": Stethoscope,
+  "Billing Services": DollarSign,
+  "Housekeeping": DollarSign,
+  "Maintenance": Wrench,
+  "Diagnostic Services": Building2,
+  "Dietitian Services": Utensils,
+  "Security": ShieldCheck,
+};
 import { ApiGet } from '../../helper/axios'
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
+import { Calendar, ChevronDown, Hospital, MessageSquare, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
 
 import {
   ResponsiveContainer,
@@ -29,6 +51,7 @@ import {
   Legend,
 } from "recharts"
 import { useNavigate } from 'react-router-dom'
+import Widgets1 from '../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1'
 
 // ------------------------------------------------------------------
 // Helpers
@@ -151,7 +174,7 @@ function AnimatedDropdown({ label, options, selected, onSelect, icon: Icon, disa
         onClick={() => !disabled && setOpen((v) => !v)}
         className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-white transition-colors ${disabled
           ? "border-gray-200 text-gray-400 cursor-not-allowed"
-          : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          : "border-gray-300 hover:bg-gray-50 focus:outline-none "
           }`}
       >
         <div className="flex items-center gap-2">
@@ -327,7 +350,7 @@ export default function IPDFeedbackDashboard() {
   const doctorOptions = useMemo(() => {
     const set = new Set();
     rawIPD.forEach(d => {
-      const name = d?.consultantDoctorName || d?.doctorName;
+      const name = d?.consultantDoctorName?.name || d?.doctorName;
       if (name) set.add(String(name));
     });
     return ["All Doctors", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
@@ -592,7 +615,7 @@ export default function IPDFeedbackDashboard() {
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
           bedNo: d.bedNo || "-",
-          consultantDoctorName: d.consultantDoctorName || "-",
+          consultantDoctorName: d.consultantDoctorName?.name || "-",
           rating,
           overallRecommendation: d.overallRecommendation,
           comments: d.comments || "-",
@@ -607,7 +630,7 @@ export default function IPDFeedbackDashboard() {
       const overallScore =
         avg >= 4.5 ? "Excellent" :
           avg >= 4.0 ? "Good" :
-            avg >= 3.0 ? "Average" :
+            avg >= 3.0 ? "Av." :
               avg >= 2.0 ? "Poor" : "Very Poor";
 
       setRows(list);
@@ -661,7 +684,7 @@ export default function IPDFeedbackDashboard() {
 
       // doctor (matches consultantDoctorName/doctorName)
       if (doctorFilter && doctorFilter !== "All Doctors") {
-        const nm = (d.consultantDoctorName || d.doctorName || "").trim();
+        const nm = (d.consultantDoctorName?.name || d.doctorName || "").trim();
         if (!nm || nm !== doctorFilter) return false;
       }
 
@@ -683,7 +706,7 @@ export default function IPDFeedbackDashboard() {
         patient: d.patientName || d.name || "-",
         contact: d.contact || "-",
         bedNo: d.bedNo || "-",
-        consultantDoctorName: d.consultantDoctorName || "-",
+        consultantDoctorName: d.consultantDoctorName?.name || "-",
         rating,
         overallRecommendation: d.overallRecommendation,
         comments: d.comments
@@ -696,7 +719,7 @@ export default function IPDFeedbackDashboard() {
     const overallScore =
       avg >= 4.5 ? "Excellent" :
         avg >= 4.0 ? "Good" :
-          avg >= 3.0 ? "Average" :
+          avg >= 3.0 ? "Av." :
             avg >= 2.0 ? "Poor" : "Very Poor";
 
     setRows(list);
@@ -732,7 +755,7 @@ export default function IPDFeedbackDashboard() {
       "Patient Name": f.patient,
       Contact: f.contact,
       "Bed No": f.bedNo,
-      "Doctor Name": f.consultantDoctorName,
+      "Doctor Name": f.consultantDoctorName?.name,
       "Average Rating (/5)": f.rating,
       ...(typeof f.overallRecommendation === "number"
         ? { "Overall Recommendation (NPS)": f.overallRecommendation }
@@ -861,13 +884,13 @@ export default function IPDFeedbackDashboard() {
         </svg>
 
         {/* Legend */}
-        <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
+        <div className="mt-6 w-full  flex-wrap flex sm:grid-cols-2 gap-x-3 gap-y-2 justify-center px-[10px]  text-sm">
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             return (
               <div
                 key={index}
-                className={`flex items-center transition-all duration-200 ${hoverIndex === index ? 'scale-[1.02]' : ''}`}
+                className={`flex items-center  transition-all duration-200 ${hoverIndex === index ? 'scale-[1.02]' : ''}`}
                 onMouseEnter={() => setHoverIndex(index)}
                 onMouseLeave={() => setHoverIndex(null)}
               >
@@ -906,12 +929,12 @@ export default function IPDFeedbackDashboard() {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
 
               <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
-                <div className="grid grid-cols-1  md:grid-cols-4 gap-x-2">
+                <div className="grid grid-cols-2  md:grid-cols-4 gap-x-2">
                   {/* From date */}
-                  <div className=" relative">
+                  <div className=" relative mb-[15px]">
                     <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -920,7 +943,7 @@ export default function IPDFeedbackDashboard() {
                         value={dateFrom}
                         max={dateTo}
                         onChange={(e) => setDateFrom(e.target.value)}
-                        className="w-full pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="w-full pl-9 min-h-[40px] text-[14px] pr-3 py-2 border border-gray-300 bg-transparent rounded-md focus:outline-none  focus:ring-sky-500"
                       />
                     </div>
                   </div>
@@ -934,7 +957,7 @@ export default function IPDFeedbackDashboard() {
                         value={dateTo}
                         min={dateFrom}
                         onChange={(e) => setDateTo(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="w-full min-h-[40px] pl-9 pr-3 py-2 text-[14px] border bg-transparent border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                       />
                     </div>
                   </div>
@@ -959,69 +982,79 @@ export default function IPDFeedbackDashboard() {
               </div>
               <div className="mx-auto w-full">
                 {/* KPI Cards */}
-                <div className="pt-[5px] flex gap-3 mb-3">
-                  <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <FileText className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Total Feedback</p>
-                        <p className="text-2xl font-[600] text-gray-900">{kpiData.totalFeedback}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <Star className="w-8 h-8 text-yellow-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                        <p className="text-2xl font-[600] text-gray-900">{kpiData.averageRating} / 5</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <ThumbsUp className="w-8 h-8 text-green-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">NPS Rating</p>
-                        <p className="text-2xl font-[600] text-gray-900">{kpiData.npsRating}%</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white min-w-[240px] w-[100%] rounded-lg border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <Award className="w-8 h-8 text-purple-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Overall Score</p>
-                        <p className="text-2xl font-[600] text-gray-900">{kpiData.overallScore}</p>
-                      </div>
-                    </div>
-                  </div>
+                <div className="  md34:!grid-cols-2 gap-x-[10px] md11:!grid-cols-4 grid w-[100%]">
+                  <Widgets1
+                    data={{
+                      title: "Total Feedback",
+                      gros: kpiData.totalFeedback,
+                      total: kpiData.totalFeedback,
+                      color: "primary",
+                      icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
+                    }}
+                  />
+
+                  <Widgets1
+                    data={{
+                      title: "Average Rating",
+                      gros: `${kpiData.averageRating} `,
+                      total: `${kpiData.averageRating} `,
+                      color: "warning",
+                      icon: <Star className="w-5 h-5 text-yellow-600" />,
+                    }}
+                  />
+
+                  <Widgets1
+                    data={{
+                      title: "NPS Rating",
+                      gros: `${kpiData.npsRating}%`,
+                      total: `${kpiData.npsRating}%`,
+                      color: "success",
+                      icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
+                    }}
+                  />
+
+                  <Widgets1
+                    data={{
+                      title: "Overall Score",
+                      total: kpiData.overallScore,
+                      gros: kpiData.overallScore,
+                      color: "purple",
+                      icon: <Award className="w-5 h-5 text-purple-600" />,
+                    }}
+                  />
                 </div>
 
                 {/* Charts Row */}
-                <div className="flex justify-start  gap-[20px] mb-2  ">
+                <div className="flex  md11:!flex-row flex-col  justify-start  gap-[20px] mb-2  ">
                   {/* Rating Distribution Donut Chart */}
                   <div className="bg-white rounded-lg  border shadow-md p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
-                    <div className="flex">
+                    <div className=' flex  mb-[10px] items-center gap-[10px]'>
+
+
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className=" text-[#fff] text-[17px] fa-solid fa-star-sharp-half-stroke"></i>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Rating Distribution</h3>
+                    </div>
+                    <div className="flex justify-center">
                       <DonutChart data={chartData} />
                     </div>
                   </div>
 
                   {/* Average Rating Trend Line Chart */}
-                  <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                      Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
-                    </h3>
-                    <div className="h-72">
+                  <div className="bg-white rounded-lg pb-[10px] md11:!w-[800px] shadow-sm border border-gray-100  md11:!p-4">
+                    <div className=' flex ml-[15px] mt-[13px]  mb-[17px] items-center gap-[10px]'>
+
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-regular fa-chart-simple text-[#fff] text-[19px]"></i>
+                      </div>
+                      <h3 className="text-lg font-semibold  mt-[10px] ml-[15px] text-gray-900 mb-3">
+
+
+                        Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+                      </h3>
+                    </div>
+                    <div className="h-72 pr-[10px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <RLineChart
                           data={lineData.length ? lineData : [{ date: "-", value: 0 }]}
@@ -1051,7 +1084,13 @@ export default function IPDFeedbackDashboard() {
 
                 {/* Word Cloud */}
                 <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
+                  <div className=' flex  mb-[17px] items-center gap-[10px]'>
+
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                      <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Feedback Keywords</h3>
+                  </div>
                   <div className="flex flex-wrap gap-3">
                     {[
                       "Excellent",
@@ -1095,11 +1134,15 @@ export default function IPDFeedbackDashboard() {
                 <div className="flex w-[100%] mb-[19px] gap-[30px]">
                   {/* Service-Wise Summary Table */}
                   <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
-                    <div className="px-6 py-2 border-b border-gray-200">
+                    <div className="px-3 items-center py-2 border-b flex  mt-[5px] gap-[10px] border-gray-200">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-solid  text-[17px] text-[#fff] fa-user-md"></i>
+
+                      </div>
                       <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="min-w-full">
+                      <table className=" min-w-[800px] md11:!min-w-full">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
@@ -1123,6 +1166,7 @@ export default function IPDFeedbackDashboard() {
                           </tr>
                         </thead>
                         <tbody className="bg-white">
+
                           {serviceSummary.map((service, index) => (
                             <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
                               <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
@@ -1143,6 +1187,33 @@ export default function IPDFeedbackDashboard() {
                               </td>
                             </tr>
                           ))}
+
+                          {serviceSummary.map((service, index) => {
+                            const Icon = serviceIcons[service.service] || User; // fallback icon
+                            return (
+                              <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
+                                <td className="px-6 flex gap-[10px] py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">           <Icon className="w-4 h-4 text-gray-600" />
+                                  {service.service}</td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
+                                </td>
+                                <td className="px-6 py-[10px] text-center text-sm">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+
                         </tbody>
                       </table>
                     </div>
@@ -1160,25 +1231,32 @@ export default function IPDFeedbackDashboard() {
                 </div>
 
                 {/* Patient-Wise Feedback Table */}
-                <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-                  <div className="px-6 py-2 items-center border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
-                    <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                <div className="bg-white rounded-lg e mb-[100px]  border shadow-sm overflow-hidden">
+                  <div className="px-3 py-2 border-b  border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
+                    <div className=' flex gap-[10px] pt-[13px] pb-[20px]  justify-start '>
+
+
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
+                    </div>
+                    <div className="flex flex-row justify-between gap-2">
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-[19px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder="Search feedback..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="pl-10 pr-3 py-2 w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
                       {/* Export only if permitted */}
                       <button
                         onClick={exportToExcel}
-                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="flex items-center flex-shrink-0 px-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel
@@ -1188,7 +1266,7 @@ export default function IPDFeedbackDashboard() {
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="min-w-full">
+                    <table className=" min-w-[1200px] md11:!min-w-full">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
@@ -1256,8 +1334,11 @@ export default function IPDFeedbackDashboard() {
                               </div>
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900  border-gray-200">
+
                               <div className="flex text-[12px] items-center">
                                 {feedback.comments || "-"}
+
+
                               </div>
                             </td>
                           </tr>

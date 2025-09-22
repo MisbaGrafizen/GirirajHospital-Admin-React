@@ -201,7 +201,7 @@ export default function ComplaintViewPage() {
         category: categoryText,
         details: row.details || "",
         contact: row.contact || fullDoc?.contact || "—",
-        doctorName: row.doctor || row.doctorName || fullDoc?.consultantDoctorName || "—",
+        doctorName: row.doctor || row.doctorName || fullDoc?.consultantDoctorName?.name || "—",
         assignedTo: row.assignedTo || "—",
         expectedResolution: row.expectedResolution || "—",
         attachments,
@@ -562,7 +562,7 @@ export default function ComplaintViewPage() {
 
 
 
-            <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
+            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
                 <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
                     <Header pageName="Complaint Details" />
                     <div className="flex w-[100%] h-[100%]">

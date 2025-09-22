@@ -13,27 +13,33 @@ const OverallBalance = ({ kpis, opdSummary }) => {
   return (
     <Col xxl='8' lg='12' className='box-col-12'>
       <Card>
-        <CardHeader className='card-no-border'>
+        <CardHeader className='card-no-border  items-center  gap-[10px] !flex'>
+        <div className=' flex  profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px] '>
+<i className="fa-regular text-[23px] fa-chart-waterfall"></i>
+
+        </div>
           <H5>Overall Ratings</H5>
         </CardHeader>
         <CardBody className='pt-0'>
+
+
           <Row className='m-0 overall-card'>
             <Col xl='9' md='12' sm='7' className='p-0'>
               <div className='chart-right'>
                 <Row>
                   <Col xl='12' className='col-xl-12'>
-                    <CardBody className='p-0'>
+                    <CardBody className='p-0 '>
                       <UL attrUL={{ horizontal: true, className: 'd-flex balance-data' }}>
                         <LI>
-                          <span className='circle bg-[#aaafcb]'> </span>
-                          <span className='f-light ms-1'>OPD</span>
+                          <span className='circle  md11:!flex md34:!hidden bg-[#aaafcb]'> </span>
+                          <span className='f-light  md11:!flex md34:!hidden ms-1'>OPD</span>
                         </LI>
                         <LI>
-                          <span className='circle bg-primary'> </span>
-                          <span className='f-light ms-1'>IPD</span>
+                          <span className='circle  md11:!flex md34:!hidden bg-primary'> </span>
+                          <span className='f-light  md11:!flex md34:!hidden ms-1'>IPD</span>
                         </LI>
                       </UL>
-                      <div className='current-sale-container'>
+                      <div className='  current-sale-container'>
                         {/* <ReactApexChart type='bar' height={300} options={CurrencyChartData.options} series={CurrencyChartData.series} /> */}
                          <ReactApexChart
                          type='bar'
@@ -65,7 +71,11 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                 </Row>
               </div>
             </Col>
-            <LightCard LightCardData={LightCardData} totals={{ ipd: totalIPD, opd: totalOPD }} />
+
+
+<LightCard LightCardData={LightCardData} totals={{ ipd: totalIPD, opd: totalOPD }} />
+
+            
           </Row>
         </CardBody>
       </Card>

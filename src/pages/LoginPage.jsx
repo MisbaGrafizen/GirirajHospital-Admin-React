@@ -78,7 +78,7 @@ export default function LoginPage() {
       <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-cyan-500 rounded-full opacity-20 blur-xl animate-pulse delay-1000" />
 
       {/* Login Card */}
-      <div className="relative w-full max-w-md bg-white/20 backdrop-blur-[50px] rounded-3xl p-8 shadow-2xl border border-white/20 z-10">
+      <div className="relative w-full max-w-md bg-white/20 backdrop-blur-[50px] rounded-3xl p-4 md77:p-6 md11:p-8 shadow-2xl border border-white/20 z-10">
         <div className="text-center mb-8">
           <img src={logo} alt="logo" className="mx-auto rounded-[8px] w-32" />
           <h1 className="text-3xl font-bold text-white mt-2">Welcome Back</h1>

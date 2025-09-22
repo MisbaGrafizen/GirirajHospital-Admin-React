@@ -106,15 +106,15 @@ export default function DashBoard() {
   const [error, setError] = useState(null)
   const [concernData, setConcernData] = useState([])
   const [kpis, setKpis] = useState({
-  totalFeedback: 0,
-  averageRating: { value: 0 },
-  npsRating: { value: 0 },
-  openIssues: 0,         
-  resolvedIssues: 0, 
-  totalConcern: 0,        
-  earning: { weeklyAverage: 0, series: [], labels: [] },
-  expense: { weeklyAverage: 0, series: [], labels: [] },
-});
+    totalFeedback: 0,
+    averageRating: { value: 0 },
+    npsRating: { value: 0 },
+    openIssues: 0,
+    resolvedIssues: 0,
+    totalConcern: 0,
+    earning: { weeklyAverage: 0, series: [], labels: [] },
+    expense: { weeklyAverage: 0, series: [], labels: [] },
+  });
 
 
   const [recentFeedbacks, setRecentFeedbacks] = useState([])
@@ -249,12 +249,12 @@ export default function DashBoard() {
   return (
     <>
 
-      <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[96%] pb-[50px] py-[10px]  bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
 
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -333,7 +333,7 @@ export default function DashBoard() {
                           <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
                             <div className="flex items-center justify-between mb-6">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
                                   <BarChart3 className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
@@ -369,7 +369,7 @@ export default function DashBoard() {
                       <motion.div variants={itemVariants}>
                         <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center">
                               <Clock className="w-5 h-5 text-white" />
                             </div>
                             <div>
@@ -378,20 +378,20 @@ export default function DashBoard() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm text-blue-600 font-semibold">{recentFeedbacks.length} recent entries</p>
+                            <p className=" md11:!flex md34:!hidden text-sm text-blue-600 font-semibold">{recentFeedbacks.length} recent entries</p>
                           </div>
                         </div>
 
-                        <motion.div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
+                        <motion.div className="bg-white/90. md34:!hidden md11:!block backdrop-blur-sm rounded-xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
                           <div className="overflow-x-auto">
-                            <table className="w-full">
+                            <table className="w-full min-w-[1000px]">
                               <thead className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-teal-500/10">
                                 <tr>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Patient Details</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Visit Info</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Medical Details</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Rating</th>
-                                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Feedback</th>
+                                  <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Patient Details</th>
+                                  <th className="px-6 py-3 text-left text-sm  flex-shrink-0 font-bold text-gray-900">Visit Info</th>
+                                  <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Medical Details</th>
+                                  <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Rating</th>
+                                  <th className="px-6 py-3 text-left text-sm font-bold flex-shrink-0 text-gray-900">Feedback</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-100">
@@ -403,7 +403,7 @@ export default function DashBoard() {
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.05 }}
                                   >
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
                                           {String(feedback.name || "-").charAt(0)}
@@ -421,7 +421,7 @@ export default function DashBoard() {
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="space-y-1">
                                         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${feedback.type === "IPD" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
                                           {feedback.type}
@@ -437,14 +437,14 @@ export default function DashBoard() {
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="space-y-1">
                                         <div className="text-sm font-medium text-gray-900">{feedback.doctor}</div>
                                         {/* <div className="text-sm text-gray-600">Complaint: {feedback.complaint}</div> */}
                                         {/* <div className="text-xs text-gray-500">Duration: {feedback.duration}</div> */}
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                       <div className="flex flex-col items-center gap-2">
                                         <StarRating rating={Math.round(feedback.rating || 0)} />
                                         <span className="text-sm font-semibold text-gray-900">{Number(feedback.rating || 0).toFixed(1)}/5</span>
@@ -460,6 +460,14 @@ export default function DashBoard() {
                               </tbody>
                             </table>
                           </div>
+
+
+
+
+
+
+
+
                           <div className="px-6 py-4 bg-gray-50/50 border-top border-gray-200">
                             <div className="flex items-center justify-between text-sm text-gray-600">
                               <span>Showing {recentFeedbacks.length} recent feedbacks</span>
@@ -476,6 +484,61 @@ export default function DashBoard() {
                             </div>
                           </div>
                         </motion.div>
+
+
+
+
+                        <div className="  flex flex-col pb-[70px] gap-[10px]">
+                          <div className=" grid grid-cols-2 mt-[10px] gap-[15px]">
+                            {recentFeedbacks.map((feedback, index) => (
+                              <>
+                                <div key={feedback.id} className="  bg-white relative flex px-[10px] shadow-sm py-[10px] border-[1.3px]  rounded-[10px] border-[#dcdcdc] flex-col gap-[7px]">
+                                  <div className=" flex gap-[10px] items-start border-b-[1.8px] border-blue-200 border-dashed pb-[10px]">
+
+
+                                    {/* <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                      {String(feedback.name || "-").charAt(0)}
+                                    </div> */}
+                                    <div>
+                                      <div className="font-semibold text-gray-900">{feedback.name}</div>
+
+                                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <Phone className="w-3 h-3" />
+                                        <span>{feedback.contact}</span>
+                                      </div>
+
+                                      <span className={`inline-flex absolute top-[6px] right-[6px] px-3 py-1 rounded-full text-xs font-semibold ${feedback.type === "IPD" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
+                                        {feedback.type}
+                                      </span>
+
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1 flex items-center justify-between">
+
+
+                                    <div className="space-y-1">
+                                      <div className="text-sm font-medium text-gray-900">{feedback.doctor}</div>
+                                    </div>
+
+                                  </div>
+
+
+                                  <div className="flex  items-center gap-2">
+                                    <StarRating rating={Math.round(feedback.rating || 0)} />
+                                    <span className="text-sm font-semibold text-gray-900">{Number(feedback.rating || 0).toFixed(1)}/5</span>
+                                  </div>
+                                  <div className="max-w-xs">
+                                    <p className="text-sm text-gray-700 line-clamp-3">{feedback.feedback}</p>
+                                  </div>
+
+                                </div>
+                              </>
+                            ))}
+                          </div>
+
+
+                        </div>
 
                         {error && <div className="text-red-600 text-sm mt-3">{error}</div>}
                       </motion.div>

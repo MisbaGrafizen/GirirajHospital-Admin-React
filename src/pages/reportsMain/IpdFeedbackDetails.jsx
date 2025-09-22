@@ -119,7 +119,7 @@ export default function IpdFeedbackDetails() {
       dateTime: normDate(doc.createdAt ?? doc.date ?? doc.dateTime ?? doc.createdOn) || '',
       name: doc.patientName ?? doc.patient ?? doc.name ?? '-',
       contact: doc.contact ?? doc.phone ?? doc.mobile ?? '-',
-      doctorName: doc.consultantDoctorName ?? doc.doctor ?? doc.doctorName ?? doc.consultant ?? '-',
+      doctorName: doc.consultantDoctorName?.name ?? doc.doctor ?? doc.doctorName ?? doc.consultant ?? '-',
       department: doc.department ?? doc.dept ?? 'IPD',
       bedNo: doc.bedNo ?? doc.bed ?? '',
       ratings: {
@@ -151,7 +151,7 @@ export default function IpdFeedbackDetails() {
 
   return (
     <>
-      <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h=[98vh]">
           <Header pageName="Ipd Feedback Details" />
           <div className="flex  w-[100%] h-[100%]">

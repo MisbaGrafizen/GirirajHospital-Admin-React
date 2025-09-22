@@ -1,5 +1,7 @@
 @tailwind base;
 @tailwind components;
+@import "tailwindcss";
+
 @tailwind utilities;
 /* @import "~react-clock/dist/Clock.css"; */
 @import "~re";
@@ -1948,6 +1950,13 @@ border-color: #fff;
 
 
 .profile-box1 {
-  background: linear-gradient(to bottom, #047dc8, var(--theme-default));
+  background: linear-gradient(to top, #047dc8, var(--theme-default));
   color: #fff;
+}
+.rdp-selected .rdp-day_button {
+  font-weight: 600 !important;
+  background: linear-gradient(to top, #047dc8, var(--theme-default));
+  color: white !important;
+
+  border: none !important;
 }

@@ -16628,10 +16628,10 @@ select.crypto-select.primary {
 .widget-1 .widget-content h4 {
   margin-bottom: 4px;
 }
-.widget-1:hover {
+/* .widget-1:hover {
   transform: translateY(-5px);
   transition: 0.5s;
-}
+} */
 .widget-1:hover .widget-round .svg-fill:not(.half-circle) {
   -webkit-animation: tada 1.5s ease infinite;
   animation: tada 1.5s ease infinite;

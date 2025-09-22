@@ -18,6 +18,7 @@ import {
 import Header from "../../Component/header/Header"
 import SideBar from "../../Component/sidebar/CubaSideBar"
 import { ApiGet } from "../../helper/axios"
+import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
 
 
 function resolvePermissions() {
@@ -93,11 +94,10 @@ function AnimatedDropdown({ label, options, selected, onSelect, icon: Icon, disa
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
-        className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-white transition-colors ${
-          disabled
-            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-            : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
-        }`}
+        className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-white transition-colors ${disabled
+          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+          : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          }`}
       >
         <div className="flex items-center gap-2">
           {Icon && <Icon className="w-4 h-4 text-gray-400" />}
@@ -203,7 +203,7 @@ const toNps = (v) => {
   const n = Number(v)
   return Number.isFinite(n) ? Math.max(0, Math.min(10, Math.round(n))) : null
 }
-const pickDoctor = (d) => pick(d.consultantDoctorName, d.doctorName, d.doctor, d.consultant, "-")
+const pickDoctor = (d) => pick(d.consultantDoctorName?.name, d.doctorName, d.doctor, d.consultant, "-")
 const pickPatient = (d) => pick(d.patientName, d.name, d.patient, "-")
 const pickCreatedAt = (d) => new Date(d.createdAt || d.date || d.dateTime || d.createdOn || Date.now())
 const pickRoom = (d, dept) => (dept === "IPD" ? pick(d.bedNo, d.roomNo, d.room, "") : "-")
@@ -224,7 +224,7 @@ export default function NpsDashboard() {
     d.setDate(d.getDate() - 14)
     return d.toISOString().slice(0, 10)
   })
-    const { canViewNps } = resolvePermissions()
+  const { canViewNps } = resolvePermissions()
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10))
   const [department, setDepartment] = useState("Both")
   const [doctor, setDoctor] = useState("All Doctors")
@@ -243,7 +243,7 @@ export default function NpsDashboard() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         setLoading(true)
         setError(null)
@@ -270,7 +270,7 @@ export default function NpsDashboard() {
       const name = pickDoctor(d)
       if (name && name !== "-") set.add(name)
     })
-    return ["All Doctors", ...Array.from(set).sort((a, b) => a.localeCompare(b))]
+    return ["All Doctors", ...Array.from(set).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)))]
   }, [department, rawOpd, rawIpd])
 
   // Map real docs -> records for charts/table, using overallRecommendation as NPS
@@ -368,218 +368,266 @@ export default function NpsDashboard() {
   // ---------------- render (unchanged design) ----------------
   return (
     <>
-      <section className="flex w-[100%] h-[100%] select-none pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none md11:!pr-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="NPS Trends (OPD + IPD)" />
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
-                  {!canViewNps ? (
-                         <div className="flex flex-col w-full max-h-[90%] pb-[50px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+            {!canViewNps ? (
+              <div className="flex flex-col w-full max-h-[90%] pb-[50px] md34:!pr-0 md11:!pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
                 <PermissionDenied />
               </div>
             ) : (
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
-              <div className="">
-                <main className="">
-                  {/* optional lightweight state messages */}
-                  {loading && <div className="text-sm text-gray-500 px-2 pb-1">Loading NPS…</div>}
-                  {error && <div className="text-sm text-red-600 px-2 pb-1">{error}</div>}
+              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+                <div className="">
+                  <main className="">
+                    {/* optional lightweight state messages */}
+                    {loading && <div className="text-sm text-gray-500 px-2 pb-1">Loading NPS…</div>}
+                    {error && <div className="text-sm text-red-600 px-2 pb-1">{error}</div>}
 
-                  {/* Filters */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 mb-3">
-                    <div className="grid grid-cols-1 pt-[3px] md:grid-cols-5 gap-x-4">
-                      <div className="relative">
-                        <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
-                          From
-                        </label>
-                        <div className="relative">
-                          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="date"
-                            value={dateFrom}
-                            max={dateTo}
-                            onChange={(e) => setDateFrom(e.target.value)}
-                            className="w-full pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    {/* Filters */}
+                    <div className="bg-white rounded-lg shadow-sm border h-fit border-gray-100 p-3 mb-3">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-x-4">
+                        <div className="relative md:11!mb-[0px] md34:mb-[14px]">
+                          <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                            From
+                          </label>
+                          <div className="relative">
+                            <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="date"
+                              value={dateFrom}
+                              max={dateTo}
+                              onChange={(e) => setDateFrom(e.target.value)}
+                              className="w-full pl-9 text-[14px] pr-3 py-2  bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="relative  md:11!mb-[0px] md34:mb-[14px]">
+                          <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                            To
+                          </label>
+                          <div className="relative">
+                            <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="date"
+                              value={dateTo}
+                              min={dateFrom}
+                              onChange={(e) => setDateTo(e.target.value)}
+                              className="w-full pl-9 pr-3 py-2 text-[14px] bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="  md:11!mb-[0px] md34:mb-[14px]  w-[100%]">
+                          <AnimatedDropdown label="Department" options={deptOptions} selected={department} onSelect={setDepartment} icon={Hospital} />
+                        </div>
+                        <div className="  md:11!mb-[0px] w-[100%]">
+                          <AnimatedDropdown label="Doctor Name" options={doctorOptions} selected={doctor} onSelect={setDoctor} icon={User} />
+                        </div>
+
+                        <div className="  md:11!mb-[0px]   w-[100%]">
+                          <AnimatedDropdown
+                            label="Room No"
+                            options={roomOptions}
+                            selected={room}
+                            onSelect={setRoom}
+                            icon={Activity}
+                            disabled={roomOptions.length === 0}
                           />
                         </div>
                       </div>
-                      <div className="relative">
-                        <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
-                          To
-                        </label>
-                        <div className="relative">
-                          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="date"
-                            value={dateTo}
-                            min={dateFrom}
-                            onChange={(e) => setDateTo(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-                      </div>
-                      <AnimatedDropdown label="Department" options={deptOptions} selected={department} onSelect={setDepartment} icon={Hospital} />
-                      <AnimatedDropdown label="Doctor Name" options={doctorOptions} selected={doctor} onSelect={setDoctor} icon={User} />
-                      <AnimatedDropdown
-                        label="Room No"
-                        options={roomOptions}
-                        selected={room}
-                        onSelect={setRoom}
-                        icon={Activity}
-                        disabled={roomOptions.length === 0}
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4 md11:!gap-4 ">
+                      <Widgets1
+                        data={{
+                          title: "Detractors %",
+                          gros: `${kpi.pDetr}%`,
+                          total: `${kpi.total} total`,
+                          color: "danger",
+                          icon: <i className="fa-solid fa-face-frown text-[18px] text-red-600"></i>,
+                        }}
+                      />
+                      <Widgets1
+                        data={{
+                          title: "Passives %",
+                          gros: `${kpi.pPass}%`,
+                          total: `${kpi.total} total`,
+                          color: "warning",
+                          icon: <i className="fa-solid fa-minus text-[18px] text-amber-600"></i>,
+                        }}
+                      />
+                      <Widgets1
+                        data={{
+                          title: "Promoters %",
+                          gros: `${kpi.pProm}%`,
+                          total: `${kpi.total} total`,
+                          color: "success",
+                          icon: <i className="fa-solid fa-heart-pulse text-[18px] text-emerald-600"></i>,
+                        }}
+                      />
+                      <Widgets1
+                        data={{
+                          title: "Overall NPS",
+                          gros: `${kpi.nps}`,
+                          total: "Promoters − Detractors",
+                          color: "secondary",
+                          icon: <i className="fa-solid fa-chart-line text-[18px] text-gray-600"></i>,
+                        }}
                       />
                     </div>
-                  </div>
 
-                  {/* KPI Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
-                    <KpiCard title="Detractors %" value={`${kpi.pDetr}%`} icon={Frown} color="text-red-600" bg="bg-red-50" subtitle={`${kpi.total} total`} />
-                    <KpiCard title="Passives %" value={`${kpi.pPass}%`} icon={Minus} color="text-amber-600" bg="bg-amber-50" subtitle={`${kpi.total} total`} />
-                    <KpiCard title="Promoters %" value={`${kpi.pProm}%`} icon={HeartPulse} color="text-emerald-600" bg="bg-emerald-50" subtitle={`${kpi.total} total`} />
-                    <KpiCard title="Overall NPS" value={kpi.nps} icon={Activity} color="text-gray-600" bg="bg-gray-50" subtitle="Promoters − Detractors" />
-                  </div>
+                    {/* Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                        <div className=" flex mb-[10px] items-center gap-[10px]">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                            <i className="fa-regular fa-chart-line text-[#fff] text-[19px]"></i>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 ">Distribution Over Time</h3>
+                        </div>
+                        <div className="h-72">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={areaData} key={areaKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="gradDetractors" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.35} />
+                                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="gradPassives" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
+                                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="gradPromoters" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                              <Tooltip contentStyle={{ fontSize: 12 }} />
+                              <Legend />
+                              <Area type="monotone" dataKey="Detractors" stackId="1" stroke="#ef4444" fill="url(#gradDetractors)" isAnimationActive animationDuration={600} />
+                              <Area type="monotone" dataKey="Passives" stackId="1" stroke="#f59e0b" fill="url(#gradPassives)" isAnimationActive animationDuration={600} />
+                              <Area type="monotone" dataKey="Promoters" stackId="1" stroke="#10b981" fill="url(#gradPromoters)" isAnimationActive animationDuration={600} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
 
-                  {/* Charts */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribution Over Time</h3>
-                      <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={areaData} key={areaKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                            <defs>
-                              <linearGradient id="gradDetractors" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.35} />
-                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                              </linearGradient>
-                              <linearGradient id="gradPassives" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
-                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
-                              </linearGradient>
-                              <linearGradient id="gradPromoters" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                                <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                            <Tooltip contentStyle={{ fontSize: 12 }} />
-                            <Legend />
-                            <Area type="monotone" dataKey="Detractors" stackId="1" stroke="#ef4444" fill="url(#gradDetractors)" isAnimationActive animationDuration={600} />
-                            <Area type="monotone" dataKey="Passives" stackId="1" stroke="#f59e0b" fill="url(#gradPassives)" isAnimationActive animationDuration={600} />
-                            <Area type="monotone" dataKey="Promoters" stackId="1" stroke="#10b981" fill="url(#gradPromoters)" isAnimationActive animationDuration={600} />
-                          </AreaChart>
-                        </ResponsiveContainer>
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                        <div className=" flex mb-[10px] items-center gap-[10px]">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                            <i className="fa-regular fa-arrow-trend-up text-[#fff] text-[19px]"></i>
+
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900">Overall NPS Trend</h3>
+                        </div>
+                        <div className="h-72">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={lineData} key={lineKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                              <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                              <YAxis domain={[-100, 100]} tick={{ fontSize: 12 }} />
+                              <Tooltip contentStyle={{ fontSize: 12 }} />
+                              <Legend />
+                              <Line type="monotone" dataKey="NPS" stroke="#374151" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive animationDuration={600} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Overall NPS Trend</h3>
-                      <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={lineData} key={lineKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis domain={[-100, 100]} tick={{ fontSize: 12 }} />
-                            <Tooltip contentStyle={{ fontSize: 12 }} />
-                            <Legend />
-                            <Line type="monotone" dataKey="NPS" stroke="#374151" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive animationDuration={600} />
-                          </LineChart>
-                        </ResponsiveContainer>
+                    {/* Table Controls */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <label className="inline-flex items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
+                            <span className="text-sm text-gray-700">Detractors</span>
+                          </label>
+                          <label className="inline-flex items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
+                            <span className="text-sm text-gray-700">Passives</span>
+                          </label>
+                          <label className="inline-flex items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
+                            <span className="text-sm text-gray-700">Promoters</span>
+                          </label>
+                        </div>
+                        <div className="relative w-full md:w-80">
+                          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search patient, doctor, room, comment..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Table Controls */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <label className="inline-flex items-center gap-2">
-                          <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
-                          <span className="text-sm text-gray-700">Detractors</span>
-                        </label>
-                        <label className="inline-flex items-center gap-2">
-                          <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
-                          <span className="text-sm text-gray-700">Passives</span>
-                        </label>
-                        <label className="inline-flex items-center gap-2">
-                          <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
-                          <span className="text-sm text-gray-700">Promoters</span>
-                        </label>
-                      </div>
-                      <div className="relative w-full md:w-80">
-                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="text"
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          placeholder="Search patient, doctor, room, comment..."
-                          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Table */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full table-auto divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
-                          {filteredRecords.slice(0, 400).map((rec, idx) => (
-                            <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
-                              <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
-                              <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
-                              <td className="px-4 py-3 text-sm">
-                                <span
-                                  className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    rec.category === "Promoter"
+                    {/* Table */}
+                    <div className="bg-white rounded-lg shadow-sm border mb-[100px] border-gray-100 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-100">
+                            {filteredRecords.slice(0, 400).map((rec, idx) => (
+                              <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span
+                                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
                                       ? "bg-emerald-100 text-emerald-800"
                                       : rec.category === "Passive"
-                                      ? "bg-amber-100 text-amber-800"
-                                      : "bg-red-100 text-red-800"
-                                  }`}
-                                >
-                                  {rec.category}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
-                            </tr>
-                          ))}
-                          {filteredRecords.length === 0 && (
-                            <tr>
-                              <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                                No records match your filters.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-red-100 text-red-800"
+                                      }`}
+                                  >
+                                    {rec.category}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
+                              </tr>
+                            ))}
+                            {filteredRecords.length === 0 && (
+                              <tr>
+                                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
+                                  No records match your filters.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
+                        <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
+                        {/* <span className="text-gray-500">Colors: Promoter (green), Passive (yellow), Detractor (red)</span> */}
+                      </div>
                     </div>
-                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
-                      <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
-                      <span className="text-gray-500">Colors: Promoter (green), Passive (yellow), Detractor (red)</span>
-                    </div>
-                  </div>
-                </main>
+                  </main>
+                </div>
               </div>
-            </div>
-                  )}
+            )}
           </div>
         </div>
       </section>

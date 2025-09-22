@@ -24,7 +24,7 @@ const RecentOrders = ({ overallNps = 0 }) => {
     npsRaw < 0 ? 'text-danger' : npsRaw < (isPercent ? 30 : 3) ? 'text-warning' : 'text-success';
 
   // Optional "Average Rating (out of 5)" approximation
-  const avg5 = +( (isPercent ? npsRaw / 20 : npsRaw / 2) ).toFixed(1);
+  const avg5 = +((isPercent ? npsRaw / 20 : npsRaw / 2)).toFixed(1);
 
   const baseOpts = RecentOrderChart?.options || {};
   const options = {
@@ -47,10 +47,14 @@ const RecentOrders = ({ overallNps = 0 }) => {
   };
 
   return (
-    <Col xxl="4" xl="7" md="6" sm="5" className="box-col-6">
+    <Col xxl="4" xl="7" md="6" sm="5" className="box-col-6 md34:pb-[20px] md11:!pb-0">
       <Card className="height-equal">
         <CardHeader className="card-no-border">
-          <div className="header-top">
+          <div className=" flex   items-center gap-[10px]">
+            <div className=' flex  profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px] '>
+           <i className="fa-regular  text-[23px] fa-chart-user"></i>
+
+            </div>
             <H5>NPS Rating</H5>
           </div>
         </CardHeader>
@@ -68,7 +72,7 @@ const RecentOrders = ({ overallNps = 0 }) => {
               </div>
             </Col>
 
-            <Col xl="6">
+            <Col className='md34:pb-[20px] md11:!pb-0' xl="6">
               <UL attrUL={{ className: 'order-content' }}>
                 <LI>
                   <span className="recent-circle" style={{ backgroundColor: dialColor }} />

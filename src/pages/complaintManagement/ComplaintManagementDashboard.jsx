@@ -20,11 +20,21 @@ import {
     FileText,
     CalendarIcon,
 } from "lucide-react"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+    faTriangleExclamation,
+    faClock,
+    faCircleCheck,
+    faArrowTrendUp,
+    faSpinner,
+    faStopwatch,
+} from "@fortawesome/free-solid-svg-icons";
 import Header from "../../Component/header/Header"
 import Sidebar from "../../Component/sidebar/CubaSideBar"
 import { useNavigate } from "react-router-dom"
 import OpdFilter from "../../Component/ReportFilter/OpdFilter"
 import { ApiGet } from "../../helper/axios"
+import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
 
 const MODULE_TO_BLOCK = {
     doctor_service: "doctorServices",
@@ -216,63 +226,63 @@ const getPriorityColor = (priority) => {
 // }
 
 function flattenConcernDoc(doc, allowedBlocks) {
-  const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
-  const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
+    const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
+    const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
 
-  const departments = [];
-  allowedBlocks.forEach((k) => {
-    const block = doc?.[k];
-    if (!block) return;
-    const hasText = block.text && String(block.text).trim().length > 0;
-    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
-    if (hasText || hasAttachments) {
-      departments.push(DEPT_LABEL[k]);
-    }
-  });
+    const departments = [];
+    allowedBlocks.forEach((k) => {
+        const block = doc?.[k];
+        if (!block) return;
+        const hasText = block.text && String(block.text).trim().length > 0;
+        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+        if (hasText || hasAttachments) {
+            departments.push(DEPT_LABEL[k]);
+        }
+    });
 
-  if (departments.length === 0) return [];
+    if (departments.length === 0) return [];
 
-  return [{
-    id: doc._id,
-    complaintId: doc.complaintId,
-    date: dateStr,
-    department: departments.join(", "),  // 👈 one row with joined departments
-    doctor: doc.consultantDoctorName || "-",
-    bedNo: doc.bedNo || "-",
-    patient: doc.patientName || "-",
-    contact: doc.contact || "-",
-    status: mapStatusUI(doc.status),
-    priority: doc.priority || "Normal",
-    assignedTo: "-",
-    details: "-",
-    actions: [],
-    category: "Multiple",
-    expectedResolution: "-",
-    createdAt,
-  }];
+    return [{
+        id: doc._id,
+        complaintId: doc.complaintId,
+        date: dateStr,
+        department: departments.join(", "),  // 👈 one row with joined departments
+        doctor: doc.consultantDoctorName?.name || "-",
+        bedNo: doc.bedNo || "-",
+        patient: doc.patientName || "-",
+        contact: doc.contact || "-",
+        status: mapStatusUI(doc.status),
+        priority: doc.priority || "Normal",
+        assignedTo: "-",
+        details: "-",
+        actions: [],
+        category: "Multiple",
+        expectedResolution: "-",
+        createdAt,
+    }];
 }
 
 function flattenConcernDocForStats(doc) {
-  const results = [];
+    const results = [];
 
-  CONCERN_KEYS.forEach((k) => {
-    const block = doc?.[k];
-    if (!block) return;
+    CONCERN_KEYS.forEach((k) => {
+        const block = doc?.[k];
+        if (!block) return;
 
-    const hasText = block.text && String(block.text).trim().length > 0;
-    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+        const hasText = block.text && String(block.text).trim().length > 0;
+        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
 
-    if (hasText || hasAttachments) {
-      results.push({
-        department: DEPT_LABEL[k],          // 👈 one per department
-        resolutionTime: doc.status === "resolved" ? 1 : 0, // fake example
-        escalated: doc.priority === "Urgent" || doc.priority === "Critical",
-        createdAt: doc.createdAt || doc.updatedAt || new Date().toISOString(), // 👈 needed for trend
-      });
-    }
-  });
+        if (hasText || hasAttachments) {
+            results.push({
+                department: DEPT_LABEL[k],          // 👈 one per department
+                resolutionTime: doc.status === "resolved" ? 1 : 0, // fake example
+                escalated: doc.priority === "Urgent" || doc.priority === "Critical",
+                createdAt: doc.createdAt || doc.updatedAt || new Date().toISOString(), // 👈 needed for trend
+            });
+        }
+    });
 
-  return results;
+    return results;
 }
 
 
@@ -293,41 +303,41 @@ const getDepartmentsString = (doc, allowedBlocks) =>
 
 // Build multi-line chart series from rows
 function buildTrendData(rows) {
-  const byDay = {};
-  // ✅ ensure all departments always exist in chart
-  const presentDepartments = new Set(CONCERN_KEYS.map((k) => DEPT_LABEL[k]));
+    const byDay = {};
+    // ✅ ensure all departments always exist in chart
+    const presentDepartments = new Set(CONCERN_KEYS.map((k) => DEPT_LABEL[k]));
 
-  rows.forEach((r) => {
-    const day = fmtDateLabel(r.createdAt || r.date);
-    byDay[day] ||= {};
-    byDay[day][r.department] = (byDay[day][r.department] || 0) + 1;
-  });
-
-  let days = Object.keys(byDay);
-  days.sort((a, b) => Date.parse(a + " 2020") - Date.parse(b + " 2020"));
-
-  if (days.length === 1) {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    const prev = fmtDateLabel(d.toISOString());
-    byDay[prev] ||= {};
-    days = [prev, ...days];
-  }
-
-  const result = days.map((day) => {
-    const obj = { date: day };
-    presentDepartments.forEach((dept) => {
-      obj[dept] = byDay[day]?.[dept] || 0;
+    rows.forEach((r) => {
+        const day = fmtDateLabel(r.createdAt || r.date);
+        byDay[day] ||= {};
+        byDay[day][r.department] = (byDay[day][r.department] || 0) + 1;
     });
-    return obj;
-  });
 
-  const colors = {};
-  presentDepartments.forEach((d) => {
-    colors[d] = DEPT_COLORS[d] || "#6B7280";
-  });
+    let days = Object.keys(byDay);
+    days.sort((a, b) => Date.parse(a + " 2020") - Date.parse(b + " 2020"));
 
-  return { data: result, colors };
+    if (days.length === 1) {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const prev = fmtDateLabel(d.toISOString());
+        byDay[prev] ||= {};
+        days = [prev, ...days];
+    }
+
+    const result = days.map((day) => {
+        const obj = { date: day };
+        presentDepartments.forEach((dept) => {
+            obj[dept] = byDay[day]?.[dept] || 0;
+        });
+        return obj;
+    });
+
+    const colors = {};
+    presentDepartments.forEach((d) => {
+        colors[d] = DEPT_COLORS[d] || "#6B7280";
+    });
+
+    return { data: result, colors };
 }
 
 
@@ -352,7 +362,7 @@ function computeKpis(rows) {
         )
         const h = Math.floor(mins / 60)
         const m = mins % 60
-        avgResolutionStr = `${h} HR ${m} MIN`
+        avgResolutionStr = `${h}/${m} `
     }
 
     return {
@@ -429,7 +439,7 @@ export default function ComplaintManagementDashboard() {
         return () => clearTimeout(t)
     }, [])
 
-  
+
     // ====== DERIVED ======
     const filteredComplaints = useMemo(() => {
         const q = (searchTerm || "").toLowerCase();
@@ -463,54 +473,54 @@ export default function ComplaintManagementDashboard() {
 
 
     useEffect(() => {
-  if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
-    setRows([]);
-    setKpiData(computeKpis([]));
-    setTrendData([]);
-    setDepartmentColors({});
-    setTop5Departments([]);
-    return;
-  }
+        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+            setRows([]);
+            setKpiData(computeKpis([]));
+            setTrendData([]);
+            setDepartmentColors({});
+            setTop5Departments([]);
+            return;
+        }
 
-  // ✅ build table rows (one row per complaint)
-  const list = rawConcerns.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
-  setRows(list);
+        // ✅ build table rows (one row per complaint)
+        const list = rawConcerns.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+        setRows(list);
 
-  // ✅ build stats (multi-department)
-  const statsDocs = rawConcerns.flatMap((d) => flattenConcernDocForStats(d));
+        // ✅ build stats (multi-department)
+        const statsDocs = rawConcerns.flatMap((d) => flattenConcernDocForStats(d));
 
-  // KPIs
-  setKpiData(computeKpis(list));
+        // KPIs
+        setKpiData(computeKpis(list));
 
-  // Trend chart
-  const { data: tData, colors } = buildTrendData(statsDocs);
-  setTrendData(tData);
-  setDepartmentColors(colors);
+        // Trend chart
+        const { data: tData, colors } = buildTrendData(statsDocs);
+        setTrendData(tData);
+        setDepartmentColors(colors);
 
-  // Top-5 departments
-  const deptStats = {};
-  statsDocs.forEach((d) => {
-    if (!deptStats[d.department]) {
-      deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-    }
-    deptStats[d.department].complaints += 1;
-    deptStats[d.department].totalResolution += d.resolutionTime || 0;
-    if (d.escalated) deptStats[d.department].escalations += 1;
-  });
+        // Top-5 departments
+        const deptStats = {};
+        statsDocs.forEach((d) => {
+            if (!deptStats[d.department]) {
+                deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+            }
+            deptStats[d.department].complaints += 1;
+            deptStats[d.department].totalResolution += d.resolutionTime || 0;
+            if (d.escalated) deptStats[d.department].escalations += 1;
+        });
 
-  const top = Object.entries(deptStats)
-    .map(([department, s]) => ({
-      department,
-      complaints: s.complaints,
-      avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-      escalations: s.escalations,
-    }))
-    .sort((a, b) => b.complaints - a.complaints)
-    .slice(0, 5)
-    .map((x, i) => ({ rank: i + 1, ...x }));
+        const top = Object.entries(deptStats)
+            .map(([department, s]) => ({
+                department,
+                complaints: s.complaints,
+                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+                escalations: s.escalations,
+            }))
+            .sort((a, b) => b.complaints - a.complaints)
+            .slice(0, 5)
+            .map((x, i) => ({ rank: i + 1, ...x }));
 
-  setTop5Departments(top);
-}, [rawConcerns, allowedBlocks]);
+        setTop5Departments(top);
+    }, [rawConcerns, allowedBlocks]);
 
 
 
@@ -567,7 +577,7 @@ export default function ComplaintManagementDashboard() {
                         )
                     })}
                 </svg>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="mt-4 flex flex-wrap justify-center md11:grid grid-cols-2 gap-2 text-sm">
                     {data.map((item, index) => (
                         <div
                             key={index}
@@ -706,7 +716,7 @@ export default function ComplaintManagementDashboard() {
                     })}
                 </svg>
 
-                <div className="grid grid-cols-4 justify-center  mt-4 space-x-2">
+                <div className="md11:!grid grid-cols-4 flex flex-wrap gap-[10px] justify-center  mt-4 space-x-2">
                     {departments.map((dept, index) => (
                         <div
                             key={dept}
@@ -726,12 +736,12 @@ export default function ComplaintManagementDashboard() {
     // ===================== UI (design unchanged) =====================
     return (
         <>
-            <section className="flex w-[100%] h-[100%] select-none   pr-[15px] overflow-hidden">
+            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
                 <div className="flex w-[100%] overflow-hidden flex-col  h-[96vh]">
                     <Header pageName="Complaint Management " />
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
-                        <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
 
                             <div className="">
                                 <div className="">
@@ -744,75 +754,95 @@ export default function ComplaintManagementDashboard() {
 
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2  mt-[10px] lg:grid-cols-6 gap-2 mb-2">
-                                        <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-blue-500">
-                                            <div className="flex items-center">
-                                                <AlertTriangle className="w-6 h-6 text-blue-600 mr-3" />
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-600">Total Complaints</p>
-                                                    <p className="text-xl font-[600] text-gray-900">{kpiData.totalComplaints}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-yellow-500">
-                                            <div className="flex items-center">
-                                                <Clock className="w-6 h-6 text-yellow-600 mr-3" />
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-600">Pending</p>
-                                                    <p className="text-xl font-[600] text-gray-900">{kpiData.pending}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-green-500">
-                                            <div className="flex items-center">
-                                                <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-600">Resolved</p>
-                                                    <p className="text-xl font-[600] text-gray-900">{kpiData.resolved}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-red-500">
-                                            <div className="flex items-center">
-                                                <TrendingUp className="w-6 h-6 text-red-600 mr-3" />
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-600">Escalated</p>
-                                                    <p className="text-xl font-[600] text-gray-900">{kpiData.escalated}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-purple-500">
-                                            <div className="flex items-center">
-                                                <Clock className="w-6 h-6 text-purple-600 mr-3" />
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-600">Avg Resolution</p>
-                                                    <p className="text-[15px] font-[600] text-gray-900">{kpiData.avgResolutionTime}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                           <div className="bg-white rounded-lg shadow-sm p-3 border   border-l-4 border-l-purple-500">
-  <div className="flex items-center">
-    <RefreshCw className="w-6 h-6 text-purple-600 mr-3" />
-    <div>
-      <p className="text-xs font-medium text-gray-600">In Progress</p>
-      <p className="text-[15px] font-[600] text-gray-900">{kpiData.inProgress}</p>
-    </div>
-  </div>
-</div>
+                                    <div className="grid md34:!grid-cols-2  md11:!grid-cols-5 mt-[10px] lg:grid-cols-6 gap-2 mb-2">
+                                        <Widgets1
+                                            data={{
+                                                title: "Total Complaints",
+                                                gros: kpiData.totalComplaints,
+                                                total: kpiData.totalComplaints,
+                                                color: "",
+                                                icon: <FontAwesomeIcon icon={faTriangleExclamation} className="w-6 h-6 text-blue-600" />,
+                                            }}
+                                        />
 
+                                        <Widgets1
+                                            data={{
+                                                title: "Pending",
+                                                gros: kpiData.pending,
+                                                total: kpiData.pending,
+                                                color: "warning",
+                                                icon: <FontAwesomeIcon icon={faClock} className="w-6 h-6 text-yellow-600" />,
+                                            }}
+                                        />
+
+                                        <Widgets1
+                                            data={{
+                                                title: "Resolved",
+                                                gros: kpiData.resolved,
+                                                total: kpiData.resolved,
+                                                color: "success",
+                                                icon: <FontAwesomeIcon icon={faCircleCheck} className="w-6 h-6 text-green-600" />,
+                                            }}
+                                        />
+
+                                        <Widgets1
+                                            data={{
+                                                title: "Escalated",
+                                                gros: kpiData.escalated,
+                                                total: kpiData.escalated,
+                                                color: "danger",
+                                                icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
+                                            }}
+                                        />
+
+                                        <Widgets1
+                                            data={{
+                                                title: "Avg Resolution",
+                                                gros: kpiData.avgResolutionTime,
+                                                total: kpiData.avgResolutionTime,
+                                                color: "purple",
+                                                icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
+                                            }}
+                                        />
+
+                                        <Widgets1
+                                            data={{
+                                                title: "In Progress",
+                                                gros: kpiData.inProgress,
+                                                total: kpiData.inProgress,
+                                                color: "purple",
+                                                icon: <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-purple-600" spin />,
+                                            }}
+                                        />
                                     </div>
 
+
                                     {/* Charts Row */}
-                                    <div className=" flex mt-[20px]  gap-6 mb-6">
+                                    <div className=" flex  md11:!flex-row md34:!flex-col mt-[20px]  gap-6 mb-6">
                                         <div className="bg-white border rounded-lg shadow-sm p-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
+                                            <div className=" flex gap-[10px]">
+
+
+
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className=" text-[#fff] text-[17px] fa-solid fa-star-sharp-half-stroke"></i>
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
+                                            </div>
                                             <div className="flex justify-center">
                                                 <AnimatedMultiLineChart data={trendData} colors={departmentColors} />
                                             </div>
                                         </div>
 
                                         <div className="bg-white  rounded-lg  border shadow-sm p-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
+                                            <div className="flex gap-[10px]">
+
+
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                  <i className="fa-regular fa-hospitals text-[#fff] text-[19px]"></i>
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
+                                            </div>
                                             <div className="flex justify-center">
                                                 <AnimatedDonutChart
                                                     data={[
@@ -827,13 +857,18 @@ export default function ComplaintManagementDashboard() {
                                         </div>
                                     </div>
 
-                                    <div className=" flex items-start gap-[10px]">
-                                        <div className="bg-white border shadow-sm rounded-lg  overflow-hidden mb-6">
-                                            <div className="px-6 py-2 border-b border-gray-200">
-                                                <h3 className="text-[15px] font-semibold text-gray-900">Top 5 Departments with Most Complaints</h3>
+                                    <div className=" flex md11:!flex-row md34:!flex-col w-[100%] items-start gap-[10px]">
+                                        <div className="bg-white border md34:!w-[100%] md11:!w-[70%] shadow-sm rounded-lg overflow-hidden mb-6">
+                                            <div className="pl-4 items-center gap-[10px] flex  py-2 border-b border-gray-200">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
+                                                </div>
+                                                <h3 className="text-[15px] font-semibold text-gray-900">
+                                                    Top 5 Departments with Most Complaints
+                                                </h3>
                                             </div>
-                                            <div className="overflow-x-auto">
-                                                <table className="min-w-full">
+                                            <div className="w-full overflow-x-auto">
+                                                <table className="md34:!min-w-[1000px] md11:!min-w-[500px]">
                                                     <thead className="bg-gray-50">
                                                         <tr>
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -864,20 +899,13 @@ export default function ComplaintManagementDashboard() {
                                                                         {dept.rank}
                                                                     </span>
                                                                 </td>
-
-                                                                {/* ✅ only show text if department is defined */}
-                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">
-                                                                    {dept.department || ""}
-                                                                </td>
-
+                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">{dept.department || ""}</td>
                                                                 <td className="px-6 py-2 text-sm text-gray-900">
                                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-red-100 text-red-800">
                                                                         {dept.complaints}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    {dept.avgResolution || ""}
-                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-900">{dept.avgResolution || ""}</td>
                                                                 <td className="px-6 py-2 text-sm text-gray-900">
                                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-orange-100 text-orange-800">
                                                                         {dept.escalations}
@@ -885,17 +913,24 @@ export default function ComplaintManagementDashboard() {
                                                                 </td>
                                                             </tr>
                                                         ))}
-
-
-
                                                     </tbody>
                                                 </table>
                                             </div>
+
                                         </div>
 
+
                                         {/* Word Cloud */}
-                                        <div className="bg-white border  rounded-lg pt-[6px] mb-[20px] h-[250px] shadow-sm w-[400px]">
-                                            <h3 className="text-lg ml-[19px] font-semibold text-gray-900 mb-1">Frequent Complaint Keywords</h3>
+                                        <div className="bg-white border  rounded-lg pt-[6px] mb-[20px] md11:!h-[250px] shadow-sm md11:!w-[400px]">
+                                            <div className="flex ml-[19px] mb-[10px] pt-[10px] gap-[10px]">
+
+
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">Frequent Complaint Keywords</h3>
+
+                                            </div>
                                             <div className="flex border-t flex-wrap gap-2 p-[20px] ">
                                                 {[
                                                     "Food",
@@ -938,12 +973,15 @@ export default function ComplaintManagementDashboard() {
 
                                     {/* Complaint Details Table */}
                                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                                        <div className="px-6 py-2 border-b border-gray-200">
+                                        <div className="px-6 py-2 border-b flex  gap-[10px] items-center border-gray-200">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                                            </div>
                                             <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
                                         </div>
 
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full">
+                                            <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

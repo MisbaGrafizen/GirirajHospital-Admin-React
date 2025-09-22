@@ -134,7 +134,7 @@ export default function OpdFilter({
 
   return (
     <div className="">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6">
+      <div className=" md34:!hidden md11:!grid grid-cols-2   md11:grid-cols-4 gap-x-6">
         <ModernDatePicker
           label="From Date"
           selectedDate={dateFrom}
@@ -159,6 +159,41 @@ export default function OpdFilter({
           onChange={setSelectedDoctor}
           options={doctorOptions}
         />
+      </div>
+
+      <div className=" md34:!flex md11:!hidden flex-col gap-[12px]">
+       <div className=' grid grid-cols-2 gap-x-[10px] justify-between w-[100%]'>
+
+
+          <ModernDatePicker
+            label="From Date"
+            selectedDate={dateFrom}
+            setSelectedDate={setDateFrom}
+          />
+          <ModernDatePicker
+            label="To Date"
+            selectedDate={dateTo}
+            setSelectedDate={setDateTo}
+          />
+        </div>
+        <div className=' grid grid-cols-2 gap-x-[10px] justify-between w-[100%]'>
+
+
+          <AnimatedDropdown
+            label="Service"
+            icon={Filter}
+            selected={selectedService}
+            onChange={setSelectedService}
+            options={serviceOptions}
+          />
+          <AnimatedDropdown
+            label="Doctor"
+            icon={User}
+            selected={selectedDoctor}
+            onChange={setSelectedDoctor}
+            options={doctorOptions}
+          />
+        </div>
       </div>
     </div>
   );
