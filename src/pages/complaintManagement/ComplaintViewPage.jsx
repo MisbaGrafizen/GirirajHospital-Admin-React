@@ -28,7 +28,7 @@ const MODULE_TO_BLOCK = {
     doctor_service: "doctorServices",
     diagnostic_service: "diagnosticServices",
     nursing: "nursing",
-    dietetics: "dietetics",
+    dietetics: "dietitianServices",
     maintenance: "maintenance",
     security: "security",
     billing_service: "billingServices",
@@ -103,73 +103,6 @@ function mapStatusUI(status) {
     if (s === "escalated") return "Escalated";
     return "Pending"; // fallback for unexpected status
 }
-
-
-const ServiceBlock = ({ label, block }) => {
-    return (
-        <div className="bg-gray-50 rounded-lg p-4 mb-3">
-            {/* Service Name */}
-            <h3 className="text-md font-semibold text-gray-900 mb-2">{label}</h3>
-
-            {/* Topic */}
-            {block?.topic ? (
-                <p className="text-sm text-gray-700 mb-1">
-                    <span className="font-medium">Topic:</span> {block.topic}
-                </p>
-            ) : (
-                <p className="text-sm text-gray-400 italic">No topic provided</p>
-            )}
-
-            {/* Text */}
-            {block?.text ? (
-                <p className="text-gray-800 mb-2">
-                    <span className="font-medium">Details:</span> {block.text}
-                </p>
-            ) : (
-                <p className="text-sm text-gray-400 italic">No details provided</p>
-            )}
-
-            {/* Attachments */}
-            {Array.isArray(block?.attachments) && block.attachments.length > 0 ? (
-                <div className="space-y-2 mt-2">
-                    {block.attachments.map((att, i) => {
-                        const isAudio = att.endsWith(".mp3") || att.endsWith(".wav");
-                        const isImage =
-                            att.endsWith(".jpg") || att.endsWith(".jpeg") || att.endsWith(".png");
-
-                        return (
-                            <div key={i} className="p-2 bg-white border rounded-md">
-                                {isAudio ? (
-                                    <audio controls className="w-full">
-                                        <source src={att} type="audio/mpeg" />
-                                        Your browser does not support audio playback.
-                                    </audio>
-                                ) : isImage ? (
-                                    <img
-                                        src={att}
-                                        alt="attachment"
-                                        className="w-48 h-auto rounded-md border"
-                                    />
-                                ) : (
-                                    <a
-                                        href={att}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 underline"
-                                    >
-                                        {att}
-                                    </a>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <p className="text-sm text-gray-400 italic">No attachments</p>
-            )}
-        </div>
-    );
-};
 
 
 
@@ -326,35 +259,35 @@ export default function ComplaintViewPage() {
 
     // in handleForwardSubmit
     const handleForwardSubmit = async () => {
-  if (!forwardDepartment || !forwardReason) {
-    alert("Please select a department and provide a reason.");
-    return;
-  }
+        if (!forwardDepartment || !forwardReason) {
+            alert("Please select a department and provide a reason.");
+            return;
+        }
 
-  try {
-    const departmentKey = DEPT_KEY[forwardDepartment]; // convert label to backend key
-    if (!departmentKey) {
-      alert("Invalid department selected");
-      return;
-    }
+        try {
+            const departmentKey = DEPT_KEY[forwardDepartment]; // convert label to backend key
+            if (!departmentKey) {
+                alert("Invalid department selected");
+                return;
+            }
 
-    const payload = {
-      department: departmentKey,           // ✅ required
-      topic: "Forwarded Complaint",        // ✅ required
-      text: forwardReason,                 // ✅ your reason
-      attachments: uploadedFile ? [uploadedFile.name] : [],
-      mode: "text",                        // ✅ default to "text"
+            const payload = {
+                department: departmentKey,           // ✅ required
+                topic: "Forwarded Complaint",        // ✅ required
+                text: forwardReason,                 // ✅ your reason
+                attachments: uploadedFile ? [uploadedFile.name] : [],
+                mode: "text",                        // ✅ default to "text"
+            };
+
+            const res = await ApiPost(`/admin/${complaint.id}/forward`, payload);
+
+            alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
+            closeAllModals();
+        } catch (error) {
+            console.error("Forward Error:", error);
+            alert(error.message || "Something went wrong while forwarding");
+        }
     };
-
-    const res = await ApiPost(`/admin/${complaint.id}/forward`, payload);
-
-    alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
-    closeAllModals();
-  } catch (error) {
-    console.error("Forward Error:", error);
-    alert(error.message || "Something went wrong while forwarding");
-  }
-};
 
 
     async function escalateComplaint(complaintId, { level, note, userId }) {
@@ -755,7 +688,7 @@ export default function ComplaintViewPage() {
                                                                         <div className="mt-2 space-y-2">
                                                                             {block.attachments.map((att, i) => {
                                                                                 const url = att.trim().toLowerCase();
-                                                                                const isImage = /\.(jpg|jpeg|png|gif)$/i.test(url);
+                                                                                const isImage = /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(url);
                                                                                 const isAudio = /\.(mp3|wav|ogg)$/i.test(url) || att.endsWith(".");
                                                                                 const isPDF = /\.pdf$/i.test(url);
 
@@ -862,49 +795,139 @@ export default function ComplaintViewPage() {
                                             className="space-y-6"
                                         >
                                             {/* Action Buttons */}
+                                            {/* Action Buttons */}
                                             <div className="bg-white border rounded-xl shadow-sm p-4">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
-                                                <div className="space-y-3">
-                                                    <button
-                                                        onClick={() => openModal("resolve")}
-                                                        className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                                    >
-                                                        <CheckCircle className="w-5 h-5 mr-2" />
-                                                        Mark as Resolved
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openModal("progress")}
-                                                        className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
-                                                    >
-                                                        <TrendingUp className="w-5 h-5 mr-2" />
-                                                        Progress Remark
-                                                    </button>
 
-                                                    <button
-                                                        onClick={() => openModal("forward")}
-                                                        className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                    >
-                                                        <Forward className="w-5 h-5 mr-2" />
-                                                        Forward to Another Department
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openModal("escalate")}
-                                                        className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                                    >
-                                                        <TrendingUp className="w-5 h-5 mr-2" />
-                                                        Escalate to Higher Authority
-                                                    </button>
+                                                {complaint.status === "Resolved" ? (
+                                                    // 🔹 Show ONLY history when Resolved
+                                                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                                                        {loadingHistory ? (
+                                                            <p className="text-center text-gray-500">Loading history...</p>
+                                                        ) : historyData.length === 0 ? (
+                                                            <p className="text-center text-gray-500">No history found.</p>
+                                                        ) : (
+                                                            Array.isArray(historyData) && historyData.map((h, index) => (
+                                                                <motion.div
+                                                                    key={index}
+                                                                    initial={{ opacity: 0, x: -20 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: index * 0.05 }}
+                                                                    className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
+                                                                >
+                                                                    <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
+                                                                    <div className="flex-1">
+                                                                        {h.type === "created" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-gray-900">Complaint Created</p>
+                                                                                <p className="text-xs text-gray-600">
+                                                                                    {h.details.patientName} ({h.details.complaintId})
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.createdAt).toLocaleString()}
+                                                                                </p>
+                                                                            </>
+                                                                        )}
+                                                                        {h.type === "forwarded" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-gray-900">
+                                                                                    Forwarded to {DEPT_LABEL[h.department] || h.department}
+                                                                                </p>
+                                                                                {h.details?.topic && (
+                                                                                    <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
+                                                                                )}
+                                                                            </>
+                                                                        )}
+                                                                        {h.type === "escalated" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-gray-900">
+                                                                                    Escalated to {h.level}
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.at).toLocaleString()}
+                                                                                </p>
+                                                                            </>
+                                                                        )}
+                                                                        {h.type === "resolved" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-green-700">Resolved</p>
+                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                                {h.proof && (
+                                                                                    <a
+                                                                                        href={h.proof}
+                                                                                        target="_blank"
+                                                                                        rel="noreferrer"
+                                                                                        className="text-xs text-blue-600 underline"
+                                                                                    >
+                                                                                        View Proof
+                                                                                    </a>
+                                                                                )}
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.at).toLocaleString()}
+                                                                                </p>
+                                                                            </>
+                                                                        )}
+                                                                        {h.type === "progress" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-blue-700">Progress Update</p>
+                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.at).toLocaleString()}
+                                                                                </p>
+                                                                            </>
+                                                                        )}
 
+                                                                    </div>
+                                                                </motion.div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        <button
+                                                            onClick={() => openModal("resolve")}
+                                                            className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                                        >
+                                                            <CheckCircle className="w-5 h-5 mr-2" />
+                                                            Mark as Resolved
+                                                        </button>
 
-                                                    <button
-                                                        onClick={() => openModal("history")}
-                                                        className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                                                    >
-                                                        <Clock className="w-5 h-5 mr-2" />
-                                                        View Full History
-                                                    </button>
-                                                </div>
+                                                        <button
+                                                            onClick={() => openModal("progress")}
+                                                            className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
+                                                        >
+                                                            <TrendingUp className="w-5 h-5 mr-2" />
+                                                            Progress Remark
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => openModal("forward")}
+                                                            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                        >
+                                                            <Forward className="w-5 h-5 mr-2" />
+                                                            Forward to Another Department
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => openModal("escalate")}
+                                                            className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                                        >
+                                                            <TrendingUp className="w-5 h-5 mr-2" />
+                                                            Escalate to Higher Authority
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => openModal("history")}
+                                                            className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                                        >
+                                                            <Clock className="w-5 h-5 mr-2" />
+                                                            View Full History
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
+
 
                                             {/* Recent Activity */}
                                             {/* <div className="bg-white rounded-xl border shadow-sm p-4">
@@ -922,53 +945,62 @@ export default function ComplaintViewPage() {
                                                     ))}
                                                 </div>
                                             </div> */}
-                                            <div className="bg-white rounded-xl border shadow-sm p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                                                <div className="space-y-4">
-                                                    {historyData.slice(-3).reverse().map((h, index) => (
-                                                        <div key={index} className="flex items-start space-x-3">
-                                                            <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
-                                                            <div className="flex-1">
-                                                                {h.type === "forwarded" && (
-                                                                    <>
-                                                                        <p className="text-sm font-medium text-gray-900">
-                                                                            Forwarded to {DEPT_LABEL[h.department] || h.department}
-                                                                        </p>
-                                                                        {h.note && (
-                                                                            <p className="text-xs text-gray-600">Reason: {h.note}</p>
-                                                                        )}
-                                                                        <p className="text-xs text-gray-500">
-                                                                            {new Date(h.at).toLocaleString()}
-                                                                        </p>
-                                                                    </>
-                                                                )}
+                                            {/* Recent Activity — hide if Resolved */}
+                                            {complaint.status !== "Resolved" && (
+                                                <div className="bg-white rounded-xl border shadow-sm p-4">
+                                                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+                                                    <div className="space-y-4">
+                                                        {historyData.slice(-3).reverse().map((h, index) => (
+                                                            <div key={index} className="flex items-start space-x-3">
+                                                                <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
+                                                                <div className="flex-1">
+                                                                    {h.type === "forwarded" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-gray-900">
+                                                                                Forwarded to {DEPT_LABEL[h.department] || h.department}
+                                                                            </p>
+                                                                            {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
+                                                                        </>
+                                                                    )}
+                                                                    
+                                                                    {h.type === "progress" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-blue-700">Progress Update</p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
 
 
-                                                                {h.type === "escalated" && (
-                                                                    <>
-                                                                        <p className="text-sm font-medium text-red-700">
-                                                                            Escalated to {h.level}
-                                                                        </p>
-                                                                        <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                    </>
-                                                                )}
-                                                                {h.type === "resolved" && (
-                                                                    <>
-                                                                        <p className="text-sm font-medium text-green-700">Resolved</p>
-                                                                        <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                    </>
-                                                                )}
-                                                                {h.type === "created" && (
-                                                                    <p className="text-sm text-gray-700">Complaint Created</p>
-                                                                )}
-                                                                <p className="text-xs text-gray-500">
-                                                                    {new Date(h.at || h.createdAt).toLocaleString()}
-                                                                </p>
+                                                                    {h.type === "escalated" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-red-700">
+                                                                                Escalated to {h.level}
+                                                                            </p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "resolved" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-green-700">Resolved</p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "created" && (
+                                                                        <p className="text-sm text-gray-700">Complaint Created</p>
+                                                                    )}
+
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {new Date(h.at || h.createdAt).toLocaleString()}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
+
 
                                         </motion.div>
                                     </div>
@@ -1547,7 +1579,7 @@ export default function ComplaintViewPage() {
                                                                                 <p className="text-sm text-gray-500">
                                                                                     <span className="font-medium">Last updated:</span> {new Date().toLocaleString()}
                                                                                 </p>
-                                                                                <div className="flex gap-2">
+                                                                                {/* <div className="flex gap-2">
                                                                                     <button
                                                                                         onClick={() => {
                                                                                             setIsEditing(false)
@@ -1569,7 +1601,7 @@ export default function ComplaintViewPage() {
                                                                                         </svg>
                                                                                         Save Changes
                                                                                     </button>
-                                                                                </div>
+                                                                                </div> */}
                                                                             </div>
                                                                         </div>
                                                                     ) : (

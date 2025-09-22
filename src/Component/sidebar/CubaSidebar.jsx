@@ -40,20 +40,20 @@ function resolvePermissions() {
 
 
 const CubaSidebar = () => {
-const [expandedMenu, setExpandedMenu] = useState("dashboards");
-const [isCollapsed, setIsCollapsed] = useState(false);
-const navigate = useNavigate();
-const location = useLocation();
-const { isAdmin } = resolvePermissions();
-let roleName = "User";
- try {
-   const rights = JSON.parse(localStorage.getItem("rights"));
-   if (rights?.roleName) {
-     roleName = rights.roleName;
-   }
- } catch {
-   roleName = "Super Admin";
- }
+  const [expandedMenu, setExpandedMenu] = useState("dashboards");
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAdmin } = resolvePermissions();
+  let roleName = "User";
+  try {
+    const rights = JSON.parse(localStorage.getItem("rights"));
+    if (rights?.roleName) {
+      roleName = rights.roleName;
+    }
+  } catch {
+    roleName = "Super Admin";
+  }
 
 
   // Custom SVG Icons
@@ -206,11 +206,11 @@ let roleName = "User";
             { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard" },
             { id: "nft", label: "Executive Report", href: "/dashboards/executive-report" },
             ...(isAdmin
-            ? [
+              ? [
                 { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage" },
                 { id: "pos", label: "User Mana..", href: "/dashboards/user-manage" },
               ]
-            : []),
+              : []),
             // { id: "crm", label: "CRM", href: "/dashboards/crm", isNew: true },
             // { id: "analytics", label: "Analytics", href: "/dashboards/analytics", isNew: true },
             // { id: "hr", label: "HR", href: "/dashboards/hr", isNew: true },
@@ -347,14 +347,14 @@ let roleName = "User";
     // },
   ]
 
-const handleMenuClick = (item) => {
-  if (item.hasSubmenu) {
-    setExpandedMenu(item.id); // always switch, never null
-  } else {
-    navigate(item.href);
-    setExpandedMenu("dashboards"); // fallback stays expanded
-  }
-};
+  const handleMenuClick = (item) => {
+    if (item.hasSubmenu) {
+      setExpandedMenu(item.id); // always switch, never null
+    } else {
+      navigate(item.href);
+      setExpandedMenu("dashboards"); // fallback stays expanded
+    }
+  };
 
 
   const handleSubmenuClick = (href) => {
@@ -362,7 +362,7 @@ const handleMenuClick = (item) => {
   }
 
   const isActive = (href) => {
-return location.pathname === href || location.pathname.startsWith(href + "/");
+    return location.pathname === href || location.pathname.startsWith(href + "/");
   }
 
   const isSubmenuActive = (submenu) => {
@@ -375,13 +375,13 @@ return location.pathname === href || location.pathname.startsWith(href + "/");
     return false
   }
 
-const toggleSidebar = () => {
-  setIsCollapsed((prev) => !prev);
-  if (isCollapsed) {
-    // when reopening, restore default expanded menu
-    setExpandedMenu("dashboards");
-  }
-};
+  const toggleSidebar = () => {
+    setIsCollapsed((prev) => !prev);
+    if (isCollapsed) {
+      // when reopening, restore default expanded menu
+      setExpandedMenu("dashboards");
+    }
+  };
 
 
   // Framer Motion variants
@@ -443,174 +443,175 @@ const toggleSidebar = () => {
 
 
   return (
-<>
+    <>
 
-      <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <motion.div
-        className="bg-white shadow-sm flex flex-col border-r border-gray-200 relative"
-        // variants={sidebarVariants}
-        animate={isCollapsed ? "collapsed" : "expanded"}
-        initial={false}
-      >
-        {/* Header */}
-        <div className="px-3  py-[10px] border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-            {/* <img className=" w-[30px]" src={logofevicon} /> */}
-              <AnimatePresence>
-                {!isCollapsed && (
-                  <motion.span
-                    className="text-xl font-bold text-gray-800 tracking-tight"
-                    variants={contentVariants}
+      <div className="flex h-screen relative bg-gray-50">
+        {/* Sidebar */}
+        <motion.div
+          className="bg-white shadow-sm min-w-[210px] flex flex-col border-r border-gray-200 relative"
+          // variants={sidebarVariants}
+          animate={isCollapsed ? "collapsed" : "expanded"}
+          initial={false}
+        >
+          {/* Header */}
+          <div className="px-3  py-[10px] border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {/* <img className=" w-[30px]" src={logofevicon} /> */}
+                <AnimatePresence>
+                  {!isCollapsed && (
+                    <motion.span
+                      className="text-xl font-bold text-gray-800 tracking-tight"
+                      variants={contentVariants}
                     // initial="collapsed"
                     // animate="expanded"
                     // exit="collapsed"
-                  >
-<img className=" w-[100px]" src={textlogo} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
+                    >
+                      <img className=" w-[100px]" src={textlogo} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+              <button onClick={toggleSidebar} className="p-1.5 rounded-md  hover:bg-gray-100 transition-colors">
+                {isCollapsed ? React.createElement(MenuIcon) : React.createElement(GridIcon)}
+              </button>
             </div>
-            <button onClick={toggleSidebar} className="p-1.5 rounded-md  hover:bg-gray-100 transition-colors">
-              {isCollapsed ? React.createElement(MenuIcon) : React.createElement(GridIcon)}
-            </button>
           </div>
-        </div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4">
-          {menuSections.map((section, sectionIndex) => (
-            <div key={section.title} className={sectionIndex > 0 ? "mt-8" : ""}>
-              <AnimatePresence>
-                {!isCollapsed && (
-                  <motion.div
-                    className="px-6 mb-2"
+          {/* Navigation */}
+          <div className="flex-1 overflow-y-auto py-4">
+            {menuSections.map((section, sectionIndex) => (
+              <div key={section.title} className={sectionIndex > 0 ? "mt-8" : ""}>
+                <AnimatePresence>
+                  {!isCollapsed && (
+                    <motion.div
+                      className="px-6 mb-2"
                     // variants={contentVariants}
                     // initial="collapsed"
                     // animate="expanded"
                     // exit="collapsed"
-                  >
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{section.title}</h3>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    >
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{section.title}</h3>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              <nav className="space-y-1 px-2">
-                {section.items.map((item) => {
-                  const mainActive = isMainMenuActive(item)
-                  const expanded = expandedMenu === item.id
+                <nav className="space-y-1 px-2">
+                  {section.items.map((item) => {
+                    const mainActive = isMainMenuActive(item)
+                    const expanded = expandedMenu === item.id
 
-                  return (
-                    <div key={item.id} className="relative">
-                      <button
-                        onClick={() => handleMenuClick(item)}
-                        className={`group w-full  flex items-center px-[13px] sha py-2.5 text-sm font-medium rounded-md transition-all duration-200 relative ${
-                          mainActive ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        }`}
-                      >
-                        {/* Blue rounded indicator on the left */}
-                        {mainActive && (
-                          <motion.div
-                            className="absolute right-[1px] top-[7px] transform -translate-y-1/2 w-1 h-7 bg-blue-600 rounded-l-full"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.2 }}
-                          />
-                        )}
-
-                        <div
-                          className={`mr-3 flex-shrink-0 transition-colors ${
-                            mainActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-600"
-                          }`}
+                    return (
+                      <div key={item.id} className="relative">
+                        <button
+                          onClick={() => handleMenuClick(item)}
+                          className={`group w-full  flex items-center px-[13px] sha py-2.5 text-sm font-medium rounded-md transition-all duration-200 relative ${mainActive ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            }`}
                         >
-                          {item.icon}
-                        </div>
-
-                        <AnimatePresence>
-                          {!isCollapsed && (
+                          {/* Blue rounded indicator on the left */}
+                          {mainActive && (
                             <motion.div
-                              className="flex-1 flex items-center flex-shrink-0 justify-between"
+                              className="absolute right-[1px] top-[7px] transform -translate-y-1/2 w-1 h-7 bg-blue-600 rounded-l-full"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ duration: 0.2 }}
+                            />
+                          )}
+
+                          <div
+                            className={`mr-3 flex-shrink-0 transition-colors ${mainActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-600"
+                              }`}
+                          >
+                            {item.icon}
+                          </div>
+
+                          <AnimatePresence>
+                            {!isCollapsed && (
+                              <motion.div
+                                className="flex-1 flex items-center flex-shrink-0 justify-between"
                               // variants={contentVariants}
                               // initial="collapsed"
                               // animate="expanded"
                               // exit="collapsed"
+                              >
+                                <span className="text-left flex-shrink-0">{item.label}</span>
+                                <div className="flex items-center space-x-2">
+                                  {item.badge && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                  {item.isNew && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                      New
+                                    </span>
+                                  )}
+                                  {item.hasSubmenu && (
+                                    <motion.div animate={{ rotate: expanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                                      {React.createElement(ChevronRightIcon)}
+                                    </motion.div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </button>
+
+                        {/* Submenu - expands below with animation */}
+                        <AnimatePresence>
+                          {item.hasSubmenu && !isCollapsed && expanded && (
+                            <motion.div
+                              // variants={submenuVariants}
+                              // initial="collapsed"
+                              // animate="expanded"
+                              // exit="collapsed"
+                              className="overflow-hidden"
                             >
-                              <span className="text-left flex-shrink-0">{item.label}</span>
-                              <div className="flex items-center space-x-2">
-                                {item.badge && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                    {item.badge}
-                                  </span>
-                                )}
-                                {item.isNew && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                    New
-                                  </span>
-                                )}
-                                {item.hasSubmenu && (
-                                  <motion.div animate={{ rotate: expanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
-                                    {React.createElement(ChevronRightIcon)}
-                                  </motion.div>
-                                )}
+                              <div className="ml-6 mt-1 border-l border-gray-200 pl-4 space-y-1">
+                                {item.submenu?.map((subItem, index) => (
+                                  <div key={subItem.id} className="relative">
+                                    {/* Connecting line */}
+                                    <div className="absolute -left-4 top-3 w-3 h-px bg-gray-200"></div>
+
+                                    <motion.button
+                                      onClick={() => handleSubmenuClick(subItem.href)}
+                                      className={`w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors ${isActive(subItem.href)
+                                          ? "bg-blue-50 text-blue-700 font-medium"
+                                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                        }`}
+                                    // initial={{ opacity: 0, x: -10 }}
+                                    // animate={{ opacity: 1, x: 0 }}
+                                    // transition={{ delay: index * 0.05 }}
+                                    >
+                                      <span className="flex-1 flex-shrink-0 text-left">{subItem.label}</span>
+                                      {subItem.isNew && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 ml-2">
+                                          New
+                                        </span>
+                                      )}
+                                    </motion.button>
+                                  </div>
+                                ))}
                               </div>
                             </motion.div>
                           )}
                         </AnimatePresence>
-                      </button>
+                      </div>
+                    )
+                  })}
+                </nav>
+              </div>
+            ))}
 
-                      {/* Submenu - expands below with animation */}
-                      <AnimatePresence>
-                        {item.hasSubmenu && !isCollapsed && expanded && (
-                          <motion.div
-                            // variants={submenuVariants}
-                            // initial="collapsed"
-                            // animate="expanded"
-                            // exit="collapsed"
-                            className="overflow-hidden"
-                          >
-                            <div className="ml-6 mt-1 border-l border-gray-200 pl-4 space-y-1">
-                              {item.submenu?.map((subItem, index) => (
-                                <div key={subItem.id} className="relative">
-                                  {/* Connecting line */}
-                                  <div className="absolute -left-4 top-3 w-3 h-px bg-gray-200"></div>
+         
+          </div>
 
-                                  <motion.button
-                                    onClick={() => handleSubmenuClick(subItem.href)}
-                                    className={`w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-                                      isActive(subItem.href)
-                                        ? "bg-blue-50 text-blue-700 font-medium"
-                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                                    }`}
-                                    // initial={{ opacity: 0, x: -10 }}
-                                    // animate={{ opacity: 1, x: 0 }}
-                                    // transition={{ delay: index * 0.05 }}
-                                  >
-                                    <span className="flex-1 flex-shrink-0 text-left">{subItem.label}</span>
-                                    {subItem.isNew && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 ml-2">
-                                        New
-                                      </span>
-                                    )}
-                                  </motion.button>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )
-                })}
-              </nav>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+        
+        </motion.div>
 
- 
-    </div>
-</>
+
+      </div>
+    </>
   );
 };
 

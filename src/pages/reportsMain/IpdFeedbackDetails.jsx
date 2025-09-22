@@ -124,11 +124,13 @@ export default function IpdFeedbackDetails() {
       bedNo: doc.bedNo ?? doc.bed ?? '',
       ratings: {
         overallExperience: to05(doc.ratings?.overallExperience),
-        doctorServices: to05(doc.ratings?.doctorServices),
+        consultantDoctorServices: to05(doc.ratings?.consultantDoctorServices),
+        medicalAdminDoctorService: to05(doc.ratings?.medicalAdminDoctorService),
         billingServices: to05(doc.ratings?.billingServices),
         housekeeping: to05(doc.ratings?.housekeeping),
         maintenance: to05(doc.ratings?.maintenance),
-        diagnosticServices: to05(doc.ratings?.diagnosticServices),
+        radiologyDiagnosticServices: to05(doc.ratings?.radiologyDiagnosticServices),
+        pathologyDiagnosticServices: to05(doc.ratings?.pathologyDiagnosticServices),
         dietitianServices: to05(doc.ratings?.dietitianServices),
         security: to05(doc.ratings?.security),
       },
@@ -175,12 +177,14 @@ export default function IpdFeedbackDetails() {
                     <div className="space-y-4">
                       {[
                         { key: "overallExperience", label: "Overall Experience" },
-                        { key: "doctorServices", label: `Doctor Services ${model.extra.doctorType ? `(${model.extra.doctorType})` : ""}` },
+                        { key: "consultantDoctorServices", label: "Consultant Doctor Services" },
+                        { key: "medicalAdminDoctorService", label: "Medical Admin Doctor Services" },
                         { key: "billingServices", label: "Billing Services" },
                         { key: "housekeeping", label: "Housekeeping" },
                         { key: "maintenance", label: "Maintenance" },
-                        { key: "diagnosticServices", label: `Diagnostic Services ${model.extra.diagnosticType ? `(${model.extra.diagnosticType})` : ""}` },
-                        { key: "dietitianServices", label: "Dietitian (Food, Canteen)" },
+                        { key: "radiologyDiagnosticServices", label: "Radiology Diagnostic Services" },
+                        { key: "pathologyDiagnosticServices", label: "Pathology Diagnostic Services" },
+                        { key: "dietitianServices", label: "Dietitian Services (Food, Canteen)" },
                         { key: "security", label: "Security" },
                       ].map(({ key, label }) => (
                         <div

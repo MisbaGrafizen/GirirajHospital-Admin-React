@@ -32,7 +32,7 @@ function StarRating({ score = 0, label = "Rating" }) {
   return (
     <div className="flex items-center gap-2" aria-label={`${label}: ${s} out of 5`} role="img">
       <div className="flex items-center">
-        {[1,2,3,4,5].map(i =>
+        {[1, 2, 3, 4, 5].map(i =>
           i <= s
             ? <Star key={i} className="w-5 h-5 text-yellow-500" strokeWidth={1.5} fill="currentColor" />
             : <Star key={i} className="w-5 h-5 text-gray-300" strokeWidth={1.5} fill="none" />
@@ -88,18 +88,18 @@ export default function FeedbackDetails() {
   // ALWAYS fetch full OPD by id (no id in URL; id only in request)
   useEffect(() => {
     if (!id) return
-    ;(async () => {
-      try {
-        setLoading(true); setError(null)
-        const res = await ApiGet(`/admin/opd-patient/${encodeURIComponent(id)}`)
-        setDoc(res?.data ?? res)
-      } catch (e) {
-        console.error('Fetch feedback by id failed:', e)
-        setError('Failed to load feedback.')
-      } finally {
-        setLoading(false)
-      }
-    })()
+      ; (async () => {
+        try {
+          setLoading(true); setError(null)
+          const res = await ApiGet(`/admin/opd-patient/${encodeURIComponent(id)}`)
+          setDoc(res?.data ?? res)
+        } catch (e) {
+          console.error('Fetch feedback by id failed:', e)
+          setError('Failed to load feedback.')
+        } finally {
+          setLoading(false)
+        }
+      })()
   }, [id])
 
   const model = useMemo(() => {
@@ -118,11 +118,13 @@ export default function FeedbackDetails() {
       bedNo: doc.bedNo ?? doc.bed ?? '',
       ratings: {
         appointment: to05(ratings.appointment),
-        nursing: to05(nursingScore),
-        diagnosticServices: to05(ratings.diagnosticServices ?? ratings.diagnostics ?? ratings.lab),
-        doctorServices: to05(ratings.doctorServices ?? ratings.doctor ?? ratings.doctorService),
+        receptionStaff: to05(ratings.receptionStaff),
+        radiologyDiagnosticServices: to05(ratings.radiologyDiagnosticServices),
+        pathologyDiagnosticServices: to05(ratings.pathologyDiagnosticServices),
+        doctorServices: to05(ratings.doctorServices),
         security: to05(ratings.security),
       },
+
       comments: doc.comments ?? doc.comment ?? '',
     }
   }, [doc])
@@ -170,44 +172,47 @@ export default function FeedbackDetails() {
                       <div><p className="text-sm font-medium text-gray-900">Appointment</p></div>
                       <StarRating score={model.ratings.appointment} label="Appointment" />
                     </div>
-
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div><p className="text-sm font-medium text-gray-900">Nursing / Reception</p></div>
-                      <StarRating score={model.ratings.nursing} label="Nursing / Reception" />
+                      <div><p className="text-sm font-medium text-gray-900">Reception Staff</p></div>
+                      <StarRating score={model.ratings.receptionStaff} label="Reception Staff" />
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div><p className="text-sm font-medium text-gray-900">Radiology Services</p></div>
+                      <StarRating score={model.ratings.radiologyDiagnosticServices} label="Radiology Services" />
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div><p className="text-sm font-medium text-gray-900">Diagnostic Services</p></div>
-                      <StarRating score={model.ratings.diagnosticServices} label="Diagnostic Services" />
-                    </div>
+                    <div><p className="text-sm font-medium text-gray-900">Pathology Services</p></div>
+                    <StarRating score={model.ratings.pathologyDiagnosticServices} label="Pathology Services" />
+                  </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div><p className="text-sm font-medium text-gray-900">Doctor Services</p></div>
-                      <StarRating score={model.ratings.doctorServices} label="Doctor Services" />
-                    </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div><p className="text-sm font-medium text-gray-900">Doctor Services</p></div>
+                    <StarRating score={model.ratings.doctorServices} label="Doctor Services" />
+                  </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div><p className="text-sm font-medium text-gray-900">Security</p></div>
-                      <StarRating score={model.ratings.security} label="Security" />
-                    </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div><p className="text-sm font-medium text-gray-900">Security</p></div>
+                    <StarRating score={model.ratings.security} label="Security" />
                   </div>
                 </div>
-
-                <div className="my-6 h-px bg-gray-100" />
-
-                {/* Comments */}
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Comments (if any)</h3>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {model.comments && model.comments.trim() ? model.comments : "—"}
-                  </p>
-                </div>
               </div>
-            </section>
 
+              <div className="my-6 h-px bg-gray-100" />
+
+              {/* Comments */}
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Comments (if any)</h3>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {model.comments && model.comments.trim() ? model.comments : "—"}
+                </p>
+              </div>
           </div>
-        </div>
+        </section>
+
       </div>
-    </section>
+    </div>
+      </div >
+    </section >
   )
 }

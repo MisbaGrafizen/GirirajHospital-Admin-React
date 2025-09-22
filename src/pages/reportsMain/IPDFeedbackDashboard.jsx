@@ -51,12 +51,15 @@ function round1(n) {
 }
 
 const RATING_KEYS = [
-  "appointment", "appointmentBooking",
-  "reception", "receptionStaff",
-  "diagnostic",
-  "laboratory", "labServices",
-  "radiology", "radiologyServices",
-  "doctorServices", "consultant", "doctor",
+  "overallExperience",
+  "consultantDoctorServices",
+  "medicalAdminDoctorService",
+  "billingServices",
+  "housekeeping",
+  "maintenance",
+  "radiologyDiagnosticServices",
+  "pathologyDiagnosticServices",
+  "dietitianServices",
   "security",
 ]
 
@@ -400,11 +403,13 @@ export default function IPDFeedbackDashboard() {
 
   const SERVICE_GROUPS = {
     "Overall Experience": ["overallExperience"],
-    "Doctor Services": ["doctorServices"],
+    "Consultant Doctor": ["consultantDoctorServices"],
+    "Medical Admin Doctor": ["medicalAdminDoctorService"],
     "Billing Services": ["billingServices"],
     "Housekeeping": ["housekeeping"],
     "Maintenance": ["maintenance"],
-    "Diagnostic Services": ["diagnosticServices"],
+    "Radiology": ["radiologyDiagnosticServices"],
+    "Pathology": ["pathologyDiagnosticServices"],
     "Dietitian Services": ["dietitianServices"],
     "Security": ["security"],
   };
@@ -590,6 +595,7 @@ export default function IPDFeedbackDashboard() {
           consultantDoctorName: d.consultantDoctorName || "-",
           rating,
           overallRecommendation: d.overallRecommendation,
+          comments: d.comments || "-",
         };
       });
 
@@ -680,6 +686,7 @@ export default function IPDFeedbackDashboard() {
         consultantDoctorName: d.consultantDoctorName || "-",
         rating,
         overallRecommendation: d.overallRecommendation,
+        comments: d.comments
       };
     });
 
@@ -730,6 +737,7 @@ export default function IPDFeedbackDashboard() {
       ...(typeof f.overallRecommendation === "number"
         ? { "Overall Recommendation (NPS)": f.overallRecommendation }
         : {}),
+      comments: f.comments
     }))
 
     const feedbackHeaders = feedbackRows.length
@@ -1116,24 +1124,24 @@ export default function IPDFeedbackDashboard() {
                         </thead>
                         <tbody className="bg-white">
                           {serviceSummary.map((service, index) => (
-                               <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
-                                <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
-                                </td>
-                              </tr>
+                            <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
+                              <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
+                              </td>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -1248,8 +1256,8 @@ export default function IPDFeedbackDashboard() {
                               </div>
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900  border-gray-200">
-                              <div className="flex  text-[12px] items-center">
-Okay , hi , sdjipasdjasdDA SDLSDN ASD 
+                              <div className="flex text-[12px] items-center">
+                                {feedback.comments || "-"}
                               </div>
                             </td>
                           </tr>

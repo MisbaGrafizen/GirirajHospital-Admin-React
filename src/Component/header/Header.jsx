@@ -28,6 +28,15 @@ function Header({
     }
   }, [dateFrom, dateTo]);
 
+   const handleLogout = () => {
+    localStorage.removeItem("loginType");
+    localStorage.removeItem("rights");
+    localStorage.removeItem("token"); // if token stored
+    sessionStorage.clear();
+
+    navigate("/"); // redirect to login
+  };
+
   return (
     <>
       <section className="flex w-[100%] justify-between items-center border-b-[1.5px]">
@@ -73,14 +82,20 @@ function Header({
           )}
         </div>
 
-            <div className="relative mr-[40px] inline-block">
-      <i className="fa-solid fa-bell text-gray-700 text-2xl"></i>
-   
-        <span className="absolute -top-1 -right-3 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full">
-          3
-        </span>
-      
-    </div>
+
+
+        <div className="relative mr-[30px]  flex gap-[20px] items-center">
+        <div className="bg-gradient-to-br  cursor-pointer   w-[130px] font-[600] items-center gap-[10px] text-[16px] rounded-[8px]   h-[35px] flex  justify-center  from-purple-400 to-blue-500  text-[#fff]  "
+        onClick={handleLogout}>
+          <i class="fa-solid fa-left-from-bracket"></i> Log Out
+        </div>
+          <i className="fa-solid fa-bell text-gray-700 text-2xl"></i>
+
+          <span className="absolute -top-1 -right-3 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full">
+            3
+          </span>
+
+        </div>
       </section>
     </>
   );
