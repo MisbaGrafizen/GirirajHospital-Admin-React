@@ -119,7 +119,7 @@ export default function IpdFeedbackDetails() {
       dateTime: normDate(doc.createdAt ?? doc.date ?? doc.dateTime ?? doc.createdOn) || '',
       name: doc.patientName ?? doc.patient ?? doc.name ?? '-',
       contact: doc.contact ?? doc.phone ?? doc.mobile ?? '-',
-      doctorName: doc.consultantDoctorName ?? doc.doctor ?? doc.doctorName ?? doc.consultant ?? '-',
+      doctorName: doc.consultantDoctorName?.name ?? doc.doctor ?? doc.doctorName ?? doc.consultant ?? '-',
       department: doc.department ?? doc.dept ?? 'IPD',
       bedNo: doc.bedNo ?? doc.bed ?? '',
       ratings: {

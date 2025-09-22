@@ -201,7 +201,7 @@ export default function ComplaintViewPage() {
         category: categoryText,
         details: row.details || "",
         contact: row.contact || fullDoc?.contact || "—",
-        doctorName: row.doctor || row.doctorName || fullDoc?.consultantDoctorName || "—",
+        doctorName: row.doctor || row.doctorName || fullDoc?.consultantDoctorName?.name || "—",
         assignedTo: row.assignedTo || "—",
         expectedResolution: row.expectedResolution || "—",
         attachments,

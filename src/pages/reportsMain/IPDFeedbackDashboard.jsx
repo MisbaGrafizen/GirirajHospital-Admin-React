@@ -327,7 +327,7 @@ export default function IPDFeedbackDashboard() {
   const doctorOptions = useMemo(() => {
     const set = new Set();
     rawIPD.forEach(d => {
-      const name = d?.consultantDoctorName || d?.doctorName;
+      const name = d?.consultantDoctorName?.name || d?.doctorName;
       if (name) set.add(String(name));
     });
     return ["All Doctors", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
@@ -592,7 +592,7 @@ export default function IPDFeedbackDashboard() {
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
           bedNo: d.bedNo || "-",
-          consultantDoctorName: d.consultantDoctorName || "-",
+          consultantDoctorName: d.consultantDoctorName?.name || "-",
           rating,
           overallRecommendation: d.overallRecommendation,
           comments: d.comments || "-",
@@ -661,7 +661,7 @@ export default function IPDFeedbackDashboard() {
 
       // doctor (matches consultantDoctorName/doctorName)
       if (doctorFilter && doctorFilter !== "All Doctors") {
-        const nm = (d.consultantDoctorName || d.doctorName || "").trim();
+        const nm = (d.consultantDoctorName?.name || d.doctorName || "").trim();
         if (!nm || nm !== doctorFilter) return false;
       }
 
@@ -683,7 +683,7 @@ export default function IPDFeedbackDashboard() {
         patient: d.patientName || d.name || "-",
         contact: d.contact || "-",
         bedNo: d.bedNo || "-",
-        consultantDoctorName: d.consultantDoctorName || "-",
+        consultantDoctorName: d.consultantDoctorName?.name || "-",
         rating,
         overallRecommendation: d.overallRecommendation,
         comments: d.comments
@@ -732,7 +732,7 @@ export default function IPDFeedbackDashboard() {
       "Patient Name": f.patient,
       Contact: f.contact,
       "Bed No": f.bedNo,
-      "Doctor Name": f.consultantDoctorName,
+      "Doctor Name": f.consultantDoctorName?.name,
       "Average Rating (/5)": f.rating,
       ...(typeof f.overallRecommendation === "number"
         ? { "Overall Recommendation (NPS)": f.overallRecommendation }

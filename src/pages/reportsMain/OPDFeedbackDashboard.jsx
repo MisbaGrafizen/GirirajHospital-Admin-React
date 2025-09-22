@@ -376,7 +376,7 @@ export default function OPDFeedbackDashboard() {
           createdAt: normDate(d.createdAt ?? d.date),
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
-          doctor: d.consultantDoctorName || d.doctorName || d.consultant || "-",
+          doctor: d.consultantDoctorName?.name || d.doctorName || d.consultant || "-",
           rating,
           comment: d.comments || d.comment || "",
           overallRecommendation: d.overallRecommendation,
@@ -494,7 +494,7 @@ export default function OPDFeedbackDashboard() {
 
       // doctor filter (substring match)
       if (doctorQuery) {
-        const docName = (d.consultantDoctorName || d.doctorName || '').toLowerCase();
+        const docName = (d.consultantDoctorName?.name || d.doctorName || '').toLowerCase();
         if (!docName.includes(doctorQuery)) return false;
       }
 
@@ -511,7 +511,7 @@ export default function OPDFeedbackDashboard() {
         createdAt: normDate(d.createdAt ?? d.date),
         patient: d.patientName || d.name || '-',
         contact: d.contact || '-',
-        doctor: d.consultantDoctorName || d.doctorName || d.consultant || '-',
+        doctor: d.consultantDoctorName?.name || d.doctorName || d.consultant || '-',
         rating,
         comment: d.comments || d.comment || '',
         overallRecommendation: d.overallRecommendation,
