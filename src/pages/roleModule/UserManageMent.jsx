@@ -334,8 +334,9 @@ export default function UserManageMent() {
   const fetchDoctors = async () => {
     setLoadingDoctors(true);
     try {
-      const res = await ApiGet("/admin/doctors");
-      if (res?.doctors) setDoctorList(res.doctors);
+      const res = await ApiGet("/admin/doctor");
+      console.log('res', res)
+      if (res?.data) setDoctorList(res.data);
     } catch (err) {
       console.error("Error fetching doctors", err);
     } finally {
@@ -523,7 +524,7 @@ export default function UserManageMent() {
 
 
                       {/* Modal */}
-                      {isDoctorModalOpen && (
+                      {/* {isDoctorModalOpen && (
                         <div className="bg-white shadow-lg rounded-xl p-6 max-w-md mx-auto border border-gray-200">
                           <h2 className="text-lg font-bold mb-4 text-red-600">Add Doctor</h2>
                           <input
@@ -547,10 +548,10 @@ export default function UserManageMent() {
                             Save
                           </button>
                         </div>
-                      )}
+                      )} */}
 
                       {/* Doctor Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                         {doctorList.map((doctor) => (
                           <div
                             key={doctor.id}
@@ -576,7 +577,7 @@ export default function UserManageMent() {
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </div> */}
 
 
 

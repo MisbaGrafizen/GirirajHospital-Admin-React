@@ -185,46 +185,6 @@ const getPriorityColor = (priority) => {
     }
 }
 
-// ===================== TRANSFORMS =====================
-// function flattenConcernDoc(doc, allowedBlocks) {
-//     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
-//     const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
-
-//     const departments = [];
-//     allowedBlocks.forEach((k) => {
-//         const block = doc?.[k];
-//         if (!block) return;
-//         const hasText = block.text && String(block.text).trim().length > 0;
-//         const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
-//         if (hasText || hasAttachments) {
-//             departments.push(DEPT_LABEL[k]);
-//         }
-//     });
-
-//     if (departments.length === 0) return [];
-
-//     return [
-//         {
-//             id: doc._id,
-//             complaintId: doc.complaintId,
-//             date: dateStr,
-//             department: departments.join(", "),
-//             doctor: doc.consultantDoctorName || "-",
-//             bedNo: doc.bedNo || "-",
-//             patient: doc.patientName || "-",
-//             contact: doc.contact || "-",
-//             status: mapStatusUI(doc.status),
-//             priority: doc.priority || "Normal",
-//             assignedTo: "-",
-//             details: "-",
-//             actions: [],
-//             category: "Multiple",
-//             expectedResolution: "-",
-//             createdAt,
-//         },
-//     ];
-// }
-
 function flattenConcernDoc(doc, allowedBlocks) {
     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
     const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
@@ -260,6 +220,7 @@ function flattenConcernDoc(doc, allowedBlocks) {
         expectedResolution: "-",
         createdAt,
     }];
+
 }
 
 function flattenConcernDocForStats(doc) {
