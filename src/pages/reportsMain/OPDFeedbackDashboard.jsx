@@ -3,7 +3,7 @@ import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSideBar'
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
-import { FileText, Download, Star,ThumbsUp, Award, Phone, Clock } from "lucide-react"
+import { FileText, Download, Star, ThumbsUp, Award, Phone, Clock } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
 import {
   ResponsiveContainer,
@@ -34,7 +34,14 @@ function round1(n) {
   return Math.round((Number(n) || 0) * 10) / 10
 }
 
-const OPD_RATING_KEYS = ["appointment", "receptionStaff", "diagnosticServices", "doctorServices", "security"]
+const OPD_RATING_KEYS = [
+  "appointment",
+  "receptionStaff",
+  "radiologyDiagnosticServices",
+  "pathologyDiagnosticServices",
+  "doctorServices",
+  "security"
+];
 
 function calcRowAverage(ratings = {}) {
   const vals = []
@@ -124,12 +131,12 @@ export default function OPDFeedbackDashboard() {
     npsRating: 0,
     overallScore: "-",
   })
-const [filters, setFilters] = useState({
-  from: '',                 // "YYYY-MM-DD"
-  to: '',                   // "YYYY-MM-DD"
-  service: 'All Services',  // matches your UI labels
-  doctor: '',               // blank means All Doctors
-});
+  const [filters, setFilters] = useState({
+    from: '',                 // "YYYY-MM-DD"
+    to: '',                   // "YYYY-MM-DD"
+    service: 'All Services',  // matches your UI labels
+    doctor: '',               // blank means All Doctors
+  });
 
   const [chartData, setChartData] = useState([
     { label: "Excellent", count: 0, percentage: 0, color: "#10B981" },
@@ -146,18 +153,21 @@ const [filters, setFilters] = useState({
   const SERVICE_GROUPS = {
     "Appointment": ["appointment"],
     "Reception Staff": ["receptionStaff"],
-    "Diagnostic Services": ["diagnosticServices"],
-    "Doctor Service": ["doctorServices"],
+    "Radiology Services": ["radiologyDiagnosticServices"],
+    "Pathology Services": ["pathologyDiagnosticServices"],
+    "Doctor Services": ["doctorServices"],
     "Security": ["security"],
-  }
+  };
 
   const OPD_SERVICE_LABELS = {
     appointment: "Appointment",
     receptionStaff: "Reception Staff",
-    diagnosticServices: "Diagnostic Services",
+    radiologyDiagnosticServices: "Radiology Services",
+    pathologyDiagnosticServices: "Pathology Services",
     doctorServices: "Doctor Services",
     security: "Security",
   };
+
 
   // -------- Service summary builders --------
   function buildServiceSummary(rawItems = []) {
@@ -440,115 +450,115 @@ const [filters, setFilters] = useState({
   }
 
   const handleFilterChange = useCallback((next) => {
-  // next looks like: { from, to, service, doctor }
-  setFilters((prev) => ({ ...prev, ...next }));
-}, []);
+    // next looks like: { from, to, service, doctor }
+    setFilters((prev) => ({ ...prev, ...next }));
+  }, []);
 
-useEffect(() => {
-  // Nothing to do until the first fetch is done
-  if (!Array.isArray(rawOPD) || !rawOPD.length) {
-    setRows([]);
-    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: '-' });
-    setServiceSummary([]);
-    setChartData(buildServiceDistribution([], 'All Services'));
-    return;
-  }
-
-  // Build date range (inclusive)
-  const start = filters.from ? new Date(filters.from) : null;
-  const end   = filters.to   ? new Date(filters.to)   : null;
-  if (start) start.setHours(0, 0, 0, 0);
-  if (end)   end.setHours(23, 59, 59, 999);
-
-  // Service key map (uses your SERVICE_GROUPS)
-  const serviceLabel = filters.service || 'All Services';
-  const keysForService =
-    serviceLabel === 'All Services' ? null : (SERVICE_GROUPS[serviceLabel] || []);
-
-  const doctorQuery = (filters.doctor || '').trim().toLowerCase();
-
-  // Filter raw docs first
-  const filteredDocs = rawOPD.filter((d) => {
-    // date filter
-    const dt = new Date(normDate(d.createdAt ?? d.date));
-    if (isNaN(dt)) return false;
-    if (start && dt < start) return false;
-    if (end && dt > end) return false;
-
-    // service filter (record must have at least one rating in that service group)
-    if (keysForService) {
-      const r = d?.ratings || {};
-      const hasRating = keysForService.some((k) => typeof r[k] === 'number' && r[k] >= 1 && r[k] <= 5);
-      if (!hasRating) return false;
+  useEffect(() => {
+    // Nothing to do until the first fetch is done
+    if (!Array.isArray(rawOPD) || !rawOPD.length) {
+      setRows([]);
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: '-' });
+      setServiceSummary([]);
+      setChartData(buildServiceDistribution([], 'All Services'));
+      return;
     }
 
-    // doctor filter (substring match)
-    if (doctorQuery) {
-      const docName = (d.consultantDoctorName || d.doctorName || '').toLowerCase();
-      if (!docName.includes(doctorQuery)) return false;
+    // Build date range (inclusive)
+    const start = filters.from ? new Date(filters.from) : null;
+    const end = filters.to ? new Date(filters.to) : null;
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(23, 59, 59, 999);
+
+    // Service key map (uses your SERVICE_GROUPS)
+    const serviceLabel = filters.service || 'All Services';
+    const keysForService =
+      serviceLabel === 'All Services' ? null : (SERVICE_GROUPS[serviceLabel] || []);
+
+    const doctorQuery = (filters.doctor || '').trim().toLowerCase();
+
+    // Filter raw docs first
+    const filteredDocs = rawOPD.filter((d) => {
+      // date filter
+      const dt = new Date(normDate(d.createdAt ?? d.date));
+      if (isNaN(dt)) return false;
+      if (start && dt < start) return false;
+      if (end && dt > end) return false;
+
+      // service filter (record must have at least one rating in that service group)
+      if (keysForService) {
+        const r = d?.ratings || {};
+        const hasRating = keysForService.some((k) => typeof r[k] === 'number' && r[k] >= 1 && r[k] <= 5);
+        if (!hasRating) return false;
+      }
+
+      // doctor filter (substring match)
+      if (doctorQuery) {
+        const docName = (d.consultantDoctorName || d.doctorName || '').toLowerCase();
+        if (!docName.includes(doctorQuery)) return false;
+      }
+
+      return true;
+    });
+
+    // Build table rows (your existing shape)
+    const list = filteredDocs.map((d) => {
+      const id = normId(d._id ?? d.id);
+      const rating = calcRowAverage(d.ratings);
+      return {
+        id,
+        _id: id,
+        createdAt: normDate(d.createdAt ?? d.date),
+        patient: d.patientName || d.name || '-',
+        contact: d.contact || '-',
+        doctor: d.consultantDoctorName || d.doctorName || d.consultant || '-',
+        rating,
+        comment: d.comments || d.comment || '',
+        overallRecommendation: d.overallRecommendation,
+      };
+    });
+
+    // KPIs
+    const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
+    const nps = calcNpsPercent(filteredDocs);
+    const overallScore =
+      avg >= 4.5 ? 'Excellent' :
+        avg >= 4.0 ? 'Good' :
+          avg >= 3.0 ? 'Average' :
+            avg >= 2.0 ? 'Poor' : 'Very Poor';
+
+    setRows(list);
+    setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
+
+    // Summary + charts
+    setServiceSummary(buildServiceSummary(filteredDocs));
+    setOpdServiceChart(buildOPDServiceChart(filteredDocs));
+    setChartData(buildServiceDistribution(filteredDocs, serviceLabel));
+
+    // Keep your existing local states in sync (so Trend uses the same dates)
+    setDateFrom(filters.from || '');
+    setDateTo(filters.to || '');
+    setSelectedService(serviceLabel);
+  }, [filters, rawOPD]);
+
+
+
+  const openFeedbackDetails = useCallback((fb) => {
+    const id = normId(fb?._id ?? fb?.id)
+    if (!id) {
+      console.error("No ID on feedback row:", fb)
+      alert("No ID found for this feedback.")
+      return
     }
+    sessionStorage.setItem(
+      'opdFeedback:last',
+      JSON.stringify({ id, preview: fb })
+    )
 
-    return true;
-  });
-
-  // Build table rows (your existing shape)
-  const list = filteredDocs.map((d) => {
-    const id = normId(d._id ?? d.id);
-    const rating = calcRowAverage(d.ratings);
-    return {
-      id,
-      _id: id,
-      createdAt: normDate(d.createdAt ?? d.date),
-      patient: d.patientName || d.name || '-',
-      contact: d.contact || '-',
-      doctor: d.consultantDoctorName || d.doctorName || d.consultant || '-',
-      rating,
-      comment: d.comments || d.comment || '',
-      overallRecommendation: d.overallRecommendation,
-    };
-  });
-
-  // KPIs
-  const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
-  const nps = calcNpsPercent(filteredDocs);
-  const overallScore =
-    avg >= 4.5 ? 'Excellent' :
-    avg >= 4.0 ? 'Good' :
-    avg >= 3.0 ? 'Average' :
-    avg >= 2.0 ? 'Poor' : 'Very Poor';
-
-  setRows(list);
-  setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
-
-  // Summary + charts
-  setServiceSummary(buildServiceSummary(filteredDocs));
-  setOpdServiceChart(buildOPDServiceChart(filteredDocs));
-  setChartData(buildServiceDistribution(filteredDocs, serviceLabel));
-
-  // Keep your existing local states in sync (so Trend uses the same dates)
-  setDateFrom(filters.from || '');
-  setDateTo(filters.to || '');
-  setSelectedService(serviceLabel);
-}, [filters, rawOPD]);
-
-
-
-const openFeedbackDetails = useCallback((fb) => {
-  const id = normId(fb?._id ?? fb?.id)
-  if (!id) {
-    console.error("No ID on feedback row:", fb)
-    alert("No ID found for this feedback.")
-    return
-  }
-  sessionStorage.setItem(
-    'opdFeedback:last',
-    JSON.stringify({ id, preview: fb })
-  )
-
-  navigate('/feedback-details', {
-    state: { id, feedback: fb }
-  })
-}, [navigate])
+    navigate('/feedback-details', {
+      state: { id, feedback: fb }
+    })
+  }, [navigate])
 
   // -------- Small components --------
   const DonutChart = ({ data }) => {
@@ -629,169 +639,169 @@ const openFeedbackDetails = useCallback((fb) => {
           <Header pageName="OPD Feedback" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
-                <div className="mx-auto w-full">
-    <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
-              <OpdFilter value={filters} onChange={handleFilterChange} />
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+              <div className="mx-auto w-full">
+                <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
+                  <OpdFilter value={filters} onChange={handleFilterChange} />
                 </div>
-                  <div className="pt-[5px] flex gap-6 mb-3">
-                    <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0"><FileText className="w-8 h-8 text-blue-600" /></div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Total Feedback</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.totalFeedback}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0"><Star className="w-8 h-8 text-yellow-600" /></div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.averageRating} / 5</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0"><ThumbsUp className="w-8 h-8 text-green-600" /></div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">NPS Rating</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.npsRating}%</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0"><Award className="w-8 h-8 text-purple-600" /></div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Overall Score</p>
-                          <p className="text-2xl font-[600] text-gray-900">{kpiData.overallScore}</p>
-                        </div>
+                <div className="pt-[5px] flex gap-6 mb-3">
+                  <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0"><FileText className="w-8 h-8 text-blue-600" /></div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Feedback</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.totalFeedback}</p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Charts Row */}
-                  <div className="flex justify-start gap-[20px] mb-2">
-                    <div className="bg-white border  rounded-lg shadow-md p-3">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
-                      <div className="flex">
-                        <DonutChart data={chartData} />
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
-                      </h3>
-                      <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RLineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
-                            <Tooltip contentStyle={{ fontSize: 12 }} />
-                            <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              name="Average Rating"
-                              stroke="#3B82F6"
-                              strokeWidth={3}
-                              dot={{ r: 3 }}
-                              activeDot={{ r: 5 }}
-                              isAnimationActive
-                              animationDuration={600}
-                            />
-                          </RLineChart>
-                        </ResponsiveContainer>
+                  <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-yellow-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0"><Star className="w-8 h-8 text-yellow-600" /></div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Average Rating</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.averageRating} / 5</p>
                       </div>
                     </div>
                   </div>
+                  <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-green-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0"><ThumbsUp className="w-8 h-8 text-green-600" /></div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">NPS Rating</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.npsRating}%</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white min-w-[240px] rounded-lg  w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-purple-500">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0"><Award className="w-8 h-8 text-purple-600" /></div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Overall Score</p>
+                        <p className="text-2xl font-[600] text-gray-900">{kpiData.overallScore}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Word Cloud */}
-                  <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {[
-                        "Excellent", 
-                        // "Nurse", 
-                        // "Professional", 
-                        "Clean", 
-                        // "Comfortable", 
-                        // "Doctor", 
-                        // "Care", 
-                        "Staff",
-                        // "Treatment", 
-                        "Service", 
-                        // "Billing", 
-                        "Food", 
-                        // "Room", 
-                        // "Pharmacy", 
-                        // "Housekeeping",
-                      ].map((word, index) => (
-                        <span
-                          key={index}
-                          className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
-                            index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
-                              index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
-                                index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
-                                  index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
-                                    "bg-indigo-100 border-indigo-800 text-indigo-800"
-                            }`}
-                        >
-                          {word}
-                        </span>
-                      ))}
+                {/* Charts Row */}
+                <div className="flex justify-start gap-[20px] mb-2">
+                  <div className="bg-white border  rounded-lg shadow-md p-3">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
+                    <div className="flex">
+                      <DonutChart data={chartData} />
                     </div>
                   </div>
 
-                  {/* Service Summary + Extra Donut */}
-                  <div className="flex w-[100%] mb-[30px] gap-[30px]">
-                    <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
-                      <div className="px-6 py-2 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
-                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Excellent %</th>
-                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Good %</th>
-                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Average %</th>
-                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Poor %</th>
-                              <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Very Poor %</th>
+                  <div className="bg-white rounded-lg w-[800px] shadow-sm border border-gray-100 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
+                    </h3>
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RLineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                          <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                          <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
+                          <Tooltip contentStyle={{ fontSize: 12 }} />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            name="Average Rating"
+                            stroke="#3B82F6"
+                            strokeWidth={3}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                            isAnimationActive
+                            animationDuration={600}
+                          />
+                        </RLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Word Cloud */}
+                <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback Keywords</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      "Excellent",
+                      // "Nurse", 
+                      // "Professional", 
+                      "Clean",
+                      // "Comfortable", 
+                      // "Doctor", 
+                      // "Care", 
+                      "Staff",
+                      // "Treatment", 
+                      "Service",
+                      // "Billing", 
+                      "Food",
+                      // "Room", 
+                      // "Pharmacy", 
+                      // "Housekeeping",
+                    ].map((word, index) => (
+                      <span
+                        key={index}
+                        className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
+                          index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
+                            index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
+                              index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
+                                index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
+                                  "bg-indigo-100 border-indigo-800 text-indigo-800"
+                          }`}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Service Summary + Extra Donut */}
+                <div className="flex w-[100%] mb-[30px] gap-[30px]">
+                  <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
+                    <div className="px-6 py-2 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
+                            <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Excellent %</th>
+                            <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Good %</th>
+                            <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Average %</th>
+                            <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Poor %</th>
+                            <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Very Poor %</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white">
+                          {serviceSummary.map((service, index) => (
+                            <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
+                              <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
+                              </td>
+                              <td className="px-6 py-[10px] text-center text-sm">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody className="bg-white">
-                            {serviceSummary.map((service, index) => (
-                              <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
-                                <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
-                                </td>
-                                <td className="px-6 py-[10px] text-center text-sm">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-{/* 
+                  </div>
+                  {/* 
                     <div className="flex">
                       <div className="bg-white w-[100%] rounded-lg border shadow-md p-3">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Service-Wise Chart</h3>
@@ -800,96 +810,96 @@ const openFeedbackDetails = useCallback((fb) => {
                         </div>
                       </div>
                     </div> */}
-                  </div>
+                </div>
 
-                  {/* Patient-Wise Feedback Table */}
-                  <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-                    <div className="px-3 py-2 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                      <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
-                            type="text"
-                            placeholder="Search feedback..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-3 py-[4px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-
-                          <button
-                            onClick={exportToExcel}
-                            className="flex items-center px-4 py-[4px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Export to Excel
-                          </button>
-
+                {/* Patient-Wise Feedback Table */}
+                <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+                  <div className="px-3 py-2 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <h3 className="text-lg font-semibold text-gray-900  sm:mb-0">Patient Feedback Details</h3>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Search feedback..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 pr-3 py-[4px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
                       </div>
+
+                      <button
+                        onClick={exportToExcel}
+                        className="flex items-center px-4 py-[4px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Export to Excel
+                      </button>
+
                     </div>
-
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
-                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Patient Name</th>
-                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Contact</th>
-                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th>
-                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
-                            <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white">
-                          {filteredFeedback.map((feedback, index) => (
-                            <tr
-                              key={feedback.id || feedback._id}
-                              onClick={() => openFeedbackDetails(feedback)}
-                              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors cursor-pointer`}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => { if (e.key === "Enter") openFeedbackDetails(feedback); }}
-                            >
-
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                  {formatDate(feedback.createdAt)}
-                                </div>
-                              </td>
-                              <td className="px-6 py-[7px] text-sm font-medium text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <User className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.patient}
-                                </div>
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                                  {feedback.contact}
-                                </div>
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td>
-                              <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                <div className="flex items-center">
-                                  {getRatingStars(feedback.rating)}
-                                  <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">
-                                <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {error && <div className="text-red-600 text-sm mt-3 px-6">{error}</div>}
                   </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
+                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Patient Name</th>
+                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Contact</th>
+                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th>
+                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
+                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white">
+                        {filteredFeedback.map((feedback, index) => (
+                          <tr
+                            key={feedback.id || feedback._id}
+                            onClick={() => openFeedbackDetails(feedback)}
+                            className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors cursor-pointer`}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === "Enter") openFeedbackDetails(feedback); }}
+                          >
+
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                {formatDate(feedback.createdAt)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-[7px] text-sm font-medium text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                {feedback.patient}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                <Phone className="w-4 h-4 text-gray-400 mr-2" />
+                                {feedback.contact}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td>
+                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                              <div className="flex items-center">
+                                {getRatingStars(feedback.rating)}
+                                <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">
+                              <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {error && <div className="text-red-600 text-sm mt-3 px-6">{error}</div>}
                 </div>
               </div>
+            </div>
           </div>
         </div>
       </section>
