@@ -56,17 +56,13 @@ function normalizeServiceLabel(label, variant = 'opd') {
   return label;
 }
 
-/** Convert normalized service (from parent) to a display label that exists in options */
 function toDisplayServiceLabel(service, variant = 'opd') {
   if (!service) return 'All Services';
   if (variant === 'opd') {
-    // If parent gives "Diagnostic Services", show "Lab" in OPD dropdown
     if (service === 'Diagnostic Services') return 'Lab';
-    // If parent gives plural, show singular used in OPD list
     if (service === 'Doctor Services') return 'Doctor Service';
     return service;
   }
-  // concern: prefer plural labels
   if (service === 'Doctor Service') return 'Doctor Services';
   return service;
 }
@@ -74,12 +70,10 @@ function toDisplayServiceLabel(service, variant = 'opd') {
 export default function OpdFilter({
   value,
   onChange,
-  /** NEW: choose which service set to show: 'opd' (default) | 'concern' */
   serviceVariant = 'opd',
   services,
   doctors,
 }) {
-  // Local UI state (pre-filled from parent value if provided)
   const [dateFrom, setDateFrom] = useState(parseToDate(value?.from));
   const [dateTo, setDateTo] = useState(parseToDate(value?.to));
   const [selectedService, setSelectedService] = useState(
@@ -87,7 +81,6 @@ export default function OpdFilter({
   );
   const [selectedDoctor, setSelectedDoctor] = useState(value?.doctor ? value.doctor : 'All Doctors');
 
-  // Build options (allow overrides, else pick by variant)
   const serviceOptions = useMemo(() => {
     if (Array.isArray(services) && services.length) return services;
     return serviceVariant === 'concern' ? CONCERN_SERVICES : OPD_SERVICES;
@@ -98,7 +91,6 @@ export default function OpdFilter({
     return ['All Doctors', 'Dr. Sharma', 'Dr. Mehta', 'Dr. Patel', 'Dr. Gupta', 'Dr. Rao', 'Dr. Singh'];
   }, [doctors]);
 
-  // Keep local in sync if parent value changes externally
   useEffect(() => {
     if (!value) return;
     setDateFrom(parseToDate(value.from));
@@ -109,7 +101,6 @@ export default function OpdFilter({
     if (value.doctor !== undefined) setSelectedDoctor(value.doctor || 'All Doctors');
   }, [value?.from, value?.to, value?.service, value?.doctor, serviceVariant]);
 
-  // Emit normalized changes
   useEffect(() => {
     if (typeof onChange !== 'function') return;
     onChange({

@@ -1166,28 +1166,6 @@ export default function IPDFeedbackDashboard() {
                           </tr>
                         </thead>
                         <tbody className="bg-white">
-
-                          {serviceSummary.map((service, index) => (
-                            <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
-                              <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">{service.service}</td>
-                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
-                              </td>
-                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">{service.good}%</span>
-                              </td>
-                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">{service.average}%</span>
-                              </td>
-                              <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-[#fff]">{service.poor}%</span>
-                              </td>
-                              <td className="px-6 py-[10px] text-center text-sm">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">{service.veryPoor}%</span>
-                              </td>
-                            </tr>
-                          ))}
-
                           {serviceSummary.map((service, index) => {
                             const Icon = serviceIcons[service.service] || User; // fallback icon
                             return (

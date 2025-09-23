@@ -98,8 +98,6 @@ const DEPARTMENT_MODULES = [
   { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "overall", name: "Overall Experience", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-
 ]
 
 // final ordered list shown in modal: core first, then departments

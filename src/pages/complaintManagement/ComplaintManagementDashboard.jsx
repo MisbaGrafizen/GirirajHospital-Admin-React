@@ -401,16 +401,111 @@ export default function ComplaintManagementDashboard() {
     }, [])
 
 
+  // Parse YYYY-MM-DD into local midnight
+const parseLocalDate = (str) => {
+  if (!str) return null;
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+// Apply filters to raw docs
+function applyFilters(docs, filters, allowedBlocks) {
+  const q = (filters.searchTerm || "").toLowerCase();
+  const from = parseLocalDate(filters.from);
+  const to = parseLocalDate(filters.to);
+
+  return docs.filter((doc) => {
+    const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
+
+    // Date range
+    if (from && createdAt < from) return false;
+    if (to) {
+      const endOfDay = new Date(to);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      if (createdAt >= endOfDay) return false;
+    }
+
+    // Service filter
+    if (filters.service && filters.service !== "All Services") {
+      const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
+      if (!depts.includes(filters.service.toLowerCase())) return false;
+    }
+
+    // Doctor filter
+    if (filters.doctor && filters.doctor !== "All Doctors") {
+      const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
+      if (!doctor.includes(filters.doctor.toLowerCase())) return false;
+    }
+
+    // Search term filter
+    if (q) {
+      const combined = [
+        doc.patientName,
+        doc.consultantDoctorName?.name,
+        doc.complaintId,
+        getDepartmentsString(doc, allowedBlocks),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!combined.includes(q)) return false;
+    }
+
+    return true;
+  });
+}
+
+
     // ====== DERIVED ======
     const filteredComplaints = useMemo(() => {
         const q = (searchTerm || "").toLowerCase();
+
         return rows
+            // 🔍 Search filter
             .filter((c) =>
                 [c.patient, c.department, c.details, c.id]
-                    .some((v) => String(v || "").toLowerCase().includes(q)),
+                    .some((v) => String(v || "").toLowerCase().includes(q))
             )
-            .filter((c) => (selectedStatus === "All Status" ? true : c.status === selectedStatus));
-    }, [rows, searchTerm, selectedStatus]);
+            // 📌 Status filter
+            .filter((c) =>
+                selectedStatus === "All Status" ? true : c.status === selectedStatus
+            )
+            // 📅 Date filter (use createdAt ISO, not formatted date string)
+            .filter((c) => {
+                if (!filters.from && !filters.to) return true;
+
+                const d = new Date(c.createdAt);
+
+                const from = parseLocalDate(filters.from);
+                const to = parseLocalDate(filters.to);
+
+                if (from && d < from) return false;
+                if (to) {
+                    // include the full day, so add 1 day to "to"
+                    const endOfDay = new Date(to);
+                    endOfDay.setDate(endOfDay.getDate() + 1);
+                    if (d >= endOfDay) return false;
+                }
+
+                return true;
+            })
+
+            // 🏥 Service/Department filter
+            .filter((c) => {
+                if (!filters.service || filters.service === "All Services") return true;
+                return (c.department || "")
+                    .toLowerCase()
+                    .includes(filters.service.toLowerCase());
+            })
+            // 👨‍⚕️ Doctor filter
+            .filter((c) => {
+                if (!filters.doctor) return true;
+                return (c.doctor || "")
+                    .toLowerCase()
+                    .includes(filters.doctor.toLowerCase());
+            });
+    }, [rows, searchTerm, selectedStatus, filters]);
+
 
     console.log('filteredComplaints', filteredComplaints)
 
@@ -434,54 +529,58 @@ export default function ComplaintManagementDashboard() {
 
 
     useEffect(() => {
-        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
-            setRows([]);
-            setKpiData(computeKpis([]));
-            setTrendData([]);
-            setDepartmentColors({});
-            setTop5Departments([]);
-            return;
-        }
+  if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+    setRows([]);
+    setKpiData(computeKpis([]));
+    setTrendData([]);
+    setDepartmentColors({});
+    setTop5Departments([]);
+    return;
+  }
 
-        // ✅ build table rows (one row per complaint)
-        const list = rawConcerns.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
-        setRows(list);
+  // ✅ Apply filters here
+  const docs = applyFilters(rawConcerns, filters, allowedBlocks);
 
-        // ✅ build stats (multi-department)
-        const statsDocs = rawConcerns.flatMap((d) => flattenConcernDocForStats(d));
+  // Table rows
+  const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+  setRows(list);
 
-        // KPIs
-        setKpiData(computeKpis(list));
+  // Stats docs for chart & top-5
+  const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
 
-        // Trend chart
-        const { data: tData, colors } = buildTrendData(statsDocs);
-        setTrendData(tData);
-        setDepartmentColors(colors);
+  // KPIs
+  setKpiData(computeKpis(list));
 
-        // Top-5 departments
-        const deptStats = {};
-        statsDocs.forEach((d) => {
-            if (!deptStats[d.department]) {
-                deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-            }
-            deptStats[d.department].complaints += 1;
-            deptStats[d.department].totalResolution += d.resolutionTime || 0;
-            if (d.escalated) deptStats[d.department].escalations += 1;
-        });
+  // Trend chart
+  const { data: tData, colors } = buildTrendData(statsDocs);
+  setTrendData(tData);
+  setDepartmentColors(colors);
 
-        const top = Object.entries(deptStats)
-            .map(([department, s]) => ({
-                department,
-                complaints: s.complaints,
-                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-                escalations: s.escalations,
-            }))
-            .sort((a, b) => b.complaints - a.complaints)
-            .slice(0, 5)
-            .map((x, i) => ({ rank: i + 1, ...x }));
+  // Top-5 departments
+  const deptStats = {};
+  statsDocs.forEach((d) => {
+    if (!deptStats[d.department]) {
+      deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+    }
+    deptStats[d.department].complaints += 1;
+    deptStats[d.department].totalResolution += d.resolutionTime || 0;
+    if (d.escalated) deptStats[d.department].escalations += 1;
+  });
 
-        setTop5Departments(top);
-    }, [rawConcerns, allowedBlocks]);
+  const top = Object.entries(deptStats)
+    .map(([department, s]) => ({
+      department,
+      complaints: s.complaints,
+      avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+      escalations: s.escalations,
+    }))
+    .sort((a, b) => b.complaints - a.complaints)
+    .slice(0, 5)
+    .map((x, i) => ({ rank: i + 1, ...x }));
+
+  setTop5Departments(top);
+}, [rawConcerns, allowedBlocks, filters]);
+
 
 
 
@@ -712,7 +811,6 @@ export default function ComplaintManagementDashboard() {
                                             onChange={handleFilterChange}
                                             serviceVariant="concern"
                                         />
-
                                     </div>
 
                                     <div className="grid md34:!grid-cols-2  md11:!grid-cols-5 mt-[10px] lg:grid-cols-6 gap-2 mb-2">
@@ -800,7 +898,7 @@ export default function ComplaintManagementDashboard() {
 
 
                                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                  <i className="fa-regular fa-hospitals text-[#fff] text-[19px]"></i>
+                                                    <i className="fa-regular fa-hospitals text-[#fff] text-[19px]"></i>
                                                 </div>
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
                                             </div>

@@ -522,66 +522,6 @@ export default function UserManageMent() {
                         </div>
                       )}
 
-
-                      {/* Modal */}
-                      {/* {isDoctorModalOpen && (
-                        <div className="bg-white shadow-lg rounded-xl p-6 max-w-md mx-auto border border-gray-200">
-                          <h2 className="text-lg font-bold mb-4 text-red-600">Add Doctor</h2>
-                          <input
-                            type="text"
-                            placeholder="Doctor Name"
-                            value={doctorName}
-                            onChange={(e) => setDoctorName(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Doctor Qualification"
-                            value={doctorQualification}
-                            onChange={(e) => setDoctorQualification(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                          />
-                          <button
-                            onClick={addDoctor}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-semibold"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      )} */}
-
-                      {/* Doctor Cards */}
-                      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                        {doctorList.map((doctor) => (
-                          <div
-                            key={doctor.id}
-                            className="bg-white border border-gray-200 shadow-md rounded-xl p-4 flex justify-between items-center hover:shadow-lg transition"
-                          >
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-800">{doctor.name}</h3>
-                              <p className="text-sm text-gray-600">{doctor.qualification}</p>
-                            </div>
-                            <div className="flex gap-3">
-                              <button
-                                onClick={() => editDoctor(doctor.id)}
-                                className="text-blue-600 hover:text-blue-800"
-                              >
-                                <Edit className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => deleteDoctor(doctor.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div> */}
-
-
-
-
                       <div className="border-t-[1.6px]  border-red-600 border-dashed w-[100%] my-[15px] "></div>
                       <div className="flex justify-between items-center mb-4">
                         <div>
@@ -594,7 +534,7 @@ export default function UserManageMent() {
                               className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg"
                             >
                               <UserPlus className="w-5 h-5" />
-                              Create Role
+                              Create Role User
                             </button>
                           </div>
                         )}
@@ -1021,14 +961,14 @@ export default function UserManageMent() {
                           <p className="font-medium">{selectedUserData?.roleId?.roleName}</p>
                         </div>
 
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-500">Selected Companies</p>
                           <p className="font-medium">
                             {Array.isArray(selectedUserData?.companyId) ? selectedUserData?.companyId?.length : 1} selected
                           </p>
-                        </div>
+                        </div> */}
 
-                        <div className="flex flex-wrap gap-2">
+                        {/* <div className="flex flex-wrap gap-2">
                           {Array.isArray(selectedUserData?.companyId)
                             ? selectedUserData?.companyId.map((c, idx) => (
                               <div key={idx} className="flex items-center gap-1 px-3 py-2 bg-gray-100 rounded-md border">
@@ -1041,9 +981,9 @@ export default function UserManageMent() {
                               </div>
                             )
                           }
-                        </div>
+                        </div> */}
 
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-500">Password<span className="text-red-500">*</span></p>
                           <div className="flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
@@ -1055,7 +995,7 @@ export default function UserManageMent() {
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>
-                        </div>
+                        </div> */}
 
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-500">Login Status</p>
