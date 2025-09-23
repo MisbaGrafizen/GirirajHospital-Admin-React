@@ -471,7 +471,7 @@ const toggleSidebar = () => {
       <div className="   md34:!hidden md11:!flex   h-screen bg-gray-50">
       {/* Sidebar */}
       <motion.div
-        className="bg-white shadow-sm flex flex-col border-r border-gray-200 relative"
+        className="bg-white shadow-sm flex flex-col border-r min-w-[200px] border-gray-200 relative"
         // variants={sidebarVariants}
         animate={isCollapsed ? "collapsed" : "expanded"}
         initial={false}
@@ -490,7 +490,7 @@ const toggleSidebar = () => {
                     // animate="expanded"
                     // exit="collapsed"
                   >
-<img className=" w-[100px]" src={textlogo} />
+<img className=" w-[200px]" src={textlogo} />
                   </motion.span>
                 )}
               </AnimatePresence>

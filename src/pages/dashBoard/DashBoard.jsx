@@ -254,12 +254,14 @@ export default function DashBoard() {
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[96%] pb-[50px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
 
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
                 <Container fluid={true}>
                   <Row className="widget-grid">
+                  {/* <Row className=""> */}
+
                     <GreetingCard />
                     <WidgetsWrapper kpis={kpis} />
                     <OverallBalance kpis={kpis} opdSummary={opdSummary} />
@@ -492,7 +494,7 @@ export default function DashBoard() {
                           <div className=" grid grid-cols-2 mt-[10px] gap-[15px]">
                             {recentFeedbacks.map((feedback, index) => (
                               <>
-                                <div key={feedback.id} className="  bg-white relative flex px-[10px] shadow-sm py-[10px] border-[1.3px]  rounded-[10px] border-[#dcdcdc] flex-col gap-[7px]">
+                                <div key={feedback.id} className="  bg-white overflow-hidden relative flex px-[10px] shadow-sm py-[10px] border-[1.3px]  rounded-[10px] border-[#dcdcdc] flex-col gap-[7px]">
                                   <div className=" flex gap-[10px] items-start border-b-[1.8px] border-blue-200 border-dashed pb-[10px]">
 
 

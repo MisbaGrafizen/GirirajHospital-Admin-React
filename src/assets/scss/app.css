@@ -737,9 +737,22 @@ progress {
   flex-shrink: 0;
   width: 100%;
   max-width: 100%;
+  padding-right: calc(var(--bs-gutter-x) * 0.0);
+  padding-left: calc(var(--bs-gutter-x) * 0.0);
+  margin-top: var(--bs-gutter-y);
+}
+
+
+
+@media only screen and (min-width: 1350px) {
+  .row > * {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
   padding-right: calc(var(--bs-gutter-x) * 0.5);
   padding-left: calc(var(--bs-gutter-x) * 0.5);
   margin-top: var(--bs-gutter-y);
+}
 }
 
 .col {
@@ -27721,7 +27734,7 @@ select.crypto-select.primary {
 }
 @media (max-width: 1720px) {
   .widget-1 .card-body {
-    padding: 18px;
+    padding: 10px;
   }
 }
 .widget-1 .widget-round {

@@ -403,7 +403,7 @@ export default function OPDFeedbackDashboard() {
       const overallScore =
         avg >= 4.5 ? "Excellent" :
           avg >= 4.0 ? "Good" :
-            avg >= 3.0 ? "Average" :
+            avg >= 3.0 ? "Av" :
               avg >= 2.0 ? "Poor" : "Very Poor"
 
       setRows(list)
@@ -666,15 +666,15 @@ export default function OPDFeedbackDashboard() {
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[15px] bg-[#fff] overflow-y-auto gap-[30px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] md11:!pr-[15px]  overflow-y-auto gap-[30px] rounded-[10px]">
               <div className="mx-auto w-full">
-                <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
+                <div className="bg-white rounded-lg shadow-sm p-[13px]  mx-[10px]  mb-[10px] border border-gray-100  ">
                   <OpdFilter value={filters} onChange={handleFilterChange} />
                 </div>
                 <div className="pt-[5px] flex gap-6 mb-3">
-                  <div className="bg-white rounded-lg min-w-[240px] w-[100%] border-[#cacaca66] shadow-md border p-6 border-l-4 border-l-blue-500">
+               
 
-                    <div className="flex flex-col w-[94%] md11:mx-0 mx-auto md11:w-[100%] max-h-[90%] pb-[50px] py-[10px] md11:pr-[15px]  overflow-y-auto gap-[30px] rounded-[10px]">
+                    <div className="flex flex-col w-[97%] md11:mx-0 mx-auto md11:w-[100%] max-h-[90%] pb-[50px] py-[10px] md11:pr-[15px]  overflow-y-auto gap-[30px] rounded-[10px]">
                       <div className="mx-auto w-full">
 
                         <div className="pt-[5px] w-[100%] mb-3">
@@ -904,7 +904,7 @@ export default function OPDFeedbackDashboard() {
                             {/* Patient-Wise Feedback Table */}
                             <div className="bg-white md34:!mb-[100px] rounded-lg border shadow-sm overflow-hidden">
                               <div className="px-3 py-2 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                                <div className=' flex gap-[10px] pt-[13px]  justify-start '>
+                                <div className=' flex gap-[10px] pt-[13px] mb-[10px]  justify-start '>
 
 
 
@@ -938,7 +938,7 @@ export default function OPDFeedbackDashboard() {
                               </div>
 
                               <div className="overflow-x-auto">
-                                <table className="min-w-full">
+                                <table className=" md34:!min-w-[1200px] md11:!min-w-full">
                                   <thead className="bg-gray-50">
                                     <tr>
                                       <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
@@ -1002,7 +1002,7 @@ export default function OPDFeedbackDashboard() {
 
                 
                     </div>
-                  </div>
+             
                 </div>
               </div>
             </div>

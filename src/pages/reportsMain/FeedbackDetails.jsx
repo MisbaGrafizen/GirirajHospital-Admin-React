@@ -141,9 +141,9 @@ export default function FeedbackDetails() {
         <Header pageName="Feedback Details" />
         <div className="flex gap-[10px] w-[100%] h-[100%]">
           <SideBar />
-          <div className="flex flex-col w-[100%] max-h-[99%] pb-[50px] bg-white pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
+          <div className="flex flex-col w-[100%] md34:!mx-[10px] md11:!mx-auto max-h-[99%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
 
-            <section className="bg-white rounded-xl  h-[100%]  shadow-sm border border-gray-100 ">
+            <section className="bg-white  rounded-xl  md11:!mb-[0px] md34:!mb-[160px]   bg-white shadow-sm border border-red-600 ">
               {/* <div className="px-5 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-900">OPD Feedback</h2>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700 ring-1 ring-sky-200">
@@ -212,7 +212,7 @@ export default function FeedbackDetails() {
 
       </div>
     </div>
-      </div >
-    </section >
+      </div>
+    </section>
   )
 }

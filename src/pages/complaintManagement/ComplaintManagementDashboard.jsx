@@ -797,11 +797,11 @@ function applyFilters(docs, filters, allowedBlocks) {
     return (
         <>
             <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
-                <div className="flex w-[100%] overflow-hidden flex-col  h-[96vh]">
+                <div className="flex w-[100%] overflow-hidden flex-col  h-[100vh]">
                     <Header pageName="Complaint Management " />
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
-                        <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex flex-col w-[100%] max-h-[97%] pb-[50px] py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
 
                             <div className="">
                                 <div className="">

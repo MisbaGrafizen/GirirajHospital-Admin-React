@@ -20,6 +20,7 @@ import LoginPage from "./pages/LoginPage";
 import SuperAdminDashboard from "./pages/adminDashboard/SuperAdminDashboard";
 import UserLoginPage from "./pages/UserLoginPage";
 import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
+import EmailManagement from "./pages/EmailManagement";
 
 
 
@@ -52,6 +53,8 @@ function App() {
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
           <Route path="/dashboard" element={<SuperAdminDashboard />} />
+          <Route path="/mail" element={<EmailManagement />} />
+
 
           <Route path="/" element={<LoginPage />} />
           <Route path="/role-login" element={<UserLoginPage />} />

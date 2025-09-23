@@ -16555,6 +16555,13 @@ select.crypto-select.primary {
     padding: 18px;
   }
 }
+
+@media (max-width: 1720px) {
+  .widget-1 .card-body {
+    padding: 18px;
+   
+  }
+}
 .widget-1 .widget-round {
   position: relative;
   display: inline-block;

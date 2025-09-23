@@ -7,8 +7,8 @@ import CarToon from '../../../../..//assets/images/dashboard/cartoon.svg';
 
 const GreetingCard = () => {
   return (
-    <Col className='col-xxl-4 col-sm-6 box-col-6'>
-      <Card className=' profile-box'>
+    <Col className =' md md11:!flex  col-xxl-4 col-sm-6 box-col-6'>
+      <Card className='  profile-box'>
         <CardBody>
           <Media>
             <Media body>
