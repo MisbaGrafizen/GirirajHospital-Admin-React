@@ -488,7 +488,7 @@ export default function DashBoard() {
 
 
 
-                        <div className="  flex flex-col pb-[70px] gap-[10px]">
+                        <div className="   md11:!hidden md34:!flex flex-col pb-[70px] gap-[10px]">
                           <div className=" grid grid-cols-2 mt-[10px] gap-[15px]">
                             {recentFeedbacks.map((feedback, index) => (
                               <>
