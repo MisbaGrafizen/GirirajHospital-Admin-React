@@ -18,13 +18,37 @@ import {
   Menu,
   ChevronRight,
 } from "lucide-react";
+import { ApiGet } from "../../helper/axios";
 
 function Header({
   pageName = "",
   onDateRangeChange,
 }) {
   const navigate = useNavigate();
-  const location = useLocation(); // 👈 to get current route
+  const location = useLocation();
+const [count, setCount] = useState(0);
+const [lastSeen, setLastSeen] = useState(Number(localStorage.getItem("lastSeen")) || 0);
+
+useEffect(() => {
+  const fetchCount = async () => {
+    try {
+      const data = await ApiGet("/admin/notifications");
+      setCount(data?.notifications?.length || 0);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
+  };
+  fetchCount();
+}, []);
+
+const handleMail = () => {
+  navigate("/mail");
+  setLastSeen(count);
+  localStorage.setItem("lastSeen", count);
+};
+
+const unreadCount = count - lastSeen;
+
 
   const handleBack = () => {
     navigate(-1);
@@ -33,9 +57,6 @@ function Header({
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
 
-const handleMail =()=>{
-  navigate("/mail");
-}
   useEffect(() => {
     if (onDateRangeChange) {
       onDateRangeChange({
@@ -115,12 +136,12 @@ const handleMail =()=>{
             </div>
             <i className="fa-solid fa-bell text-gray-700 text-2xl  cursor-pointer" onClick={handleMail}></i>
 
-            <span className="absolute -top-1  cursor-pointer -right-3 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full" onClick={handleMail}>
-              3
-            </span>
-
-
-
+              <span
+                className="absolute -top-1 -right-3 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full cursor-pointer"
+                onClick={handleMail}
+              >
+                {unreadCount}
+              </span>
 
           </div>
         </section>

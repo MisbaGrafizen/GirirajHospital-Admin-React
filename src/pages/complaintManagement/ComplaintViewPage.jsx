@@ -384,7 +384,7 @@ export default function ComplaintViewPage() {
                 updatedConcern: response.data,
             };
         } catch (error) {
-            throw new Error(error.message || "Failed to update progress remark");
+            throw new Error(error.message || "Failed to update in_progress remark");
         }
     }
 
@@ -393,19 +393,22 @@ export default function ComplaintViewPage() {
 
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case "Pending":
-                return "bg-yellow-100 text-yellow-800 border-yellow-200"
-            case "In Progress":
-                return "bg-blue-100 text-blue-800 border-blue-200"
-            case "Closed":
-                return "bg-green-100 text-green-800 border-green-200"
-            case "Escalated":
-                return "bg-red-100 text-red-800 border-red-200"
-            default:
-                return "bg-gray-100 text-gray-800 border-gray-200"
-        }
-    }
+  switch (status) {
+    case "open":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200"; // 🟡 Open
+    case "in_progress":
+      return "bg-blue-100 text-blue-800 border-blue-200"; // 🔵 In Progress
+    case "forwarded":
+      return "bg-purple-100 text-purple-800 border-purple-200"; // 🟣 Forwarded
+    case "resolved":
+      return "bg-green-100 text-green-800 border-green-200"; // ✅ Resolved
+    case "escalated":
+      return "bg-red-100 text-red-800 border-red-200"; // 🔴 Escalated
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200"; // ⚪ Default / Unknown
+  }
+};
+
 
     const getPriorityColor = (priority) => {
         switch (priority) {
@@ -462,7 +465,7 @@ export default function ComplaintViewPage() {
                     setLoadingHistory(false);
                 }
                 break;
-            case "progress":
+            case "in_progress":
                 setIsOpen(true);
                 setComplaintText(complaint.details || "");
                 setTempText(complaint.details || "");
@@ -670,7 +673,7 @@ export default function ComplaintViewPage() {
 
                                                                     {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
-                                                                            <span className="font-medium">Topic:</span> {block.topic}
+                                                                            <span className="font-medium">Department:</span> {block.topic}
                                                                         </p>
                                                                     )}
                                                                     {block?.text && (
@@ -863,7 +866,7 @@ export default function ComplaintViewPage() {
                                                                                 </p>
                                                                             </>
                                                                         )}
-                                                                        {h.type === "progress" && (
+                                                                        {h.type === "in_progress" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-blue-700">Progress Update</p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
@@ -889,7 +892,7 @@ export default function ComplaintViewPage() {
                                                         </button>
 
                                                         <button
-                                                            onClick={() => openModal("progress")}
+                                                            onClick={() => openModal("in_progress")}
                                                             className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
                                                         >
                                                             <TrendingUp className="w-5 h-5 mr-2" />
@@ -958,7 +961,7 @@ export default function ComplaintViewPage() {
                                                                         </>
                                                                     )}
                                                                     
-                                                                    {h.type === "progress" && (
+                                                                    {h.type === "in_progress" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-blue-700">Progress Update</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
@@ -1392,7 +1395,7 @@ export default function ComplaintViewPage() {
                                                                                         </p>
                                                                                     </>
                                                                                 )}
-                                                                                {h.type === "progress" && (
+                                                                                {h.type === "in_progress" && (
                                                                                     <>
                                                                                         <p className="text-sm font-medium text-blue-700">Progress Update</p>
                                                                                         <p className="text-xs text-gray-600">Note: {h.note}</p>
@@ -1741,7 +1744,7 @@ export default function ComplaintViewPage() {
                                                                         alert(res.message || "Progress remark updated successfully");
                                                                     } catch (error) {
                                                                         console.error("Progress Remark Error:", error);
-                                                                        alert(error.message || "Failed to update progress remark");
+                                                                        alert(error.message || "Failed to update in_progress remark");
                                                                     }
                                                                 }}
                                                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
