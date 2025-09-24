@@ -1,29 +1,30 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-    Search,
-    Mail,
-    MailOpen,
-    Star,
-    Archive,
-    Trash2,
-    Reply,
-    Forward,
-    MoreHorizontal,
-    Paperclip,
+  Search,
+  Mail,
+  MailOpen,
+  Star,
+  Archive,
+  Trash2,
+  Reply,
+  Forward,
+  MoreHorizontal,
+  Paperclip,
 } from "lucide-react";
 import Header from "../Component/header/Header";
 import SideBar from "../Component/sidebar/SideBar";
 import CubaSidebar from "../Component/sidebar/CubaSideBar";
+import { ApiGet } from "../helper/axios";
 
 const mockEmails = [
-    {
-        id: "1",
-        sender: "GitHub",
-        senderEmail: "noreply@github.com",
-        subject: "[GitHub] Your Dependabot alerts for the week of Sep 16 - Sep 23",
-        preview:
-            "To protect your privacy remote resources have been blocked. Security vulnerabilities detected in your repository.",
-        content: `
+  {
+    id: "1",
+    sender: "GitHub",
+    senderEmail: "noreply@github.com",
+    subject: "[GitHub] Your Dependabot alerts for the week of Sep 16 - Sep 23",
+    preview:
+      "To protect your privacy remote resources have been blocked. Security vulnerabilities detected in your repository.",
+    content: `
       <div class="email-content">
         <div class="security-alert">
           <h2>🔒 Security Alert Digest</h2>
@@ -64,21 +65,21 @@ const mockEmails = [
         </div>
       </div>
     `,
-        timestamp: "Today 10:02",
-        isRead: false,
-        isStarred: false,
-        isNew: true,
-        priority: "high",
-        hasAttachment: false,
-    },
-    {
-        id: "2",
-        sender: "ClickUp Team",
-        senderEmail: "team@clickup.com",
-        subject: "Gather data and guide users with ClickUp Forms",
-        preview:
-            "Create custom forms to collect information and streamline your workflow. Perfect for customer feedback and project requests.",
-        content: `
+    timestamp: "Today 10:02",
+    isRead: false,
+    isStarred: false,
+    isNew: true,
+    priority: "high",
+    hasAttachment: false,
+  },
+  {
+    id: "2",
+    sender: "ClickUp Team",
+    senderEmail: "team@clickup.com",
+    subject: "Gather data and guide users with ClickUp Forms",
+    preview:
+      "Create custom forms to collect information and streamline your workflow. Perfect for customer feedback and project requests.",
+    content: `
       <div class="email-content">
         <h2>🚀 Introducing ClickUp Forms</h2>
         <p>Create custom forms to collect information and streamline your workflow. Perfect for:</p>
@@ -105,260 +106,297 @@ const mockEmails = [
         </div>
       </div>
     `,
-        timestamp: "Today 03:30",
-        isRead: true,
-        isStarred: true,
-        isNew: false,
-        priority: "normal",
-        hasAttachment: true,
-    },
-    // ... keep rest of emails same as your original
+    timestamp: "Today 03:30",
+    isRead: true,
+    isStarred: true,
+    isNew: false,
+    priority: "normal",
+    hasAttachment: true,
+  },
+  // ... keep rest of emails same as your original
 ];
 
 export default function EmailManagement() {
-    const [selectedEmail, setSelectedEmail] = useState(mockEmails[0]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [emails, setEmails] = useState(mockEmails);
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [emails, setEmails] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const filteredEmails = useMemo(() => {
-        if (!searchQuery) return emails;
+  useEffect(() => {
+    const fetchEmails = async () => {
+      try {
+        setLoading(true);
+        const data = await ApiGet("/admin/notifications");
+        console.log('data', data)
+        const mapped = (data?.notifications || []).map((n) => ({
+          id: n._id,
+          sender: "New Notification",
+          senderEmail: "noreply@system.com",
+          subject: n.title,
+          preview: n.body,
+          content: `<p>${n.body}</p><pre>${JSON.stringify(n.data, null, 2)}</pre>`,
+          timestamp: new Date(n.createdAt).toLocaleString(),
+          isRead: false,
+          isStarred: false,
+          isNew: true,
+          priority: "normal",
+          hasAttachment: false,
+        }));
 
-        return emails.filter(
-            (email) =>
-                email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                email.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                email.preview.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [emails, searchQuery]);
-
-    const handleEmailClick = (email) => {
-        setSelectedEmail(email);
-        if (!email.isRead) {
-            setEmails((prev) =>
-                prev.map((e) =>
-                    e.id === email.id ? { ...e, isRead: true, isNew: false } : e
-                )
-            );
-        }
+        setEmails(mapped);
+        if (mapped.length > 0) setSelectedEmail(mapped[0]);
+      } catch (error) {
+        console.error("❌ Error fetching emails:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const toggleStar = (emailId, e) => {
-        e.stopPropagation();
-        setEmails((prev) =>
-            prev.map((email) =>
-                email.id === emailId ? { ...email, isStarred: !email.isStarred } : email
-            )
-        );
-    };
-
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case "high":
-                return "border-l-red-500";
-            case "low":
-                return "border-l-green-500";
-            default:
-                return "border-l-blue-500";
-        }
-    };
-
-    return (
-        <>
+    fetchEmails();
+  }, []);
 
 
-            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
-                <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-                    <Header pageName="Mail Management" />
-                    <div className="flex  w-[100%] h-[100%]">
-                        <CubaSidebar />
-                        <div className="flex w-[100%] pl-[10px] max-h-[96%] pb-[50px]  ̰   gap-[10px] rounded-[10px]">
-                            <div className="flex h-screen bg-gray-50">
-                                {/* Left Sidebar */}
-                                <div className=" w-[30%] max-w-[400px]  bg-white border-r border-gray-200 flex flex-col">
-                                    {/* Header */}
-                                    <div className="p-2 mx-[10px] border-b border-gray-200 bg-gray-50">
-                                   
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search emails..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                                            />
-                                        </div>
-                                    </div>
+  const filteredEmails = useMemo(() => {
+    if (!searchQuery) return emails;
+    return emails.filter(
+      (email) =>
+        email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.preview.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [emails, searchQuery]);
 
-                                    {/* Email List */}
-                                    <div className="flex-1 overflow-y-auto">
-                                        {filteredEmails.map((email) => (
-                                            <div
-                                                key={email.id}
-                                                onClick={() => handleEmailClick(email)}
-                                                className={`
+  const handleEmailClick = (email) => {
+    setSelectedEmail(email);
+    if (!email.isRead) {
+      setEmails((prev) =>
+        prev.map((e) =>
+          e.id === email.id ? { ...e, isRead: true, isNew: false } : e
+        )
+      );
+    }
+  };
+
+  const toggleStar = (emailId, e) => {
+    e.stopPropagation();
+    setEmails((prev) =>
+      prev.map((email) =>
+        email.id === emailId ? { ...email, isStarred: !email.isStarred } : email
+      )
+    );
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "high":
+        return "border-l-red-500";
+      case "low":
+        return "border-l-green-500";
+      default:
+        return "border-l-blue-500";
+    }
+  };
+
+  return (
+    <>
+
+
+      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
+          <Header pageName="Mail Management" />
+          <div className="flex  w-[100%] h-[100%]">
+            <CubaSidebar />
+            <div className="flex w-[100%] pl-[10px] max-h-[96%] pb-[50px]  ̰   gap-[10px] rounded-[10px]">
+              <div className="flex h-screen bg-gray-50">
+                {/* Left Sidebar */}
+                <div className=" w-[30%] max-w-[400px]  bg-white border-r border-gray-200 flex flex-col">
+                  {/* Header */}
+                  <div className="p-2 mx-[10px] border-b border-gray-200 bg-gray-50">
+
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        placeholder="Search emails..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email List */}
+                  <div className="flex-1 overflow-y-auto">
+                    {filteredEmails.map((email) => (
+                      <div
+                        key={email.id}
+                        onClick={() => handleEmailClick(email)}
+                        className={`
                 p-2 border-b border-gray-100 cursor-pointer transition-all   rounded-[10px] duration-200
                 ${selectedEmail?.id === email.id
-                                                        ? "bg-blue-100 border-l-4 rounded-l-[10px] border-l-blue-600 shadow-sm"
-                                                        : " border-l-4 !border-gray-300 " +
-                                                        getPriorityColor(email.priority)
-                                                    }
+                            ? "bg-blue-100 border-l-4 rounded-l-[10px] border-l-blue-600 shadow-sm"
+                            : " border-l-4 !border-gray-300 " +
+                            getPriorityColor(email.priority)
+                          }
                 ${!email.isRead ? "bg-blue-25" : ""}
-              `} 
-                                            >
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                                        {email.isRead ? (
-                                                            <MailOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                                        ) : (
-                                                            <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                                        )}
-                                                        <div className="flex  items-center min-w-0">
-                                                            <div className="flex items-center space-x-2 mb-1">
-                                                                <span
-                                                                    className={`font-medium truncate ${!email.isRead ? "text-gray-900" : "text-gray-700"
-                                                                        }`}
-                                                                >
-                                                                    {email.sender}
-                                                                </span>
-                                                                {email.isNew && (
-                                                                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0">
-                                                                        New
-                                                                    </span>
-                                                                )}
-                                                                {email.hasAttachment && (
-                                                                    <Paperclip className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                                                                )}
-                                                            </div>
-                                                            <span className="text-xs text-gray-500">
-                                                                {email.timestamp}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                 
-                                                </div>
+              `}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            {email.isRead ? (
+                              <MailOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            ) : (
+                              <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            )}
+                            <div className="flex  items-center min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span
+                                  className={`font-medium truncate ${!email.isRead ? "text-gray-900" : "text-gray-700"
+                                    }`}
+                                >
+                                  {email.sender}
+                                </span>
+                                {email.isNew && (
+                                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0">
+                                    New
+                                  </span>
+                                )}
+                                {email.hasAttachment && (
+                                  <Paperclip className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {email.timestamp}
+                              </span>
+                            </div>
+                          </div>
 
-                                                <h3
-                                                    className={`text-sm mb-2 line-clamp-2 ${!email.isRead
-                                                            ? "font-semibold text-gray-900"
-                                                            : "font-medium text-gray-800"
-                                                        }`}
-                                                >
-                                                    {email.subject}
-                                                </h3>
-{/* 
+                        </div>
+
+                        <h3
+                          className={`text-sm mb-2 line-clamp-2 ${!email.isRead
+                            ? "font-semibold text-gray-900"
+                            : "font-medium text-gray-800"
+                            }`}
+                        >
+                          {email.subject}
+                          {email.data?.type && (
+                            <span className="ml-2 text-xs text-blue-500">[{email.data.type}]</span>
+                          )}
+                        </h3>
+                        {/* 
                                                 <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
                                                     {email.preview}
                                                 </p> */}
-                                            </div>
-                                        ))}
-                                    </div>
+                      </div>
+                    ))}
+                  </div>
 
 
+                </div>
+
+                {/* Right Panel */}
+                <div className="w-[70%] flex flex-col bg-white">
+                  {selectedEmail ? (
+                    <>
+                      {/* Header */}
+                      <div className="p-3 border-b border-gray-200 bg-gray-50">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <h1 className="text-xl font-semibold text-gray-900 mb-3 leading-tight">
+                              {selectedEmail.subject}
+                            </h1>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white font-medium text-sm">
+                                    {selectedEmail.sender.charAt(0).toUpperCase()}
+                                  </span>
                                 </div>
-
-                                {/* Right Panel */}
-                                <div className="w-[70%] flex flex-col bg-white">
-                                    {selectedEmail ? (
-                                        <>
-                                            {/* Header */}
-                                            <div className="p-3 border-b border-gray-200 bg-gray-50">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="flex-1">
-                                                        <h1 className="text-xl font-semibold text-gray-900 mb-3 leading-tight">
-                                                            {selectedEmail.subject}
-                                                        </h1>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                                                    <span className="text-white font-medium text-sm">
-                                                                        {selectedEmail.sender.charAt(0).toUpperCase()}
-                                                                    </span>
-                                                                </div>
-                                                                <div>
-                                                                    <span className="font-medium text-gray-900">
-                                                                        {selectedEmail.sender}
-                                                                    </span>
-                                                                    <span className="text-gray-500">
-                                                                        {" "}
-                                                                        &lt;{selectedEmail.senderEmail}&gt;
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mt-2 text-sm text-gray-500">
-                                                            Received on {selectedEmail.timestamp}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                                                            <Reply className="w-5 h-5 text-gray-600" />
-                                                        </button>
-                                                        <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                                                            <Forward className="w-5 h-5 text-gray-600" />
-                                                        </button>
-                                                        <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                                                            <Archive className="w-5 h-5 text-gray-600" />
-                                                        </button>
-                                                        <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                                                            <Trash2 className="w-5 h-5 text-gray-600" />
-                                                        </button>
-                                                        {/* <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                                <div>
+                                  <span className="font-medium text-gray-900">
+                                    {selectedEmail.sender}
+                                  </span>
+                                  <span className="text-gray-500">
+                                    {" "}
+                                    &lt;{selectedEmail.senderEmail}&gt;
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-sm text-gray-500">
+                              Received on {selectedEmail.timestamp}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                              <Reply className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                              <Forward className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                              <Archive className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                              <Trash2 className="w-5 h-5 text-gray-600" />
+                            </button>
+                            {/* <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
                                                             <MoreHorizontal className="w-5 h-5 text-gray-600" />
                                                         </button> */}
-                                                    </div>
-                                                </div>
+                          </div>
+                        </div>
 
-                                          
-                                            </div>
 
-                                            {/* Privacy Banner */}
-                                            {selectedEmail.sender === "GitHub" && (
-                                                <div className="mx-6 mt-1 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                                                            <span className="text-white font-bold">!</span>
-                                                        </div>
-                                                        <span className="text-sm text-gray-700">
-                                                            To protect your privacy remote resources have been blocked.
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex space-x-2">
-                                                        <button className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors">
-                                                            Allow
-                                                        </button>
-                                                        <button className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors">
-                                                            Always allow from {selectedEmail.senderEmail}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
+                      </div>
 
-                                            {/* Content */}
-                                            <div className="flex-1 overflow-y-auto p-6">
-                                                <div
-                                                    className="prose max-w-none"
-                                                    dangerouslySetInnerHTML={{ __html: selectedEmail.content }}
-                                                />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="flex-1 flex items-center justify-center text-gray-500">
-                                            <div className="text-center">
-                                                <Mail className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                                    No Email Selected
-                                                </h3>
-                                                <p className="text-gray-500">
-                                                    Select an email from the list to view its contents
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                      {/* Privacy Banner */}
+                      {selectedEmail.sender === "GitHub" && (
+                        <div className="mx-6 mt-1 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                              <span className="text-white font-bold">!</span>
+                            </div>
+                            <span className="text-sm text-gray-700">
+                              To protect your privacy remote resources have been blocked.
+                            </span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors">
+                              Allow
+                            </button>
+                            <button className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors">
+                              Always allow from {selectedEmail.senderEmail}
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
-                                {/* Styles */}
-                                <style jsx>{`
+                      {/* Content */}
+                      <div className="flex-1 overflow-y-auto p-6">
+                        <div
+                          className="prose max-w-none"
+                          dangerouslySetInnerHTML={{ __html: selectedEmail.content }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <Mail className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Email Selected
+                        </h3>
+                        <p className="text-gray-500">
+                          Select an email from the list to view its contents
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Styles */}
+                <style jsx>{`
         .line-clamp-2 {
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -522,13 +560,13 @@ export default function EmailManagement() {
           background: #e5e7eb;
         }
       `}</style>
-                            </div>
-                        </div>
+              </div>
+            </div>
 
-                    </div>
-                </div>
-            </section>
+          </div>
+        </div>
+      </section>
 
-        </>
-    )
+    </>
+  )
 }

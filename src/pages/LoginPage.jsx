@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg"
 import { useNavigate } from "react-router-dom"
+import { requestNotificationPermission } from "../helper/notification"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -23,42 +24,56 @@ export default function LoginPage() {
     }
   }, [])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    try {
-      const res = await fetch("https://server.grafizen.in/api/v2/giriraj/auth/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
+  try {
+    const res = await fetch("http://localhost:3000/api/v2/giriraj/auth/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (!res.ok) {
-        const { message } = await res.json()
-        throw new Error(message || "Login failed")
-      }
-
-      const { token } = await res.json()
-
-      if (rememberMe) {
-        localStorage.setItem("authToken", token)
-        localStorage.setItem("savedEmail", email)
-        localStorage.setItem("rememberMe", "true")
-      } else {
-        sessionStorage.setItem("authToken", token)
-        localStorage.removeItem("savedEmail")
-        localStorage.setItem("rememberMe", "false")
-      }
-
-      navigate("/dashboards/super-dashboard")
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
+    if (!res.ok) {
+      const { message } = await res.json();
+      throw new Error(message || "Login failed");
     }
+
+    // 👇 Response is wrapped inside `.user`
+    const data = await res.json();
+    const { user, tokens } = data.user;
+
+    console.log("✅ Access Token:", tokens.access.token);
+    console.log("✅ Refresh Token:", tokens.refresh.token);
+    console.log("✅ User:", user);
+
+    // Store tokens + userId
+    if (rememberMe) {
+      localStorage.setItem("authToken", tokens.access.token);
+      localStorage.setItem("refreshToken", tokens.refresh.token);
+      localStorage.setItem("userId", user._id);
+      localStorage.setItem("savedEmail", email);
+      localStorage.setItem("rememberMe", "true");
+    } else {
+      localStorage.setItem("authToken", tokens.access.token);
+      localStorage.setItem("refreshToken", tokens.refresh.token);
+      localStorage.setItem("userId", user._id);
+      localStorage.removeItem("savedEmail");
+      localStorage.setItem("rememberMe", "false");
+    }
+
+    await requestNotificationPermission();
+
+    navigate("/dashboards/super-dashboard");
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
   }
+};
+
 
   return (
     <div className="min-h-screen bs-giri font-Poppins  flex items-center justify-center p-4 relative">
@@ -131,11 +146,10 @@ export default function LoginPage() {
               className="sr-only"
             />
             <span
-              className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${
-                rememberMe
+              className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${rememberMe
                   ? "bg-white"
                   : "border-gray-400"
-              }`}
+                }`}
             >
               {rememberMe && (
                 <svg

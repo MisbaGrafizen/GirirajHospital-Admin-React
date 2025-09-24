@@ -21,12 +21,18 @@ import SuperAdminDashboard from "./pages/adminDashboard/SuperAdminDashboard";
 import UserLoginPage from "./pages/UserLoginPage";
 import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
 import EmailManagement from "./pages/EmailManagement";
+import { listenForMessages, requestNotificationPermission } from "./helper/notification";
 
 
 
 function App() {
 
-    const location = useLocation();
+      const location = useLocation();
+
+      useEffect(() => {
+    requestNotificationPermission();
+    listenForMessages();
+  }, []);
 
   useEffect(() => {
     if (location.pathname === "/") {
