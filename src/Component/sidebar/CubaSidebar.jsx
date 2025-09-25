@@ -58,7 +58,7 @@ const CubaSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAdmin } = resolvePermissions();
-  let roleName = "User";
+  let roleName = "Super Admin";
   try {
     const rights = JSON.parse(localStorage.getItem("rights"));
     if (rights?.roleName) {

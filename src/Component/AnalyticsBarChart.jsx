@@ -2,27 +2,38 @@
 
 import { BarChart } from "@mui/x-charts/BarChart";
 
+// 🎨 Fixed department → color mapping
+const DEPT_COLORS = {
+  Doctor: "#3B82F6",        // Blue
+  Billing: "#10B981",       // Green
+  Housekeeping: "#F59E0B",  // Amber
+  Maintenance: "#EF4444",   // Red
+  Diagnostic: "#8B5CF6",    // Purple
+  Dietitian: "#06B6D4",     // Cyan
+  Security: "#F43F5E",      // Pink/Coral
+};
+
 const chartSetting = {
-  yAxis: [
-    {
-      label: "Complaints",
-      width: 25,
-    },
-  ],
+  yAxis: [{ label: "Complaints", width: 25 }],
   height: 300,
 };
 
-const data = [
-  { name: "Doctor", value: 38, color: "#3B82F6" },   // Blue
-  { name: "Billing", value: 40, color: "#10B981" },  // Green
-  { name: "Housekeeping", value: 26, color: "#F59E0B" }, // Amber
-  { name: "Maintenance", value: 35, color: "#EF4444" },  // Red
-  { name: "Diagnostic", value: 39, color: "#8B5CF6" },   // Purple
-  { name: "Dietitian", value: 38, color: "#06B6D4" },    // Cyan
-  { name: "Security", value: 25, color: "#F43F5E" },     // Pink/Coral
-];
+export default function SimpleBarChart({ trendData }) {
+  // ✅ Summarize complaints by department
+  const deptCounts = {};
+  (trendData || []).forEach((row) => {
+    Object.keys(DEPT_COLORS).forEach((dept) => {
+      deptCounts[dept] = (deptCounts[dept] || 0) + (row[dept] || 0);
+    });
+  });
 
-export default function SimpleBarChart() {
+  // ✅ Convert to chart data
+  const data = Object.entries(DEPT_COLORS).map(([dept, color]) => ({
+    name: dept,
+    value: deptCounts[dept] || 0,
+    color,
+  }));
+
   return (
     <BarChart
       xAxis={[{ scaleType: "band", data: ["Complaints"] }]}
@@ -30,7 +41,7 @@ export default function SimpleBarChart() {
         data: [d.value],
         label: d.name,
         color: d.color,
-        barWidth: 10, // ✅ custom width for thinner bars
+        barWidth: 25, // Adjust bar thickness (10–25 looks nice)
       }))}
       grid={{ horizontal: true, vertical: false }}
       {...chartSetting}

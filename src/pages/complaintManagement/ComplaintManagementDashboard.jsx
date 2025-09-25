@@ -896,7 +896,7 @@ export default function ComplaintManagementDashboard() {
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
                                             </div>
                                             <div className="flex justify-center">
-                                         <SimpleBarChart />
+                                            <SimpleBarChart trendData={trendData} />
                                             </div>
                                         </div>
 

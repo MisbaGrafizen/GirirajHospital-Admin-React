@@ -135,7 +135,32 @@ export default function EmailManagement() {
           senderEmail: "noreply@system.com",
           subject: n.title,
           preview: n.body,
-          content: `<p>${n.body}</p><pre>${JSON.stringify(n.data, null, 2)}</pre>`,
+          content: `
+    <div class="space-y-4">
+      <p class="text-gray-800 text-base">${n.body}</p>
+      ${n.data
+              ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+              <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
+                📋 Patient Details
+              </h4>
+              <div class="divide-y divide-gray-200">
+                ${Object.entries(n.data)
+                .map(
+                  ([key, value]) => `
+                    <div class="flex items-start py-2">
+                      <div class="w-40 font-medium text-gray-900 capitalize">${formatKey(
+                    key
+                  )}</div>
+                      <div class="flex-1 text-gray-700 break-words">${value}</div>
+                    </div>`
+                )
+                .join("")}
+              </div>
+            </div>`
+              : ""
+            }
+    </div>
+  `,
           timestamp: new Date(n.createdAt).toLocaleString(),
           isRead: false,
           isStarred: false,
@@ -143,6 +168,15 @@ export default function EmailManagement() {
           priority: "normal",
           hasAttachment: false,
         }));
+
+        // Helper function
+        function formatKey(key) {
+          return key
+            .replace(/([A-Z])/g, " $1")
+            .replace(/^./, (s) => s.toUpperCase());
+        }
+
+
 
         setEmails(mapped);
         if (mapped.length > 0) setSelectedEmail(mapped[0]);
@@ -208,7 +242,7 @@ export default function EmailManagement() {
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
             <div className="flex w-[100%] pl-[10px] max-h-[96%] pb-[50px]  relative    gap-[10px] rounded-[10px]">
-            <Preloader />
+              <Preloader />
               <div className="flex w-[100%] h-screen bg-gray-50">
                 {/* Left Sidebar */}
                 <div className=" w-[30%] max-w-[400px]  bg-white border-r border-gray-200 flex flex-col">
