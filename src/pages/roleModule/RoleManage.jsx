@@ -4,6 +4,7 @@ import SideBar from "../../Component/sidebar/CubaSideBar"
 import Header from "../../Component/header/Header"
 import { ApiDelete, ApiGet, ApiPost, ApiPut } from "../../helper/axios"
 import { Modal as NextUIModal, ModalContent } from "@nextui-org/react"
+import Preloader from "../../Component/loader/Preloader"
 
 
 function resolvePermissions() {
@@ -189,7 +190,8 @@ export default function RoleManage() {
           <Header pageName="Role Management" />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
- <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+ <div className="flex flex-col w-[100%] max-h-[90%]  relative  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+              <Preloader />
               <div className="flex w-[100%] flex-col gap-[20px] py-[10px]">
                 <div className="w-[100%] mx-auto">
                    {canCreate && (

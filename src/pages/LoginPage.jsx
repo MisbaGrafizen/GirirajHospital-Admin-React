@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg"
 import { useNavigate } from "react-router-dom"
-import { requestNotificationPermission } from "../helper/notification"
+// import { requestNotificationPermission } from "../helper/notification"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -64,7 +64,7 @@ const handleSubmit = async (e) => {
       localStorage.setItem("rememberMe", "false");
     }
 
-    await requestNotificationPermission();
+    // await requestNotificationPermission();
 
     navigate("/dashboards/super-dashboard");
   } catch (err) {

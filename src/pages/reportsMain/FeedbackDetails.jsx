@@ -45,7 +45,7 @@ function StarRating({ score = 0, label = "Rating" }) {
 
 function InfoRow({ icon: Icon, label, value }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg border border-gray-100">
+    <div className="flex items-start gap-3 bg-gray-50 shadow-sm p-3 rounded-lg border border-gray-100">
       <div className="mt-0.5 text-gray-400">
         <Icon className="w-5 h-5" aria-hidden="true" />
       </div>
@@ -141,7 +141,7 @@ export default function FeedbackDetails() {
         <Header pageName="Feedback Details" />
         <div className="flex gap-[10px] w-[100%] h-[100%]">
           <SideBar />
-          <div className="flex flex-col w-[100%] md34:!mx-[10px] md11:!mx-auto max-h-[99%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
+          <div className="flex flex-col w-[100%] md34:!mx-[10px] mt-[10px] md11:!mx-auto max-h-[99%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
 
             <section className="bg-white  rounded-xl  md11:!mb-[0px] md34:!mb-[160px]   bg-white shadow-sm border border-red-600 ">
               {/* <div className="px-5 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-100">

@@ -1,3 +1,4 @@
+import { width } from "@mui/system";
 import ConfigDB from "../../Config/ThemeConfig";
 
 const primary = ConfigDB.data.color.primary_color;
@@ -793,6 +794,7 @@ export const CurrencyChartData = {
         options: {
           chart: {
             height: 290,
+         
           },
         },
       },
@@ -803,6 +805,7 @@ export const CurrencyChartData = {
             bar: {
               columnWidth: "35px",
             },
+  
           },
           yaxis: {
             labels: {
@@ -1026,7 +1029,7 @@ export const RecentOrderChart = {
         breakpoint: 1400,
         options: {
           chart: {
-            height: 360,
+            height: 300,
           },
         },
       },
@@ -1034,7 +1037,7 @@ export const RecentOrderChart = {
         breakpoint: 1361,
         options: {
           chart: {
-            height: 300,
+            height: 270,
           },
         },
       },

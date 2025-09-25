@@ -7,64 +7,85 @@ import ReactApexChart from 'react-apexcharts';
 import { CurrencyChartData } from '../../../Data/DefaultDashboard/Chart';
 import { LightCardData } from '../../../Data/DefaultDashboard';
 const OverallBalance = ({ kpis, opdSummary }) => {
-   const totalAll = Number(kpis?.totalFeedback?.value ?? kpis?.totalFeedback ?? 0);
-   const totalOPD = Number(opdSummary?.responses ?? 0);
-   const totalIPD = Math.max(0, totalAll - totalOPD);
+  const totalAll = Number(kpis?.totalFeedback?.value ?? kpis?.totalFeedback ?? 0);
+  const totalOPD = Number(opdSummary?.responses ?? 0);
+  const totalIPD = Math.max(0, totalAll - totalOPD);
   return (
-    <Col xxl='8' lg='12' className='box-col-12'>
+    <Col className='box-col-12'>
       <Card>
         <CardHeader className='card-no-border  items-center  gap-[10px] !flex'>
-        <div className=' flex  profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px] '>
-<i className="fa-regular text-[23px] fa-chart-waterfall"></i>
+          <div className=' flex  profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px] '>
+            <i className="fa-regular text-[23px] fa-chart-waterfall"></i>
 
-        </div>
+          </div>
           <H5>Overall Ratings</H5>
         </CardHeader>
         <CardBody className='pt-0'>
 
 
-          <Row className='m-0 overall-card'>
-            <Col xl='9' md='12' sm='7' className='p-0'>
-              <div className='chart-right'>
+          {/* <Row className='m-0 overall-card w-[100%]'> */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Chart */}
+            <Col className="p-0 flex flex-1">
+              <div className="chart-right w-full">
                 <Row>
-                  <Col xl='12' className='col-xl-12'>
-                    <CardBody className='p-0 '>
-                      <UL attrUL={{ horizontal: true, className: 'd-flex balance-data' }}>
+                  <Col xl="12">
+                    <CardBody className="p-0">
+                      <UL attrUL={{ horizontal: true, className: "d-flex balance-data " }}>
                         <LI>
-                          <span className='circle  md11:!flex md34:!hidden bg-[#aaafcb]'> </span>
-                          <span className='f-light  md11:!flex md34:!hidden ms-1'>OPD</span>
+                          <span className="circle bg-[#aaafcb]"></span>
+                          <span className="f-light ms-1">OPD</span>
                         </LI>
                         <LI>
-                          <span className='circle  md11:!flex md34:!hidden bg-primary'> </span>
-                          <span className='f-light  md11:!flex md34:!hidden ms-1'>IPD</span>
+                          <span className="circle bg-primary"></span>
+                          <span className="f-light ms-1">IPD</span>
                         </LI>
                       </UL>
-                      <div className='  current-sale-container'>
-                        {/* <ReactApexChart type='bar' height={300} options={CurrencyChartData.options} series={CurrencyChartData.series} /> */}
-                         <ReactApexChart
-                         type='bar'
-                         height={300}
-                         options={{
-                           ...CurrencyChartData.options,
-                           xaxis: {
-                             ...CurrencyChartData.options.xaxis,
-                             // use backend labels if present
-                             categories: (kpis?.earning?.labels?.length
-                               ? kpis.earning.labels
-                               : CurrencyChartData.options.xaxis.categories),
-                           },
-                         }}
-                         series={[
-                           {
-                             name: 'IPD',
-                             data: Array.isArray(kpis?.earning?.series) ? kpis.earning.series : [],
-                           },
-                           {
-                             name: 'OPD',
-                             data: Array.isArray(kpis?.expense?.series) ? kpis.expense.series : [],
-                           },
-                         ]}
-                       />
+
+                      {/* ✅ Responsive full-width chart */}
+                      <div className="w-full">
+                        <ReactApexChart
+                          type="bar"
+                          height={250}
+                          width="100%"
+                          options={{
+                            ...CurrencyChartData.options,
+                            xaxis: {
+                              ...CurrencyChartData.options.xaxis,
+                              categories: (kpis?.earning?.labels?.length
+                                ? kpis.earning.labels
+                                : CurrencyChartData.options.xaxis.categories),
+                            },
+                            responsive: [
+                              {
+                                breakpoint: 1024, // tablets
+                                options: {
+                                  chart: { height: 250 },
+                                  plotOptions: { bar: { columnWidth: "40%" } },
+                                  legend: { position: "bottom" },
+                                },
+                              },
+                              {
+                                breakpoint: 768, // small tablets
+                                options: {
+                                  chart: { height: 220 },
+                                  plotOptions: { bar: { columnWidth: "50%" } },
+                                  xaxis: { labels: { rotate: -30 } },
+                                },
+                              },
+                            ],
+                          }}
+                          series={[
+                            {
+                              name: "IPD",
+                              data: Array.isArray(kpis?.earning?.series) ? kpis.earning.series : [],
+                            },
+                            {
+                              name: "OPD",
+                              data: Array.isArray(kpis?.expense?.series) ? kpis.expense.series : [],
+                            },
+                          ]}
+                        />
                       </div>
                     </CardBody>
                   </Col>
@@ -73,10 +94,11 @@ const OverallBalance = ({ kpis, opdSummary }) => {
             </Col>
 
 
-<LightCard LightCardData={LightCardData} totals={{ ipd: totalIPD, opd: totalOPD }} />
+            <LightCard LightCardData={LightCardData} totals={{ ipd: totalIPD, opd: totalOPD }} />
 
-            
-          </Row>
+          </div>
+
+          {/* </Row> */}
         </CardBody>
       </Card>
     </Col>

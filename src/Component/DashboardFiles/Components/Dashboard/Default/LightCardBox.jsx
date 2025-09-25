@@ -7,7 +7,7 @@ import DropdownCommon from '../../Common/Dropdown';
 
 const LightCardBox = ({ data }) => {
   return (
-    <div className='light-card balance-card widget-hover md34:!mt-[16px]'>
+    <div className='light-card flex-shrink-0 balance-card widget-hover md34:!mt-[16px]'>
       <div className='svg-box'>
         {data.icon}
       </div>

@@ -477,7 +477,7 @@ export const UserChart = {
         show: false,
       },
       events: {
-        click: function (chart, w, e) {},
+        click: function (chart, w, e) { },
       },
     },
     colors: primary,
@@ -1430,13 +1430,23 @@ export const TotalEarningChart = {
     },
     responsive: [
       {
-        breakpoint: 360,
+        breakpoint: 760,
         options: {
           chart: {
-            height: 300,
+            height: 350,
           },
         },
       },
+      {
+        breakpoint: 360,
+        options: {
+          chart: {
+            height: 350,
+          },
+        },
+      },
+
+
     ],
     labels: ['Volatility'],
   },

@@ -39,12 +39,12 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
-      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-      transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
-      className="relative bg-white w-[100%] rounded-2xl flex flex-col justify-center items-center shadow-lg border border-gray-100 p-6 "
+      // initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+      // animate={{ opacity: 1, scale: 1, rotate: 0 }}
+      // transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
+      className="relative bg-white w-[100%] rounded-2xl flex flex-col md34:!max-h-[360px] md11:!max-h-[100%] md34:items-start  md11:!items-center shadow-sm border border-gray-100 p-6 "
     >
-      <div className="relative w-80 h-60 flex justify-center items-center">
+      <div className="relative w-80 h-60 flex mx-auto justify-center items-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -98,7 +98,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.2, duration: 0.5 }}
-        className="  flex flex-wrap md11:!flex justify-center gap-x-6  gap-y-[10px] mt-6"
+        className="  flex flex-wrap md11:!flex justify-center gap-x-6  gap-y-[10px] md34:mt-[10px] md11:!mt-6"
       >
         {data.map((item, index) => (
           <motion.div

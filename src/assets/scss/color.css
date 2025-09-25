@@ -18007,7 +18007,8 @@ span.twitter-typeahead .tt-suggestion:active {
 }
 @media (max-width: 1560px) and (min-width: 1400px) {
   .recent-wrapper > div:last-child {
-    display: none;
+    /* display: none; */
+        width: 100%;
   }
 }
 

@@ -47,22 +47,22 @@ const RecentOrders = ({ overallNps = 0 }) => {
   };
 
   return (
-    <Col xxl="4" xl="7" md="6" sm="5" className="box-col-6 md34:pb-[20px] md11:!pb-0">
+    <Col className="  w-[100%] md11:!pb-0">
       <Card className="height-equal">
         <CardHeader className="card-no-border">
           <div className=" flex   items-center gap-[10px]">
             <div className=' flex  profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px] '>
-           <i className="fa-regular  text-[23px] fa-chart-user"></i>
+              <i className="fa-regular  text-[23px] fa-chart-user"></i>
 
             </div>
             <H5>NPS Rating</H5>
           </div>
         </CardHeader>
 
-        <CardBody className="pt-0 pb-1">
-          <Row className="recent-wrapper">
-            <Col xl="6">
-              <div className="recent-chart">
+        <CardBody className="pt-0 pb-2">
+          <div className="recent-wrapper">
+    
+              <div className="recent-chart  md11:!w-[300px] mx-auto">
                 <ReactApexChart
                   type="radialBar"
                   height={290}
@@ -70,9 +70,9 @@ const RecentOrders = ({ overallNps = 0 }) => {
                   series={[seriesValue]}
                 />
               </div>
-            </Col>
+     
 
-            <Col className='md34:pb-[20px] md11:!pb-0' xl="6">
+            {/* <Col className='md34:pb-[20px] md11:!pb-0' xl="6">
               <UL attrUL={{ className: 'order-content' }}>
                 <LI>
                   <span className="recent-circle" style={{ backgroundColor: dialColor }} />
@@ -98,8 +98,8 @@ const RecentOrders = ({ overallNps = 0 }) => {
                   </div>
                 </LI>
               </UL>
-            </Col>
-          </Row>
+            </Col> */}
+          </div>
         </CardBody>
       </Card>
     </Col>

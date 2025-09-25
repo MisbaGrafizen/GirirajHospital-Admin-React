@@ -516,7 +516,7 @@ export default function SuperAdminDashboard() {
                               />
                             </PieChart>
                           </ResponsiveContainer>
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="absolute inset-0 flex items-center mx-auto left-0 right-0 w-fit justify-center pointer-events-none">
                             <div className="text-center">
                               <p className="text-3xl font-bold text-gray-900">{Number(opdSummary.avgRating || 0).toFixed(1)}</p>
                               <p className="text-sm text-gray-600">Avg Rating</p>

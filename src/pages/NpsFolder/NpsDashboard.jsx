@@ -19,6 +19,7 @@ import Header from "../../Component/header/Header"
 import SideBar from "../../Component/sidebar/CubaSideBar"
 import { ApiGet } from "../../helper/axios"
 import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
+import Preloader from "../../Component/loader/Preloader"
 
 
 function resolvePermissions() {
@@ -96,7 +97,7 @@ function AnimatedDropdown({ label, options, selected, onSelect, icon: Icon, disa
         onClick={() => !disabled && setOpen((v) => !v)}
         className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-white transition-colors ${disabled
           ? "border-gray-200 text-gray-400 cursor-not-allowed"
-          : "border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          : "border-gray-300 hover:bg-gray-50 focus:outline-none  focus:ring-sky-500"
           }`}
       >
         <div className="flex items-center gap-2">
@@ -279,28 +280,30 @@ export default function NpsDashboard() {
     const wantIPD = department === "IPD" || department === "Both"
     const doctorFilter = doctor !== "All Doctors" ? doctor.toLowerCase() : null
 
-    const project = (list, dept) =>
-      list
-        .map((d) => {
-          const nps = toNps(d.overallRecommendation)
-          if (nps === null) return null
-          const when = pickCreatedAt(d)
-          if (!inRange(when, dateFrom, dateTo)) return null
-          const docName = pickDoctor(d)
-          if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null
-          return {
-            date: when.toISOString().slice(0, 10),
-            datetime: when.toLocaleString(),
-            patient: pickPatient(d),
-            room: pickRoom(d, dept),
-            doctor: docName,
-            department: dept,
-            rating: nps, // ✅ NPS 0–10 from overallRecommendation
-            category: categoryFromRating(nps),
-            comment: pick(d.comments, d.comment, ""),
-          }
-        })
-        .filter(Boolean)
+    const project = (list, dept) => {
+  if (!Array.isArray(list)) return []
+  return list
+    .map((d) => {
+      const nps = toNps(d.overallRecommendation)
+      if (nps === null) return null
+      const when = pickCreatedAt(d)
+      if (!inRange(when, dateFrom, dateTo)) return null
+      const docName = pickDoctor(d)
+      if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null
+      return {
+        date: when.toISOString().slice(0, 10),
+        datetime: when.toLocaleString(),
+        patient: pickPatient(d),
+        room: pickRoom(d, dept),
+        doctor: docName,
+        department: dept,
+        rating: nps,
+        category: categoryFromRating(nps),
+        comment: pick(d.comments, d.comment, ""),
+      }
+    })
+    .filter(Boolean)
+}
 
     let recs = []
     if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"))
@@ -378,7 +381,8 @@ export default function NpsDashboard() {
                 <PermissionDenied />
               </div>
             ) : (
-              <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+              <div className="flex flex-col relative  w-[100%] max-h-[90%] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+         <Preloader />
                 <div className="">
                   <main className="">
                     {/* optional lightweight state messages */}
@@ -386,9 +390,9 @@ export default function NpsDashboard() {
                     {error && <div className="text-sm text-red-600 px-2 pb-1">{error}</div>}
 
                     {/* Filters */}
-                    <div className="bg-white rounded-lg shadow-sm border h-fit border-gray-100 p-3 mb-3">
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-x-4">
-                        <div className="relative md:11!mb-[0px] md34:mb-[14px]">
+                    <div className="bg-white rounded-lg shadow-sm border h-fit border-gray-100  px-3 pt-3 pb-3 mb-3">
+                      <div className="grid grid-cols-2 md77:!grid-cols-3  md11:!grid-cols-5 h-fit gap-x-4">
+                        <div className="relative md:11!mb-[0px] md34:!mb-[14px]">
                           <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                             From
                           </label>
@@ -399,7 +403,7 @@ export default function NpsDashboard() {
                               value={dateFrom}
                               max={dateTo}
                               onChange={(e) => setDateFrom(e.target.value)}
-                              className="w-full pl-9 text-[14px] pr-3 py-2  bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              className="w-full pl-9 text-[14px] pr-3 py-2  bg-white border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                             />
                           </div>
                         </div>
@@ -414,7 +418,7 @@ export default function NpsDashboard() {
                               value={dateTo}
                               min={dateFrom}
                               onChange={(e) => setDateTo(e.target.value)}
-                              className="w-full pl-9 pr-3 py-2 text-[14px] bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              className="w-full pl-9 pr-3 py-2 text-[14px] bg-white border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                             />
                           </div>
                         </div>
@@ -438,14 +442,14 @@ export default function NpsDashboard() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4 md11:!gap-4 ">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4  ">
                       <Widgets1
                         data={{
                           title: "Detractors %",
                           gros: `${kpi.pDetr}%`,
                           total: `${kpi.total} total`,
-                          color: "danger",
-                          icon: <i className="fa-solid fa-face-frown text-[18px] text-red-600"></i>,
+                          color: "warning",
+                          icon: <i className="fa-solid fa-face-frown !text-[24px] text-orange-600"></i>,
                         }}
                       />
                       <Widgets1
@@ -454,7 +458,7 @@ export default function NpsDashboard() {
                           gros: `${kpi.pPass}%`,
                           total: `${kpi.total} total`,
                           color: "warning",
-                          icon: <i className="fa-solid fa-minus text-[18px] text-amber-600"></i>,
+                          icon: <i className="fa-solid fa-minus !text-[24px] text-amber-600"></i>,
                         }}
                       />
                       <Widgets1
@@ -463,7 +467,7 @@ export default function NpsDashboard() {
                           gros: `${kpi.pProm}%`,
                           total: `${kpi.total} total`,
                           color: "success",
-                          icon: <i className="fa-solid fa-heart-pulse text-[18px] text-emerald-600"></i>,
+                          icon: <i className="fa-regular fa-heart-pulse !text-[24px] text-emerald-600"></i>,
                         }}
                       />
                       <Widgets1
@@ -472,13 +476,13 @@ export default function NpsDashboard() {
                           gros: `${kpi.nps}`,
                           total: "Promoters − Detractors",
                           color: "secondary",
-                          icon: <i className="fa-solid fa-chart-line text-[18px] text-gray-600"></i>,
+                          icon: <i className="fa-regular fa-chart-line !text-[20px] text-gray-600"></i>,
                         }}
                       />
                     </div>
 
                     {/* Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6  mb-3">
                       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
                         <div className=" flex mb-[10px] items-center gap-[10px]">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -516,7 +520,7 @@ export default function NpsDashboard() {
                         </div>
                       </div>
 
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-[18px] p-4">
                         <div className=" flex mb-[10px] items-center gap-[10px]">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                             <i className="fa-regular fa-arrow-trend-up text-[#fff] text-[19px]"></i>
@@ -540,18 +544,18 @@ export default function NpsDashboard() {
                     </div>
 
                     {/* Table Controls */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-2 px-[10px] mb-3">
+                      <div className="flex flex-col md:flex-row  items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <label className="inline-flex items-center gap-2">
+                          <label className="inline-flex   !mb-0 items-center gap-2">
                             <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
                             <span className="text-sm text-gray-700">Detractors</span>
                           </label>
-                          <label className="inline-flex items-center gap-2">
+                          <label className="inline-flex !mb-0  items-center gap-2">
                             <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
                             <span className="text-sm text-gray-700">Passives</span>
                           </label>
-                          <label className="inline-flex items-center gap-2">
+                          <label className="inline-flex !mb-0 items-center gap-2">
                             <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
                             <span className="text-sm text-gray-700">Promoters</span>
                           </label>
@@ -563,14 +567,14 @@ export default function NpsDashboard() {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Search patient, doctor, room, comment..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Table */}
-                    <div className="bg-white rounded-lg shadow-sm border mb-[100px] border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
                           <thead className="bg-gray-50">

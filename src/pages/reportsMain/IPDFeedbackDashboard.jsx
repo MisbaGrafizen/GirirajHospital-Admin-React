@@ -52,6 +52,7 @@ import {
 } from "recharts"
 import { useNavigate } from 'react-router-dom'
 import Widgets1 from '../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1'
+import Preloader from '../../Component/loader/Preloader'
 
 // ------------------------------------------------------------------
 // Helpers
@@ -931,12 +932,12 @@ export default function IPDFeedbackDashboard() {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%] max-h-[97%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-
+            <div className="flex flex-col w-[100%]  relative max-h-[97%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+<Preloader />
               <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
                 <div className="grid grid-cols-2  md:grid-cols-4 gap-x-2">
                   {/* From date */}
-                  <div className=" relative mb-[15px]">
+                  <div className=" relative ">
                     <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1029,7 +1030,7 @@ export default function IPDFeedbackDashboard() {
                 {/* Charts Row */}
                 <div className="flex  md11:!flex-row flex-col  justify-start  gap-[20px] mb-2  ">
                   {/* Rating Distribution Donut Chart */}
-                  <div className="bg-white rounded-lg  border shadow-md p-4">
+                  <div className="bg-white rounded-lg   shadow-sm p-4">
                     <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
@@ -1044,7 +1045,7 @@ export default function IPDFeedbackDashboard() {
                   </div>
 
                   {/* Average Rating Trend Line Chart */}
-                  <div className="bg-white rounded-lg pb-[10px] md11:!w-[800px] shadow-sm border border-gray-100  md11:!p-4">
+                  <div className="bg-white rounded-lg pb-[10px] md11:!w-[800px] shadow-sm  border-gray-100  md11:!p-4">
                     <div className=' flex ml-[15px] mt-[13px]  mb-[17px] items-center gap-[10px]'>
 
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1085,7 +1086,7 @@ export default function IPDFeedbackDashboard() {
                 </div>
 
                 {/* Word Cloud */}
-                <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
+                <div className="bg-white border rounded-[10px]  p-3 mt-[] mb-[13px]">
                   <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1133,10 +1134,10 @@ export default function IPDFeedbackDashboard() {
                 </div>
 
                 {/* Service Summary + Extra Donut */}
-                <div className="flex w-[100%] mb-[19px] gap-[30px]">
+                <div className="flex w-[100%] mb-[15px] gap-[30px]">
                   {/* Service-Wise Summary Table */}
-                  <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
-                    <div className="px-3 items-center py-2 border-b flex  mt-[5px] gap-[10px] border-gray-200">
+                  <div className="bg-white rounded-xl border w-[100%] shadow-sm overflow-hidden">
+                    <div className="px-3 items-center py-[10px] border-b flex  mt-[5px] gap-[10px] border-gray-200">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                         <i className="fa-solid  text-[17px] text-[#fff] fa-user-md"></i>
 
@@ -1211,9 +1212,9 @@ export default function IPDFeedbackDashboard() {
                 </div>
 
                 {/* Patient-Wise Feedback Table */}
-                <div className="bg-white rounded-lg e mb-[100px]  border shadow-sm overflow-hidden">
-                  <div className="px-3 py-2 border-b  border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
-                    <div className=' flex gap-[10px] pt-[13px] pb-[20px]  justify-start '>
+                <div className="bg-white rounded-xl e md34:!mb-[100px] md11:!mb-0  border shadow-sm overflow-hidden">
+                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
+                    <div className=' flex gap-[10px] items-center py-[10px]    justify-start '>
 
 
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1229,14 +1230,14 @@ export default function IPDFeedbackDashboard() {
                           placeholder="Search feedback..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-3 py-2 w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="pl-10 pr-[6px] py-2 w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
                       {/* Export only if permitted */}
                       <button
                         onClick={exportToExcel}
-                        className="flex items-center flex-shrink-0 px-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="flex items-center flex-shrink-0 px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel

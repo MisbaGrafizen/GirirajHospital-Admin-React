@@ -9,6 +9,7 @@ import { Modal as NextUIModal, ModalContent } from "@nextui-org/react";
 import { Edit, Trash2 } from "lucide-react";
 
 import uploadToHPanel from '../../helper/hpanelUpload';
+import Preloader from '../../Component/loader/Preloader';
 
 function resolvePermissions() {
   const loginType = localStorage.getItem("loginType")
@@ -425,7 +426,8 @@ export default function UserManageMent() {
           <Header pageName="  User Management" />
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex pl-[10px] w-[100%] max-h-[90%] pb-[50px] pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
+            <div className="flex  w-[100%] relative max-h-[90%] overflow-y-auto gap-[30px] rounded-[10px]">
+<Preloader />
               <div className=' flex w-[100%] flex-col gap-[20px] py-[10px]'>
                 <div className=' flex gap-[5px]  w-[100%] flex-col'>
                   <div className=" w-[100%]  p-2">

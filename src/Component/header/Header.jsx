@@ -82,7 +82,7 @@ const unreadCount = count - lastSeen;
 
 
         <section className="flex w-[100%] justify-between px-[12px] items-center border-b-[1.5px]">
-          <div className="gap-[30px] flex items-center justify-between px-[0px] pb-[25px] pt-[32px] bg h-[42px]">
+          <div className="gap-[60px] flex items-center justify-between px-[0px] pb-[25px] pt-[32px] bg h-[42px]">
             {/* Left side back + title */}
             <div className="flex w-fit cursor-pointer items-center gap-[5px]">
               <img
@@ -130,10 +130,7 @@ const unreadCount = count - lastSeen;
 
 
           <div className="relative mr-[30px]  flex gap-[20px] items-center">
-            <div className="bg-gradient-to-br  cursor-pointer   w-[130px] font-[600] items-center gap-[10px] text-[16px] rounded-[8px]   h-[35px] flex  justify-center  from-purple-400 to-blue-500  text-[#fff]  "
-              onClick={handleLogout}>
-              <i className="fa-solid fa-left-from-bracket"></i> Log Out
-            </div>
+  
             <i className="fa-solid fa-bell text-gray-700 text-2xl  cursor-pointer" onClick={handleMail}></i>
 
               <span
@@ -145,7 +142,7 @@ const unreadCount = count - lastSeen;
 
           </div>
         </section>
-
+{["/dashboards/super-dashboard", "/dashboards/opd-feedback","/dashboards/ipd-feedback", "/dashboards/complaint-dashboard","/dashboards/nps-dashboard"].includes(location.pathname) && (
         <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
 
           <div className="flex h-[50px] px-[10px]  items-center justify-center w-[100%]">
@@ -164,6 +161,7 @@ const unreadCount = count - lastSeen;
 
 
         </div>
+   )}
       </div>
 
     </>

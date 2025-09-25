@@ -4,6 +4,7 @@ import SideBar from '../../Component/sidebar/CubaSideBar'
 import Header from '../../Component/header/Header'
 import { Calendar, User, Phone, Stethoscope, BedSingle, Star } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
+import Preloader from '../../Component/loader/Preloader'
 
 // ---------- utils ----------
 const normId = (v) =>
@@ -157,6 +158,7 @@ export default function IpdFeedbackDetails() {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
             <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <Preloader />
               <section className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-4">
                   {/* Top info */}

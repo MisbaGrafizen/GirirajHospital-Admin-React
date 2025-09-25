@@ -31,6 +31,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import OpdFilter from '../../Component/ReportFilter/OpdFilter'
 import Widgets1 from '../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1'
+import Preloader from '../../Component/loader/Preloader'
 
 // ------------------------------------------------------------------
 // Config / Helpers
@@ -666,18 +667,19 @@ export default function OPDFeedbackDashboard() {
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] md11:!pr-[15px]  overflow-y-auto gap-[30px] rounded-[10px]">
+            <div className="flex relative flex-col w-[100%] max-h-[94%] md34:!pb-[50px] md11:!pb-[0px] py-[10px] md11:!pr-[15px]  overflow-y-auto gap-[20px] rounded-[10px]">
+            <Preloader />
               <div className="mx-auto w-full">
-                <div className="bg-white rounded-lg shadow-sm p-[13px]  mx-[10px]  mb-[10px] border border-gray-100  ">
+                <div className="bg-white rounded-lg shadow-sm p-[13px]  md34:!mx-[12px] md11:!mx-0   mb-[10px] border border-gray-100  ">
                   <OpdFilter value={filters} onChange={handleFilterChange} />
                 </div>
-                <div className="pt-[5px] flex gap-6 mb-3">
+                <div className="flex gap-6 mb-3">
 
 
-                  <div className="flex flex-col w-[97%] md11:mx-0 mx-auto md11:w-[100%] max-h-[90%] pb-[50px] py-[10px] md11:pr-[15px]  overflow-y-auto gap-[30px] rounded-[10px]">
+                  <div className="flex flex-col w-[97%] md11:mx-0 mx-auto md11:w-[100%] max-h-[90%] md34:!pb-[50px] md11:!pb-[10px]  overflow-y-auto gap-[20px] rounded-[10px]">
                     <div className="mx-auto w-full">
 
-                      <div className="pt-[5px] w-[100%] mb-3">
+                      <div className="pt-[5px] w-[100%] ">
 
 
 
@@ -726,7 +728,7 @@ export default function OPDFeedbackDashboard() {
                       </div>
 
                       {/* Charts Row */}
-                      <div className=" flex md11:!flex-row flex-col justify-start gap-[20px] mb-2">
+                      <div className=" flex md11:!flex-row flex-col justify-start gap-[15px] mb-2">
                         <div className="bg-white border  rounded-lg shadow-md p-3">
                           <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
@@ -780,7 +782,7 @@ export default function OPDFeedbackDashboard() {
                       </div>
 
                       {/* Word Cloud */}
-                      <div className="bg-white border-b-[1.7px] border-dashed p-3 mb-6">
+                      <div className="bg-white border-[1.7px] shadow-sm  rounded-[10px] p-3 mt-[16px] ">
                         <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -809,7 +811,7 @@ export default function OPDFeedbackDashboard() {
                           ].map((word, index) => (
                             <span
                               key={index}
-                              className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
+                              className={`px-3 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
                                 index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
                                   index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
                                     index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
@@ -828,9 +830,9 @@ export default function OPDFeedbackDashboard() {
 
 
                     {/* Service Summary + Extra Donut */}
-                    <div className="flex w-[100%] mb-[30px] gap-[30px]">
+                    <div className="flex w-[100%] mb-[px] gap-[30px]">
                       <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
-                        <div className="px-6 py-2  flex  items-center gap-[10px] border-b border-gray-200">
+                        <div className="px-3 py-[13px]  flex  items-center gap-[10px] border-b border-gray-200">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                             <i className="fa-solid  text-[17px] text-[#fff] fa-user-md"></i>
                           </div>
@@ -840,12 +842,12 @@ export default function OPDFeedbackDashboard() {
                           <table className="md11:!min-w-full min-w-[800px] ">
                             <thead className="bg-gray-50">
                               <tr>
-                                <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
-                                <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Excellent %</th>
-                                <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Good %</th>
-                                <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Average %</th>
-                                <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase flex-shrink-0 tracking-wider border-r border-gray-200">Poor %</th>
-                                <th className="px-6 py-[10px] text-center text-xs font-medium text-gray-500 uppercase flex-shrink-0 tracking-wider">Very Poor %</th>
+                                <th className="px-3 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
+                                <th className="px-3 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Excellent %</th>
+                                <th className="px-3 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Good %</th>
+                                <th className="px-3 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Average %</th>
+                                <th className="px-3 py-[10px] text-center text-xs font-medium text-gray-500 uppercase flex-shrink-0 tracking-wider border-r border-gray-200">Poor %</th>
+                                <th className="px-3 py-[10px] text-center text-xs font-medium text-gray-500 uppercase flex-shrink-0 tracking-wider">Very Poor %</th>
                               </tr>
                             </thead>
                             <tbody className="bg-white">
@@ -856,31 +858,31 @@ export default function OPDFeedbackDashboard() {
                                     key={index}
                                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                   >
-                                    <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r flex items-center gap-2 border-gray-200">
+                                    <td className="px-3 py-[10px] text-sm font-medium text-gray-900 border-r flex items-center gap-2 border-gray-200">
                                       <Icon className="w-4 h-4 text-gray-600" />
                                       {service.service}
                                     </td>
-                                    <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                    <td className="px-3 py-[10px] text-center text-sm border-r border-gray-200">
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">
                                         {service.excellent}%
                                       </span>
                                     </td>
-                                    <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                    <td className="px-3 py-[10px] text-center text-sm border-r border-gray-200">
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6] text-white">
                                         {service.good}%
                                       </span>
                                     </td>
-                                    <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                    <td className="px-3 py-[10px] text-center text-sm border-r border-gray-200">
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#06B6D4] text-white">
                                         {service.average}%
                                       </span>
                                     </td>
-                                    <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
+                                    <td className="px-3 py-[10px] text-center text-sm border-r border-gray-200">
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EAB308] text-white">
                                         {service.poor}%
                                       </span>
                                     </td>
-                                    <td className="px-6 py-[10px] text-center text-sm">
+                                    <td className="px-3 py-[10px] text-center text-sm">
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F97316] text-white">
                                         {service.veryPoor}%
                                       </span>
@@ -902,9 +904,9 @@ export default function OPDFeedbackDashboard() {
 
 
                     {/* Patient-Wise Feedback Table */}
-                    <div className="bg-white md34:!mb-[100px] rounded-lg border shadow-sm overflow-hidden">
-                      <div className="px-3 py-2 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div className=' flex gap-[10px] pt-[13px] mb-[10px]  justify-start '>
+                    <div className="bg-white md34:!mb-[100px]  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
+                      <div className="px-3  border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        <div className=' flex gap-[10px]  items-center py-[13px] justify-start '>
 
 
 
@@ -913,7 +915,7 @@ export default function OPDFeedbackDashboard() {
                           </div>
                           <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
                         </div>
-                        <div className="flex flex-row gap-7">
+                        <div className="flex flex-row items-center gap-3">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
@@ -921,7 +923,7 @@ export default function OPDFeedbackDashboard() {
                               placeholder="Search feedback..."
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10 pr-3 py-[4px] border w-[170px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
+                              className="pl-10 pr-3 py-[5px] border w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
                             />
                           </div>
 
@@ -966,7 +968,7 @@ export default function OPDFeedbackDashboard() {
 
                                   <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                     <div className="flex items-center">
-                                      <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
                                       {formatDate(feedback.createdAt)}
                                     </div>
                                   </td>

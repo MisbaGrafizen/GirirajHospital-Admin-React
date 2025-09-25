@@ -15,6 +15,7 @@ import Header from "../Component/header/Header";
 import SideBar from "../Component/sidebar/SideBar";
 import CubaSidebar from "../Component/sidebar/CubaSideBar";
 import { ApiGet } from "../helper/axios";
+import Preloader from "../Component/loader/Preloader";
 
 const mockEmails = [
   {
@@ -206,8 +207,9 @@ export default function EmailManagement() {
           <Header pageName="Mail Management" />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
-            <div className="flex w-[100%] pl-[10px] max-h-[96%] pb-[50px]  ̰   gap-[10px] rounded-[10px]">
-              <div className="flex h-screen bg-gray-50">
+            <div className="flex w-[100%] pl-[10px] max-h-[96%] pb-[50px]  relative    gap-[10px] rounded-[10px]">
+            <Preloader />
+              <div className="flex w-[100%] h-screen bg-gray-50">
                 {/* Left Sidebar */}
                 <div className=" w-[30%] max-w-[400px]  bg-white border-r border-gray-200 flex flex-col">
                   {/* Header */}
@@ -296,7 +298,7 @@ export default function EmailManagement() {
                 </div>
 
                 {/* Right Panel */}
-                <div className="w-[70%] flex flex-col bg-white">
+                <div className="w-[100%] flex flex-col bg-white">
                   {selectedEmail ? (
                     <>
                       {/* Header */}

@@ -21,7 +21,7 @@ import SuperAdminDashboard from "./pages/adminDashboard/SuperAdminDashboard";
 import UserLoginPage from "./pages/UserLoginPage";
 import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
 import EmailManagement from "./pages/EmailManagement";
-import { listenForMessages, requestNotificationPermission } from "./helper/notification";
+// import { listenForMessages, requestNotificationPermission } from "./helper/notification";
 
 
 
@@ -29,10 +29,10 @@ function App() {
 
       const location = useLocation();
 
-      useEffect(() => {
-    requestNotificationPermission();
-    listenForMessages();
-  }, []);
+  //     useEffect(() => {
+  //   requestNotificationPermission();
+  //   listenForMessages();
+  // }, []);
 
   useEffect(() => {
     if (location.pathname === "/") {
@@ -58,7 +58,7 @@ function App() {
           <Route path="/ipd-feedback-details" element={<IpdFeedbackDetails />} />
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
-          <Route path="/dashboard" element={<SuperAdminDashboard />} />
+
           <Route path="/mail" element={<EmailManagement />} />
 
 

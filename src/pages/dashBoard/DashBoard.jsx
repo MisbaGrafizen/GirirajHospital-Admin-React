@@ -55,6 +55,7 @@ import '../../assets/scss/style.css'
 import { ApiGet } from "../../helper/axios";
 import dayjs from "dayjs";
 import ConcernSummaryDonutChart from "../../Component/MainInputFolder/ConcernSummaryDonutChart";
+import Preloader from "../../Component/loader/Preloader";
 // import CryptoAnnotations from "../../Component/DashboardFiles/Components/Widgets/Chart/CryptoAnnotations";
 
 // import 'react-clock/dist/Clock.css';
@@ -254,20 +255,31 @@ export default function DashBoard() {
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[96%] pb-[50px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-
+            <div className="flex flex-col w-[100%] md34:!max-h-[96%] relative md11:!max-h-[90%] md34:pb-[100px] md11:!pb-[20px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+<Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
                 <Container fluid={true}>
-                  <Row className="widget-grid">
+                  {/* <Row className="widget-grid"> */}
                   {/* <Row className=""> */}
 
-                    <GreetingCard />
+                  <div className=" ">
+
+
                     <WidgetsWrapper kpis={kpis} />
-                    <OverallBalance kpis={kpis} opdSummary={opdSummary} />
-                    <RecentOrders
-                      overallNps={kpis?.npsRating?.value}
-                    />
+                    <div className=" flex md11:!flex-row flex-col  gap-[25px] w-[100%]">
+
+                      <div className=" md11:!w-[850px] max-w-[900px]">
+
+
+                        <OverallBalance kpis={kpis} opdSummary={opdSummary} />
+                      </div>
+                      <div className=" md34:hidden md11:!flex w-[400px]">
+                        <RecentOrders
+                          overallNps={kpis?.npsRating?.value}
+                        />
+                      </div>
+                    </div>
                     {/* <CryptoAnnotations /> */}
                     {/* <ActivityCard /> */}
                     {/* <RecentSales /> */}
@@ -280,7 +292,7 @@ export default function DashBoard() {
                     <>
 
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
                         {/* Concerns Status */}
                         {/* <motion.div variants={itemVariants}>
                           <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
@@ -327,12 +339,19 @@ export default function DashBoard() {
                             </div>
                           </motion.div>
                         </motion.div> */}
+                        <div className=" flex md77:flex-row md34:flex-col md77:!gap-[20px] ">
 
-                        <ConcernSummaryDonutChart data={concernData} />
+                          <div className=" md11:!hidden  ">
+                            <RecentOrders
+                              overallNps={kpis?.npsRating?.value}
+                            />
+                          </div>
+                          <ConcernSummaryDonutChart data={concernData} />
 
+                        </div>
                         {/* Department Analysis */}
                         <motion.div variants={itemVariants}>
-                          <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
+                          <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
                             <div className="flex items-center justify-between mb-6">
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
@@ -369,14 +388,14 @@ export default function DashBoard() {
 
 
                       <motion.div variants={itemVariants}>
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center">
                               <Clock className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                              <h2 className="text-2xl font-bold text-gray-900">Recent Feedbacks</h2>
-                              <p className="text-sm text-gray-600">Latest patient responses and ratings</p>
+                              <h2 className="text-xl font-bold text-gray-900">Recent Feedbacks</h2>
+                              <p className="text-[10px] text-gray-600">Latest patient responses and ratings</p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -387,7 +406,7 @@ export default function DashBoard() {
                         <motion.div className="bg-white/90. md34:!hidden md11:!block backdrop-blur-sm rounded-xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
                           <div className="overflow-x-auto">
                             <table className="w-full min-w-[1000px]">
-                              <thead className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-teal-500/10">
+                              <thead className=" bg-gray-100">
                                 <tr>
                                   <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Patient Details</th>
                                   <th className="px-6 py-3 text-left text-sm  flex-shrink-0 font-bold text-gray-900">Visit Info</th>
@@ -547,7 +566,8 @@ export default function DashBoard() {
 
 
                     </>
-                  </Row>
+                    {/* </Row> */}
+                  </div>
                 </Container>
               </Fragment>
             </div>

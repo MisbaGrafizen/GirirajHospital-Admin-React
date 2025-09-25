@@ -22,6 +22,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiGet, ApiPost, ApiPut } from '../../helper/axios'
 import uploadToHPanel from '../../helper/hpanelUpload'
+import Preloader from '../../Component/loader/Preloader'
 
 // map backend module ids to your DEPT_LABEL keys
 const MODULE_TO_BLOCK = {
@@ -570,14 +571,15 @@ export default function ComplaintViewPage() {
                     <Header pageName="Complaint Details" />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
-                        <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <Preloader />
                             <div className="">
                                 <div className="">
                                     {/* Header */}
                                     <motion.div
                                         initial={{ opacity: 0, y: -20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="bg-white shadow-sm  px-[20px] pb-[10px] pt-[10px] border-b mb-6"
+                                        className="bg-white shadow-sm  px-[20px] pb-[10px] pt-[10px] border  rounded-lg mb-2"
                                     >
                                         <div className="flex items-center justify-between ">
 
@@ -595,7 +597,7 @@ export default function ComplaintViewPage() {
                                     </motion.div>
 
                                     {/* Main Content */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         {/* Left Column - Patient & Complaint Info */}
                                         <motion.div
                                             initial={{ opacity: 0, x: -20 }}
@@ -604,46 +606,46 @@ export default function ComplaintViewPage() {
                                             className="lg:col-span-2 space-y-6"
                                         >
                                             {/* Patient Information */}
-                                            <div className="bg-white  border rounded-xl shadow-sm p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Patient Information</h2>
+                                            <div className="bg-white  border rounded-xl shadow-sm p-3">
+                                                <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                    <div className="flex  shadow-sm border !border-[#eaeaea] p-3 bg-gray-50 rounded-lg">
                                                         <User className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Patient Name</p>
                                                             <p className="font-medium text-gray-900">{complaint.patient}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Bed className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Bed Number</p>
                                                             <p className="font-medium text-gray-900">{complaint.bedNo}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Phone className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Contact</p>
                                                             <p className="font-medium text-gray-900">{complaint.contact}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                        <MapPin className="w-5 h-5 text-gray-400 mr-3" />
+                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                        <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Department</p>
                                                             <p className="font-medium text-gray-900">{complaint.department}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                        <User className="w-5 h-5 text-gray-400 mr-3" />
+                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                        <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Doctor</p>
                                                             <p className="font-medium text-gray-900">{complaint.doctorName}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                        <Calendar className="w-5 h-5 text-gray-400 mr-3" />
+                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                        <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
                                                             <p className="font-medium text-gray-900">{complaint.date}</p>
@@ -653,8 +655,8 @@ export default function ComplaintViewPage() {
                                             </div>
 
                                             {/* Complaint Details */}
-                                            <div className="bg-white rounded-xl shadow-sm border p-5">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Complaint Details</h2>
+                                            <div className="bg-white rounded-xl shadow-sm border p-4">
+                                                <h2 className="text-xl font-semibold text-gray-900 mb-3">Complaint Details</h2>
                                                 <div className="space-y-4">
                                                     {/* Service Feedback Section */}
                                                     <div className="space-y-4">
@@ -666,7 +668,7 @@ export default function ComplaintViewPage() {
                                                             if (!blockHasContent(block)) return null;
 
                                                             return (
-                                                                <div key={key} className="bg-gray-50 rounded-lg p-4 mb-3">
+                                                                <div key={key} className="bg-gray-50 border rounded-lg p-3 mb-3">
                                                                     <h3 className="text-md font-semibold text-gray-900 mb-2">
                                                                         {DEPT_LABEL[key]}
                                                                     </h3>

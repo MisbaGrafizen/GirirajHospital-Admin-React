@@ -35,6 +35,9 @@ import { useNavigate } from "react-router-dom"
 import OpdFilter from "../../Component/ReportFilter/OpdFilter"
 import { ApiGet } from "../../helper/axios"
 import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
+import AnalyticsBarChart from "../../Component/AnalyticsBarChart";
+import SimpleBarChart from "../../Component/AnalyticsBarChart";
+import Preloader from "../../Component/loader/Preloader";
 
 const MODULE_TO_BLOCK = {
     doctor_service: "doctorServices",
@@ -637,7 +640,7 @@ export default function ComplaintManagementDashboard() {
                         )
                     })}
                 </svg>
-                <div className="mt-4 flex flex-wrap justify-center md11:grid grid-cols-2 gap-2 text-sm">
+                <div className="mt-4 flex flex-wrap justify-center   gap-2 text-sm">
                     {data.map((item, index) => (
                         <div
                             key={index}
@@ -801,8 +804,8 @@ export default function ComplaintManagementDashboard() {
                     <Header pageName="Complaint Management " />
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
-                        <div className="flex flex-col w-[100%] max-h-[97%] pb-[50px] py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
-
+                        <div className="flex relative flex-col w-[100%] max-h-[97%] md34:!pb-[50px] md11:!pb-0 py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
+<Preloader />
                             <div className="">
                                 <div className="">
                                     <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
@@ -813,7 +816,7 @@ export default function ComplaintManagementDashboard() {
                                         />
                                     </div>
 
-                                    <div className="grid md34:!grid-cols-2  md11:!grid-cols-5 mt-[10px] lg:grid-cols-6 gap-2 mb-2">
+                                    <div className="grid md34:!grid-cols-2  md11:!grid-cols-4 mt-[10px] lg:grid-cols-6 gap-2 mb-2">
                                         <Widgets1
                                             data={{
                                                 title: "Total Complaints",
@@ -853,7 +856,7 @@ export default function ComplaintManagementDashboard() {
                                                 icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
                                             }}
                                         />
-
+<div className=" mt-[-10px]">
                                         <Widgets1
                                             data={{
                                                 title: "Avg Resolution",
@@ -863,6 +866,9 @@ export default function ComplaintManagementDashboard() {
                                                 icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
                                             }}
                                         />
+                                        </div>
+<div className=" mt-[-10px]">
+
 
                                         <Widgets1
                                             data={{
@@ -873,11 +879,12 @@ export default function ComplaintManagementDashboard() {
                                                 icon: <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-purple-600" spin />,
                                             }}
                                         />
+                                        </div>
                                     </div>
 
 
                                     {/* Charts Row */}
-                                    <div className=" flex  md11:!flex-row md34:!flex-col mt-[20px]  gap-6 mb-6">
+                                    <div className=" flex  md11:!flex-row md34:!flex-col  min-w-[600px]  gap-6 mb-3">
                                         <div className="bg-white border rounded-lg shadow-sm p-4">
                                             <div className=" flex gap-[10px]">
 
@@ -889,7 +896,7 @@ export default function ComplaintManagementDashboard() {
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
                                             </div>
                                             <div className="flex justify-center">
-                                                <AnimatedMultiLineChart data={trendData} colors={departmentColors} />
+                                         <SimpleBarChart />
                                             </div>
                                         </div>
 
@@ -902,7 +909,7 @@ export default function ComplaintManagementDashboard() {
                                                 </div>
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
                                             </div>
-                                            <div className="flex justify-center">
+                                            <div className="flex justify-center  max-w-[400px]">
                                                 <AnimatedDonutChart
                                                     data={[
                                                         { label: "General", count: 45, percentage: 35, color: "#3B82F6" },
@@ -918,7 +925,7 @@ export default function ComplaintManagementDashboard() {
 
                                     <div className=" flex md11:!flex-row md34:!flex-col w-[100%] items-start gap-[10px]">
                                         <div className="bg-white border md34:!w-[100%] md11:!w-[70%] shadow-sm rounded-lg overflow-hidden mb-6">
-                                            <div className="pl-4 items-center gap-[10px] flex  py-2 border-b border-gray-200">
+                                            <div className=" px-3 py-3 items-center gap-[10px] flex   border-b border-gray-200">
                                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                                                     <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
                                                 </div>
@@ -980,8 +987,8 @@ export default function ComplaintManagementDashboard() {
 
 
                                         {/* Word Cloud */}
-                                        <div className="bg-white border  rounded-lg pt-[6px] mb-[20px] md11:!h-[250px] shadow-sm md11:!w-[400px]">
-                                            <div className="flex ml-[19px] mb-[10px] pt-[10px] gap-[10px]">
+                                        <div className="bg-white border  min-h-[348px]  rounded-lg  mb-[20px] md11:!h-[200px] shadow-sm md11:!w-[400px]">
+                                            <div className="flex ml-[19px] py-3 items-center  gap-[10px]">
 
 
                                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1032,7 +1039,7 @@ export default function ComplaintManagementDashboard() {
 
                                     {/* Complaint Details Table */}
                                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                                        <div className="px-6 py-2 border-b flex  gap-[10px] items-center border-gray-200">
+                                        <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
                                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                                                 <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
                                             </div>

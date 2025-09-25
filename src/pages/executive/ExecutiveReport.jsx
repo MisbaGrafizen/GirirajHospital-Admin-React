@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Circle,
 } from "lucide-react"
+import Preloader from "../../Component/loader/Preloader"
 
 
 function resolvePermissions() {
@@ -202,7 +203,7 @@ function TrendIcon({ direction }) {
 
 // ---------- Component ----------
 export default function ExecutiveReport() {
-    const { canView } = resolvePermissions()
+  const { canView } = resolvePermissions()
 
   // Filters
   const [fromDate, setFromDate] = useState(() => monthStartLocalISO()) // first day of current month
@@ -217,30 +218,30 @@ export default function ExecutiveReport() {
   // Fetch OPD + IPD once (or you can refetch on date change if backend supports range)
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        setLoading(true); setError(null)
-        const [opdRes, ipdRes] = await Promise.all([
-          ApiGet("/admin/opd-patient"),
-          ApiGet("/admin/ipd-patient"),
-        ])
-        const opdData = Array.isArray(opdRes) ? opdRes : (opdRes?.data ?? [])
-        const ipdData = Array.isArray(ipdRes) ? ipdRes : (ipdRes?.data ?? [])
-        if (!mounted) return
-        setOpd(opdData)
-        setIpd(ipdData)
-      } catch (e) {
-        console.error("ExecutiveReport fetch failed:", e)
-        if (mounted) setError("Failed to load data")
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    })()
+      ; (async () => {
+        try {
+          setLoading(true); setError(null)
+          const [opdRes, ipdRes] = await Promise.all([
+            ApiGet("/admin/opd-patient"),
+            ApiGet("/admin/ipd-patient"),
+          ])
+          const opdData = Array.isArray(opdRes) ? opdRes : (opdRes?.data ?? [])
+          const ipdData = Array.isArray(ipdRes) ? ipdRes : (ipdRes?.data ?? [])
+          if (!mounted) return
+          setOpd(opdData)
+          setIpd(ipdData)
+        } catch (e) {
+          console.error("ExecutiveReport fetch failed:", e)
+          if (mounted) setError("Failed to load data")
+        } finally {
+          if (mounted) setLoading(false)
+        }
+      })()
     return () => { mounted = false }
   }, [])
 
   // Build current window + previous window slices
-    const { opdNow, ipdNow, opdPrev, ipdPrev } = useMemo(() => {
+  const { opdNow, ipdNow, opdPrev, ipdPrev } = useMemo(() => {
     const now = new Date()
 
     // Current month (1st → last day)
@@ -257,12 +258,15 @@ export default function ExecutiveReport() {
     const prevToISO = toLocalISO(prevTo)
 
     const slice = (arr, fromISO, toISO) =>
-      arr.filter((d) => {
-        const dtISO = toISODateOnly(
-          normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
-        )
-        return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
-      })
+      Array.isArray(arr)
+        ? arr.filter((d) => {
+          const dtISO = toISODateOnly(
+            normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
+          );
+          return dtISO ? dateInRange(dtISO, fromISO, toISO) : false;
+        })
+        : [];
+
 
     return {
       opdNow: slice(opd, curFromISO, curToISO),
@@ -309,7 +313,7 @@ export default function ExecutiveReport() {
   // Build table rows with trends + statuses
   const metrics = useMemo(() => {
     const rows = []
-        function pctChange(current, previous) {
+    function pctChange(current, previous) {
       if (!previous || previous === 0) return "—"
       const diff = ((current - previous) / previous) * 100
       return diff
@@ -328,9 +332,9 @@ export default function ExecutiveReport() {
     rows.push({
       metric: "Overall OPD Feedback",
       value: `${cur.opdPct}%`,
-      trend: { 
-        value: `${diffOPD === "—" ? "—" : diffOPD.toFixed(1) + "%"}`, 
-        direction: diffOPD < 0 ? "down" : "up" 
+      trend: {
+        value: `${diffOPD === "—" ? "—" : diffOPD.toFixed(1) + "%"}`,
+        direction: diffOPD < 0 ? "down" : "up"
       },
       status: statusFromChange(diffOPD === "—" ? 0 : diffOPD),
     })
@@ -400,7 +404,7 @@ export default function ExecutiveReport() {
     // All metrics auto-update on date change
   }
 
-    if (!canView) {
+  if (!canView) {
     return (
       <section className="flex w-full h-full select-none pr-[15px] overflow-hidden">
         <div className="flex w-full flex-col gap-0 h-[96vh]">
@@ -423,11 +427,12 @@ export default function ExecutiveReport() {
           <Header pageName="Executive Report" />
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col relative  w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+             <Preloader />
               <main>
                 {/* Filters */}
-                <section className="mb-6 border border-gray-200 rounded-md">
-                  <form onSubmit={handleFilter} className="p-4">
+                <section className="mb-3 border border-gray-200 rounded-md">
+                  <form onSubmit={handleFilter} className="p-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                       {/* From date */}
                       <div className="relative">
@@ -486,16 +491,16 @@ export default function ExecutiveReport() {
                       </colgroup>
                       <thead className="bg-gray-100 border-b border-gray-200">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
                             Metric
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-center text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
                             Value
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-center text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
                             Trend vs Previous
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
                             Status
                           </th>
                         </tr>
@@ -508,17 +513,17 @@ export default function ExecutiveReport() {
                               key={row.metric}
                               className={idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100 transition-colors"}
                             >
-                              <td className="px-4 py-3 text-sm font-semibold text-gray-900">{row.metric}</td>
-                              <td className="px-4 py-3 text-center">
-                                <span className="text-base sm:text-lg font-semibold text-gray-900">{row.value}</span>
+                              <td className="px-4 py-2 text-sm font-semibold text-gray-900">{row.metric}</td>
+                              <td className="px-4 py-2 text-center">
+                                <span className="text-base sm:text-sm font-[400] text-gray-900">{row.value}</span>
                               </td>
-                              <td className="px-4 py-3 text-center">
+                              <td className="px-4 py-2 text-center">
                                 <span className={`inline-flex items-center gap-2 text-sm font-medium ${trendColor(row.trend.direction)}`}>
                                   <TrendIcon direction={row.trend.direction} />
                                   {row.trend.value}
                                 </span>
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-4 py-2">
                                 <span className="inline-flex items-center gap-2 text-sm text-gray-800">
                                   <Icon className={`w-4 h-4 ${iconClass}`} aria-hidden="true" />
                                   <span className="font-medium">{row.status.label}</span>
@@ -537,7 +542,7 @@ export default function ExecutiveReport() {
                       </tbody>
                       <tfoot>
                         <tr>
-                          <td colSpan={4} className="px-4 py-3 bg-gray-100 border-t border-gray-200 text-xs text-gray-600">
+                          <td colSpan={4} className="px-4 py-2 bg-gray-100 border-t border-gray-200 text-xs text-gray-600">
                             Report period: {fromDate} to {toDate}
                           </td>
                         </tr>
