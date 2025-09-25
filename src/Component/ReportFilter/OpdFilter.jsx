@@ -125,7 +125,7 @@ export default function OpdFilter({
 
   return (
     <div className="">
-      <div className=" md34:!hidden md11:!grid grid-cols-2   md11:grid-cols-4 gap-x-6">
+      <div className=" md34:!hidden md11:!grid grid-cols-2    md11:grid-cols-4 gap-x-6">
         <ModernDatePicker
           label="From Date"
           selectedDate={dateFrom}
@@ -152,7 +152,7 @@ export default function OpdFilter({
         />
       </div>
 
-      <div className=" md34:!flex md11:!hidden flex-col gap-[12px]">
+      <div className=" md34:!flex md11:!hidden flex-col mt-[10px] gap-[12px]">
        <div className=' grid grid-cols-2 gap-x-[10px] justify-between w-[100%]'>
 
 

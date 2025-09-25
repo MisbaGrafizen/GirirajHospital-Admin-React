@@ -226,7 +226,7 @@ export default function ExecutiveReport() {
             ApiGet("/admin/ipd-patient"),
           ])
           const opdData = Array.isArray(opdRes) ? opdRes : (opdRes?.data ?? [])
-          const ipdData = Array.isArray(ipdRes) ? ipdRes : (ipdRes?.data ?? [])
+          const ipdData = Array.isArray(ipdRes) ? ipdRes : (ipdRes?.data?.patients ?? [])
           if (!mounted) return
           setOpd(opdData)
           setIpd(ipdData)

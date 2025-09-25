@@ -742,12 +742,12 @@ export default function IPDFeedbackDashboard() {
   }, [rows, dateFrom, dateTo])
 
   // ---------------- Search + Export ----------------
-   const filteredFeedback = rows
-   .filter((f) =>
-     f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
-   )
-   .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // latest first
-   .slice(0, 5); // only top
+  const filteredFeedback = rows
+    .filter((f) =>
+      f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
+    )
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // latest first
+    .slice(0, 5); // only top
 
   const exportToExcel = async () => {
 
@@ -932,8 +932,8 @@ export default function IPDFeedbackDashboard() {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%]  relative max-h-[97%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-<Preloader />
+            <div className="flex flex-col w-[100%]  relative max-h-[97%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+              <Preloader />
               <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-3 ">
                 <div className="grid grid-cols-2  md:grid-cols-4 gap-x-2">
                   {/* From date */}
@@ -951,7 +951,7 @@ export default function IPDFeedbackDashboard() {
                     </div>
                   </div>
                   {/* To date */}
-                  <div className=" relative">
+                  <div className=" relative md34:!mb-[15px] md11:!hidden">
                     <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1222,7 +1222,7 @@ export default function IPDFeedbackDashboard() {
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
                     </div>
-                    <div className="flex flex-row justify-between gap-2">
+                    <div className="flex flex-row justify-between gap-2 mb-[10px]">
                       <div className="relative">
                         <Search className="absolute left-3 top-[19px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input

@@ -805,7 +805,7 @@ export default function ComplaintManagementDashboard() {
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
                         <div className="flex relative flex-col w-[100%] max-h-[97%] md34:!pb-[50px] md11:!pb-0 py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
-<Preloader />
+                            <Preloader />
                             <div className="">
                                 <div className="">
                                     <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
@@ -856,35 +856,35 @@ export default function ComplaintManagementDashboard() {
                                                 icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
                                             }}
                                         />
-<div className=" mt-[-10px]">
-                                        <Widgets1
-                                            data={{
-                                                title: "Avg Resolution",
-                                                gros: kpiData.avgResolutionTime,
-                                                total: kpiData.avgResolutionTime,
-                                                color: "purple",
-                                                icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
-                                            }}
-                                        />
+                                        <div className=" mt-[-10px]">
+                                            <Widgets1
+                                                data={{
+                                                    title: "Avg Resolution",
+                                                    gros: kpiData.avgResolutionTime,
+                                                    total: kpiData.avgResolutionTime,
+                                                    color: "purple",
+                                                    icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
+                                                }}
+                                            />
                                         </div>
-<div className=" mt-[-10px]">
+                                        <div className=" mt-[-10px]">
 
 
-                                        <Widgets1
-                                            data={{
-                                                title: "In Progress",
-                                                gros: kpiData.inProgress,
-                                                total: kpiData.inProgress,
-                                                color: "purple",
-                                                icon: <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-purple-600" spin />,
-                                            }}
-                                        />
+                                            <Widgets1
+                                                data={{
+                                                    title: "In Progress",
+                                                    gros: kpiData.inProgress,
+                                                    total: kpiData.inProgress,
+                                                    color: "purple",
+                                                    icon: <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-purple-600" spin />,
+                                                }}
+                                            />
                                         </div>
                                     </div>
 
 
                                     {/* Charts Row */}
-                                    <div className=" flex  md11:!flex-row md34:!flex-col  min-w-[600px]  gap-6 mb-3">
+                                    <div className=" flex  md11:!flex-row md34:!flex-col  md11:!min-w-[600px]  gap-6 mb-3">
                                         <div className="bg-white border rounded-lg shadow-sm p-4">
                                             <div className=" flex gap-[10px]">
 
@@ -896,7 +896,9 @@ export default function ComplaintManagementDashboard() {
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
                                             </div>
                                             <div className="flex justify-center">
+
                                             <SimpleBarChart trendData={trendData} />
+
                                             </div>
                                         </div>
 
@@ -987,7 +989,7 @@ export default function ComplaintManagementDashboard() {
 
 
                                         {/* Word Cloud */}
-                                        <div className="bg-white border  min-h-[348px]  rounded-lg  mb-[20px] md11:!h-[200px] shadow-sm md11:!w-[400px]">
+                                        <div className="bg-white border  md34min-h-[348px]  rounded-lg  mb-[20px] md11:!h-[200px] shadow-sm md11:!w-[400px]">
                                             <div className="flex ml-[19px] py-3 items-center  gap-[10px]">
 
 

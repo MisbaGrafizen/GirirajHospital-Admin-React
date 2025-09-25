@@ -238,16 +238,16 @@ export default function EmailManagement() {
 
       <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Mail Management" />
+          <Header pageName="Notification Management" />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
             <div className="flex w-[100%] pl-[10px] max-h-[96%] pb-[50px]  relative    gap-[10px] rounded-[10px]">
               <Preloader />
               <div className="flex w-[100%] h-screen bg-gray-50">
                 {/* Left Sidebar */}
-                <div className=" w-[30%] max-w-[400px]  bg-white border-r border-gray-200 flex flex-col">
+                <div className=" md11:w-[30%] 2xl:!w-[20%] max-w-[400px] pr-[10px] border-r border-gray-200 flex flex-col">
                   {/* Header */}
-                  <div className="p-2 mx-[10px] border-b border-gray-200 bg-gray-50">
+                  <div className=" py-[10px] gap-[10px] border-b flex  border-gray-200 bg-gray-50">
 
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -256,8 +256,12 @@ export default function EmailManagement() {
                         placeholder="Search emails..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-[] pl-10  pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                       />
+                    </div>
+
+                    <div className=" border  flex justify-center items-center rounded-[8px] w-[40px] h-[40px]">
+                      <i class="fa-regular text-[#787777] fa-filter"></i>
                     </div>
                   </div>
 
@@ -268,10 +272,10 @@ export default function EmailManagement() {
                         key={email.id}
                         onClick={() => handleEmailClick(email)}
                         className={`
-                p-2 border-b border-gray-100 cursor-pointer transition-all   rounded-[10px] duration-200
+                p-2 border-b border-gray-100 relative cursor-pointer transition-all mb-[5px]   rounded-[10px] duration-200
                 ${selectedEmail?.id === email.id
-                            ? "bg-blue-100 border-l-4 rounded-l-[10px] border-l-blue-600 shadow-sm"
-                            : " border-l-4 !border-gray-300 " +
+                            ? "bg-red-50  border-[1px]  !border-red-600   rounded-l-[10px] shadow-sm"
+                            : " border-[1px]  !border-blue-800 " +
                             getPriorityColor(email.priority)
                           }
                 ${!email.isRead ? "bg-blue-25" : ""}
@@ -292,16 +296,16 @@ export default function EmailManagement() {
                                 >
                                   {email.sender}
                                 </span>
-                                {email.isNew && (
-                                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0">
-                                    New
+                                {/* {email.isNew && (
+                                  <span className="bg-red-500 text-white  absolute text-xs px-2 py-0.5 rounded-full flex-shrink-0">
+                                    New 
                                   </span>
-                                )}
+                                )} */}
                                 {email.hasAttachment && (
                                   <Paperclip className="w-3 h-3 text-gray-400 flex-shrink-0" />
                                 )}
                               </div>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-[8px] absolute right-0  pt-[5px] px-[10px] rounded-b-sm  top-[-1px] flex-shrink-0 text-gray-500">
                                 {email.timestamp}
                               </span>
                             </div>

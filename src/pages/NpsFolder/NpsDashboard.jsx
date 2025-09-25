@@ -249,8 +249,10 @@ export default function NpsDashboard() {
         setLoading(true)
         setError(null)
         const [opdRes, ipdRes] = await Promise.all([ApiGet("/admin/opd-patient"), ApiGet("/admin/ipd-patient")])
+        console.log('opdRes', opdRes)
+        console.log('ipdRes', ipdRes)
         setRawOpd(Array.isArray(opdRes) ? opdRes : opdRes?.data || [])
-        setRawIpd(Array.isArray(ipdRes) ? ipdRes : ipdRes?.data || [])
+        setRawIpd(Array.isArray(ipdRes) ? ipdRes : ipdRes?.data?.patients || [])
       } catch (e) {
         console.error("NPS load failed:", e)
         setError("Failed to load NPS data.")

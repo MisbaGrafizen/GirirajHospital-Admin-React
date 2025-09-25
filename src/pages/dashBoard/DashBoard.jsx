@@ -255,8 +255,8 @@ export default function DashBoard() {
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] md34:!max-h-[96%] relative md11:!max-h-[90%] md34:pb-[100px] md11:!pb-[20px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-<Preloader />
+            <div className="flex flex-col w-[100%] md34:!max-h-[96%] relative md11:!max-h-[90%] md34:!pb-[120px] md11:!pb-[20px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+              <Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
                 <Container fluid={true}>

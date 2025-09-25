@@ -915,7 +915,7 @@ export default function OPDFeedbackDashboard() {
                           </div>
                           <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
                         </div>
-                        <div className="flex flex-row items-center gap-3">
+                        <div className="flex flex-row items-center  md34:!mb-[10px] gap-3">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
@@ -923,7 +923,7 @@ export default function OPDFeedbackDashboard() {
                               placeholder="Search feedback..."
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10 pr-3 py-[5px] border w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
+                              className="pl-10 pr-3 py-[5px] border md34:!w-[190px] md11:!w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
                             />
                           </div>
 
