@@ -349,7 +349,7 @@ export default function IPDFeedbackDashboard() {
   // Build doctor list from data (keeps "All Doctors" at top)
   const doctorOptions = useMemo(() => {
     const set = new Set();
-    rawIPD.forEach(d => {
+    (Array.isArray(rawIPD) ? rawIPD : []).forEach((d) => {
       const name = d?.consultantDoctorName?.name || d?.doctorName;
       if (name) set.add(String(name));
     });
@@ -358,12 +358,13 @@ export default function IPDFeedbackDashboard() {
 
   const roomOptions = useMemo(() => {
     const set = new Set();
-    rawIPD.forEach(d => {
+    (Array.isArray(rawIPD) ? rawIPD : []).forEach((d) => {
       const bed = d?.bedNo;
       if (bed != null && bed !== "") set.add(String(bed));
     });
     return ["All Rooms", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [rawIPD]);
+
 
   useEffect(() => {
     if (!roomOptions.includes(room)) setRoom("All Rooms");
@@ -600,13 +601,11 @@ export default function IPDFeedbackDashboard() {
 
     try {
       const res = await ApiGet(`${API_URL}`);
-      const data = Array.isArray(res) ? res : (res.data || []);
+      console.log('res', res)
+      const data = Array.isArray(res?.data?.patients) ? res.data?.patients : [];
 
-      // ✅ keep raw server data for filtering
       setRawIPD(data);
 
-      // (You can keep your existing mapping here if you want an initial view;
-      // the filter effect below will update it once filters are present.)
       const list = data.map((d) => {
         const rating = calcRowAverage(d.ratings);
         return {
@@ -615,7 +614,7 @@ export default function IPDFeedbackDashboard() {
           patient: d.patientName || d.name || "-",
           contact: d.contact || "-",
           bedNo: d.bedNo || "-",
-          consultantDoctorName: d.consultantDoctorName?.name || "-",
+          consultantDoctorName: d.consultantDoctorNamez?.name || "-",
           rating,
           overallRecommendation: d.overallRecommendation,
           comments: d.comments || "-",
@@ -626,7 +625,7 @@ export default function IPDFeedbackDashboard() {
         ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
         : 0;
 
-      const nps = calcNpsPercent(data);
+      const nps = calcNpsPercent(list);
       const overallScore =
         avg >= 4.5 ? "Excellent" :
           avg >= 4.0 ? "Good" :
@@ -636,7 +635,7 @@ export default function IPDFeedbackDashboard() {
       setRows(list);
       setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
       setChartData(buildDistribution(list));
-      setServiceSummary(buildServiceSummary(data));
+      setServiceSummary(buildServiceSummary(list));
     } catch (e) {
       console.error("Fetch IPD failed:", e);
       setError("Failed to load IPD feedback");
@@ -742,9 +741,12 @@ export default function IPDFeedbackDashboard() {
   }, [rows, dateFrom, dateTo])
 
   // ---------------- Search + Export ----------------
-  const filteredFeedback = rows.filter((f) =>
-    f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
-  )
+   const filteredFeedback = rows
+   .filter((f) =>
+     f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
+   )
+   .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // latest first
+   .slice(0, 5); // only top
 
   const exportToExcel = async () => {
 

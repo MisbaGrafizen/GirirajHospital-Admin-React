@@ -586,29 +586,33 @@ export default function NpsDashboard() {
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-100">
-                            {filteredRecords.slice(0, 400).map((rec, idx) => (
-                              <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
-                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
-                                <td className="px-4 py-3 text-sm">
-                                  <span
-                                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
-                                      ? "bg-emerald-100 text-emerald-800"
-                                      : rec.category === "Passive"
-                                        ? "bg-amber-100 text-amber-800"
-                                        : "bg-red-100 text-red-800"
-                                      }`}
-                                  >
-                                    {rec.category}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
-                              </tr>
-                            ))}
+                            {filteredRecords
+                              .slice() // clone
+                              .sort((a, b) => new Date(b.datetime) - new Date(a.datetime)) // latest first
+                              .slice(0, 5) // ✅ latest 5
+                              .map((rec, idx) => (
+                                <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
+                                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
+                                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    <span
+                                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : rec.category === "Passive"
+                                          ? "bg-amber-100 text-amber-800"
+                                          : "bg-red-100 text-red-800"
+                                        }`}
+                                    >
+                                      {rec.category}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
+                                </tr>
+                              ))}
                             {filteredRecords.length === 0 && (
                               <tr>
                                 <td colSpan={8} className="px-4 py-10 text-center text-gray-500">

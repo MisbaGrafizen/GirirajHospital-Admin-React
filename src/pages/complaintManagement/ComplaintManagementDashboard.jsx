@@ -107,12 +107,12 @@ const CONCERN_KEYS = [
 ]
 
 const DEPT_LABEL = {
-    doctorServices: "Doctor Services",
-    billingServices: "Billing Services",
+    doctorServices: "Doctor",
+    billingServices: "Billing",
     housekeeping: "Housekeeping",
     maintenance: "Maintenance",
-    diagnosticServices: "Diagnostic Services",
-    dietitianServices: "Dietitian Services",
+    diagnosticServices: "Diagnostic",
+    dietitianServices: "Dietitian",
     security: "Security",
     overall: "Overall",
 }
@@ -401,59 +401,59 @@ export default function ComplaintManagementDashboard() {
     }, [])
 
 
-  // Parse YYYY-MM-DD into local midnight
-const parseLocalDate = (str) => {
-  if (!str) return null;
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
+    // Parse YYYY-MM-DD into local midnight
+    const parseLocalDate = (str) => {
+        if (!str) return null;
+        const [y, m, d] = str.split("-").map(Number);
+        return new Date(y, m - 1, d);
+    };
 
-// Apply filters to raw docs
-function applyFilters(docs, filters, allowedBlocks) {
-  const q = (filters.searchTerm || "").toLowerCase();
-  const from = parseLocalDate(filters.from);
-  const to = parseLocalDate(filters.to);
+    // Apply filters to raw docs
+    function applyFilters(docs, filters, allowedBlocks) {
+        const q = (filters.searchTerm || "").toLowerCase();
+        const from = parseLocalDate(filters.from);
+        const to = parseLocalDate(filters.to);
 
-  return docs.filter((doc) => {
-    const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
+        return docs.filter((doc) => {
+            const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
 
-    // Date range
-    if (from && createdAt < from) return false;
-    if (to) {
-      const endOfDay = new Date(to);
-      endOfDay.setDate(endOfDay.getDate() + 1);
-      if (createdAt >= endOfDay) return false;
+            // Date range
+            if (from && createdAt < from) return false;
+            if (to) {
+                const endOfDay = new Date(to);
+                endOfDay.setDate(endOfDay.getDate() + 1);
+                if (createdAt >= endOfDay) return false;
+            }
+
+            // Service filter
+            if (filters.service && filters.service !== "All Services") {
+                const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
+                if (!depts.includes(filters.service.toLowerCase())) return false;
+            }
+
+            // Doctor filter
+            if (filters.doctor && filters.doctor !== "All Doctors") {
+                const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
+                if (!doctor.includes(filters.doctor.toLowerCase())) return false;
+            }
+
+            // Search term filter
+            if (q) {
+                const combined = [
+                    doc.patientName,
+                    doc.consultantDoctorName?.name,
+                    doc.complaintId,
+                    getDepartmentsString(doc, allowedBlocks),
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+                if (!combined.includes(q)) return false;
+            }
+
+            return true;
+        });
     }
-
-    // Service filter
-    if (filters.service && filters.service !== "All Services") {
-      const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
-      if (!depts.includes(filters.service.toLowerCase())) return false;
-    }
-
-    // Doctor filter
-    if (filters.doctor && filters.doctor !== "All Doctors") {
-      const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
-      if (!doctor.includes(filters.doctor.toLowerCase())) return false;
-    }
-
-    // Search term filter
-    if (q) {
-      const combined = [
-        doc.patientName,
-        doc.consultantDoctorName?.name,
-        doc.complaintId,
-        getDepartmentsString(doc, allowedBlocks),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      if (!combined.includes(q)) return false;
-    }
-
-    return true;
-  });
-}
 
 
     // ====== DERIVED ======
@@ -529,57 +529,57 @@ function applyFilters(docs, filters, allowedBlocks) {
 
 
     useEffect(() => {
-  if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
-    setRows([]);
-    setKpiData(computeKpis([]));
-    setTrendData([]);
-    setDepartmentColors({});
-    setTop5Departments([]);
-    return;
-  }
+        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+            setRows([]);
+            setKpiData(computeKpis([]));
+            setTrendData([]);
+            setDepartmentColors({});
+            setTop5Departments([]);
+            return;
+        }
 
-  // ✅ Apply filters here
-  const docs = applyFilters(rawConcerns, filters, allowedBlocks);
+        // ✅ Apply filters here
+        const docs = applyFilters(rawConcerns, filters, allowedBlocks);
 
-  // Table rows
-  const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
-  setRows(list);
+        // Table rows
+        const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+        setRows(list);
 
-  // Stats docs for chart & top-5
-  const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
+        // Stats docs for chart & top-5
+        const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
 
-  // KPIs
-  setKpiData(computeKpis(list));
+        // KPIs
+        setKpiData(computeKpis(list));
 
-  // Trend chart
-  const { data: tData, colors } = buildTrendData(statsDocs);
-  setTrendData(tData);
-  setDepartmentColors(colors);
+        // Trend chart
+        const { data: tData, colors } = buildTrendData(statsDocs);
+        setTrendData(tData);
+        setDepartmentColors(colors);
 
-  // Top-5 departments
-  const deptStats = {};
-  statsDocs.forEach((d) => {
-    if (!deptStats[d.department]) {
-      deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-    }
-    deptStats[d.department].complaints += 1;
-    deptStats[d.department].totalResolution += d.resolutionTime || 0;
-    if (d.escalated) deptStats[d.department].escalations += 1;
-  });
+        // Top-5 departments
+        const deptStats = {};
+        statsDocs.forEach((d) => {
+            if (!deptStats[d.department]) {
+                deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+            }
+            deptStats[d.department].complaints += 1;
+            deptStats[d.department].totalResolution += d.resolutionTime || 0;
+            if (d.escalated) deptStats[d.department].escalations += 1;
+        });
 
-  const top = Object.entries(deptStats)
-    .map(([department, s]) => ({
-      department,
-      complaints: s.complaints,
-      avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-      escalations: s.escalations,
-    }))
-    .sort((a, b) => b.complaints - a.complaints)
-    .slice(0, 5)
-    .map((x, i) => ({ rank: i + 1, ...x }));
+        const top = Object.entries(deptStats)
+            .map(([department, s]) => ({
+                department,
+                complaints: s.complaints,
+                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+                escalations: s.escalations,
+            }))
+            .sort((a, b) => b.complaints - a.complaints)
+            .slice(0, 5)
+            .map((x, i) => ({ rank: i + 1, ...x }));
 
-  setTop5Departments(top);
-}, [rawConcerns, allowedBlocks, filters]);
+        setTop5Departments(top);
+    }, [rawConcerns, allowedBlocks, filters]);
 
 
 
@@ -1070,59 +1070,63 @@ function applyFilters(docs, filters, allowedBlocks) {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
-                                                    {filteredComplaints.map((complaint, index) => {
-                                                        const fullDoc = rawConcerns.find(d => d._id === complaint.id);
-                                                        return (
-                                                            <tr
-                                                                key={complaint.id}
-                                                                // onClick={handlenavigate}
-                                                                className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
-                                                            >
-                                                                <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    <div className="flex items-center">
-                                                                        <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                                                        {complaint.date}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    <div className="flex items-center">
-                                                                        <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                        {complaint.doctor}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    <div className="flex items-center">
-                                                                        <Bed className="w-4 h-4 text-gray-400 mr-2" />
-                                                                        {complaint.bedNo}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
-                                                                </td>
+                                                    {filteredComplaints
+                                                        .slice()
+                                                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                        .slice(0, 5)
+                                                        .map((complaint, index) => {
+                                                            const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                            return (
+                                                                <tr
+                                                                    key={complaint.id}
+                                                                    // onClick={handlenavigate}
+                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                                                                >
+                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <div className="flex items-center">
+                                                                            <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                                                            {complaint.date}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <div className="flex items-center">
+                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                            {complaint.doctor}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <div className="flex items-center">
+                                                                            <Bed className="w-4 h-4 text-gray-400 mr-2" />
+                                                                            {complaint.bedNo}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
+                                                                    </td>
 
-                                                                <td className="px-6 py-2 text-sm">
-                                                                    <span
-                                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
-                                                                            complaint.status,
-                                                                        )}`}
-                                                                    >
-                                                                        {complaint.status}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    <button
-                                                                        onClick={() => handlenavigate(complaint, fullDoc)}
-                                                                        className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                                                                    >
-                                                                        <Eye className="w-4 h-4 mr-1" />
-                                                                        View
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        )
-                                                    })}
+                                                                    <td className="px-6 py-2 text-sm">
+                                                                        <span
+                                                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
+                                                                                complaint.status,
+                                                                            )}`}
+                                                                        >
+                                                                            {complaint.status}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <button
+                                                                            onClick={() => handlenavigate(complaint, fullDoc)}
+                                                                            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1" />
+                                                                            View
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })}
                                                     {filteredComplaints.length === 0 && (
                                                         <tr>
                                                             <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
