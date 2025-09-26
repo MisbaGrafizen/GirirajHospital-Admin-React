@@ -23,6 +23,7 @@ import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
 import EmailManagement from "./pages/EmailManagement";
 import { listenForMessages, requestNotificationPermission } from "./helper/notification";
 import ChatPage from "./pages/chatappPage/ChatPage";
+import socket from "./socket/index.js";
 
 
 
@@ -30,10 +31,54 @@ function App() {
 
       const location = useLocation();
 
-      useEffect(() => {
-    requestNotificationPermission();
-    listenForMessages();
-  }, []);
+  //     useEffect(() => {
+  //   requestNotificationPermission();
+  //   listenForMessages();
+  // }, []);
+
+    useEffect(() => {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+
+  const showNotification = (title, body) => {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body, icon: "/images/feedbacklogo.png" });
+    }
+  };
+
+  // 🔴 Always clear old listeners first
+  socket.off("ipd:new");
+  socket.off("opd:new");
+  socket.off("ipd:complaint");
+
+  // ✅ Register once
+  socket.on("ipd:new", (data) => {
+    console.log("📩 ipd:new", data);
+    showNotification("🩺 New IPD Patient", `${data.patientName} (Bed ${data.bedNo})`);
+  });
+
+  socket.on("opd:new", (data) => {
+    console.log("📩 opd:new", data);
+    showNotification("🩺 New OPD Patient", `${data.patientName}`);
+  });
+
+  socket.on("ipd:complaint", (data) => {
+    console.log("📩 ipd:complaint", data);
+    showNotification("📝 New Complaint", `${data.patientName} added a complaint.`);
+  });
+
+  return () => {
+    // Cleanup on unmount
+    socket.off("ipd:new");
+    socket.off("opd:new");
+    socket.off("ipd:complaint");
+  };
+}, []);
+
+
+
+
 
   useEffect(() => {
     if (location.pathname === "/") {

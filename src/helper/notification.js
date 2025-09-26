@@ -9,11 +9,12 @@ export const requestNotificationPermission = async () => {
     if (permission === "granted") {
       console.log("✅ Notification permission granted.");
 
-       await deleteToken(messaging);
+      // ❌ remove deleteToken
+      // await deleteToken(messaging);
 
-    const token = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-    });
+      const token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      });
 
       if (token) {
         console.log("📌 FCM Token:", token);
@@ -37,6 +38,7 @@ export const requestNotificationPermission = async () => {
     return null;
   }
 };
+
 
 // Foreground notification listener
 export const listenForMessages = () => {

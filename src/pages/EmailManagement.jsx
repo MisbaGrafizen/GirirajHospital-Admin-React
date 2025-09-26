@@ -17,106 +17,6 @@ import CubaSidebar from "../Component/sidebar/CubaSideBar";
 import { ApiGet } from "../helper/axios";
 import Preloader from "../Component/loader/Preloader";
 
-const mockEmails = [
-  {
-    id: "1",
-    sender: "GitHub",
-    senderEmail: "noreply@github.com",
-    subject: "[GitHub] Your Dependabot alerts for the week of Sep 16 - Sep 23",
-    preview:
-      "To protect your privacy remote resources have been blocked. Security vulnerabilities detected in your repository.",
-    content: `
-      <div class="email-content">
-        <div class="security-alert">
-          <h2>🔒 Security Alert Digest</h2>
-          <p><strong>MisbaGrafizen's</strong> repository security updates from the week of <strong>Sep 16 - Sep 23</strong></p>
-          <div class="repository-info">
-            <h3>📁 MisbaGrafizen's personal account</h3>
-            <p><strong>🔗 MisbaGrafizen / Ecommerce-web-reactjs</strong></p>
-            <p>⚠️ Known security vulnerabilities detected</p>
-            <table class="vulnerability-table">
-              <thead>
-                <tr>
-                  <th>Dependency</th>
-                  <th>Current Version</th>
-                  <th>Upgrade to</th>
-                  <th>Severity</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><code>vite</code></td>
-                  <td><span class="version-current">>= 5.4.0</span></td>
-                  <td><span class="version-upgrade">>> 5.4.6</span></td>
-                  <td><span class="severity-high">High</span></td>
-                </tr>
-                <tr>
-                  <td><code>react-dom</code></td>
-                  <td><span class="version-current"><= 5.4.5</span></td>
-                  <td><span class="version-upgrade">>> 5.4.8</span></td>
-                  <td><span class="severity-medium">Medium</span></td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="action-buttons">
-              <button class="btn-primary">Review Security Updates</button>
-              <button class="btn-secondary">View Repository</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `,
-    timestamp: "Today 10:02",
-    isRead: false,
-    isStarred: false,
-    isNew: true,
-    priority: "high",
-    hasAttachment: false,
-  },
-  {
-    id: "2",
-    sender: "ClickUp Team",
-    senderEmail: "team@clickup.com",
-    subject: "Gather data and guide users with ClickUp Forms",
-    preview:
-      "Create custom forms to collect information and streamline your workflow. Perfect for customer feedback and project requests.",
-    content: `
-      <div class="email-content">
-        <h2>🚀 Introducing ClickUp Forms</h2>
-        <p>Create custom forms to collect information and streamline your workflow. Perfect for:</p>
-        <ul>
-          <li>📝 Customer feedback collection</li>
-          <li>📋 Project request submissions</li>
-          <li>🐛 Bug report tracking</li>
-          <li>📊 Survey responses and analytics</li>
-          <li>📞 Contact form management</li>
-        </ul>
-        <div class="feature-highlight">
-          <h3>✨ Key Features:</h3>
-          <ul>
-            <li>Drag-and-drop form builder</li>
-            <li>Custom field types and validation</li>
-            <li>Automated workflow triggers</li>
-            <li>Real-time response tracking</li>
-          </ul>
-        </div>
-        <p><strong>Get started today and improve your data collection process!</strong></p>
-        <div class="action-buttons">
-          <button class="btn-primary">Create Your First Form</button>
-          <button class="btn-secondary">Watch Demo</button>
-        </div>
-      </div>
-    `,
-    timestamp: "Today 03:30",
-    isRead: true,
-    isStarred: true,
-    isNew: false,
-    priority: "normal",
-    hasAttachment: true,
-  },
-  // ... keep rest of emails same as your original
-];
-
 export default function EmailManagement() {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,8 +32,8 @@ export default function EmailManagement() {
         console.log('data', data)
         const mapped = (data?.notifications || []).map((n) => ({
           id: n._id,
-          sender: "New Notification",
-          senderEmail: "noreply@system.com",
+          sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
+          senderEmail: "", 
           subject: n.title,
           preview: n.body,
           content: `
@@ -358,10 +258,10 @@ export default function EmailManagement() {
                                   <span className="font-medium text-gray-900">
                                     {selectedEmail.sender}
                                   </span>
-                                  <span className="text-gray-500">
+                                  {/* <span className="text-gray-500">
                                     {" "}
                                     &lt;{selectedEmail.senderEmail}&gt;
-                                  </span>
+                                  </span> */}
                                 </div>
                               </div>
                             </div>
@@ -476,7 +376,7 @@ export default function EmailManagement() {
                               {email.sender}
                             </h3>
                             <span className="text-xs text-gray-500">{email.timestamp}</span>
-                          </div>
+                          </div>  
                           <p className="text-sm font-medium text-gray-800">{email.subject}</p>
                           <p className="text-xs text-gray-500 line-clamp-2">{email.preview}</p>
                         </div>
@@ -496,9 +396,9 @@ export default function EmailManagement() {
                           <h1 className="text-lg font-semibold text-gray-900 mb-2">
                             {selectedEmail.subject}
                           </h1>
-                          <p className="text-sm text-gray-600 mb-1">
-                            {selectedEmail.sender} &lt;{selectedEmail.senderEmail}&gt;
-                          </p>
+                          {/* <p className="text-sm text-gray-600 mb-1">
+                            {selectedEmail.sender};
+                          </p> */}
                           <p className="text-xs text-gray-500 mb-3">
                             {selectedEmail.timestamp}
                           </p>
