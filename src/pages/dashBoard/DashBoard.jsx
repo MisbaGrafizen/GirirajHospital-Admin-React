@@ -255,7 +255,7 @@ export default function DashBoard() {
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] md34:!max-h-[96%] relative md11:!max-h-[90%] md34:!pb-[120px] md11:!pb-[20px] py-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -466,7 +466,7 @@ export default function DashBoard() {
                                       </div>
                                     </td>
                                     <td className="px-6 py-2">
-                                      <div className="flex flex-col items-center gap-2">
+                                      <div className="flex flex-col items-left justify-center gap-2">
                                         <StarRating rating={Math.round(feedback.rating || 0)} />
                                         <span className="text-sm font-semibold text-gray-900">{Number(feedback.rating || 0).toFixed(1)}/5</span>
                                       </div>
@@ -566,7 +566,7 @@ export default function DashBoard() {
 
 
                     </>
-                    {/* </Row> */}
+                
                   </div>
                 </Container>
               </Fragment>

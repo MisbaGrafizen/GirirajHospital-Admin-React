@@ -667,7 +667,7 @@ export default function OPDFeedbackDashboard() {
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex relative flex-col w-[100%] max-h-[94%] md34:!pb-[50px] md11:!pb-[0px] py-[10px] md11:!pr-[15px]  overflow-y-auto gap-[20px] rounded-[10px]">
+           <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[0px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
             <Preloader />
               <div className="mx-auto w-full">
                 <div className="bg-white rounded-lg shadow-sm p-[13px]  md34:!mx-[12px] md11:!mx-0   mb-[10px] border border-gray-100  ">
@@ -904,7 +904,7 @@ export default function OPDFeedbackDashboard() {
 
 
                     {/* Patient-Wise Feedback Table */}
-                    <div className="bg-white md34:!mb-[100px]  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
+                    <div className="bg-white  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
                       <div className="px-3  border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                         <div className=' flex gap-[10px]  items-center py-[13px] justify-start '>
 
