@@ -211,25 +211,20 @@ const CubaSidebar = () => {
           hasSubmenu: true,
           href: "/dashboards",
           submenu: [
-            { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard" },
-            { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback" },
-            { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback" },
-            { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard" },
-
-            { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard" },
-            { id: "nft", label: "Executive Report", href: "/dashboards/executive-report" },
+            { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
+            { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
+            { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
+            { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
+            { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard", icon: faChartLine },
+            { id: "nft", label: "Executive Report", href: "/dashboards/executive-report", icon: faFileAlt },
             ...(isAdmin
               ? [
-                { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage" },
-                { id: "pos", label: "User Mana..", href: "/dashboards/user-manage" },
+                { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage", icon: faUserShield },
+                { id: "pos", label: "User Mana..", href: "/dashboards/user-manage", icon: faUsersCog },
               ]
               : []),
-            // { id: "crm", label: "CRM", href: "/dashboards/crm", isNew: true },
-            // { id: "analytics", label: "Analytics", href: "/dashboards/analytics", isNew: true },
-            // { id: "hr", label: "HR", href: "/dashboards/hr", isNew: true },
-            // { id: "projects", label: "Projects", href: "/dashboards/projects", isNew: true },
-            // { id: "logistics", label: "Logistics", href: "/dashboards/logistics", isNew: true },
-          ],
+          ]
+
         },
         // {
         //   id: "widgets",
@@ -609,14 +604,20 @@ const CubaSidebar = () => {
 
                                     <motion.button
                                       onClick={() => handleSubmenuClick(subItem.href)}
-                                      className={`w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors ${isActive(subItem.href)
-                                          ? "bg-blue-50 text-blue-700 font-medium"
-                                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                      className={`w-full flex items-center pl-[10px] gap-[8px] py-2 text-sm rounded-md transition-colors ${isActive(subItem.href)
+                                        ? "bg-blue-50 text-blue-700 font-medium"
+                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
                                     // initial={{ opacity: 0, x: -10 }}
                                     // animate={{ opacity: 1, x: 0 }}
                                     // transition={{ delay: index * 0.05 }}
                                     >
+                                      {subItem.icon && (
+                                        <FontAwesomeIcon icon={subItem.icon} className={`w-4  h-4 text-gray-400${isActive(subItem.href)
+                                        ? " !text-blue-700 "
+                                        : "!text-gray-200"
+                                        }`} />
+                                      )}
                                       <span className="flex-1 flex-shrink-0 text-left">{subItem.label}</span>
                                       {subItem.isNew && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 ml-2">
@@ -641,10 +642,10 @@ const CubaSidebar = () => {
         </motion.div>
 
 
-          <div className="bg-gradient-to-br left-0 right-0 mx-auto  absolute md11:!bottom-[10%] cursor-pointer   w-[130px] font-[600] items-center gap-[10px] text-[16px] rounded-[8px]   h-[35px] flex  justify-center  from-purple-400 to-blue-500  text-[#fff]  "
-            onClick={handleLogout}>
-            <i className="fa-solid fa-left-from-bracket"></i> Log Out
-          </div>
+        <div className="bg-gradient-to-br left-0 right-0 mx-auto  absolute md11:!bottom-[10%] cursor-pointer   w-[130px] font-[600] items-center gap-[10px] text-[16px] rounded-[8px]   h-[35px] flex  justify-center  from-purple-400 to-blue-500  text-[#fff]  "
+          onClick={handleLogout}>
+          <i className="fa-solid fa-left-from-bracket"></i> Log Out
+        </div>
       </div>
 
 

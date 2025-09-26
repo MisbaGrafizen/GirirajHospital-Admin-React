@@ -22,6 +22,7 @@ import UserLoginPage from "./pages/UserLoginPage";
 import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
 import EmailManagement from "./pages/EmailManagement";
 import { listenForMessages, requestNotificationPermission } from "./helper/notification";
+import ChatPage from "./pages/chatappPage/ChatPage";
 
 
 
@@ -60,6 +61,8 @@ function App() {
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
 
           <Route path="/mail" element={<EmailManagement />} />
+          {/* <Route path="/chat" element={<ChatPage />} /> */}
+
 
 
           <Route path="/" element={<LoginPage />} />

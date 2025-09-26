@@ -207,7 +207,7 @@ export default function RoleManage() {
                   )}
 
                   {/* Roles grid */}
-                  <div className="flex gap-[13px] flex-wrap">
+                  <div className="flex gap-[13px] mx-auto md11:!justify-start md34:!justify-center flex-wrap">
                     {roleList.length > 0 ? (
                       roleList.map((role) => (
                         <div

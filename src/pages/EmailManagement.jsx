@@ -122,6 +122,7 @@ export default function EmailManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobileDetail, setIsMobileDetail] = useState(false);
 
   useEffect(() => {
     const fetchEmails = async () => {
@@ -245,7 +246,7 @@ export default function EmailManagement() {
               <Preloader />
               <div className="flex w-[100%] h-screen bg-gray-50">
                 {/* Left Sidebar */}
-                <div className=" md11:w-[30%] 2xl:!w-[20%] max-w-[400px] pr-[10px] border-r border-gray-200 flex flex-col">
+                <div className=" md11:w-[30%] 2xl:!w-[20%] md34:!hidden md11:!flex  max-w-[400px] pr-[10px] border-r border-gray-200  flex-col">
                   {/* Header */}
                   <div className=" py-[10px] gap-[10px] border-b flex  border-gray-200 bg-gray-50">
 
@@ -266,7 +267,7 @@ export default function EmailManagement() {
                   </div>
 
                   {/* Email List */}
-                  <div className="flex-1 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto max-h-[82%]">
                     {filteredEmails.map((email) => (
                       <div
                         key={email.id}
@@ -336,7 +337,7 @@ export default function EmailManagement() {
                 </div>
 
                 {/* Right Panel */}
-                <div className="w-[100%] flex flex-col bg-white">
+                <div className="w-[100%] md34:!hidden md11:!flex flex-col bg-white">
                   {selectedEmail ? (
                     <>
                       {/* Header */}
@@ -434,6 +435,83 @@ export default function EmailManagement() {
                     </div>
                   )}
                 </div>
+
+
+
+                {/* 📱 Mobile / Tablet */}
+                <div className="flex w-full lg:hidden bg-gray-50">
+                  {!isMobileDetail ? (
+                    // Email List (Cards)
+                    <div className="w-full p-3 overflow-y-auto">
+
+                      <div className=" py-[10px] mb-[5px] gap-[10px] border-b flex w-[100%]  border-gray-200 bg-gray-50">
+
+                        <div className="relative w-[100%]">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            placeholder="Search emails..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-[100%] pl-10  pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                          />
+                        </div>
+
+                        <div className=" border  flex justify-center items-center rounded-[8px] w-[40px] h-[40px]">
+                          <i className="fa-regular text-[#787777] fa-filter"></i>
+                        </div>
+                      </div>
+
+                      {filteredEmails.map((email) => (
+                        <div
+                          key={email.id}
+                          onClick={() => {
+                            handleEmailClick(email);
+                            setIsMobileDetail(true);
+                          }}
+                          className="bg-white shadow-sm rounded-lg p-4 mb-3 border-[1.2px] cursor-pointer hover:bg-gray-50"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-sm font-semibold text-gray-900">
+                              {email.sender}
+                            </h3>
+                            <span className="text-xs text-gray-500">{email.timestamp}</span>
+                          </div>
+                          <p className="text-sm font-medium text-gray-800">{email.subject}</p>
+                          <p className="text-xs text-gray-500 line-clamp-2">{email.preview}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    // Detail View
+                    <div className="w-full flex flex-col bg-white h-screen">
+                      <button
+                        onClick={() => setIsMobileDetail(false)}
+                        className="p-3 text-blue-600 flex items-center gap-2 border-b bg-gray-50"
+                      >
+                        <i className="fa-solid fa-arrow-left"></i> Back to Notfications
+                      </button>
+                      {selectedEmail && (
+                        <div className="flex-1 overflow-y-auto p-4">
+                          <h1 className="text-lg font-semibold text-gray-900 mb-2">
+                            {selectedEmail.subject}
+                          </h1>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {selectedEmail.sender} &lt;{selectedEmail.senderEmail}&gt;
+                          </p>
+                          <p className="text-xs text-gray-500 mb-3">
+                            {selectedEmail.timestamp}
+                          </p>
+                          <div
+                            className="prose max-w-none"
+                            dangerouslySetInnerHTML={{ __html: selectedEmail.content }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
 
                 {/* Styles */}
                 <style jsx>{`

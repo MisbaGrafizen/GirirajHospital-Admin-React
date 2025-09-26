@@ -435,16 +435,7 @@ export default function UserManageMent() {
                       {/* Header */}
 
 
-                      {/* <div className="flex justify-between items-center mb-6">
-  <h1 className="text-2xl font-semibold">Manage Doctors</h1>
-  <button
-    onClick={() => setIsDoctorModalOpen(true)}
-    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md"
-  >
-    <UserPlus className="w-5 h-5" />
-    Create
-  </button>
-</div> */}
+
                       {/* Header */}
                       <div className="flex justify-between items-center mb-6">
                         <h1 className="text-2xl font-semibold">Manage Doctors</h1>
@@ -464,10 +455,17 @@ export default function UserManageMent() {
 
                       {/* Modal */}
                       {isDoctorModalOpen && (
-                        <div className="bg-white shadow-lg rounded-xl p-6 max-w-md mx-auto border border-gray-200">
+                        <div className="bg-white relative shadow-lg rounded-xl p-6 max-w-md mx-auto border border-gray-200">
                           <h2 className="text-lg font-bold mb-4 text-red-600">
                             {editingDoctor ? "Edit Doctor" : "Add Doctor"}
                           </h2>
+
+                              <button
+      onClick={() => setIsDoctorModalOpen(false)}
+      className="absolute  bg-red-600 top-3  px-[5px] py-[5px]  flex justify-center items-center flex-shrink-0 w-[25px] h-[25px] rounded-full right-3 text-gray-100 hover:text-gray-400"
+    >
+      <i className="fa-solid fa-xmark text-[15px]"></i>
+    </button>
                           <input
                             type="text"
                             placeholder="Doctor Name"
@@ -525,7 +523,7 @@ export default function UserManageMent() {
                       )}
 
                       <div className="border-t-[1.6px]  border-red-600 border-dashed w-[100%] my-[15px] "></div>
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between  mb-4">
                         <div>
                           <h1 className="text-[24px] font-[600]">Manage User</h1>
                         </div>
@@ -552,7 +550,7 @@ export default function UserManageMent() {
 
                       {/* User Cards Grid */}
                       {!isLoading && (
-                        <div className="flex flex-wrap gap-[15px]">
+                        <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-cente gap-[15px]">
                           {users.map((user) => (
                             <div
                               key={user._id || user.id}

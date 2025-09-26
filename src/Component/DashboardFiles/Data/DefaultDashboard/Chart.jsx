@@ -1008,7 +1008,7 @@ export const RecentOrderChart = {
         breakpoint: 1660,
         options: {
           chart: {
-            height: 230,
+            height: 280,
             dataLabels: {
               name: {
                 fontSize: "15px",
@@ -1021,7 +1021,7 @@ export const RecentOrderChart = {
         breakpoint: 1561,
         options: {
           chart: {
-            height: 275,
+            height: 290,
           },
         },
       },
@@ -1045,7 +1045,7 @@ export const RecentOrderChart = {
         breakpoint: 1200,
         options: {
           chart: {
-            height: 230,
+            height: 280,
           },
         },
       },
@@ -1053,7 +1053,7 @@ export const RecentOrderChart = {
         breakpoint: 1007,
         options: {
           chart: {
-            height: 240,
+            height: 280,
           },
         },
       },
@@ -1061,7 +1061,7 @@ export const RecentOrderChart = {
         breakpoint: 600,
         options: {
           chart: {
-            height: 230,
+            height: 280,
           },
         },
       },
