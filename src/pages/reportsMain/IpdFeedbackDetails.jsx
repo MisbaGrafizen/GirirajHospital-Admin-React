@@ -146,7 +146,7 @@ export default function IpdFeedbackDetails() {
   console.log('model', model)
 
   if (!id) return <div className="p-6 text-red-600">{error || 'No feedback selected.'}</div>
-  if (loading) return <div className="p-6">Loading…</div>
+  if (loading) return <div className="p-6"><Preloader /></div>
   if (error) return <div className="p-6 text-red-600">{error}</div>
   if (!model) return null
 
@@ -158,7 +158,7 @@ export default function IpdFeedbackDetails() {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
             <div className="flex flex-col w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-            <Preloader />
+          
               <section className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-4">
                   {/* Top info */}

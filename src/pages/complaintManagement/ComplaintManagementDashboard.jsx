@@ -804,7 +804,7 @@ export default function ComplaintManagementDashboard() {
                     <Header pageName="Complaint Management " />
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
-                        <div className="flex relative flex-col w-[100%] max-h-[97%] md34:!pb-[50px] md11:!pb-0 py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex relative flex-col w-[100%] max-h-[97%] md34:!pb-[80px] md11:!pb-0 py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
                             <Preloader />
                             <div className="">
                                 <div className="">
@@ -1115,9 +1115,9 @@ export default function ComplaintManagementDashboard() {
                                                                         {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
                                                                     </td>
 
-                                                                    <td className="px-6 py-2 text-sm">
+                                                                    <td className="px-3 py-2 text-sm">
                                                                         <span
-                                                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
+                                                                            className={`flex items-center px-2 py-1   !flex-shrink-0 justify-center  w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
                                                                                 complaint.status,
                                                                             )}`}
                                                                         >

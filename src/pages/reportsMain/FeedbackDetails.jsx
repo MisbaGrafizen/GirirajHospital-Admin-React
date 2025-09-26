@@ -4,6 +4,8 @@ import SideBar from '../../Component/sidebar/CubaSideBar'
 import Header from '../../Component/header/Header'
 import { Calendar, User, Phone, Stethoscope, BedSingle, Star } from "lucide-react"
 import { ApiGet } from '../../helper/axios'
+import { Loading } from '../../Component/DashboardFiles/Constant'
+import Preloader from '../../Component/loader/Preloader'
 
 // ----------------- utils -----------------
 const normId = (v) =>
@@ -131,7 +133,7 @@ export default function FeedbackDetails() {
 
 
   if (!id) return <div className="p-6 text-red-600">{error || 'No feedback selected.'}</div>
-  if (loading) return <div className="p-6">Loading…</div>
+  if (loading) return <div className="p-6"><Preloader /></div>
   if (error) return <div className="p-6 text-red-600">{error}</div>
   if (!model) return null
 

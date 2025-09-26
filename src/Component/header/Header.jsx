@@ -128,19 +128,24 @@ const unreadCount = count - lastSeen;
 
 
 
+<div className="relative mr-[30px] flex items-center">
+  <button
+    onClick={handleMail}
+    className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
+  >
+    <i className="fa-solid fa-bell text-gray-700 text-lg"></i>
+  </button>
 
-          <div className="relative mr-[30px]  flex gap-[20px] items-center">
-  
-            <i className="fa-solid fa-bell text-gray-700 text-2xl  cursor-pointer" onClick={handleMail}></i>
+  {unreadCount > 0 && (
+    <span
+      onClick={handleMail}
+      className="absolute top-[-5px] right-[-5px] flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-600 rounded-full border-2 border-white shadow"
+    >
+      {unreadCount}
+    </span>
+  )}
+</div>
 
-              <span
-                className="absolute -top-1 -right-3 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full cursor-pointer"
-                onClick={handleMail}
-              >
-                {unreadCount}
-              </span>
-
-          </div>
         </section>
 {["/dashboards/super-dashboard", "/dashboards/opd-feedback","/dashboards/ipd-feedback", "/dashboards/complaint-dashboard","/dashboards/nps-dashboard"].includes(location.pathname) && (
         <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
