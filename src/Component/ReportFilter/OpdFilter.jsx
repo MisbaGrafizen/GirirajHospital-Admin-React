@@ -68,7 +68,8 @@ export default function OpdFilter({
   onChange,
   serviceVariant = 'opd',
   services,
-  doctors,   // 👈 doctorOptions passed in from parent
+  doctors,
+  isAdmin = false,
 }) {
   const [dateFrom, setDateFrom] = useState(parseToDate(value?.from));
   const [dateTo, setDateTo] = useState(parseToDate(value?.to));
@@ -94,6 +95,11 @@ export default function OpdFilter({
     }
     return opts;
   }, [doctors]);
+
+  const shouldShowServiceDropdown = 
+    serviceVariant === "concern" ? isAdmin : true;
+  
+
 
   useEffect(() => {
     if (!value) return;
@@ -133,13 +139,15 @@ export default function OpdFilter({
       <div className="md34:!hidden md11:!grid grid-cols-2 md11:grid-cols-4 gap-x-6">
         <ModernDatePicker label="From Date" selectedDate={dateFrom} setSelectedDate={setDateFrom} />
         <ModernDatePicker label="To Date" selectedDate={dateTo} setSelectedDate={setDateTo} />
-        <AnimatedDropdown
-          label="Service"
-          icon={Filter}
-          selected={selectedService}
-          onChange={setSelectedService}
-          options={serviceOptions}
-        />
+        {shouldShowServiceDropdown && (
+          <AnimatedDropdown
+            label="Service"
+            icon={Filter}
+            selected={selectedService}
+            onChange={setSelectedService}
+            options={serviceOptions}
+          />
+        )}
         {doctorOptions.length > 1 && (
           <AnimatedDropdown
             label="Doctor"

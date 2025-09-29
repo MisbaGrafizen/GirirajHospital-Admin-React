@@ -382,6 +382,7 @@ export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState(firstDayOfThisMonth())
     const [dateTo, setDateTo] = useState(today())
     const { isAdmin, allowedBlocks } = resolvePermissions();
+    console.log('isAdmin', isAdmin)
 
 
     const [selectedStatus, setSelectedStatus] = useState("All Status")
@@ -866,6 +867,7 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
                                             onChange={handleFilterChange}
                                             serviceVariant="concern"
                                             doctors={doctorOptions} 
+                                            isAdmin={isAdmin}
                                         />
                                     </div>
 

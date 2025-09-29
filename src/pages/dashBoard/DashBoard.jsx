@@ -103,7 +103,7 @@ export default function DashBoard() {
   const [opdFeedbackData, setOpdFeedbackData] = useState([])
   const [opdSummary, setOpdSummary] = useState({ avgRating: 0, positivePercent: 0, responses: 0 })
   const [departmentData, setDepartmentData] = useState([])
-   const [allowedModules, setAllowedModules] = useState([])
+  const [allowedModules, setAllowedModules] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [concernData, setConcernData] = useState([])
@@ -132,7 +132,20 @@ export default function DashBoard() {
           const query = [];
           if (dateRange.from) query.push(`from=${dateRange.from}`);
           if (dateRange.to) query.push(`to=${dateRange.to}`);
+
+          const rights = JSON.parse(localStorage.getItem("rights") || "{}");
+          const modules = (rights?.permissions || []).map(p => p.module);
+          const loginType = localStorage.getItem("loginType") || "user";
+
+          if (modules.length) {
+            query.push(`modules=${modules.join(",")}`);
+          }
+
+          query.push(`loginType=${loginType}`);
+
           const qs = query.length ? `?${query.join("&")}` : "";
+
+          console.log('qs', qs)
 
           const res = await ApiGet(`/admin/dashboard${qs}`);
           console.log('res', res)
@@ -143,19 +156,16 @@ export default function DashBoard() {
           // KPIs
           setKpis(data.kpis || kpis)
 
-          // ----- IPD trend mapping -----
-          // Backend: ipdTrends.series -> [{date, value(0..5)}]
-          // Your chart expects: month, nursing, doctor, satisfaction, plus extra fields for tooltip.
           const series = Array.isArray(data?.ipdTrends?.series) ? data.ipdTrends.series : []
           const ipdTrendMapped = series.map((row) => {
-            const avg = Number(row.value || 0) // 0..5
-            const pct = Math.round((avg / 5) * 100) // 0..100
+            const avg = Number(row.value || 0)
+            const pct = Math.round((avg / 5) * 100)
             return {
-              month: row.date,               // shows on X axis
-              nursing: Math.max(0, Math.min(100, pct)),           // keep as "score" like your mock
-              doctor: Math.max(0, Math.min(100, Math.round(pct * 0.97 + 2))), // a tiny offset to avoid perfectly overlapping areas
-              satisfaction: pct,             // line in percent
-              totalFeedbacks: 0,             // not available per-month → 0 keeps your tooltip shape
+              month: row.date,
+              nursing: Math.max(0, Math.min(100, pct)),
+              doctor: Math.max(0, Math.min(100, Math.round(pct * 0.97 + 2))),
+              satisfaction: pct,
+              totalFeedbacks: 0,
               avgRating: avg.toFixed(1),
               complaints: 0,
               resolved: 0,
@@ -179,30 +189,53 @@ export default function DashBoard() {
               color: OPD_COLORS[d.label] || "#8b5cf6",
               count: Number(d.value || 0),
               percentage: `${Number(d.percent || 0)}%`,
-              trend: "", // not in API; keep empty to preserve layout
+              trend: "",
             }))
           )
 
-          // ----- Concerns donut (last 7 days ending today) -----
           const weeks = Array.isArray(data?.concerns) ? data.concerns : [];
-          const latest = weeks.at(-1) || { counts: {}, total: 0 };
 
+          const latest = weeks[0] || { countsByModule: {}, total: 0 };
+
+          // aggregate concerns across ALL weeks
+          const overallCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
+          let grandTotal = 0;
+
+          weeks.forEach(week => {
+            if (loginType === "admin") {
+              Object.values(week.countsByModule || {}).forEach(c => {
+                overallCounts.Open += c.Open || 0;
+                overallCounts["In Progress"] += c["In Progress"] || 0;
+                overallCounts.Resolved += c.Resolved || 0;
+                grandTotal += (c.Open || 0) + (c["In Progress"] || 0) + (c.Resolved || 0);
+              });
+            } else {
+              modules.forEach(mod => {
+                const c = week.countsByModule?.[mod] || {};
+                overallCounts.Open += c.Open || 0;
+                overallCounts["In Progress"] += c["In Progress"] || 0;
+                overallCounts.Resolved += c.Resolved || 0;
+                grandTotal += (c.Open || 0) + (c["In Progress"] || 0) + (c.Resolved || 0);
+              });
+            }
+          });
+
+          // send to donut chart
           setConcernData(
-            ["Open", "In Progress", "Resolved"].map((k) => ({
+            ["Open", "In Progress", "Resolved"].map(k => ({
               name: k,
-              value: Number(latest.counts?.[k] || 0),
+              value: Number(overallCounts[k] || 0),
               color: CONCERN_COLORS[k],
-              details: `Week: ${latest.weekLabel || "-"} • Total: ${latest.total || 0}`,
+              details: `Total Concerns: ${grandTotal || 0} (all weeks)`
             }))
           );
-
 
           // ----- Department bars -----
           const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : []
           setDepartmentData(
             dept.map((d) => ({
               department: d.department,
-              concerns: Math.round((Number(d.value || 0) / 5) * 100), // scaled score so bars look like your design
+              concerns: Math.round((Number(d.value || 0) / 5) * 100),
               resolved: 0,
               pending: 0,
               avgTime: "",
@@ -244,162 +277,162 @@ export default function DashBoard() {
   }, [dateRange])
 
 
-// useEffect(() => {
-//   let mounted = true;
+  // useEffect(() => {
+  //   let mounted = true;
 
-//   const safeParse = (json) => {
-//     try { return JSON.parse(json || "{}"); } catch { return {}; }
-//   };
+  //   const safeParse = (json) => {
+  //     try { return JSON.parse(json || "{}"); } catch { return {}; }
+  //   };
 
-//   const hasUsefulData = (payload) => {
-//     const d = payload?.data || {};
-//     if (!d) return false;
-//     const k = d.kpis || {};
-//     return (
-//       (k.totalFeedback ?? 0) > 0 ||
-//       (k.totalConcern ?? 0) > 0 ||
-//       (d.recentFeedbacks?.length ?? 0) > 0 ||
-//       (d.opdSatisfaction?.responses ?? 0) > 0
-//     );
-//   };
+  //   const hasUsefulData = (payload) => {
+  //     const d = payload?.data || {};
+  //     if (!d) return false;
+  //     const k = d.kpis || {};
+  //     return (
+  //       (k.totalFeedback ?? 0) > 0 ||
+  //       (k.totalConcern ?? 0) > 0 ||
+  //       (d.recentFeedbacks?.length ?? 0) > 0 ||
+  //       (d.opdSatisfaction?.responses ?? 0) > 0
+  //     );
+  //   };
 
-//   const applyResponse = (payload, fallbackModules) => {
-//     const d = payload?.data || {};
-//     const allowed = payload?.modules || fallbackModules || [];
+  //   const applyResponse = (payload, fallbackModules) => {
+  //     const d = payload?.data || {};
+  //     const allowed = payload?.modules || fallbackModules || [];
 
-//     setAllowedModules(allowed);
+  //     setAllowedModules(allowed);
 
-//     // KPIs
-//     setKpis(d.kpis || {
-//       totalFeedback: 0,
-//       averageRating: { value: 0 },
-//       npsRating: { value: 0 },
-//       totalConcern: 0,
-//       openIssues: 0,
-//       resolvedIssues: 0,
-//       earning: { weeklyAverage: 0, series: [], labels: [] },
-//       expense: { weeklyAverage: 0, series: [], labels: [] },
-//     });
+  //     // KPIs
+  //     setKpis(d.kpis || {
+  //       totalFeedback: 0,
+  //       averageRating: { value: 0 },
+  //       npsRating: { value: 0 },
+  //       totalConcern: 0,
+  //       openIssues: 0,
+  //       resolvedIssues: 0,
+  //       earning: { weeklyAverage: 0, series: [], labels: [] },
+  //       expense: { weeklyAverage: 0, series: [], labels: [] },
+  //     });
 
-//     // Concerns donut → use latest week (server already aggregates)
-//     const latestWeek = (d.concerns || [])[0] || { counts: { Open: 0, "In Progress": 0, Resolved: 0 }, total: 0 };
-//     setConcernData([
-//       { name: "Open",        value: Number(latestWeek.counts?.Open || 0),        color: "#ef4444" },
-//       { name: "In Progress", value: Number(latestWeek.counts?.["In Progress"] || 0), color: "#f59e0b" },
-//       { name: "Resolved",    value: Number(latestWeek.counts?.Resolved || 0),    color: "#10b981" },
-//     ]);
+  //     // Concerns donut → use latest week (server already aggregates)
+  //     const latestWeek = (d.concerns || [])[0] || { counts: { Open: 0, "In Progress": 0, Resolved: 0 }, total: 0 };
+  //     setConcernData([
+  //       { name: "Open",        value: Number(latestWeek.counts?.Open || 0),        color: "#ef4444" },
+  //       { name: "In Progress", value: Number(latestWeek.counts?.["In Progress"] || 0), color: "#f59e0b" },
+  //       { name: "Resolved",    value: Number(latestWeek.counts?.Resolved || 0),    color: "#10b981" },
+  //     ]);
 
-//     // IPD trends chart mapping
-//     const ipdSeries = d?.ipdTrends?.series || [];
-//     setIpdFeedbackTrend(
-//       ipdSeries.map(row => {
-//         const avg = Number(row.value || 0);          // 0..5
-//         const pct = Math.round((avg / 5) * 100);     // 0..100
-//         return {
-//           month: row.date,
-//           nursing: pct,
-//           doctor: Math.min(100, Math.max(0, Math.round(pct * 0.97 + 2))),
-//           satisfaction: pct,
-//           avgRating: avg.toFixed(1),
-//           totalFeedbacks: 0,
-//           complaints: 0,
-//           resolved: 0,
-//         };
-//       })
-//     );
+  //     // IPD trends chart mapping
+  //     const ipdSeries = d?.ipdTrends?.series || [];
+  //     setIpdFeedbackTrend(
+  //       ipdSeries.map(row => {
+  //         const avg = Number(row.value || 0);          // 0..5
+  //         const pct = Math.round((avg / 5) * 100);     // 0..100
+  //         return {
+  //           month: row.date,
+  //           nursing: pct,
+  //           doctor: Math.min(100, Math.max(0, Math.round(pct * 0.97 + 2))),
+  //           satisfaction: pct,
+  //           avgRating: avg.toFixed(1),
+  //           totalFeedbacks: 0,
+  //           complaints: 0,
+  //           resolved: 0,
+  //         };
+  //       })
+  //     );
 
-//     // OPD satisfaction donut + header
-//     const opd = d?.opdSatisfaction || {};
-//     setOpdSummary({
-//       avgRating: Number(opd.avgRating || 0),
-//       positivePercent: Number(opd.positivePercent || 0),
-//       responses: Number(opd.responses || 0),
-//     });
-//     setOpdFeedbackData(
-//       (opd.donut || []).map(x => ({
-//         name: x.label,
-//         value: Number(x.value || 0),
-//         color: {
-//           Excellent: "#10b981",
-//           Good: "#3b82f6",
-//           Average: "#f59e0b",
-//           Poor: "#ef4444",
-//           "Very Poor": "#f97316",
-//         }[x.label] || "#8b5cf6",
-//         percentage: `${Number(x.percent || 0)}%`,
-//       }))
-//     );
+  //     // OPD satisfaction donut + header
+  //     const opd = d?.opdSatisfaction || {};
+  //     setOpdSummary({
+  //       avgRating: Number(opd.avgRating || 0),
+  //       positivePercent: Number(opd.positivePercent || 0),
+  //       responses: Number(opd.responses || 0),
+  //     });
+  //     setOpdFeedbackData(
+  //       (opd.donut || []).map(x => ({
+  //         name: x.label,
+  //         value: Number(x.value || 0),
+  //         color: {
+  //           Excellent: "#10b981",
+  //           Good: "#3b82f6",
+  //           Average: "#f59e0b",
+  //           Poor: "#ef4444",
+  //           "Very Poor": "#f97316",
+  //         }[x.label] || "#8b5cf6",
+  //         percentage: `${Number(x.percent || 0)}%`,
+  //       }))
+  //     );
 
-//     // Department bars → use server's `concerns` count for bar height
-//     setDepartmentData(
-//       (d.departmentAnalysis || []).map(row => ({
-//         department: row.department,
-//         concerns: Number(row.concerns || 0),         // bar = count
-//         satisfaction: Number(row.satisfaction || 0), // for tooltips if needed
-//         workload: row.workload || "—",
-//       }))
-//     );
+  //     // Department bars → use server's `concerns` count for bar height
+  //     setDepartmentData(
+  //       (d.departmentAnalysis || []).map(row => ({
+  //         department: row.department,
+  //         concerns: Number(row.concerns || 0),         // bar = count
+  //         satisfaction: Number(row.satisfaction || 0), // for tooltips if needed
+  //         workload: row.workload || "—",
+  //       }))
+  //     );
 
-//     // Recent feedbacks
-//     setRecentFeedbacks(
-//       (d.recentFeedbacks || []).map((r, i) => ({
-//         id: i + 1,
-//         name: r.patientName || "-",
-//         type: r.type || "-",
-//         rating: Number(r.rating || 0),
-//         doctor: r.doctor || "-",
-//         contact: r.contact || "-",
-//         feedback: r.comment || "-",
-//         time: r.createdAt ? new Date(r.createdAt).toLocaleString() : "-",
-//       }))
-//     );
-//   };
+  //     // Recent feedbacks
+  //     setRecentFeedbacks(
+  //       (d.recentFeedbacks || []).map((r, i) => ({
+  //         id: i + 1,
+  //         name: r.patientName || "-",
+  //         type: r.type || "-",
+  //         rating: Number(r.rating || 0),
+  //         doctor: r.doctor || "-",
+  //         contact: r.contact || "-",
+  //         feedback: r.comment || "-",
+  //         time: r.createdAt ? new Date(r.createdAt).toLocaleString() : "-",
+  //       }))
+  //     );
+  //   };
 
-//   (async () => {
-//     try {
-//       setLoading(true);
-//       setError(null);
+  //   (async () => {
+  //     try {
+  //       setLoading(true);
+  //       setError(null);
 
-//       // 1) modules from localStorage.rights
-//       const rights = safeParse(localStorage.getItem("rights"));
-//       const modules = rights?.permissions?.map(p => p.module).filter(Boolean) || [];
+  //       // 1) modules from localStorage.rights
+  //       const rights = safeParse(localStorage.getItem("rights"));
+  //       const modules = rights?.permissions?.map(p => p.module).filter(Boolean) || [];
 
-//       // 2) params object (axios-friendly)
-//       const paramsWithModules = {};
-//       if (dateRange.from) paramsWithModules.from = dateRange.from;
-//       if (dateRange.to)   paramsWithModules.to   = dateRange.to;
-//       if (modules.length) paramsWithModules.modules = JSON.stringify(modules);
+  //       // 2) params object (axios-friendly)
+  //       const paramsWithModules = {};
+  //       if (dateRange.from) paramsWithModules.from = dateRange.from;
+  //       if (dateRange.to)   paramsWithModules.to   = dateRange.to;
+  //       if (modules.length) paramsWithModules.modules = JSON.stringify(modules);
 
-//       // 3) first call WITH modules (if any)
-//       const first = await ApiGet("/admin/dashboard", { params: paramsWithModules });
-//       console.log("Dashboard (with modules):", first?.data);
-//       if (!mounted) return;
+  //       // 3) first call WITH modules (if any)
+  //       const first = await ApiGet("/admin/dashboard", { params: paramsWithModules });
+  //       console.log("Dashboard (with modules):", first?.data);
+  //       if (!mounted) return;
 
-//       if (modules.length && !hasUsefulData(first?.data)) {
-//         // 4) fallback WITHOUT modules to avoid blank UI
-//         console.warn("No data for selected modules — retrying without modules.");
-//         const paramsNoModules = {};
-//         if (dateRange.from) paramsNoModules.from = dateRange.from;
-//         if (dateRange.to)   paramsNoModules.to   = dateRange.to;
+  //       if (modules.length && !hasUsefulData(first?.data)) {
+  //         // 4) fallback WITHOUT modules to avoid blank UI
+  //         console.warn("No data for selected modules — retrying without modules.");
+  //         const paramsNoModules = {};
+  //         if (dateRange.from) paramsNoModules.from = dateRange.from;
+  //         if (dateRange.to)   paramsNoModules.to   = dateRange.to;
 
-//         const second = await ApiGet("/admin/dashboard", { params: paramsNoModules });
-//         console.log("Dashboard (fallback no modules):", second?.data);
-//         if (!mounted) return;
+  //         const second = await ApiGet("/admin/dashboard", { params: paramsNoModules });
+  //         console.log("Dashboard (fallback no modules):", second?.data);
+  //         if (!mounted) return;
 
-//         applyResponse(second?.data, modules);
-//       } else {
-//         applyResponse(first?.data, modules);
-//       }
-//     } catch (err) {
-//       console.error("❌ Dashboard fetch failed:", err);
-//       setError("Failed to load dashboard");
-//     } finally {
-//       if (mounted) setLoading(false);
-//     }
-//   })();
+  //         applyResponse(second?.data, modules);
+  //       } else {
+  //         applyResponse(first?.data, modules);
+  //       }
+  //     } catch (err) {
+  //       console.error("❌ Dashboard fetch failed:", err);
+  //       setError("Failed to load dashboard");
+  //     } finally {
+  //       if (mounted) setLoading(false);
+  //     }
+  //   })();
 
-//   return () => { mounted = false; };
-// }, [dateRange]);
+  //   return () => { mounted = false; };
+  // }, [dateRange]);
 
 
   console.log('ipdTrendFeedback', ipdFeedbackTrend)
@@ -413,7 +446,7 @@ export default function DashBoard() {
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -724,7 +757,7 @@ export default function DashBoard() {
 
 
                     </>
-                
+
                   </div>
                 </Container>
               </Fragment>

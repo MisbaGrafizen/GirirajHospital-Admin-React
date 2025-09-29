@@ -59,7 +59,6 @@ export const ApiPut = (type, data) => {
   });
 };
 export const ApiPutWithId = (type, data) => {
-  console.log("33333333333333333333",type,data)
   return new Promise((resolve, reject) => {
     axios
       .put(`${BaseURL}${type}`, data, getHttpOptions()) 
