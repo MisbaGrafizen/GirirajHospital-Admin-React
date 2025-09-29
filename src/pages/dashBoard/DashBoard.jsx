@@ -230,6 +230,11 @@ export default function DashBoard() {
             }))
           );
 
+          // ✅ update kpis with totalConcern
+setKpis(prev => ({
+  ...(data.kpis || prev),
+  totalConcern: grandTotal,   // inject the grand total into kpis
+}));
           // ----- Department bars -----
           const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : []
           setDepartmentData(

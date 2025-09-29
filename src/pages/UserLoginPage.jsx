@@ -15,7 +15,6 @@ export default function UserLoginPage() {
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
-  // Pre-fill username when "Remember me" is on
   useEffect(() => {
     // mark this route as a role user login (optional, if your app reads it)
     localStorage.setItem("loginType", "user")
