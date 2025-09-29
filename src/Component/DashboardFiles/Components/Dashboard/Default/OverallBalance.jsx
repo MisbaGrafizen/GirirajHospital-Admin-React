@@ -38,7 +38,7 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                         </LI>
                         <LI>
                           <span className="circle md34:!hidden md77:!flex  bg-primary"></span>
-                          <span className="f-light  md34:!hidden md77:!flexms-1">IPD</span>
+                          <span className="f-light  md34:!hidden md77:!flex ms-1">IPD</span>
                         </LI>
                       </UL>
 

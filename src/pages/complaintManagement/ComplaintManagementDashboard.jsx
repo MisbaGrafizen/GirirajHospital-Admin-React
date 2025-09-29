@@ -131,6 +131,21 @@ const DEPT_COLORS = {
     "Overall": "#6B7280",
 }
 
+const SERVICE_NORMALIZATION_MAP = {
+  Doctor: "Doctor Services",
+  "Doctor Service": "Doctor Services",
+  Billing: "Billing Services",
+  Diagnostic: "Diagnostic Services",
+  "Diagnostic Service": "Diagnostic Services",
+  Dietitian: "Dietitian Services",
+};
+
+
+function normalizeServiceName(name = "") {
+  return SERVICE_NORMALIZATION_MAP[name] || name;
+}
+
+
 
 // ===================== DATE HELPERS =====================
 const pad2 = (n) => String(n).padStart(2, "0")
@@ -240,7 +255,7 @@ function flattenConcernDocForStats(doc) {
             results.push({
                 department: DEPT_LABEL[k],          // 👈 one per department
                 resolutionTime: doc.status === "resolved" ? 1 : 0, // fake example
-                escalated: doc.priority === "Urgent" || doc.priority === "Critical",
+                escalated: doc.stauts === "escalated",
                 createdAt: doc.createdAt || doc.updatedAt || new Date().toISOString(), // 👈 needed for trend
             });
         }
@@ -257,12 +272,20 @@ const hasConcernContent = (b) => {
     return hasText || hasFiles;
 };
 
-// Collect department labels as comma-separated string
-const getDepartmentsString = (doc, allowedBlocks) =>
-    allowedBlocks
-        .filter((k) => hasConcernContent(doc?.[k]))
-        .map((k) => DEPT_LABEL[k])
-        .join(", ");
+function getDepartmentsString(doc, allowedBlocks) {
+  const departments = [];
+  allowedBlocks.forEach((k) => {
+    const block = doc?.[k];
+    if (!block) return;
+    const hasText = block.text && String(block.text).trim().length > 0;
+    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+    if (hasText || hasAttachments) {
+      let label = DEPT_LABEL[k] || k;
+      departments.push(normalizeServiceName(label));  // ✅ normalize here
+    }
+  });
+  return departments.join(", ");
+}
 
 
 // Build multi-line chart series from rows
@@ -311,7 +334,7 @@ function computeKpis(rows) {
     const pending = rows.filter((r) => r.status === "Pending").length
     const inProgress = rows.filter((r) => r.status === "In Progress").length
     const resolved = rows.filter((r) => r.status === "Resolved").length
-    const escalated = rows.filter((r) => r.priority === "Urgent").length
+    const escalated = rows.filter((r) => r.status === "Escalated").length
 
     // Fake average resolution time (needs backend duration to be accurate)
     const resolvedRows = rows.filter((r) => r.status === "Resolved")
@@ -375,6 +398,25 @@ export default function ComplaintManagementDashboard() {
         service: 'All Services',  // matches your UI labels
         doctor: '',               // blank means All Doctors
     });
+    const [doctorOptions, setDoctorOptions] = useState([]);
+
+useEffect(() => {
+  if (!rawConcerns || !rawConcerns.length) {
+    setDoctorOptions([]);
+    return;
+  }
+
+  const uniqueDoctors = Array.from(
+    new Set(
+      rawConcerns
+        .map(d => d.consultantDoctorName?.name)
+        .filter(Boolean)
+    )
+  );
+
+  setDoctorOptions(uniqueDoctors);
+}, [rawConcerns]);
+
 
 
     console.log('top5Departments', top5Departments)
@@ -397,6 +439,10 @@ export default function ComplaintManagementDashboard() {
         navigate("/complaint-details", { state: { complaint: complaintRow, doc: fullDoc } });
     };
 
+    const handleAllPageNavigate = () => {
+        navigate("/dashboards/complain-all-list");
+    };
+
 
     useEffect(() => {
         const t = setTimeout(() => setChartAnimated(true), 500)
@@ -412,51 +458,57 @@ export default function ComplaintManagementDashboard() {
     };
 
     // Apply filters to raw docs
-    function applyFilters(docs, filters, allowedBlocks) {
-        const q = (filters.searchTerm || "").toLowerCase();
-        const from = parseLocalDate(filters.from);
-        const to = parseLocalDate(filters.to);
+function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) {
+    const q = (searchTerm || "").toLowerCase();
+    const from = parseLocalDate(filters.from);
+    const to = parseLocalDate(filters.to);
 
-        return docs.filter((doc) => {
-            const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
+    return docs.filter((doc) => {
+        const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
 
-            // Date range
-            if (from && createdAt < from) return false;
-            if (to) {
-                const endOfDay = new Date(to);
-                endOfDay.setDate(endOfDay.getDate() + 1);
-                if (createdAt >= endOfDay) return false;
-            }
+        // Date range
+        if (from && createdAt < from) return false;
+        if (to) {
+            const endOfDay = new Date(to);
+            endOfDay.setDate(endOfDay.getDate() + 1);
+            if (createdAt >= endOfDay) return false;
+        }
 
-            // Service filter
-            if (filters.service && filters.service !== "All Services") {
-                const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
-                if (!depts.includes(filters.service.toLowerCase())) return false;
-            }
+        // Service filter
+        if (filters.service && filters.service !== "All Services") {
+            const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
+            if (!depts.includes(filters.service.toLowerCase())) return false;
+        }
 
-            // Doctor filter
-            if (filters.doctor && filters.doctor !== "All Doctors") {
-                const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
-                if (!doctor.includes(filters.doctor.toLowerCase())) return false;
-            }
+        // Doctor filter
+        if (filters.doctor && filters.doctor !== "All Doctors") {
+            const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
+            if (!doctor.includes(filters.doctor.toLowerCase())) return false;
+        }
 
-            // Search term filter
-            if (q) {
-                const combined = [
-                    doc.patientName,
-                    doc.consultantDoctorName?.name,
-                    doc.complaintId,
-                    getDepartmentsString(doc, allowedBlocks),
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
-                if (!combined.includes(q)) return false;
-            }
+        // Status filter
+        if (selectedStatus && selectedStatus !== "All Status") {
+            if (mapStatusUI(doc.status) !== selectedStatus) return false;
+        }
 
-            return true;
-        });
-    }
+        // Search term filter
+        if (q) {
+            const combined = [
+                doc.patientName,
+                doc.consultantDoctorName?.name,
+                doc.complaintId,
+                getDepartmentsString(doc, allowedBlocks),
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+            if (!combined.includes(q)) return false;
+        }
+
+        return true;
+    });
+}
+
 
 
     // ====== DERIVED ======
@@ -502,11 +554,10 @@ export default function ComplaintManagementDashboard() {
             })
             // 👨‍⚕️ Doctor filter
             .filter((c) => {
-                if (!filters.doctor) return true;
-                return (c.doctor || "")
-                    .toLowerCase()
-                    .includes(filters.doctor.toLowerCase());
-            });
+  if (!filters.doctor || filters.doctor === "All Doctors") return true;
+  return (c.doctor || "").toLowerCase().includes(filters.doctor.toLowerCase());
+})
+
     }, [rows, searchTerm, selectedStatus, filters]);
 
 
@@ -532,57 +583,58 @@ export default function ComplaintManagementDashboard() {
 
 
     useEffect(() => {
-        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
-            setRows([]);
-            setKpiData(computeKpis([]));
-            setTrendData([]);
-            setDepartmentColors({});
-            setTop5Departments([]);
-            return;
+    if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+        setRows([]);
+        setKpiData(computeKpis([]));
+        setTrendData([]);
+        setDepartmentColors({});
+        setTop5Departments([]);
+        return;
+    }
+
+    // ✅ Apply all filters here
+    const docs = applyFilters(rawConcerns, filters, allowedBlocks, selectedStatus, searchTerm);
+
+    // Table rows
+    const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+    setRows(list);
+
+    // Stats docs for chart & top-5
+    const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
+
+    // KPIs
+    setKpiData(computeKpis(list));
+
+    // Trend chart
+    const { data: tData, colors } = buildTrendData(statsDocs);
+    setTrendData(tData);
+    setDepartmentColors(colors);
+
+    // Top-5 departments
+    const deptStats = {};
+    statsDocs.forEach((d) => {
+        if (!deptStats[d.department]) {
+            deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
         }
+        deptStats[d.department].complaints += 1;
+        deptStats[d.department].totalResolution += d.resolutionTime || 0;
+        if (d.escalated) deptStats[d.department].escalations += 1;
+    });
 
-        // ✅ Apply filters here
-        const docs = applyFilters(rawConcerns, filters, allowedBlocks);
+    const top = Object.entries(deptStats)
+        .map(([department, s]) => ({
+            department,
+            complaints: s.complaints,
+            avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+            escalations: s.escalations,
+        }))
+        .sort((a, b) => b.complaints - a.complaints)
+        .slice(0, 5)
+        .map((x, i) => ({ rank: i + 1, ...x }));
 
-        // Table rows
-        const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
-        setRows(list);
+    setTop5Departments(top);
+}, [rawConcerns, allowedBlocks, filters, selectedStatus, searchTerm]);
 
-        // Stats docs for chart & top-5
-        const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
-
-        // KPIs
-        setKpiData(computeKpis(list));
-
-        // Trend chart
-        const { data: tData, colors } = buildTrendData(statsDocs);
-        setTrendData(tData);
-        setDepartmentColors(colors);
-
-        // Top-5 departments
-        const deptStats = {};
-        statsDocs.forEach((d) => {
-            if (!deptStats[d.department]) {
-                deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-            }
-            deptStats[d.department].complaints += 1;
-            deptStats[d.department].totalResolution += d.resolutionTime || 0;
-            if (d.escalated) deptStats[d.department].escalations += 1;
-        });
-
-        const top = Object.entries(deptStats)
-            .map(([department, s]) => ({
-                department,
-                complaints: s.complaints,
-                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-                escalations: s.escalations,
-            }))
-            .sort((a, b) => b.complaints - a.complaints)
-            .slice(0, 5)
-            .map((x, i) => ({ rank: i + 1, ...x }));
-
-        setTop5Departments(top);
-    }, [rawConcerns, allowedBlocks, filters]);
 
 
 
@@ -813,6 +865,7 @@ export default function ComplaintManagementDashboard() {
                                             value={filters}
                                             onChange={handleFilterChange}
                                             serviceVariant="concern"
+                                            doctors={doctorOptions} 
                                         />
                                     </div>
 
@@ -897,7 +950,7 @@ export default function ComplaintManagementDashboard() {
                                             </div>
                                             <div className="flex justify-center">
 
-                                            <SimpleBarChart trendData={trendData} />
+                                                <SimpleBarChart trendData={trendData} />
 
                                             </div>
                                         </div>
@@ -1042,10 +1095,23 @@ export default function ComplaintManagementDashboard() {
                                     {/* Complaint Details Table */}
                                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
                                         <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                                            <div className=" w-[100%]  flex  items-center gap-[10px] ">
+
+
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
                                             </div>
-                                            <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
+                                            <button
+
+                                                className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                onClick={handleAllPageNavigate}
+                                            >
+                                                <Eye className="w-5 h-5 " />
+                                                View All
+                                            </button>
+
                                         </div>
 
                                         <div className="overflow-x-auto">
@@ -1079,7 +1145,7 @@ export default function ComplaintManagementDashboard() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
-                                                    {filteredComplaints
+                                                    {rows
                                                         .slice()
                                                         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                                                         .slice(0, 5)
@@ -1094,7 +1160,7 @@ export default function ComplaintManagementDashboard() {
                                                                     <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
                                                                     <td className="px-6 py-2 text-sm text-gray-900">
                                                                         <div className="flex items-center">
-                                                                            <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                                                           
                                                                             {complaint.date}
                                                                         </div>
                                                                     </td>

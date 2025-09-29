@@ -24,7 +24,26 @@ export default function EmailManagement() {
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobileDetail, setIsMobileDetail] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState([])
+
+
+  const getSubjectColor = (subject) => {
+    if (!subject) return "bg-gray-100 border-gray-200 text-gray-700"
+
+    const sub = subject.toLowerCase()
+    if (sub.includes("ipd")) {
+      return "bg-purple-100 text-purple-800"
+    }
+    if (sub.includes("opd")) {
+      return "bg-blue-100 text-blue-800"
+    }
+    if (sub.includes("complain") || sub.includes("concern")) {
+      return "bg-red-100 border-red-100 text-red-800"
+    }
+
+    return "bg-gray-100 border-gray-200 text-gray-700" // default
+  }
 
   useEffect(() => {
     const fetchEmails = async () => {
@@ -35,8 +54,9 @@ export default function EmailManagement() {
         const mapped = (data?.notifications || []).map((n) => ({
           id: n._id,
           sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
-          senderEmail: "", 
+          senderEmail: "",
           subject: n.title,
+
           preview: n.body,
           content: `
     <div class="space-y-4">
@@ -95,14 +115,30 @@ export default function EmailManagement() {
 
 
   const filteredEmails = useMemo(() => {
-    if (!searchQuery) return emails;
-    return emails.filter(
+  let list = emails;
+
+  // 🔎 Apply search filter
+  if (searchQuery) {
+    list = list.filter(
       (email) =>
         email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         email.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
         email.preview.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [emails, searchQuery]);
+  }
+
+  // ✅ Apply checkbox filter
+  if (selectedFilters.length > 0) {
+    list = list.filter((email) =>
+      selectedFilters.some((f) =>
+        email.subject?.toLowerCase().includes(f.toLowerCase())
+      )
+    );
+  }
+
+  return list;
+}, [emails, searchQuery, selectedFilters]);
+
 
   const handleEmailClick = (email) => {
     setSelectedEmail(email);
@@ -135,7 +171,6 @@ export default function EmailManagement() {
     }
   };
 
-  const [selectedFilters, setSelectedFilters] = useState([])
   const modalRef = useRef(null)
 
   // Close modal if click outside
@@ -182,50 +217,50 @@ export default function EmailManagement() {
                         type="text"
                         placeholder="Search emails..."
                         value={searchQuery}
-                      
+
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-[100%] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-[100%] pl-10 pr-4 py-2 border border-gray-300 rounded-lg  focus:border-transparent outline-none"
                       />
                     </div>
 
                     {/* Filter button & modal */}
-                <div className="relative" ref={modalRef}>
-  <button
-    onClick={() => setFilterOpen((prev) => !prev)}
-    className={`border flex justify-center items-center rounded-[8px] w-[40px] h-[40px] transition
+                    <div className="relative" ref={modalRef}>
+                      <button
+                        onClick={() => setFilterOpen((prev) => !prev)}
+                        className={`border flex justify-center items-center rounded-[8px] w-[40px] h-[40px] transition
       ${filterOpen ? "bg-red-500 text-white" : selectedFilters.length > 0 ? "bg-red-500 text-white" : "bg-white hover:bg-gray-100"}`}
-  >
-    <i className="fa-regular fa-filter"></i>
-  </button>
+                      >
+                        <i className="fa-regular fa-filter"></i>
+                      </button>
 
-  <AnimatePresence>
-    {filterOpen && (
-      <motion.div
-        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-        transition={{ duration: 0.15 }}
-        className="absolute right-0 mt-2 w-44 h-fit bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200 z-50 px-2 py-[5px]"
-      >
-        {["OPD", "IPD", "Complain"].map((item, index, arr) => (
-          <label
-            key={item}
-            className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
+                      <AnimatePresence>
+                        {filterOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 mt-2 w-44 h-fit bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200 z-50 px-2 py-[5px]"
+                          >
+                            {["OPD", "IPD", "Complain"].map((item, index, arr) => (
+                              <label
+                                key={item}
+                                className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
               ${index !== arr.length - 1 ? "border-b-[0.2px] border-[#b6b4b4]" : ""}`}
-          >
-            <input
-              type="checkbox"
-              checked={selectedFilters.includes(item)}
-              onChange={() => handleCheckboxChange(item)}
-              className="accent-blue-600"
-            />
-            {item}
-          </label>
-        ))}
-      </motion.div>
-    )}
-  </AnimatePresence>
-</div>
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedFilters.includes(item)}
+                                  onChange={() => handleCheckboxChange(item)}
+                                  className="accent-blue-600"
+                                />
+                                {item}
+                              </label>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
                   </div>
                   {/* Email List */}
@@ -282,7 +317,21 @@ export default function EmailManagement() {
                             : "font-medium text-gray-800"
                             }`}
                         >
-                          {email.subject}
+                          <h3
+                            className={`text-sm mb-2 line-clamp-2 ${!email.isRead ? "font-semibold text-gray-900" : "font-medium text-gray-800"
+                              }`}
+                          >
+                            <div
+                              className={`
+      flex  font-[500] text-[12px] w-fit px-[10px] rounded-[10px]
+      ${getSubjectColor(email.subject)}
+    `}
+                            >
+                              {email.subject}
+                            </div>
+                          </h3>
+
+
                           {email.data?.type && (
                             <span className="ml-2 text-xs text-blue-500">[{email.data.type}]</span>
                           )}
@@ -317,7 +366,7 @@ export default function EmailManagement() {
                                   </span>
                                 </div>
                                 <div>
-                                <span className="font-medium text-gray-900">
+                                  <span className="font-medium text-gray-900">
                                     {selectedEmail.sender}
                                   </span>
                                   {/* <span className="text-gray-500">
@@ -439,7 +488,7 @@ export default function EmailManagement() {
                               {email.sender}
                             </h3>
                             <span className="text-xs text-gray-500">{email.timestamp}</span>
-                          </div>  
+                          </div>
                           <p className="text-sm font-medium text-gray-800">{email.subject}</p>
                           <p className="text-xs text-gray-500 line-clamp-2">{email.preview}</p>
                         </div>

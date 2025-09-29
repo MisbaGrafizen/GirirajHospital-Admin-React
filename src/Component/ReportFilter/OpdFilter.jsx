@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ModernDatePicker from '../MainInputFolder/ModernDatePicker';
 import AnimatedDropdown from '../MainInputFolder/AnimatedDropdown';
 import { Filter, User } from 'lucide-react';
@@ -17,13 +17,14 @@ function fmtYYYYMMDD(d) {
   return `${y}-${m}-${day}`;
 }
 
-/** Default service sets for each variant */
 const OPD_SERVICES = [
   'All Services',
   'Appointment',
   'Reception Staff',
-  'Lab',
   'Doctor Service',
+  'Diagnostic Services (Pathology)',
+  'Diagnostic Services (Radiology)',
+  'clealiness',
   'Security',
 ];
 
@@ -39,18 +40,13 @@ const CONCERN_SERVICES = [
   'Overall',
 ];
 
-/** Map display label -> normalized label for filtering/back-end per variant */
 function normalizeServiceLabel(label, variant = 'opd') {
   if (!label) return 'All Services';
   if (variant === 'opd') {
-    // OPD uses "Lab" in UI, but data uses "Diagnostic Services"
     if (label === 'Lab') return 'Diagnostic Services';
-    // keep "Doctor Service" or anything else as-is, except ensure All Services stays
     if (label === 'All Services') return 'All Services';
     return label;
   }
-  // concern
-  // make sure accidental "Doctor Service" becomes "Doctor Services"
   if (label === 'Doctor Service') return 'Doctor Services';
   if (label === 'All Services') return 'All Services';
   return label;
@@ -72,23 +68,31 @@ export default function OpdFilter({
   onChange,
   serviceVariant = 'opd',
   services,
-  doctors,
+  doctors,   // 👈 doctorOptions passed in from parent
 }) {
   const [dateFrom, setDateFrom] = useState(parseToDate(value?.from));
   const [dateTo, setDateTo] = useState(parseToDate(value?.to));
   const [selectedService, setSelectedService] = useState(
     toDisplayServiceLabel(value?.service, serviceVariant) || 'All Services'
   );
-  const [selectedDoctor, setSelectedDoctor] = useState(value?.doctor ? value.doctor : 'All Doctors');
+  const [selectedDoctor, setSelectedDoctor] = useState(
+    value?.doctor ? value.doctor : 'All Doctors'
+  );
 
+  // ✅ Service options
   const serviceOptions = useMemo(() => {
     if (Array.isArray(services) && services.length) return services;
     return serviceVariant === 'concern' ? CONCERN_SERVICES : OPD_SERVICES;
   }, [services, serviceVariant]);
 
+  // ✅ Doctor options (coming from parent)
   const doctorOptions = useMemo(() => {
-    if (Array.isArray(doctors) && doctors.length) return doctors;
-    return ['All Doctors', 'Dr. Sharma', 'Dr. Mehta', 'Dr. Patel', 'Dr. Gupta', 'Dr. Rao', 'Dr. Singh'];
+    let opts = Array.isArray(doctors) && doctors.length ? doctors : [];
+    // always prepend "All Doctors"
+    if (!opts.includes('All Doctors')) {
+      opts = ['All Doctors', ...opts];
+    }
+    return opts;
   }, [doctors]);
 
   useEffect(() => {
@@ -98,7 +102,9 @@ export default function OpdFilter({
     if (value.service !== undefined) {
       setSelectedService(toDisplayServiceLabel(value.service, serviceVariant) || 'All Services');
     }
-    if (value.doctor !== undefined) setSelectedDoctor(value.doctor || 'All Doctors');
+    if (value.doctor !== undefined) {
+      setSelectedDoctor(value.doctor || 'All Doctors');
+    }
   }, [value?.from, value?.to, value?.service, value?.doctor, serviceVariant]);
 
   useEffect(() => {
@@ -111,10 +117,9 @@ export default function OpdFilter({
     });
   }, [dateFrom, dateTo, selectedService, selectedDoctor, onChange, serviceVariant]);
 
-  // Ensure current selectedService always exists in the dropdown options
+  // ✅ keep service option valid
   useEffect(() => {
     if (!serviceOptions.includes(selectedService)) {
-      // try to coerce normalized -> display present in options
       const display = toDisplayServiceLabel(
         normalizeServiceLabel(selectedService, serviceVariant),
         serviceVariant
@@ -125,17 +130,9 @@ export default function OpdFilter({
 
   return (
     <div className="">
-      <div className=" md34:!hidden md11:!grid grid-cols-2    md11:grid-cols-4 gap-x-6">
-        <ModernDatePicker
-          label="From Date"
-          selectedDate={dateFrom}
-          setSelectedDate={setDateFrom}
-        />
-        <ModernDatePicker
-          label="To Date"
-          selectedDate={dateTo}
-          setSelectedDate={setDateTo}
-        />
+      <div className="md34:!hidden md11:!grid grid-cols-2 md11:grid-cols-4 gap-x-6">
+        <ModernDatePicker label="From Date" selectedDate={dateFrom} setSelectedDate={setDateFrom} />
+        <ModernDatePicker label="To Date" selectedDate={dateTo} setSelectedDate={setDateTo} />
         <AnimatedDropdown
           label="Service"
           icon={Filter}
@@ -143,40 +140,7 @@ export default function OpdFilter({
           onChange={setSelectedService}
           options={serviceOptions}
         />
-        <AnimatedDropdown
-          label="Doctor"
-          icon={User}
-          selected={selectedDoctor}
-          onChange={setSelectedDoctor}
-          options={doctorOptions}
-        />
-      </div>
-
-      <div className=" md34:!flex md11:!hidden flex-col mt-[10px] gap-[12px]">
-       <div className=' grid grid-cols-2 gap-x-[10px] justify-between w-[100%]'>
-
-
-          <ModernDatePicker
-            label="From Date"
-            selectedDate={dateFrom}
-            setSelectedDate={setDateFrom}
-          />
-          <ModernDatePicker
-            label="To Date"
-            selectedDate={dateTo}
-            setSelectedDate={setDateTo}
-          />
-        </div>
-        <div className=' grid grid-cols-2 gap-x-[10px] justify-between w-[100%]'>
-
-
-          <AnimatedDropdown
-            label="Service"
-            icon={Filter}
-            selected={selectedService}
-            onChange={setSelectedService}
-            options={serviceOptions}
-          />
+        {doctorOptions.length > 1 && (
           <AnimatedDropdown
             label="Doctor"
             icon={User}
@@ -184,6 +148,31 @@ export default function OpdFilter({
             onChange={setSelectedDoctor}
             options={doctorOptions}
           />
+        )}
+      </div>
+
+      <div className="md34:!flex md11:!hidden flex-col mt-[10px] gap-[12px]">
+        <div className="grid grid-cols-2 gap-x-[10px] w-[100%]">
+          <ModernDatePicker label="From Date" selectedDate={dateFrom} setSelectedDate={setDateFrom} />
+          <ModernDatePicker label="To Date" selectedDate={dateTo} setSelectedDate={setDateTo} />
+        </div>
+        <div className="grid grid-cols-2 gap-x-[10px] w-[100%]">
+          <AnimatedDropdown
+            label="Service"
+            icon={Filter}
+            selected={selectedService}
+            onChange={setSelectedService}
+            options={serviceOptions}
+          />
+          {doctorOptions.length > 1 && (
+            <AnimatedDropdown
+              label="Doctor"
+              icon={User}
+              selected={selectedDoctor}
+              onChange={setSelectedDoctor}
+              options={doctorOptions}
+            />
+          )}
         </div>
       </div>
     </div>

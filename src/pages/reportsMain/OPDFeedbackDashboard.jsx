@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSideBar'
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
-
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye } from "lucide-react"
+import { useNavigate } from 'react-router-dom'
 import { FileText, Download, Star, ThumbsUp, BarChart3, Award, Phone, Clock } from "lucide-react"
 import { MessageSquare, } from "lucide-react";
 import { Users, Stethoscope, ShieldCheck, Microscope } from "lucide-react";
@@ -28,7 +28,6 @@ import {
   Line,
   CartesianGrid,
 } from "recharts"
-import { useNavigate } from 'react-router-dom'
 import OpdFilter from '../../Component/ReportFilter/OpdFilter'
 import Widgets1 from '../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1'
 import Preloader from '../../Component/loader/Preloader'
@@ -87,6 +86,7 @@ function calcNpsPercent(items) {
 function resolvePermissions() {
   const loginType = localStorage.getItem("loginType")
   const isAdmin = loginType === "admin"
+  const navigate = useNavigate();
 
   let permsArray = []
   try {
@@ -141,6 +141,7 @@ export default function OPDFeedbackDashboard() {
   const [opdServiceChart, setOpdServiceChart] = useState([]);
   const [metric, setMetric] = useState("avg")
   const [rawOPD, setRawOPD] = useState([])
+  const [doctorOptions, setDoctorOptions] = useState([]);
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
     averageRating: 0,
@@ -441,6 +442,29 @@ export default function OPDFeedbackDashboard() {
       f.comment.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  useEffect(() => {
+  if (!rawOPD || !rawOPD.length) {
+    setDoctorOptions(["All Doctors"]);
+    return;
+  }
+
+  const uniqueDoctors = Array.from(
+    new Set(
+      rawOPD
+        .map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
+        .filter(Boolean)
+    )
+  ).sort();
+
+  setDoctorOptions(["All Doctors", ...uniqueDoctors]);
+}, [rawOPD]);
+
+
+
+  const handlenavigate = () => {
+    navigate("/dashboards/opd-all-list")
+  }; 
+
   // -------- Export (permission-gated) --------
   const exportToExcel = async () => {
     const XLSX = await import("xlsx")
@@ -671,7 +695,7 @@ export default function OPDFeedbackDashboard() {
             <Preloader />
               <div className="mx-auto w-full">
                 <div className="bg-white rounded-lg shadow-sm p-[13px]  md34:!mx-[12px] md11:!mx-0   mb-[10px] border border-gray-100  ">
-                  <OpdFilter value={filters} onChange={handleFilterChange} />
+                  <OpdFilter value={filters} onChange={handleFilterChange}  doctors={doctorOptions} />
                 </div>
                 <div className="flex gap-6 mb-3">
 
@@ -935,6 +959,14 @@ export default function OPDFeedbackDashboard() {
                             Export to Excel
                           </button>
 
+                          <button
+                       
+                            className="flex items-center px-2 py-[6px] h-[35px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            onClick={handlenavigate}
+                          >
+                            <Eye className="w-5 h-5 " />
+
+                          </button>
                         </div>
 
                       </div>

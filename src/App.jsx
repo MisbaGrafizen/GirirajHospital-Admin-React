@@ -17,13 +17,16 @@ import FeedbackDetails from "./pages/reportsMain/FeedbackDetails";
 import RoleManage from "./pages/roleModule/RoleManage";
 import UserManageMent from "./pages/roleModule/UserManageMent";
 import LoginPage from "./pages/LoginPage";
-import SuperAdminDashboard from "./pages/adminDashboard/SuperAdminDashboard";
 import UserLoginPage from "./pages/UserLoginPage";
 import IpdFeedbackDetails from "./pages/reportsMain/IpdFeedbackDetails";
 import EmailManagement from "./pages/EmailManagement";
 import { listenForMessages, requestNotificationPermission } from "./helper/notification";
 import ChatPage from "./pages/chatappPage/ChatPage";
 import socket from "./socket/index.js";
+import IpdAllList from "./pages/reportsMain/allListPages/IpdAllList.jsx";
+import OpdAllList from "./pages/reportsMain/allListPages/OpdAllList.jsx";
+import ComplainAllList from "./pages/reportsMain/allListPages/ComplainAllList.jsx";
+import NpsAllList from "./pages/reportsMain/allListPages/NpsAllList.jsx";
 
 
 
@@ -104,6 +107,17 @@ function App() {
           <Route path="/ipd-feedback-details" element={<IpdFeedbackDetails />} />
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
+
+
+
+          <Route path="/dashboards/ipd-all-list" element={<IpdAllList />} />
+          <Route path="/dashboards/opd-all-list" element={<OpdAllList />} />
+          <Route path="/dashboards/complain-all-list" element={<ComplainAllList />} />
+          <Route path="/dashboards/nps-all-list" element={<NpsAllList />} />
+
+
+
+
 
           <Route path="/mail" element={<EmailManagement />} />
           {/* <Route path="/chat" element={<ChatPage />} /> */}

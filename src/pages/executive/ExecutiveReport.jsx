@@ -240,41 +240,42 @@ export default function ExecutiveReport() {
     return () => { mounted = false }
   }, [])
 
-  // Build current window + previous window slices
-  const { opdNow, ipdNow, opdPrev, ipdPrev } = useMemo(() => {
-    const now = new Date()
+  // Build filtered + previous window slices (based on selected range)
+const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
+  if (!fromDate || !toDate) return { opdFiltered: [], ipdFiltered: [], opdPrev: [], ipdPrev: [] }
 
-    // Current month (1st → last day)
-    const curFrom = new Date(now.getFullYear(), now.getMonth(), 1)
-    const curTo = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-
-    // Previous month (1st → last day)
-    const prevFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const prevTo = new Date(now.getFullYear(), now.getMonth(), 0)
-
-    const curFromISO = toLocalISO(curFrom)
-    const curToISO = toLocalISO(curTo)
-    const prevFromISO = toLocalISO(prevFrom)
-    const prevToISO = toLocalISO(prevTo)
-
-    const slice = (arr, fromISO, toISO) =>
-      Array.isArray(arr)
-        ? arr.filter((d) => {
+  const slice = (arr, fromISO, toISO) =>
+    Array.isArray(arr)
+      ? arr.filter((d) => {
           const dtISO = toISODateOnly(
             normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
-          );
-          return dtISO ? dateInRange(dtISO, fromISO, toISO) : false;
+          )
+          return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
         })
-        : [];
+      : []
 
+  // current selected range
+  const filteredOpd = slice(opd, fromDate, toDate)
+  const filteredIpd = slice(ipd, fromDate, toDate)
 
-    return {
-      opdNow: slice(opd, curFromISO, curToISO),
-      ipdNow: slice(ipd, curFromISO, curToISO),
-      opdPrev: slice(opd, prevFromISO, prevToISO),
-      ipdPrev: slice(ipd, prevFromISO, prevToISO),
-    }
-  }, [opd, ipd])
+  // previous range: same length as current
+  const from = new Date(fromDate)
+  const to = new Date(toDate)
+  const days = Math.max(1, Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1)
+
+  const prevFrom = new Date(from)
+  prevFrom.setDate(prevFrom.getDate() - days)
+  const prevTo = new Date(to)
+  prevTo.setDate(prevTo.getDate() - days)
+
+  return {
+    opdFiltered: filteredOpd,
+    ipdFiltered: filteredIpd,
+    opdPrev: slice(opd, toLocalISO(prevFrom), toLocalISO(prevTo)),
+    ipdPrev: slice(ipd, toLocalISO(prevFrom), toLocalISO(prevTo)),
+  }
+}, [opd, ipd, fromDate, toDate])
+
 
 
   // Compute metrics for a given slice
@@ -307,8 +308,9 @@ export default function ExecutiveReport() {
     return { opdPct, ipdPct, npsOPD, npsIPD, complaints, docAvg, hkPct }
   }
 
-  const cur = useMemo(() => computeFor(opdNow, ipdNow), [opdNow, ipdNow])
-  const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
+  const cur = useMemo(() => computeFor(opdFiltered, ipdFiltered), [opdFiltered, ipdFiltered])
+const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
+
 
   // Build table rows with trends + statuses
   const metrics = useMemo(() => {
@@ -433,9 +435,9 @@ export default function ExecutiveReport() {
                 {/* Filters */}
                 <section className="mb-3 border border-gray-200 rounded-md">
                   <form onSubmit={handleFilter} className="p-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
                       {/* From date */}
-                      <div className="relative">
+                      <div className="relative md34:!mb-[17px] md77:!mb-0">
                         <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                           From
                         </label>
@@ -446,7 +448,7 @@ export default function ExecutiveReport() {
                             value={fromDate}
                             max={toDate}
                             onChange={(e) => setFromDate(e.target.value)}
-                            className="w-full pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full bg-white pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
                       </div>
@@ -462,7 +464,7 @@ export default function ExecutiveReport() {
                             value={toDate}
                             min={fromDate}
                             onChange={(e) => setToDate(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full bg-white pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
                       </div>
@@ -482,7 +484,7 @@ export default function ExecutiveReport() {
                   )}
 
                   <div className="overflow-x-auto">
-                    <table className="min-w-full table-fixed">
+                    <table className="md11:!min-w-full md34:!min-w-[800px]  md77:!min-w-[1000px] table-fixed">
                       <colgroup>
                         <col className="w-2/5" />
                         <col className="w-1/5" />

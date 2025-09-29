@@ -10,8 +10,9 @@ const DEPT_COLORS = {
   Maintenance: "#EF4444",   // Red
   Diagnostic: "#8B5CF6",    // Purple
   Dietitian: "#06B6D4",     // Cyan
-  Security: "#F43F5E",      // Pink/Coral
+  Security: "#9CA3AF",      // Gray
 };
+
 
 const chartSetting = {
   yAxis: [{ label: "Complaints", width: 25 }],

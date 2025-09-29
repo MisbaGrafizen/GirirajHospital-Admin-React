@@ -103,6 +103,7 @@ export default function DashBoard() {
   const [opdFeedbackData, setOpdFeedbackData] = useState([])
   const [opdSummary, setOpdSummary] = useState({ avgRating: 0, positivePercent: 0, responses: 0 })
   const [departmentData, setDepartmentData] = useState([])
+   const [allowedModules, setAllowedModules] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [concernData, setConcernData] = useState([])
@@ -119,8 +120,6 @@ export default function DashBoard() {
 
 
   const [recentFeedbacks, setRecentFeedbacks] = useState([])
-
-
 
 
   useEffect(() => {
@@ -243,6 +242,165 @@ export default function DashBoard() {
       mounted = false
     }
   }, [dateRange])
+
+
+// useEffect(() => {
+//   let mounted = true;
+
+//   const safeParse = (json) => {
+//     try { return JSON.parse(json || "{}"); } catch { return {}; }
+//   };
+
+//   const hasUsefulData = (payload) => {
+//     const d = payload?.data || {};
+//     if (!d) return false;
+//     const k = d.kpis || {};
+//     return (
+//       (k.totalFeedback ?? 0) > 0 ||
+//       (k.totalConcern ?? 0) > 0 ||
+//       (d.recentFeedbacks?.length ?? 0) > 0 ||
+//       (d.opdSatisfaction?.responses ?? 0) > 0
+//     );
+//   };
+
+//   const applyResponse = (payload, fallbackModules) => {
+//     const d = payload?.data || {};
+//     const allowed = payload?.modules || fallbackModules || [];
+
+//     setAllowedModules(allowed);
+
+//     // KPIs
+//     setKpis(d.kpis || {
+//       totalFeedback: 0,
+//       averageRating: { value: 0 },
+//       npsRating: { value: 0 },
+//       totalConcern: 0,
+//       openIssues: 0,
+//       resolvedIssues: 0,
+//       earning: { weeklyAverage: 0, series: [], labels: [] },
+//       expense: { weeklyAverage: 0, series: [], labels: [] },
+//     });
+
+//     // Concerns donut → use latest week (server already aggregates)
+//     const latestWeek = (d.concerns || [])[0] || { counts: { Open: 0, "In Progress": 0, Resolved: 0 }, total: 0 };
+//     setConcernData([
+//       { name: "Open",        value: Number(latestWeek.counts?.Open || 0),        color: "#ef4444" },
+//       { name: "In Progress", value: Number(latestWeek.counts?.["In Progress"] || 0), color: "#f59e0b" },
+//       { name: "Resolved",    value: Number(latestWeek.counts?.Resolved || 0),    color: "#10b981" },
+//     ]);
+
+//     // IPD trends chart mapping
+//     const ipdSeries = d?.ipdTrends?.series || [];
+//     setIpdFeedbackTrend(
+//       ipdSeries.map(row => {
+//         const avg = Number(row.value || 0);          // 0..5
+//         const pct = Math.round((avg / 5) * 100);     // 0..100
+//         return {
+//           month: row.date,
+//           nursing: pct,
+//           doctor: Math.min(100, Math.max(0, Math.round(pct * 0.97 + 2))),
+//           satisfaction: pct,
+//           avgRating: avg.toFixed(1),
+//           totalFeedbacks: 0,
+//           complaints: 0,
+//           resolved: 0,
+//         };
+//       })
+//     );
+
+//     // OPD satisfaction donut + header
+//     const opd = d?.opdSatisfaction || {};
+//     setOpdSummary({
+//       avgRating: Number(opd.avgRating || 0),
+//       positivePercent: Number(opd.positivePercent || 0),
+//       responses: Number(opd.responses || 0),
+//     });
+//     setOpdFeedbackData(
+//       (opd.donut || []).map(x => ({
+//         name: x.label,
+//         value: Number(x.value || 0),
+//         color: {
+//           Excellent: "#10b981",
+//           Good: "#3b82f6",
+//           Average: "#f59e0b",
+//           Poor: "#ef4444",
+//           "Very Poor": "#f97316",
+//         }[x.label] || "#8b5cf6",
+//         percentage: `${Number(x.percent || 0)}%`,
+//       }))
+//     );
+
+//     // Department bars → use server's `concerns` count for bar height
+//     setDepartmentData(
+//       (d.departmentAnalysis || []).map(row => ({
+//         department: row.department,
+//         concerns: Number(row.concerns || 0),         // bar = count
+//         satisfaction: Number(row.satisfaction || 0), // for tooltips if needed
+//         workload: row.workload || "—",
+//       }))
+//     );
+
+//     // Recent feedbacks
+//     setRecentFeedbacks(
+//       (d.recentFeedbacks || []).map((r, i) => ({
+//         id: i + 1,
+//         name: r.patientName || "-",
+//         type: r.type || "-",
+//         rating: Number(r.rating || 0),
+//         doctor: r.doctor || "-",
+//         contact: r.contact || "-",
+//         feedback: r.comment || "-",
+//         time: r.createdAt ? new Date(r.createdAt).toLocaleString() : "-",
+//       }))
+//     );
+//   };
+
+//   (async () => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+
+//       // 1) modules from localStorage.rights
+//       const rights = safeParse(localStorage.getItem("rights"));
+//       const modules = rights?.permissions?.map(p => p.module).filter(Boolean) || [];
+
+//       // 2) params object (axios-friendly)
+//       const paramsWithModules = {};
+//       if (dateRange.from) paramsWithModules.from = dateRange.from;
+//       if (dateRange.to)   paramsWithModules.to   = dateRange.to;
+//       if (modules.length) paramsWithModules.modules = JSON.stringify(modules);
+
+//       // 3) first call WITH modules (if any)
+//       const first = await ApiGet("/admin/dashboard", { params: paramsWithModules });
+//       console.log("Dashboard (with modules):", first?.data);
+//       if (!mounted) return;
+
+//       if (modules.length && !hasUsefulData(first?.data)) {
+//         // 4) fallback WITHOUT modules to avoid blank UI
+//         console.warn("No data for selected modules — retrying without modules.");
+//         const paramsNoModules = {};
+//         if (dateRange.from) paramsNoModules.from = dateRange.from;
+//         if (dateRange.to)   paramsNoModules.to   = dateRange.to;
+
+//         const second = await ApiGet("/admin/dashboard", { params: paramsNoModules });
+//         console.log("Dashboard (fallback no modules):", second?.data);
+//         if (!mounted) return;
+
+//         applyResponse(second?.data, modules);
+//       } else {
+//         applyResponse(first?.data, modules);
+//       }
+//     } catch (err) {
+//       console.error("❌ Dashboard fetch failed:", err);
+//       setError("Failed to load dashboard");
+//     } finally {
+//       if (mounted) setLoading(false);
+//     }
+//   })();
+
+//   return () => { mounted = false; };
+// }, [dateRange]);
+
 
   console.log('ipdTrendFeedback', ipdFeedbackTrend)
 

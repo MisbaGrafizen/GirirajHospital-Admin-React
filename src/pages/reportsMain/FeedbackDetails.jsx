@@ -178,21 +178,22 @@ export default function FeedbackDetails() {
                       <div><p className="text-sm font-medium text-gray-900">Reception Staff</p></div>
                       <StarRating score={model.ratings.receptionStaff} label="Reception Staff" />
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div><p className="text-sm font-medium text-gray-900">Radiology Services</p></div>
-                      <StarRating score={model.ratings.radiologyDiagnosticServices} label="Radiology Services" />
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div><p className="text-sm font-medium text-gray-900">Pathology Services</p></div>
-                    <StarRating score={model.ratings.pathologyDiagnosticServices} label="Pathology Services" />
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div><p className="text-sm font-medium text-gray-900">Doctor Services</p></div>
                     <StarRating score={model.ratings.doctorServices} label="Doctor Services" />
                   </div>
-
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div><p className="text-sm font-medium text-gray-900">Diagnostic Services (Pathology)</p></div>
+                    <StarRating score={model.ratings.pathologyDiagnosticServices} label="Pathology Services" />
+                  </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div><p className="text-sm font-medium text-gray-900">Diagnostic Services (Radiology)</p></div>
+                      <StarRating score={model.ratings.radiologyDiagnosticServices} label="Radiology Services" />
+                    </div>
+                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div><p className="text-sm font-medium text-gray-900">Cleanliness</p></div>
+                      <StarRating score={model.ratings.cleaniness} label="Radiology Services" />
+                    </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div><p className="text-sm font-medium text-gray-900">Security</p></div>
                     <StarRating score={model.ratings.security} label="Security" />

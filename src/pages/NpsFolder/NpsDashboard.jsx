@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye } from "lucide-react"
 import {
   ResponsiveContainer,
   AreaChart,
@@ -20,6 +20,7 @@ import SideBar from "../../Component/sidebar/CubaSideBar"
 import { ApiGet } from "../../helper/axios"
 import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
 import Preloader from "../../Component/loader/Preloader"
+import { useNavigate } from "react-router-dom"
 
 
 function resolvePermissions() {
@@ -242,6 +243,12 @@ export default function NpsDashboard() {
   const [rawIpd, setRawIpd] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const navigate = useNavigate();
+
+
+  const handlenavigate =() =>{
+    navigate("/dashboards/nps-all-list")
+  };
 
   useEffect(() => {
     ; (async () => {
@@ -631,7 +638,14 @@ export default function NpsDashboard() {
                       </div>
                       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
                         <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
-                        {/* <span className="text-gray-500">Colors: Promoter (green), Passive (yellow), Detractor (red)</span> */}
+                                            <button
+                       
+                            className="flex items-center px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            onClick={handlenavigate}
+                          >
+                            <Eye className="w-5 h-5 " />
+View All
+                          </button>
                       </div>
                     </div>
                   </main>

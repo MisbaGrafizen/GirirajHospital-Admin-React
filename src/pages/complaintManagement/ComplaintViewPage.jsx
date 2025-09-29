@@ -97,13 +97,18 @@ function blockHasContent(block) {
 
 
 function mapStatusUI(status) {
-    const s = String(status || "").toLowerCase();
-    if (s === "open") return "Open";
-    if (s === "in_progress") return "In Progress";
-    if (s === "resolved") return "Resolved";
-    if (s === "escalated") return "Escalated";
-    return "Pending"; // fallback for unexpected status
+  const s = String(status || "")
+    .toLowerCase()
+    .replace("-", "_"); // normalize dash → underscore
+
+  if (s === "open") return "Open";
+  if (s === "in_progress") return "In Progress";
+  if (s === "resolved") return "Resolved";
+  if (s === "escalated") return "Escalated";
+  if (s === "forwarded") return "Forwarded";
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
 }
+
 
 
 
@@ -409,6 +414,7 @@ export default function ComplaintViewPage() {
       return "bg-gray-100 text-gray-800 border-gray-200"; // ⚪ Default / Unknown
   }
 };
+
 
 
     const getPriorityColor = (priority) => {
@@ -849,25 +855,29 @@ export default function ComplaintViewPage() {
                                                                                 </p>
                                                                             </>
                                                                         )}
-                                                                        {h.type === "resolved" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-green-700">Resolved</p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                {h.proof && (
-                                                                                    <a
-                                                                                        href={h.proof}
-                                                                                        target="_blank"
-                                                                                        rel="noreferrer"
-                                                                                        className="text-xs text-blue-600 underline"
-                                                                                    >
-                                                                                        View Proof
-                                                                                    </a>
-                                                                                )}
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
+                                                                      {h.type === "resolved" && (
+  <>
+    <p className="text-sm font-medium text-green-700">Resolved</p>
+    <p className="text-xs text-gray-600">Note: {h.note}</p>
+
+    {/* Only show "View Proof" if proof exists AND is an image */}
+    {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+      <a
+        href={h.proof}
+        target="_blank"
+        rel="noreferrer"
+        className="text-xs text-blue-600 underline"
+      >
+        View Proof
+      </a>
+    )}
+
+    <p className="text-xs text-gray-500">
+      {new Date(h.at).toLocaleString()}
+    </p>
+  </>
+)}
+
                                                                         {h.type === "in_progress" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-blue-700">Progress Update</p>
@@ -1353,7 +1363,7 @@ export default function ComplaintViewPage() {
                                                                                             {h.details.patientName} ({h.details.complaintId})
                                                                                         </p>
                                                                                         <p className="text-xs text-gray-500">
-                                                                                            {new Date(h.createdAt).toLocaleString()}
+                                                                                            {new Date(h.at).toLocaleString()}
                                                                                         </p>
                                                                                     </>
                                                                                 )}
@@ -1378,25 +1388,29 @@ export default function ComplaintViewPage() {
                                                                                         </p>
                                                                                     </>
                                                                                 )}
-                                                                                {h.type === "resolved" && (
-                                                                                    <>
-                                                                                        <p className="text-sm font-medium text-green-700">Resolved</p>
-                                                                                        <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                        {h.proof && (
-                                                                                            <a
-                                                                                                href={h.proof}
-                                                                                                target="_blank"
-                                                                                                rel="noreferrer"
-                                                                                                className="text-xs text-blue-600 underline"
-                                                                                            >
-                                                                                                View Proof
-                                                                                            </a>
-                                                                                        )}
-                                                                                        <p className="text-xs text-gray-500">
-                                                                                            {new Date(h.at).toLocaleString()}
-                                                                                        </p>
-                                                                                    </>
-                                                                                )}
+                                                                               {h.type === "resolved" && (
+  <>
+    <p className="text-sm font-medium text-green-700">Resolved</p>
+    <p className="text-xs text-gray-600">Note: {h.note}</p>
+
+    {/* Only show "View Proof" if proof exists AND is an image */}
+    {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+      <a
+        href={h.proof}
+        target="_blank"
+        rel="noreferrer"
+        className="text-xs text-blue-600 underline"
+      >
+        View Proof
+      </a>
+    )}
+
+    <p className="text-xs text-gray-500">
+      {new Date(h.at).toLocaleString()}
+    </p>
+  </>
+)}
+
                                                                                 {h.type === "in_progress" && (
                                                                                     <>
                                                                                         <p className="text-sm font-medium text-blue-700">Progress Update</p>

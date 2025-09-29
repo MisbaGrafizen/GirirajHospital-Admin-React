@@ -357,7 +357,7 @@ const WidgetsWrapper = ({ kpis }) => {
     {
       title: "Coming Soon",
       gros: openIssues,
-      total: openIssues,
+      total: 0,
       color: "danger",
       icon: <AlertCircle className="w-5 text-[#ffaa06] h-5" />,
     },

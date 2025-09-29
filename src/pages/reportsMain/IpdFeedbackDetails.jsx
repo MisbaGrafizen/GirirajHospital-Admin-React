@@ -179,14 +179,15 @@ export default function IpdFeedbackDetails() {
                     <div className="space-y-4">
                       {[
                         { key: "overallExperience", label: "Overall Experience" },
-                        { key: "consultantDoctorServices", label: "Consultant Doctor Services" },
-                        { key: "medicalAdminDoctorService", label: "Medical Admin Doctor Services" },
-                        { key: "billingServices", label: "Billing Services" },
-                        { key: "housekeeping", label: "Housekeeping" },
-                        { key: "maintenance", label: "Maintenance" },
-                        { key: "radiologyDiagnosticServices", label: "Radiology Diagnostic Services" },
-                        { key: "pathologyDiagnosticServices", label: "Pathology Diagnostic Services" },
-                        { key: "dietitianServices", label: "Dietitian Services (Food, Canteen)" },
+                        { key: "consultantDoctorServices", label: "Doctor Services (Consultant Doctor)" },
+                        { key: "medicalAdminDoctorService", label: "Doctor Services (Medical Officers)" },
+                        { key: "nursingServices", label: "Nursing Services" },
+                        { key: "billingServices", label: "Billing Services (Admission/ Discharge/ Cashless)" },
+                        { key: "pathologyDiagnosticServices", label: "Diagnostic Services (Pathology)" },
+                        { key: "radiologyDiagnosticServices", label: "Diagnostic Services (Radiology)" },
+                        { key: "housekeeping", label: "Housekeeping (Cleanliness)" },
+                        { key: "maintenance", label: "Maintenance (A.C., Fan, etc.)" },
+                        { key: "dietitianServices", label: "Dietitian (Food, Canteen)" },
                         { key: "security", label: "Security" },
                       ].map(({ key, label }) => (
                         <div

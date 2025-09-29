@@ -14,6 +14,11 @@ import {
 
   Clock,
   Bed,
+  Eye,
+  SprayCan,
+  TestTube2,
+
+  IndianRupee,
 } from "lucide-react"
 import {
   Stethoscope,
@@ -29,11 +34,13 @@ import {
 
 const serviceIcons = {
   "Overall Experience": Star,
-  "Doctor Services": Stethoscope,
-  "Billing Services": DollarSign,
-  "Housekeeping": DollarSign,
+  "Consultant Doctor": User,
+  "Medical Admin Doctor": User,
+  "Billing Services": IndianRupee,
+  "Housekeeping": SprayCan,
   "Maintenance": Wrench,
-  "Diagnostic Services": Building2,
+  "Radiology": Building2,
+  "Pathology": TestTube2,
   "Dietitian Services": Utensils,
   "Security": ShieldCheck,
 };
@@ -386,6 +393,12 @@ export default function IPDFeedbackDashboard() {
     const doctorParam = doctor === "All Doctors" ? undefined : doctor
     return generateNpsDataset({ from: dateFrom, to: dateTo, department: deptParam, doctor: doctorParam })
   }, [dateFrom, dateTo, department, doctor])
+
+
+  const handlenavigate = () => {
+    navigate("/dashboards/ipd-all-list")
+  };
+
 
   // const roomOptions = useMemo(() => {
   //   const rooms = Array.from(new Set(baseRecords.map((r) => r.room))).sort((a, b) => a.localeCompare(b))
@@ -951,7 +964,7 @@ export default function IPDFeedbackDashboard() {
                     </div>
                   </div>
                   {/* To date */}
-                  <div className=" relative md34:!mb-[15px] md11:!hidden">
+                  <div className=" relative md34:!mb-[15px]">
                     <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1213,7 +1226,7 @@ export default function IPDFeedbackDashboard() {
 
                 {/* Patient-Wise Feedback Table */}
                 <div className="bg-white rounded-xl e md34:!mb-[100px] md11:!mb-0  border shadow-sm overflow-hidden">
-                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
+                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between items-center">
                     <div className=' flex gap-[10px] items-center py-[10px]    justify-start '>
 
 
@@ -1222,27 +1235,35 @@ export default function IPDFeedbackDashboard() {
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
                     </div>
-                    <div className="flex flex-row justify-between gap-2 mb-[10px]">
+                    <div className="flex flex-row justify-between gap-2 md34:!mb-[10px] md11:!mb-0">
                       <div className="relative">
-                        <Search className="absolute left-3 top-[19px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder="Search feedback..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-[6px] py-2 w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="pl-10 pr-[6px] py-[6px] w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
                       {/* Export only if permitted */}
                       <button
                         onClick={exportToExcel}
-                        className="flex items-center flex-shrink-0 px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="flex items-center flex-shrink-0 px-2  py-[4px] bg-blue-600 text-white text-[13px] rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel
                       </button>
 
+                          <button
+                       
+                            className="flex items-center px-2 py-[6px] h-[35px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            onClick={handlenavigate}
+                          >
+                            <Eye className="w-5 h-5 " />
+
+                          </button>
                     </div>
                   </div>
 
