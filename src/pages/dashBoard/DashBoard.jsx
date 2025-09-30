@@ -109,7 +109,7 @@ export default function DashBoard() {
   const [concernData, setConcernData] = useState([])
   const [kpis, setKpis] = useState({
     totalFeedback: 0,
-    averageRating: { value: 0 },
+    averageRatixng: { value: 0 },
     npsRating: { value: 0 },
     openIssues: 0,
     resolvedIssues: 0,
@@ -120,6 +120,8 @@ export default function DashBoard() {
 
 
   const [recentFeedbacks, setRecentFeedbacks] = useState([])
+
+  console.log('concernData', concernData)
 
 
   useEffect(() => {
@@ -193,48 +195,50 @@ export default function DashBoard() {
             }))
           )
 
+
+          // ----- Concerns (Admin vs Non-admin) -----
           const weeks = Array.isArray(data?.concerns) ? data.concerns : [];
+          console.log('weeks', weeks)
+          const latestWeek = weeks[0] || { countsByModule: {}, total: 0 };
 
-          const latest = weeks[0] || { countsByModule: {}, total: 0 };
+          let statusCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
+          let totalForThisWeek = 0;
 
-          // aggregate concerns across ALL weeks
-          const overallCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
-          let grandTotal = 0;
+          if (loginType?.toLowerCase() === "admin") {
+            totalForThisWeek = latestWeek.total || 0;
 
-          weeks.forEach(week => {
-            if (loginType === "admin") {
-              Object.values(week.countsByModule || {}).forEach(c => {
-                overallCounts.Open += c.Open || 0;
-                overallCounts["In Progress"] += c["In Progress"] || 0;
-                overallCounts.Resolved += c.Resolved || 0;
-                grandTotal += (c.Open || 0) + (c["In Progress"] || 0) + (c.Resolved || 0);
-              });
-            } else {
-              modules.forEach(mod => {
-                const c = week.countsByModule?.[mod] || {};
-                overallCounts.Open += c.Open || 0;
-                overallCounts["In Progress"] += c["In Progress"] || 0;
-                overallCounts.Resolved += c.Resolved || 0;
-                grandTotal += (c.Open || 0) + (c["In Progress"] || 0) + (c.Resolved || 0);
-              });
-            }
-          });
+            statusCounts = {
+              Open: Object.values(latestWeek.countsByModule || {}).reduce((a, c) => a + (c.Open || 0), 0),
+              "In Progress": Object.values(latestWeek.countsByModule || {}).reduce((a, c) => a + (c["In Progress"] || 0), 0),
+              Resolved: Object.values(latestWeek.countsByModule || {}).reduce((a, c) => a + (c.Resolved || 0), 0),
+            };
+          } else {
+            statusCounts = {
+              Open: modules.reduce((a, mod) => a + ((latestWeek.countsByModule?.[mod]?.Open) || 0), 0),
+              "In Progress": modules.reduce((a, mod) => a + ((latestWeek.countsByModule?.[mod]?.["In Progress"]) || 0), 0),
+              Resolved: modules.reduce((a, mod) => a + ((latestWeek.countsByModule?.[mod]?.Resolved) || 0), 0),
+            };
 
-          // send to donut chart
+            totalForThisWeek =
+              statusCounts.Open + statusCounts["In Progress"] + statusCounts.Resolved;
+          }
+
+          console.log('statusCounts', statusCounts)
+
           setConcernData(
             ["Open", "In Progress", "Resolved"].map(k => ({
               name: k,
-              value: Number(overallCounts[k] || 0),
+              value: Number(statusCounts[k] || 0),
               color: CONCERN_COLORS[k],
-              details: `Total Concerns: ${grandTotal || 0} (all weeks)`
+              details: `This week's total: ${totalForThisWeek}`,
             }))
           );
 
-          // ✅ update kpis with totalConcern
-setKpis(prev => ({
-  ...(data.kpis || prev),
-  totalConcern: grandTotal,   // inject the grand total into kpis
-}));
+          setKpis(prev => ({
+            ...(data.kpis || prev),
+            totalConcern: totalForThisWeek,
+          }));
+
           // ----- Department bars -----
           const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : []
           setDepartmentData(
