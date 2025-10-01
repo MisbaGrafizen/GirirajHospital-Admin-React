@@ -132,17 +132,17 @@ const DEPT_COLORS = {
 }
 
 const SERVICE_NORMALIZATION_MAP = {
-  Doctor: "Doctor Services",
-  "Doctor Service": "Doctor Services",
-  Billing: "Billing Services",
-  Diagnostic: "Diagnostic Services",
-  "Diagnostic Service": "Diagnostic Services",
-  Dietitian: "Dietitian Services",
+    Doctor: "Doctor Services",
+    "Doctor Service": "Doctor Services",
+    Billing: "Billing Services",
+    Diagnostic: "Diagnostic Services",
+    "Diagnostic Service": "Diagnostic Services",
+    Dietitian: "Dietitian Services",
 };
 
 
 function normalizeServiceName(name = "") {
-  return SERVICE_NORMALIZATION_MAP[name] || name;
+    return SERVICE_NORMALIZATION_MAP[name] || name;
 }
 
 
@@ -273,18 +273,18 @@ const hasConcernContent = (b) => {
 };
 
 function getDepartmentsString(doc, allowedBlocks) {
-  const departments = [];
-  allowedBlocks.forEach((k) => {
-    const block = doc?.[k];
-    if (!block) return;
-    const hasText = block.text && String(block.text).trim().length > 0;
-    const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
-    if (hasText || hasAttachments) {
-      let label = DEPT_LABEL[k] || k;
-      departments.push(normalizeServiceName(label));  // ✅ normalize here
-    }
-  });
-  return departments.join(", ");
+    const departments = [];
+    allowedBlocks.forEach((k) => {
+        const block = doc?.[k];
+        if (!block) return;
+        const hasText = block.text && String(block.text).trim().length > 0;
+        const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+        if (hasText || hasAttachments) {
+            let label = DEPT_LABEL[k] || k;
+            departments.push(normalizeServiceName(label));  // ✅ normalize here
+        }
+    });
+    return departments.join(", ");
 }
 
 
@@ -401,22 +401,22 @@ export default function ComplaintManagementDashboard() {
     });
     const [doctorOptions, setDoctorOptions] = useState([]);
 
-useEffect(() => {
-  if (!rawConcerns || !rawConcerns.length) {
-    setDoctorOptions([]);
-    return;
-  }
+    useEffect(() => {
+        if (!rawConcerns || !rawConcerns.length) {
+            setDoctorOptions([]);
+            return;
+        }
 
-  const uniqueDoctors = Array.from(
-    new Set(
-      rawConcerns
-        .map(d => d.consultantDoctorName?.name)
-        .filter(Boolean)
-    )
-  );
+        const uniqueDoctors = Array.from(
+            new Set(
+                rawConcerns
+                    .map(d => d.consultantDoctorName?.name)
+                    .filter(Boolean)
+            )
+        );
 
-  setDoctorOptions(uniqueDoctors);
-}, [rawConcerns]);
+        setDoctorOptions(uniqueDoctors);
+    }, [rawConcerns]);
 
 
 
@@ -459,56 +459,56 @@ useEffect(() => {
     };
 
     // Apply filters to raw docs
-function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) {
-    const q = (searchTerm || "").toLowerCase();
-    const from = parseLocalDate(filters.from);
-    const to = parseLocalDate(filters.to);
+    function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) {
+        const q = (searchTerm || "").toLowerCase();
+        const from = parseLocalDate(filters.from);
+        const to = parseLocalDate(filters.to);
 
-    return docs.filter((doc) => {
-        const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
+        return docs.filter((doc) => {
+            const createdAt = new Date(doc.createdAt || doc.updatedAt || Date.now());
 
-        // Date range
-        if (from && createdAt < from) return false;
-        if (to) {
-            const endOfDay = new Date(to);
-            endOfDay.setDate(endOfDay.getDate() + 1);
-            if (createdAt >= endOfDay) return false;
-        }
+            // Date range
+            if (from && createdAt < from) return false;
+            if (to) {
+                const endOfDay = new Date(to);
+                endOfDay.setDate(endOfDay.getDate() + 1);
+                if (createdAt >= endOfDay) return false;
+            }
 
-        // Service filter
-        if (filters.service && filters.service !== "All Services") {
-            const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
-            if (!depts.includes(filters.service.toLowerCase())) return false;
-        }
+            // Service filter
+            if (filters.service && filters.service !== "All Services") {
+                const depts = getDepartmentsString(doc, allowedBlocks).toLowerCase();
+                if (!depts.includes(filters.service.toLowerCase())) return false;
+            }
 
-        // Doctor filter
-        if (filters.doctor && filters.doctor !== "All Doctors") {
-            const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
-            if (!doctor.includes(filters.doctor.toLowerCase())) return false;
-        }
+            // Doctor filter
+            if (filters.doctor && filters.doctor !== "All Doctors") {
+                const doctor = (doc.consultantDoctorName?.name || "").toLowerCase();
+                if (!doctor.includes(filters.doctor.toLowerCase())) return false;
+            }
 
-        // Status filter
-        if (selectedStatus && selectedStatus !== "All Status") {
-            if (mapStatusUI(doc.status) !== selectedStatus) return false;
-        }
+            // Status filter
+            if (selectedStatus && selectedStatus !== "All Status") {
+                if (mapStatusUI(doc.status) !== selectedStatus) return false;
+            }
 
-        // Search term filter
-        if (q) {
-            const combined = [
-                doc.patientName,
-                doc.consultantDoctorName?.name,
-                doc.complaintId,
-                getDepartmentsString(doc, allowedBlocks),
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            if (!combined.includes(q)) return false;
-        }
+            // Search term filter
+            if (q) {
+                const combined = [
+                    doc.patientName,
+                    doc.consultantDoctorName?.name,
+                    doc.complaintId,
+                    getDepartmentsString(doc, allowedBlocks),
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+                if (!combined.includes(q)) return false;
+            }
 
-        return true;
-    });
-}
+            return true;
+        });
+    }
 
 
 
@@ -555,9 +555,9 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
             })
             // 👨‍⚕️ Doctor filter
             .filter((c) => {
-  if (!filters.doctor || filters.doctor === "All Doctors") return true;
-  return (c.doctor || "").toLowerCase().includes(filters.doctor.toLowerCase());
-})
+                if (!filters.doctor || filters.doctor === "All Doctors") return true;
+                return (c.doctor || "").toLowerCase().includes(filters.doctor.toLowerCase());
+            })
 
     }, [rows, searchTerm, selectedStatus, filters]);
 
@@ -584,57 +584,57 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
 
 
     useEffect(() => {
-    if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
-        setRows([]);
-        setKpiData(computeKpis([]));
-        setTrendData([]);
-        setDepartmentColors({});
-        setTop5Departments([]);
-        return;
-    }
-
-    // ✅ Apply all filters here
-    const docs = applyFilters(rawConcerns, filters, allowedBlocks, selectedStatus, searchTerm);
-
-    // Table rows
-    const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
-    setRows(list);
-
-    // Stats docs for chart & top-5
-    const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
-
-    // KPIs
-    setKpiData(computeKpis(list));
-
-    // Trend chart
-    const { data: tData, colors } = buildTrendData(statsDocs);
-    setTrendData(tData);
-    setDepartmentColors(colors);
-
-    // Top-5 departments
-    const deptStats = {};
-    statsDocs.forEach((d) => {
-        if (!deptStats[d.department]) {
-            deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+        if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
+            setRows([]);
+            setKpiData(computeKpis([]));
+            setTrendData([]);
+            setDepartmentColors({});
+            setTop5Departments([]);
+            return;
         }
-        deptStats[d.department].complaints += 1;
-        deptStats[d.department].totalResolution += d.resolutionTime || 0;
-        if (d.escalated) deptStats[d.department].escalations += 1;
-    });
 
-    const top = Object.entries(deptStats)
-        .map(([department, s]) => ({
-            department,
-            complaints: s.complaints,
-            avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-            escalations: s.escalations,
-        }))
-        .sort((a, b) => b.complaints - a.complaints)
-        .slice(0, 5)
-        .map((x, i) => ({ rank: i + 1, ...x }));
+        // ✅ Apply all filters here
+        const docs = applyFilters(rawConcerns, filters, allowedBlocks, selectedStatus, searchTerm);
 
-    setTop5Departments(top);
-}, [rawConcerns, allowedBlocks, filters, selectedStatus, searchTerm]);
+        // Table rows
+        const list = docs.flatMap((d) => flattenConcernDoc(d, allowedBlocks));
+        setRows(list);
+
+        // Stats docs for chart & top-5
+        const statsDocs = docs.flatMap((d) => flattenConcernDocForStats(d));
+
+        // KPIs
+        setKpiData(computeKpis(list));
+
+        // Trend chart
+        const { data: tData, colors } = buildTrendData(statsDocs);
+        setTrendData(tData);
+        setDepartmentColors(colors);
+
+        // Top-5 departments
+        const deptStats = {};
+        statsDocs.forEach((d) => {
+            if (!deptStats[d.department]) {
+                deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
+            }
+            deptStats[d.department].complaints += 1;
+            deptStats[d.department].totalResolution += d.resolutionTime || 0;
+            if (d.escalated) deptStats[d.department].escalations += 1;
+        });
+
+        const top = Object.entries(deptStats)
+            .map(([department, s]) => ({
+                department,
+                complaints: s.complaints,
+                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
+                escalations: s.escalations,
+            }))
+            .sort((a, b) => b.complaints - a.complaints)
+            .slice(0, 5)
+            .map((x, i) => ({ rank: i + 1, ...x }));
+
+        setTop5Departments(top);
+    }, [rawConcerns, allowedBlocks, filters, selectedStatus, searchTerm]);
 
 
 
@@ -866,7 +866,7 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
                                             value={filters}
                                             onChange={handleFilterChange}
                                             serviceVariant="concern"
-                                            doctors={doctorOptions} 
+                                            doctors={doctorOptions}
                                             isAdmin={isAdmin}
                                         />
                                     </div>
@@ -1094,7 +1094,129 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
                                         </div>
                                     </div>
 
-                                    {/* Complaint Details Table */}
+
+
+
+
+
+                                    <div className="bg-white border rounded-lg mb-[20px] shadow-sm overflow-hidden">
+                                        <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
+                                            <div className=" w-[100%]  flex  items-center gap-[10px] ">
+
+
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-regular fa-stopwatch text-[17px] text-[#fff] "></i>
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900">TAT</h3>
+                                            </div>
+                                            <button
+
+                                                className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                onClick={handleAllPageNavigate}
+                                            >
+                                                <Eye className="w-5 h-5 " />
+                                                View All
+                                            </button>
+
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Complaint ID
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Patient Name
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Department
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                          Stamp In
+                                                        </th>
+                                                        <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                 Stamp Out
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Total Time
+                                                        </th>        
+                                                          <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                           Status
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white">
+                                                    {rows
+                                                        .slice()
+                                                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                        .slice(0, 5)
+                                                        .map((complaint, index) => {
+                                                            const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                            return (
+                                                                <tr
+                                                                    key={complaint.id}
+                                                                    onClick={openModal}
+                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
+                                                                >
+                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+                                            
+
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <div className="flex items-center">
+                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                         {complaint.patient}
+                                                                        </div>
+                                                                    </td>
+                                                               <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
+                                                                    </td>
+                                                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <div className="flex items-center">
+
+                                                                            {complaint.date}
+                                                                        </div>
+                                                                    </td>
+                                                             
+
+                                                                    <td className="px-3 min-w-[200px] flex-shrink-0 py-2 text-sm">
+                                                                        <span
+                                                                            className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+                                                                            
+                                                                        >
+                                                                              {complaint.date}
+                                                                        </span>
+                                                                    </td>
+                                                                         <td className="px-3 py-2 text-sm">
+                                                                        <span
+                                                                            className={`flex items-center  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+                                                                            
+                                                                        >
+                                                                              {complaint.date}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                             
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })}
+                                                    {filteredComplaints.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                No complaints found for the selected range.
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+
+
+
                                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
                                         <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
                                             <div className=" w-[100%]  flex  items-center gap-[10px] ">
@@ -1162,7 +1284,7 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
                                                                     <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
                                                                     <td className="px-6 py-2 text-sm text-gray-900">
                                                                         <div className="flex items-center">
-                                                                           
+
                                                                             {complaint.date}
                                                                         </div>
                                                                     </td>
@@ -1219,7 +1341,7 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
                                     {/* Modal */}
                                     {isModalOpen && selectedComplaint && (
                                         <div className="fixed inset-0 z-50 bg-[#00000097] ">
-                                            <div className="flex items-center justify-center  h-[400px] pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                            <div className="flex items-center justify-center  h-[350px] pt-4 px-4 pb- text-center sm:block sm:p-0">
                                                 <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={closeModal}></div>
 
                                                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
@@ -1227,7 +1349,7 @@ function applyFilters(docs, filters, allowedBlocks, selectedStatus, searchTerm) 
                                                 </span>
 
                                                 <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                                                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                                    <div className="bg-white px-4  pt-[20px]">
                                                         <div className="flex justify-between items-start mb-4">
                                                             <h3 className="text-2xl font-[600] text-gray-900">Complaint Details</h3>
                                                             <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
