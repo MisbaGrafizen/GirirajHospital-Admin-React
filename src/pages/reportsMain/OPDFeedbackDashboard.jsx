@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSideBar'
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye } from "lucide-react"
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye, } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 import { FileText, Download, Star, ThumbsUp, BarChart3, Award, Phone, Clock } from "lucide-react"
 import { MessageSquare, } from "lucide-react";
-import { Users, Stethoscope, ShieldCheck, Microscope } from "lucide-react";
+import { Users, Stethoscope, ShieldCheck, Microscope,Sparkles      } from "lucide-react";
 
 const serviceIcons = {
   "Appointment": Calendar,
@@ -14,6 +14,7 @@ const serviceIcons = {
   "Diagnostic Services": Microscope,
   "Doctor Service": Stethoscope,
   "Security": ShieldCheck,
+  "Cleanliness": Sparkles,
 };
 
 
@@ -55,8 +56,10 @@ const OPD_RATING_KEYS = [
   "radiologyDiagnosticServices",
   "pathologyDiagnosticServices",
   "doctorServices",
-  "security"
+  "cleanliness",   // ✅ include this if backend sends cleanliness rating
+  "security",
 ];
+
 
 function calcRowAverage(ratings = {}) {
   const vals = []
@@ -168,22 +171,25 @@ export default function OPDFeedbackDashboard() {
   const { canViewFeedback, canExportFeedback } = resolvePermissions()
 
   const SERVICE_GROUPS = {
-    "Appointment": ["appointment"],
-    "Reception Staff": ["receptionStaff"],
-    "Radiology Services": ["radiologyDiagnosticServices"],
-    "Pathology Services": ["pathologyDiagnosticServices"],
-    "Doctor Services": ["doctorServices"],
-    "Security": ["security"],
-  };
+  "Appointment": ["appointment"],
+  "Reception Staff": ["receptionStaff"],
+  "Diagnostic Services (Radiology)": ["radiologyDiagnosticServices"],   // ✅ match dropdown
+  "Diagnostic Services (Pathology)": ["pathologyDiagnosticServices"], // ✅ match dropdown
+  "Doctor Service": ["doctorServices"],                               // ✅ match dropdown
+  "Cleanliness": ["cleanliness"],                                     // ✅ add cleanliness
+  "Security": ["security"],
+};
 
-  const OPD_SERVICE_LABELS = {
-    appointment: "Appointment",
-    receptionStaff: "Reception Staff",
-    radiologyDiagnosticServices: "Radiology Services",
-    pathologyDiagnosticServices: "Pathology Services",
-    doctorServices: "Doctor Services",
-    security: "Security",
-  };
+const OPD_SERVICE_LABELS = {
+  appointment: "Appointment",
+  receptionStaff: "Reception Staff",
+  radiologyDiagnosticServices: "Diagnostic Services (Radiology)",   // ✅ match dropdown
+  pathologyDiagnosticServices: "Diagnostic Services (Pathology)",  // ✅ match dropdown
+  doctorServices: "Doctor Service",                                // ✅ match dropdown
+  cleanliness: "Cleanliness",                                      // ✅ added
+  security: "Security",
+};
+
 
 
   // -------- Service summary builders --------

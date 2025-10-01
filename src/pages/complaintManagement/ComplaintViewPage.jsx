@@ -34,7 +34,7 @@ const MODULE_TO_BLOCK = {
     security: "security",
     billing_service: "billingServices",
     housekeeping: "housekeeping",
-    overall: "overall",
+    nursing: "nursing",
 };
 
 function resolvePermissions() {
@@ -82,7 +82,7 @@ const DEPT_LABEL = {
     diagnosticServices: "Diagnostic Services",
     dietitianServices: "Dietitian Services",
     security: "Security",
-    overall: "Overall",
+    nursing: "Nursing",
 };
 
 // a block is "present" if it has any content (topic/mode/text/attachments)

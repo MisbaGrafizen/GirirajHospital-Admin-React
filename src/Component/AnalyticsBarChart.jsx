@@ -10,7 +10,8 @@ const DEPT_COLORS = {
   Maintenance: "#EF4444",   // Red
   Diagnostic: "#8B5CF6",    // Purple
   Dietitian: "#06B6D4",     // Cyan
-  Security: "#9CA3AF",      // Gray
+  Security: "#9CA3AF",     
+  Nursing: "#FFC107",
 };
 
 

@@ -24,20 +24,20 @@ const OPD_SERVICES = [
   'Doctor Service',
   'Diagnostic Services (Pathology)',
   'Diagnostic Services (Radiology)',
-  'clealiness',
+  'Cleanliness',
   'Security',
 ];
 
 const CONCERN_SERVICES = [
   'All Services',
   'Doctor Services',
+  'Nursing',
   'Billing Services',
   'Housekeeping',
   'Maintenance',
   'Diagnostic Services',
   'Dietitian Services',
   'Security',
-  'Overall',
 ];
 
 function normalizeServiceLabel(label, variant = 'opd') {

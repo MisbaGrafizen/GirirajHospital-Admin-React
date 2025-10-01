@@ -178,7 +178,7 @@ export default function IpdFeedbackDetails() {
                     <h3 className="text-base font-semibold text-gray-900 mb-4">Department-wise Ratings</h3>
                     <div className="space-y-4">
                       {[
-                        { key: "overallExperience", label: "Overall Experience" },
+                        { key: "overallExperience", label: " Experience" },
                         { key: "consultantDoctorServices", label: "Doctor Services (Consultant Doctor)" },
                         { key: "medicalAdminDoctorService", label: "Doctor Services (Medical Officers)" },
                         { key: "nursingServices", label: "Nursing Services" },

@@ -197,33 +197,58 @@ export default function DashBoard() {
 
 
           // ----- Concerns (Admin vs Non-admin) -----
-          const weeks = Array.isArray(data?.concerns) ? data.concerns : [];
-          console.log('weeks', weeks)
-          const latestWeek = weeks[0] || { countsByModule: {}, total: 0 };
+// ----- Concerns (Admin vs Non-admin) -----
+let statusCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
+let totalForThisWeek = 0;
 
-          let statusCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
-          let totalForThisWeek = 0;
+if (loginType === "admin") {
+  // ✅ For admins, trust KPI values
+  statusCounts = {
+    Open: Number(data.kpis?.openIssues || 0),
+    "In Progress": Number(data.kpis?.inProgressIssues || 0),
+    Resolved: Number(data.kpis?.resolvedIssues || 0),
+  };
+  totalForThisWeek = Number(data.kpis?.totalConcern || 0);
 
-          if (loginType?.toLowerCase() === "admin") {
-            totalForThisWeek = latestWeek.total || 0;
+} else {
+  // ✅ For non-admin, fallback to concerns array
+  const latestWeek = (data.concerns || [])[0] || { countsByModule: {}, total: 0 };
+  totalForThisWeek = latestWeek.total || 0;
 
-            statusCounts = {
-              Open: Object.values(latestWeek.countsByModule || {}).reduce((a, c) => a + (c.Open || 0), 0),
-              "In Progress": Object.values(latestWeek.countsByModule || {}).reduce((a, c) => a + (c["In Progress"] || 0), 0),
-              Resolved: Object.values(latestWeek.countsByModule || {}).reduce((a, c) => a + (c.Resolved || 0), 0),
-            };
-          } else {
-            statusCounts = {
-              Open: modules.reduce((a, mod) => a + ((latestWeek.countsByModule?.[mod]?.Open) || 0), 0),
-              "In Progress": modules.reduce((a, mod) => a + ((latestWeek.countsByModule?.[mod]?.["In Progress"]) || 0), 0),
-              Resolved: modules.reduce((a, mod) => a + ((latestWeek.countsByModule?.[mod]?.Resolved) || 0), 0),
-            };
+  // sum across modules
+  Object.values(latestWeek.countsByModule || {}).forEach(mod => {
+    statusCounts.Open += mod.Open || 0;
+    statusCounts["In Progress"] += mod["In Progress"] || 0;
+    statusCounts.Resolved += mod.Resolved || 0;
+  });
 
-            totalForThisWeek =
-              statusCounts.Open + statusCounts["In Progress"] + statusCounts.Resolved;
-          }
+  // normalize to backend's deduped total
+  if (totalForThisWeek > 0) {
+    const sum = statusCounts.Open + statusCounts["In Progress"] + statusCounts.Resolved;
+    const factor = totalForThisWeek / sum;
+    Object.keys(statusCounts).forEach(k => {
+      statusCounts[k] = Math.round(statusCounts[k] * factor);
+    });
+  }
+}
 
-          console.log('statusCounts', statusCounts)
+// finally set donut data
+setConcernData(
+  ["Open", "In Progress", "Resolved"].map(k => ({
+    name: k,
+    value: Number(statusCounts[k] || 0),
+    color: CONCERN_COLORS[k],
+    details: `This week's total: ${totalForThisWeek}`,
+  }))
+);
+
+// sync total concerns in KPIs as well
+setKpis(prev => ({
+  ...(data.kpis || prev),
+  totalConcern: totalForThisWeek,
+}));
+
+
 
           setConcernData(
             ["Open", "In Progress", "Resolved"].map(k => ({

@@ -124,6 +124,7 @@ export default function FeedbackDetails() {
         radiologyDiagnosticServices: to05(ratings.radiologyDiagnosticServices),
         pathologyDiagnosticServices: to05(ratings.pathologyDiagnosticServices),
         doctorServices: to05(ratings.doctorServices),
+        cleanliness: to05(ratings.cleanliness),
         security: to05(ratings.security),
       },
 
@@ -192,7 +193,7 @@ export default function FeedbackDetails() {
                     </div>
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div><p className="text-sm font-medium text-gray-900">Cleanliness</p></div>
-                      <StarRating score={model.ratings.cleaniness} label="Radiology Services" />
+                      <StarRating score={model.ratings.cleanliness} label="Radiology Services" />
                     </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div><p className="text-sm font-medium text-gray-900">Security</p></div>

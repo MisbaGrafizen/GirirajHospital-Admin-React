@@ -43,8 +43,26 @@ const MODULE_TO_BLOCK = {
     dietetics: "dietitianServices",
     nursing: "nursing", // if you have it
     security: "security",
-    overall: "overall",
+    nursing: "nursing",
 };
+
+const SERVICE_NORMALIZATION_MAP = {
+  Doctor: "Doctor Services",
+  "Doctor Service": "Doctor Services",
+  Billing: "Billing Services",
+  Diagnostic: "Diagnostic Services",
+  "Diagnostic Service": "Diagnostic Services",
+  Dietitian: "Dietitian Services",
+  Security: "Security Services",
+  Maintenance: "Maintenance Services",
+  Housekeeping: "Housekeeping Services",
+  Nursing: "Nursing Services",
+};
+
+function normalizeServiceName(name = "") {
+  return SERVICE_NORMALIZATION_MAP[name] || name;
+}
+
 
 
 function resolvePermissions() {
@@ -83,7 +101,7 @@ const DEPT_LABEL = {
     diagnosticServices: "Diagnostic",
     dietitianServices: "Dietitian",
     security: "Security",
-    overall: "Overall",
+    nursing: "Nursing",
 }
 
 async function getConcerns(from, to) {
@@ -117,10 +135,10 @@ const hasConcernContent = (b) => {
 
 
 const getDepartmentsString = (doc, allowedBlocks) =>
-    allowedBlocks
-        .filter((k) => hasConcernContent(doc?.[k]))
-        .map((k) => DEPT_LABEL[k])
-        .join(", ");
+  allowedBlocks
+    .filter((k) => hasConcernContent(doc?.[k]))
+    .map((k) => normalizeServiceName(DEPT_LABEL[k] || k))
+    .join(", ");
 
 
 export default function ComplainAllList() {

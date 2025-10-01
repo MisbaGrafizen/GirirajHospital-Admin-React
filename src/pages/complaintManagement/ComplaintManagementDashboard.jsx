@@ -48,7 +48,7 @@ const MODULE_TO_BLOCK = {
     dietetics: "dietitianServices",
     nursing: "nursing", // if you have it
     security: "security",
-    overall: "overall",
+    nursing: "nursing",
 };
 
 
@@ -106,7 +106,7 @@ const CONCERN_KEYS = [
     "diagnosticServices",
     "dietitianServices",
     "security",
-    "overall",
+    "nursing",
 ]
 
 const DEPT_LABEL = {
@@ -117,7 +117,7 @@ const DEPT_LABEL = {
     diagnosticServices: "Diagnostic",
     dietitianServices: "Dietitian",
     security: "Security",
-    overall: "Overall",
+    nursing: "Nursing",
 }
 
 const DEPT_COLORS = {
@@ -128,7 +128,7 @@ const DEPT_COLORS = {
     "Diagnostic Services": "#8B5CF6",
     "Dietitian Services": "#F59E0B",
     "Security": "#22C55E",
-    "Overall": "#6B7280",
+    "Nursing": "#6B7280",
 }
 
 const SERVICE_NORMALIZATION_MAP = {
