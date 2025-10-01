@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { Plus, X, Save, Shield, Download } from "lucide-react"
-import SideBar from "../../Component/sidebar/CubaSideBar"
+import SideBar from "../../Component/sidebar/CubaSidebar"
 import Header from "../../Component/header/Header"
 import { ApiDelete, ApiGet, ApiPost, ApiPut } from "../../helper/axios"
 import { Modal as NextUIModal, ModalContent } from "@nextui-org/react"
