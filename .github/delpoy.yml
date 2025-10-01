@@ -1,38 +1,30 @@
-name: Deploy to shreegiriraj.feedbacks.live
+name: Deploy to shreegiriraj.feedbacks.live via FTP
 
 on:
   push:
     branches:
-      - main   # change to master if your repo uses master
+      - main   # Change if your deploy branch is different
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Setup Node.js (adjust version if needed)
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      # Step 3: Install & Build (React/Vue/Angular)
-      - name: Install dependencies & build
+      - name: Build project
         run: |
           npm install
-          npm run build   # generates the build folder
+          npm run build
 
-      # Step 4: Deploy build folder to your hosting
-      - name: FTP Deploy
+      - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ${{ secrets.FTP_HOST }}
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
           protocol: ftp
           port: 21
           server-dir: /domains/shreegiriraj.feedbacks.live/public_html/
@@ -42,3 +34,4 @@ jobs:
             **/.github*
             **/node_modules/**
             **/.env
+
