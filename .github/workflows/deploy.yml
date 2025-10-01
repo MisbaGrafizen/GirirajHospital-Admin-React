@@ -32,7 +32,7 @@ jobs:
           protocol: ftp
           port: 21
           server-dir: /domains/shreegiriraj.feedbacks.live/public_html/
-          local-dir: ./build/
+          local-dir: ./dist/
           exclude: |
             **/.git*
             **/.github*
