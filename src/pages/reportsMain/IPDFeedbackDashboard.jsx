@@ -60,6 +60,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import Widgets1 from '../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1'
 import Preloader from '../../Component/loader/Preloader'
+import ModernDatePicker from '../../Component/MainInputFolder/ModernDatePicker'
 
 // ------------------------------------------------------------------
 // Helpers
@@ -419,12 +420,12 @@ export default function IPDFeedbackDashboard() {
   ])
 
   const defaultColors = [
-    '#3b82f6', // blue
-    '#ef4444', // red
-    '#10b981', // green
-    '#f59e0b', // amber
-    '#8b5cf6', // violet
-    '#ec4899', // pink
+    '#3b82f6',
+    '#ef4444',
+    '#10b981', 
+    '#f59e0b', 
+    '#8b5cf6',
+    '#ec4899', 
   ]
 
   const { canViewFeedback, canExportFeedback } = resolvePermissions()
@@ -951,7 +952,7 @@ export default function IPDFeedbackDashboard() {
                 <div className="grid grid-cols-2  md:grid-cols-4 gap-x-2">
                   {/* From date */}
                   <div className=" relative ">
-                    <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
+                    {/* <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
@@ -960,12 +961,20 @@ export default function IPDFeedbackDashboard() {
                         max={dateTo}
                         onChange={(e) => setDateFrom(e.target.value)}
                         className="w-full pl-9 min-h-[40px] text-[14px] pr-3 py-2 border border-gray-300 bg-transparent rounded-md focus:outline-none  focus:ring-sky-500"
-                      />
-                    </div>
+                      /> 
+                    </div>*/}
+
+                    <ModernDatePicker
+                                     type="date"
+                                     
+                        value={dateFrom}
+                        max={dateTo}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                     />
                   </div>
                   {/* To date */}
-                  <div className=" relative md34:!mb-[15px]">
-                    <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
+                  <div className=" relative md34:!mb-[15px] md77:!mb-0">
+                    {/* <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
@@ -975,7 +984,13 @@ export default function IPDFeedbackDashboard() {
                         onChange={(e) => setDateTo(e.target.value)}
                         className="w-full min-h-[40px] pl-9 pr-3 py-2 text-[14px] border bg-transparent border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                       />
-                    </div>
+                    </div> */}
+
+                    <ModernDatePicker
+                        value={dateTo}
+                        min={dateFrom}
+                        onChange={(e) => setDateTo(e.target.value)}
+                     />
                   </div>
                   {/* Doctor */}
                   <AnimatedDropdown
@@ -1226,7 +1241,7 @@ export default function IPDFeedbackDashboard() {
 
                 {/* Patient-Wise Feedback Table */}
                 <div className="bg-white rounded-xl e md34:!mb-[100px] md11:!mb-0  border shadow-sm overflow-hidden">
-                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between items-center">
+                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
                     <div className=' flex gap-[10px] items-center py-[10px]    justify-start '>
 
 

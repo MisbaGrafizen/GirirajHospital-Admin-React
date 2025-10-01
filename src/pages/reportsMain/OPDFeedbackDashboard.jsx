@@ -6,7 +6,7 @@ import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Min
 import { useNavigate } from 'react-router-dom'
 import { FileText, Download, Star, ThumbsUp, BarChart3, Award, Phone, Clock } from "lucide-react"
 import { MessageSquare, } from "lucide-react";
-import { Users, Stethoscope, ShieldCheck, Microscope,Sparkles      } from "lucide-react";
+import { Users, Stethoscope, ShieldCheck, Microscope, Sparkles } from "lucide-react";
 
 const serviceIcons = {
   "Appointment": Calendar,
@@ -171,24 +171,24 @@ export default function OPDFeedbackDashboard() {
   const { canViewFeedback, canExportFeedback } = resolvePermissions()
 
   const SERVICE_GROUPS = {
-  "Appointment": ["appointment"],
-  "Reception Staff": ["receptionStaff"],
-  "Diagnostic Services (Radiology)": ["radiologyDiagnosticServices"],   // ✅ match dropdown
-  "Diagnostic Services (Pathology)": ["pathologyDiagnosticServices"], // ✅ match dropdown
-  "Doctor Service": ["doctorServices"],                               // ✅ match dropdown
-  "Cleanliness": ["cleanliness"],                                     // ✅ add cleanliness
-  "Security": ["security"],
-};
+    "Appointment": ["appointment"],
+    "Reception Staff": ["receptionStaff"],
+    "Diagnostic Services (Radiology)": ["radiologyDiagnosticServices"],   // ✅ match dropdown
+    "Diagnostic Services (Pathology)": ["pathologyDiagnosticServices"], // ✅ match dropdown
+    "Doctor Service": ["doctorServices"],                               // ✅ match dropdown
+    "Cleanliness": ["cleanliness"],                                     // ✅ add cleanliness
+    "Security": ["security"],
+  };
 
-const OPD_SERVICE_LABELS = {
-  appointment: "Appointment",
-  receptionStaff: "Reception Staff",
-  radiologyDiagnosticServices: "Diagnostic Services (Radiology)",   // ✅ match dropdown
-  pathologyDiagnosticServices: "Diagnostic Services (Pathology)",  // ✅ match dropdown
-  doctorServices: "Doctor Service",                                // ✅ match dropdown
-  cleanliness: "Cleanliness",                                      // ✅ added
-  security: "Security",
-};
+  const OPD_SERVICE_LABELS = {
+    appointment: "Appointment",
+    receptionStaff: "Reception Staff",
+    radiologyDiagnosticServices: "Diagnostic Services (Radiology)",   // ✅ match dropdown
+    pathologyDiagnosticServices: "Diagnostic Services (Pathology)",  // ✅ match dropdown
+    doctorServices: "Doctor Service",                                // ✅ match dropdown
+    cleanliness: "Cleanliness",                                      // ✅ added
+    security: "Security",
+  };
 
 
 
@@ -449,27 +449,27 @@ const OPD_SERVICE_LABELS = {
   )
 
   useEffect(() => {
-  if (!rawOPD || !rawOPD.length) {
-    setDoctorOptions(["All Doctors"]);
-    return;
-  }
+    if (!rawOPD || !rawOPD.length) {
+      setDoctorOptions(["All Doctors"]);
+      return;
+    }
 
-  const uniqueDoctors = Array.from(
-    new Set(
-      rawOPD
-        .map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
-        .filter(Boolean)
-    )
-  ).sort();
+    const uniqueDoctors = Array.from(
+      new Set(
+        rawOPD
+          .map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
+          .filter(Boolean)
+      )
+    ).sort();
 
-  setDoctorOptions(["All Doctors", ...uniqueDoctors]);
-}, [rawOPD]);
+    setDoctorOptions(["All Doctors", ...uniqueDoctors]);
+  }, [rawOPD]);
 
 
 
   const handlenavigate = () => {
     navigate("/dashboards/opd-all-list")
-  }; 
+  };
 
   // -------- Export (permission-gated) --------
   const exportToExcel = async () => {
@@ -697,11 +697,11 @@ const OPD_SERVICE_LABELS = {
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
 
-           <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[0px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-            <Preloader />
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[0px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+              <Preloader />
               <div className="mx-auto w-full">
                 <div className="bg-white rounded-lg shadow-sm p-[13px]  md34:!mx-[12px] md11:!mx-0   mb-[10px] border border-gray-100  ">
-                  <OpdFilter value={filters} onChange={handleFilterChange}  doctors={doctorOptions} />
+                  <OpdFilter value={filters} onChange={handleFilterChange} doctors={doctorOptions} />
                 </div>
                 <div className="flex gap-6 mb-3">
 
@@ -945,7 +945,7 @@ const OPD_SERVICE_LABELS = {
                           </div>
                           <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
                         </div>
-                        <div className="flex flex-row items-center  md34:!mb-[10px] gap-3">
+                        <div className="flex flex-row items-center md34:!w-[100%]  md77:!w-fit justify-between  md34:!mb-[10px] gap-3">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
@@ -956,23 +956,34 @@ const OPD_SERVICE_LABELS = {
                               className="pl-10 pr-3 py-[5px] border md34:!w-[190px] md11:!w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
                             />
                           </div>
+                          <div className=' flex gap-[10px]'>
 
-                          <button
-                            onClick={exportToExcel}
-                            className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Export to Excel
-                          </button>
 
-                          <button
-                       
-                            className="flex items-center px-2 py-[6px] h-[35px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                            onClick={handlenavigate}
-                          >
-                            <Eye className="w-5 h-5 " />
+                            <button
+                              onClick={exportToExcel}
+                              className=" md34:!hidden md77:!flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Export to Excel
+                            </button>
 
-                          </button>
+
+                            <button
+                              onClick={exportToExcel}
+                              className=" flex md77:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                              <Download className="w-5 h-5 " />
+
+                            </button>
+                            <button
+
+                              className="flex items-center px-2 py-[6px] h-[32px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                              onClick={handlenavigate}
+                            >
+                              <Eye className="w-5 h-5 " />
+
+                            </button>
+                          </div>
                         </div>
 
                       </div>

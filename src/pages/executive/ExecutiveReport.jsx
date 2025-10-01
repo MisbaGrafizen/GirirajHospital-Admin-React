@@ -13,6 +13,7 @@ import {
   Circle,
 } from "lucide-react"
 import Preloader from "../../Component/loader/Preloader"
+import ModernDatePicker from "../../Component/MainInputFolder/ModernDatePicker"
 
 
 function resolvePermissions() {
@@ -438,7 +439,7 @@ const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
                       {/* From date */}
                       <div className="relative md34:!mb-[17px] md77:!mb-0">
-                        <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                        {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                           From
                         </label>
                         <div className="relative">
@@ -450,11 +451,13 @@ const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
                             onChange={(e) => setFromDate(e.target.value)}
                             className="w-full bg-white pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
-                        </div>
+                        </div> */}
+
+                          <ModernDatePicker />
                       </div>
                       {/* To date */}
                       <div className="relative">
-                        <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                        {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                           To
                         </label>
                         <div className="relative">
@@ -466,7 +469,8 @@ const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
                             onChange={(e) => setToDate(e.target.value)}
                             className="w-full bg-white pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
-                        </div>
+                        </div> */}
+                        <ModernDatePicker />
                       </div>
                     </div>
                   </form>

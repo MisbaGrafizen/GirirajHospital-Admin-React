@@ -192,7 +192,7 @@ export default function RoleManage() {
             <SideBar />
  <div className="flex flex-col w-[100%] max-h-[90%]  relative  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
-              <div className="flex w-[100%] flex-col gap-[20px] py-[10px]">
+              <div className="flex w-[100%] flex-col md34:!mb-[100px] md34!:mb-[0px] gap-[20px] py-[10px]">
                 <div className="w-[100%] mx-auto">
                    {canCreate && (
                     <div className="mb-6 flex w-full justify-end">
@@ -207,7 +207,7 @@ export default function RoleManage() {
                   )}
 
                   {/* Roles grid */}
-                  <div className="flex gap-[13px] mx-auto md11:!justify-start md34:!justify-center flex-wrap">
+                  <div className="flex gap-[13px]  mx-auto md11:!justify-start md34:!justify-center flex-wrap">
                     {roleList.length > 0 ? (
                       roleList.map((role) => (
                         <div
@@ -380,10 +380,10 @@ function RoleModal({ onClose, onSave, editingRole }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[10000]">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="relative h-16 flex items-center px-5 border-b">
+        <div className="relative h-16 flex items-center px-4 py-[10px] border-b">
           <h2 className="text-xl font-[600] text-[#df0404]">{editingRole ? "Edit Role" : "Create New Role"}</h2>
           <button onClick={onClose} className="absolute right-4 text-[#000] rounded-full p-1 hover:bg-black/10 transition-colors">
             <X className="w-6 h-6" />
@@ -391,7 +391,7 @@ function RoleModal({ onClose, onSave, editingRole }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-5">
+        <div className="flex-1 overflow-auto p-3 md11:!p-5">
           {/* Role name */}
           <div className="mb-6">
             <label htmlFor="roleName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -458,7 +458,7 @@ function RoleModal({ onClose, onSave, editingRole }) {
           </div> */}
 
           {/* Departments */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden">
+          <div className="border border-gray-200 rounded-xl  md34:!overflow-scroll md11:!overflow-hidden">
             <div className="px-4 py-2 bg-[#f9fafb] border-b text-sm font-semibold text-gray-700">Departments</div>
             <table className="w-full">
               <thead>

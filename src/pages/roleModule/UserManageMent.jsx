@@ -427,8 +427,8 @@ export default function UserManageMent() {
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
             <div className="flex  w-[100%] relative max-h-[90%] overflow-y-auto gap-[30px] rounded-[10px]">
-<Preloader />
-              <div className=' flex w-[100%] flex-col gap-[20px] py-[10px]'>
+              <Preloader />
+              <div className=' flex w-[100%]  flex-col  gap-[20px] py-[10px]'>
                 <div className=' flex gap-[5px]  w-[100%] flex-col'>
                   <div className=" w-[100%]  p-2">
                     <div className="">
@@ -460,12 +460,15 @@ export default function UserManageMent() {
                             {editingDoctor ? "Edit Doctor" : "Add Doctor"}
                           </h2>
 
-                              <button
-      onClick={() => setIsDoctorModalOpen(false)}
-      className="absolute  bg-red-600 top-3  px-[5px] py-[5px]  flex justify-center items-center flex-shrink-0 w-[25px] h-[25px] rounded-full right-3 text-gray-100 hover:text-gray-400"
-    >
-      <i className="fa-solid fa-xmark text-[15px]"></i>
-    </button>
+                          <button
+                            onClick={() => setIsDoctorModalOpen(false)}
+                            className="absolute  bg-red-600 top-3  px-[5px] py-[5px]  flex justify-center items-center flex-shrink-0 w-[25px] h-[25px] rounded-full right-3 text-gray-100 hover:text-gray-400"
+                          >
+                            <i className="fa-solid fa-xmark text-[15px]"></i>
+                          </button>
+                          <div>
+
+
                           <input
                             type="text"
                             placeholder="Doctor Name"
@@ -480,6 +483,10 @@ export default function UserManageMent() {
                             onChange={(e) => setDoctorQualification(e.target.value)}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
                           />
+
+
+                          
+                                                    </div>
                           <button
                             onClick={saveDoctor}
                             className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-semibold"
@@ -528,7 +535,7 @@ export default function UserManageMent() {
                           <h1 className="text-[24px] font-[600]">Manage User</h1>
                         </div>
                         {canCreate && (
-                          <div className="flex justify-end mb-5">
+                          <div className="flex justify-end ">
                             <button
                               onClick={() => setIsModalOpen(true)}
                               className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg"
@@ -550,7 +557,7 @@ export default function UserManageMent() {
 
                       {/* User Cards Grid */}
                       {!isLoading && (
-                        <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-cente gap-[15px]">
+                        <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-center gap-[15px]">
                           {users.map((user) => (
                             <div
                               key={user._id || user.id}
@@ -663,7 +670,7 @@ export default function UserManageMent() {
 
                     {/* Create / Edit User Modal */}
                     {isModalOpen && (
-                      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+                      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-3">
                         <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn relative">
                           {/* Optional blocker while saving */}
                           {isSavingUser && (

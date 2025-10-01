@@ -27,6 +27,7 @@ import IpdAllList from "./pages/reportsMain/allListPages/IpdAllList.jsx";
 import OpdAllList from "./pages/reportsMain/allListPages/OpdAllList.jsx";
 import ComplainAllList from "./pages/reportsMain/allListPages/ComplainAllList.jsx";
 import NpsAllList from "./pages/reportsMain/allListPages/NpsAllList.jsx";
+import BedCreate from "./pages/bedCreate/BedCreate.jsx";
 
 
 
@@ -107,6 +108,8 @@ function App() {
           <Route path="/ipd-feedback-details" element={<IpdFeedbackDetails />} />
           <Route path="/dashboards/role-manage" element={<RoleManage />} />
           <Route path="/dashboards/user-manage" element={<UserManageMent />} />
+          <Route path="/dashboards/bed-manage" element={<BedCreate />} />
+
 
 
 

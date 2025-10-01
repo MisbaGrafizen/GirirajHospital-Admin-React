@@ -53,8 +53,8 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Rating Distribution</h3>
       </div>
-      <div className="relative w-80 h-60 md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="relative w-80 md34:!h-[380px] md77:!h-60  md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
+        <ResponsiveContainer width="80%" height="100%">
           <PieChart>
             <Pie
               data={data}

@@ -21,6 +21,7 @@ import { ApiGet } from "../../helper/axios"
 import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
 import Preloader from "../../Component/loader/Preloader"
 import { useNavigate } from "react-router-dom"
+import ModernDatePicker from "../../Component/MainInputFolder/ModernDatePicker"
 
 
 function resolvePermissions() {
@@ -401,8 +402,8 @@ export default function NpsDashboard() {
                     {/* Filters */}
                     <div className="bg-white rounded-lg shadow-sm border h-fit border-gray-100  px-3 pt-3 pb-3 mb-3">
                       <div className="grid grid-cols-2 md77:!grid-cols-3  md11:!grid-cols-5 h-fit gap-x-4">
-                        <div className="relative md:11!mb-[0px] md34:!mb-[14px]">
-                          <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                        <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
+                          {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                             From
                           </label>
                           <div className="relative">
@@ -414,10 +415,13 @@ export default function NpsDashboard() {
                               onChange={(e) => setDateFrom(e.target.value)}
                               className="w-full pl-9 text-[14px] pr-3 py-2  bg-white border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                             />
-                          </div>
+                          </div> */}
+
+
+                          <ModernDatePicker/>
                         </div>
-                        <div className="relative  md:11!mb-[0px] md34:mb-[14px]">
-                          <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                        <div className="relative  md11:!mb-[0px] md34:!mb-[14px]">
+                          {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                             To
                           </label>
                           <div className="relative">
@@ -429,12 +433,17 @@ export default function NpsDashboard() {
                               onChange={(e) => setDateTo(e.target.value)}
                               className="w-full pl-9 pr-3 py-2 text-[14px] bg-white border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
                             />
-                          </div>
+                          </div> */}
+
+                           <ModernDatePicker/>
+
+
+
                         </div>
-                        <div className="  md:11!mb-[0px] md34:mb-[14px]  w-[100%]">
+                        <div className="  md11:!mb-[0px] md34:mb-[14px]  w-[100%]">
                           <AnimatedDropdown label="Department" options={deptOptions} selected={department} onSelect={setDepartment} icon={Hospital} />
                         </div>
-                        <div className="  md:11!mb-[0px] w-[100%]">
+                        <div className="  md11:!mb-[0px] w-[100%]">
                           <AnimatedDropdown label="Doctor Name" options={doctorOptions} selected={doctor} onSelect={setDoctor} icon={User} />
                         </div>
 
@@ -489,7 +498,34 @@ export default function NpsDashboard() {
                         }}
                       />
                     </div>
-
+       <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-2 px-[10px] mb-3">
+                      <div className="flex flex-col md:flex-row  items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <label className="inline-flex   !mb-0 items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
+                            <span className="text-sm text-gray-700">Detractors</span>
+                          </label>
+                          <label className="inline-flex !mb-0  items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
+                            <span className="text-sm text-gray-700">Passives</span>
+                          </label>
+                          <label className="inline-flex !mb-0 items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
+                            <span className="text-sm text-gray-700">Promoters</span>
+                          </label>
+                        </div>
+                        <div className="relative w-full md:w-80">
+                          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search patient, doctor, room, comment..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     {/* Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6  mb-3">
                       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
@@ -553,34 +589,7 @@ export default function NpsDashboard() {
                     </div>
 
                     {/* Table Controls */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-2 px-[10px] mb-3">
-                      <div className="flex flex-col md:flex-row  items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <label className="inline-flex   !mb-0 items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
-                            <span className="text-sm text-gray-700">Detractors</span>
-                          </label>
-                          <label className="inline-flex !mb-0  items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
-                            <span className="text-sm text-gray-700">Passives</span>
-                          </label>
-                          <label className="inline-flex !mb-0 items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
-                            <span className="text-sm text-gray-700">Promoters</span>
-                          </label>
-                        </div>
-                        <div className="relative w-full md:w-80">
-                          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search patient, doctor, room, comment..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
+             
 
                     {/* Table */}
                     <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
