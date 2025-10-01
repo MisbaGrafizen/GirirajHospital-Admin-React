@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Preloader from '../../../Component/loader/Preloader'
-import CubaSidebar from '../../../Component/sidebar/CubaSideBar'
+import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Header from '../../../Component/header/Header'
 import {
   FileText,

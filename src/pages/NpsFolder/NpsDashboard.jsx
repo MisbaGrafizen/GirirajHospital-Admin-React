@@ -16,7 +16,7 @@ import {
   CartesianGrid,
 } from "recharts"
 import Header from "../../Component/header/Header"
-import SideBar from "../../Component/sidebar/CubaSideBar"
+import SideBar from "../../Component/sidebar/CubaSidebar"
 import { ApiGet } from "../../helper/axios"
 import Widgets1 from "../../Component/DashboardFiles/Components/Common/CommonWidgets/Widgets1"
 import Preloader from "../../Component/loader/Preloader"

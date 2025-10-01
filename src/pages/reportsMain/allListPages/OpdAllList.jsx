@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../../Component/header/Header'
-import CubaSidebar from '../../../Component/sidebar/CubaSideBar'
+import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
 

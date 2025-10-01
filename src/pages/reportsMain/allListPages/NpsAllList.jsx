@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Header from '../../../Component/header/Header'
-import CubaSidebar from '../../../Component/sidebar/CubaSideBar'
+import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import { ApiGet } from '../../../helper/axios'
 

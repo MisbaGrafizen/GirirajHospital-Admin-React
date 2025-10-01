@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Header from "../Component/header/Header";
 import SideBar from "../Component/sidebar/SideBar";
-import CubaSidebar from "../Component/sidebar/CubaSideBar";
+import CubaSidebar from "../Component/sidebar/CubaSidebar";
 import { ApiGet } from "../helper/axios";
 import Preloader from "../Component/loader/Preloader";
 import { motion, AnimatePresence } from "framer-motion"

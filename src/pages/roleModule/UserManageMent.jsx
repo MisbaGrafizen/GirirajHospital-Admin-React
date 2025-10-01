@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Header from '../../Component/header/Header'
-import SideBar from '../../Component/sidebar/CubaSideBar'
+import SideBar from '../../Component/sidebar/CubaSidebar'
 import { Calendar, Clock, MoreVertical, X, Upload, User, Mail, Lock, UserPlus, Eye, EyeOff } from "lucide-react"
 import { ApiDelete, ApiGet, ApiPost, ApiPut } from '../../helper/axios';
 import { motion, AnimatePresence } from "framer-motion";

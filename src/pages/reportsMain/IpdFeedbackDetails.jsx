@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import SideBar from '../../Component/sidebar/CubaSideBar'
+import SideBar from '../../Component/sidebar/CubaSidebar'
 import Header from '../../Component/header/Header'
 import { Calendar, User, Phone, Stethoscope, BedSingle, Star } from "lucide-react"
 import { ApiGet } from '../../helper/axios'

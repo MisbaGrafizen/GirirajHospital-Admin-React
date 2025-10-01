@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import SideBar from "../../Component/sidebar/CubaSideBar"
+import SideBar from "../../Component/sidebar/CubaSidebar"
 import Header from "../../Component/header/Header"
 import { ApiGet } from "../../helper/axios"
 import {

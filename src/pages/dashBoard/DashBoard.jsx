@@ -38,7 +38,7 @@ import {
   Phone,
   User,
 } from "lucide-react"
-import SideBar from '../../Component/sidebar/CubaSideBar';
+import SideBar from '../../Component/sidebar/CubaSidebar';
 import Header from '../../Component/header/Header';
 import GreetingCard from "../../Component/DashboardFiles/Components/Dashboard/Default/GreetingCard";
 import WidgetsWrapper from "../../Component/DashboardFiles/Components/Dashboard/Default/WidgetsWraper";

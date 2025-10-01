@@ -30,7 +30,7 @@ import {
     faStopwatch,
 } from "@fortawesome/free-solid-svg-icons";
 import Header from "../../Component/header/Header"
-import Sidebar from "../../Component/sidebar/CubaSideBar"
+import Sidebar from "../../Component/sidebar/CubaSidebar"
 import { useNavigate } from "react-router-dom"
 import OpdFilter from "../../Component/ReportFilter/OpdFilter"
 import { ApiGet } from "../../helper/axios"

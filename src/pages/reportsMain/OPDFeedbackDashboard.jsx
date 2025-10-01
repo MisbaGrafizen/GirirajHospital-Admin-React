@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../Component/header/Header'
-import SideBar from '../../Component/sidebar/CubaSideBar'
+import SideBar from '../../Component/sidebar/CubaSidebar'
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye, } from "lucide-react"
 import { useNavigate } from 'react-router-dom'

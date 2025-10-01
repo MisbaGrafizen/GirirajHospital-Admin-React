@@ -9,7 +9,7 @@ import FilePreviewModal from "../../Component/chatApp/FilePreviewModal"
 import VideoPlayerModal from "../../Component/chatApp/VideoPlayerModal"
 import DocumentModal from "../../Component/chatApp/DocumentModal"
 import Header from "../../Component/header/Header"
-import CubaSidebar from "../../Component/sidebar/CubaSideBar"
+import CubaSidebar from "../../Component/sidebar/CubaSidebar"
 import Preloader from "../../Component/loader/Preloader"
 
 // Seed data
