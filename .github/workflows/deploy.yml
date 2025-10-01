@@ -34,6 +34,7 @@ jobs:
           server-dir: /domains/shreegiriraj.feedbacks.live/public_html/
           local-dir: ./dist/
           exclude: |
+            **/node_modules/**
             **/.git*
             **/.github*
             **/node_modules/**
