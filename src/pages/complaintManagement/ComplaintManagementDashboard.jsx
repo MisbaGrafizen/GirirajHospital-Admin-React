@@ -188,24 +188,38 @@ const getStatusColor = (status) => {
             return "bg-gray-100 text-gray-800"
     }
 }
-const getPriorityColor = (priority) => {
-    switch (priority) {
-        case "Critical":
-            return "bg-red-100 text-red-800"
-        case "Urgent":
-            return "bg-orange-100 text-orange-800"
-        case "Medium":
-            return "bg-yellow-100 text-yellow-800"
-        case "Low":
-            return "bg-green-100 text-green-800"
-        default:
-            return "bg-gray-100 text-gray-800"
-    }
+
+function formatDateTime(isoString) {
+    if (!isoString) return "-";
+    const d = new Date(isoString);
+
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0"); // months are 0-based
+    const year = d.getFullYear();
+
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
+
+function getDoctorName(doc) {
+  if (!doc.consultantDoctorName) return "-";
+
+  const { name, gujName, hindiName } = doc.consultantDoctorName;
+  const lang = doc.language || "en";  // use complaint language
+
+  let doctorName = name;
+  if (lang === "gu") doctorName = gujName || name;
+  else if (lang === "hi") doctorName = hindiName || name;
+
+  // ✅ append qualification
+  return  doctorName;
+}
+
 
 function flattenConcernDoc(doc, allowedBlocks) {
     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
-    const dateStr = new Date(createdAt).toISOString().slice(0, 16).replace("T", " ");
 
     const departments = [];
     allowedBlocks.forEach((k) => {
@@ -223,9 +237,9 @@ function flattenConcernDoc(doc, allowedBlocks) {
     return [{
         id: doc._id,
         complaintId: doc.complaintId,
-        date: dateStr,
-        department: departments.join(", "),  // 👈 one row with joined departments
-        doctor: doc.consultantDoctorName?.name || "-",
+        date: formatDateTime(createdAt),
+        department: departments.join(", "),  
+        doctor: getDoctorName(doc),
         bedNo: doc.bedNo || "-",
         patient: doc.patientName || "-",
         contact: doc.contact || "-",
@@ -264,17 +278,9 @@ function flattenConcernDocForStats(doc) {
     return results;
 }
 
-
-const hasConcernContent = (b) => {
-    if (!b || typeof b !== "object") return false;
-    const hasText = typeof b.text === "string" && b.text.trim().length > 0;
-    const hasFiles = Array.isArray(b.attachments) && b.attachments.length > 0;
-    return hasText || hasFiles;
-};
-
 function getDepartmentsString(doc, allowedBlocks) {
     const departments = [];
-    allowedBlocks.forEach((k) => {
+    allowedBlocks?.forEach((k) => {
         const block = doc?.[k];
         if (!block) return;
         const hasText = block.text && String(block.text).trim().length > 0;
@@ -376,14 +382,30 @@ const LABEL_TO_KEY = Object.fromEntries(
 // pick a date field from a concern doc
 const getDocDate = (d) => d?.createdAt || d?.updatedAt || d?.date || null;
 
+// helper to call our backend TAT API
+async function getResolvedComplaints() {
+    const res = await ApiGet(`/admin/complaint-details`);
+    console.log("Resolved API response:", res);
+
+    if (Array.isArray(res)) {
+        // keep only complaints that are resolved (have stampOut)
+        return res.filter(c => c.stampOut);
+    }
+
+    if (Array.isArray(res?.data)) {
+        return res.data.filter(c => c.stampOut);
+    }
+
+    return [];
+}
+
+
 
 // ===================== COMPONENT =====================
 export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState(firstDayOfThisMonth())
     const [dateTo, setDateTo] = useState(today())
     const { isAdmin, allowedBlocks } = resolvePermissions();
-    console.log('isAdmin', isAdmin)
-
 
     const [selectedStatus, setSelectedStatus] = useState("All Status")
     const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
@@ -393,6 +415,7 @@ export default function ComplaintManagementDashboard() {
     const [chartAnimated, setChartAnimated] = useState(false)
     const [top5Departments, setTop5Departments] = useState([]);
     const [rawConcerns, setRawConcerns] = useState([]);
+    const [tatComplaints, setTatComplaints] = useState([]);
     const [filters, setFilters] = useState({
         from: '',                 // "YYYY-MM-DD"
         to: '',                   // "YYYY-MM-DD"
@@ -418,9 +441,21 @@ export default function ComplaintManagementDashboard() {
         setDoctorOptions(uniqueDoctors);
     }, [rawConcerns]);
 
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            try {
+                const data = await getResolvedComplaints();
+                if (!alive) return;
+                setTatComplaints(data);
+            } catch (e) {
+                console.error("Failed to load resolved complaints", e);
+                setTatComplaints([]);
+            }
+        })();
+        return () => { alive = false; };
+    }, []);
 
-
-    console.log('top5Departments', top5Departments)
 
 
     const [rows, setRows] = useState([])
@@ -443,6 +478,11 @@ export default function ComplaintManagementDashboard() {
     const handleAllPageNavigate = () => {
         navigate("/dashboards/complain-all-list");
     };
+
+     const handleTATPageNavigate = () => {
+        navigate("/dashboards/tat-all-list");
+    };
+
 
 
     useEffect(() => {
@@ -511,7 +551,6 @@ export default function ComplaintManagementDashboard() {
     }
 
 
-
     // ====== DERIVED ======
     const filteredComplaints = useMemo(() => {
         const q = (searchTerm || "").toLowerCase();
@@ -561,8 +600,6 @@ export default function ComplaintManagementDashboard() {
 
     }, [rows, searchTerm, selectedStatus, filters]);
 
-
-    console.log('filteredComplaints', filteredComplaints)
 
 
     useEffect(() => {
@@ -637,6 +674,16 @@ export default function ComplaintManagementDashboard() {
     }, [rawConcerns, allowedBlocks, filters, selectedStatus, searchTerm]);
 
 
+    function getAllowedDepartments(departments = [], allowedBlocks = []) {
+        if (!departments.length) return [];
+
+        // normalize role keys for matching
+        const allowed = allowedBlocks.map((b) => b.toLowerCase());
+
+        return departments.filter((dep) =>
+            allowed.some((block) => block.includes(dep.department.toLowerCase()))
+        );
+    }
 
 
 
@@ -1094,11 +1141,6 @@ export default function ComplaintManagementDashboard() {
                                         </div>
                                     </div>
 
-
-
-
-
-
                                     <div className="bg-white border rounded-lg mb-[20px] shadow-sm overflow-hidden">
                                         <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
                                             <div className=" w-[100%]  flex  items-center gap-[10px] ">
@@ -1112,7 +1154,7 @@ export default function ComplaintManagementDashboard() {
                                             <button
 
                                                 className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                onClick={handleAllPageNavigate}
+                                                onClick={handleTATPageNavigate}
                                             >
                                                 <Eye className="w-5 h-5 " />
                                                 View All
@@ -1134,71 +1176,76 @@ export default function ComplaintManagementDashboard() {
                                                             Department
                                                         </th>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                          Stamp In
+                                                            Stamp In
                                                         </th>
                                                         <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                 Stamp Out
+                                                            Stamp Out
                                                         </th>
                                                         <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Total Time
-                                                        </th>        
-                                                          <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                           Status
                                                         </th>
+                                                        {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Status
+                                                        </th> */}
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
-                                                    {rows
+                                                    {tatComplaints
                                                         .slice()
                                                         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                                                         .slice(0, 5)
                                                         .map((complaint, index) => {
                                                             const fullDoc = rawConcerns.find(d => d._id === complaint.id);
                                                             return (
+
                                                                 <tr
                                                                     key={complaint.id}
-                                                                    onClick={openModal}
+                                                                    onClick={() => openModal(complaint)}
                                                                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                 >
                                                                     <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                            
+
 
                                                                     <td className="px-6 py-2 text-sm text-gray-900">
                                                                         <div className="flex items-center">
                                                                             <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                         {complaint.patient}
+                                                                            {complaint.patientName}
                                                                         </div>
                                                                     </td>
-                                                               <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
+                                                                            ? getAllowedDepartments(complaint.departments, allowedBlocks)
+                                                                                .map((d) => d.department)
+                                                                                .join(", ")
+                                                                            : "-"}
                                                                     </td>
-                                                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
                                                                         <div className="flex items-center">
 
-                                                                            {complaint.date}
+                                                                            {formatDateTime(complaint.stampIn)}
                                                                         </div>
                                                                     </td>
-                                                             
+
 
                                                                     <td className="px-3 min-w-[200px] flex-shrink-0 py-2 text-sm">
                                                                         <span
                                                                             className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] font-[500]`}
-                                                                            
+
                                                                         >
-                                                                              {complaint.date}
+                                                                            {formatDateTime(complaint.stampOut)}
                                                                         </span>
                                                                     </td>
-                                                                         <td className="px-3 py-2 text-sm">
+                                                                    <td className="px-3 py-2 text-sm">
                                                                         <span
                                                                             className={`flex items-center  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
-                                                                            
+
                                                                         >
-                                                                              {complaint.date}
+                                                                            {complaint.totalTimeTaken}
                                                                         </span>
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                             
-                                                                    </td>
+                                                                    {/* <td className="px-6 py-2 text-sm text-gray-900">
+
+                                                                    </td> */}
                                                                 </tr>
                                                             )
                                                         })}
@@ -1278,7 +1325,6 @@ export default function ComplaintManagementDashboard() {
                                                             return (
                                                                 <tr
                                                                     key={complaint.id}
-                                                                    // onClick={handlenavigate}
                                                                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                                 >
                                                                     <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
@@ -1341,135 +1387,234 @@ export default function ComplaintManagementDashboard() {
                                     {/* Modal */}
                                     {isModalOpen && selectedComplaint && (
                                         <div className="fixed inset-0 z-50 bg-[#00000097] ">
-                                            <div className="flex items-center justify-center  h-[350px] pt-4 px-4 pb- text-center sm:block sm:p-0">
-                                                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={closeModal}></div>
+                                            <div className="flex items-center justify-center h-[350px] pt-4 px-4 text-center sm:block sm:p-0">
+                                                <div
+                                                    className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                                                    onClick={closeModal}
+                                                ></div>
 
-                                                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+                                                <span
+                                                    className="hidden sm:inline-block sm:align-middle sm:h-screen"
+                                                    aria-hidden="true"
+                                                >
                                                     &#8203;
                                                 </span>
 
                                                 <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                                                    <div className="bg-white px-4  pt-[20px]">
+                                                    <div className="bg-white px-4 pt-[20px]">
                                                         <div className="flex justify-between items-start mb-4">
-                                                            <h3 className="text-2xl font-[600] text-gray-900">Complaint Details</h3>
-                                                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                                            <h3 className="text-2xl font-[600] text-gray-900">
+                                                                Complaint Details
+                                                            </h3>
+                                                            <button
+                                                                onClick={closeModal}
+                                                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                            >
                                                                 <X className="w-6 h-6" />
                                                             </button>
                                                         </div>
 
                                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                                                            {/* Left Column - Basic Info */}
+                                                            {/* Left Column */}
                                                             <div className="space-y-4">
                                                                 <div className="bg-gray-50 p-3 border rounded-lg">
-                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h4>
+                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                                                                        Basic Information
+                                                                    </h4>
                                                                     <div className="space-y-2">
                                                                         <div className="flex items-center">
                                                                             <FileText className="w-5 h-5 text-gray-400 mr-3" />
                                                                             <div>
                                                                                 <span className="text-sm text-gray-600">Complaint ID:</span>
-                                                                                <span className="ml-2 font-medium text-blue-600">{selectedComplaint.id}</span>
+                                                                                <span className="ml-2 font-medium text-blue-600">
+                                                                                    {selectedComplaint.complaintId}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
+
                                                                         <div className="flex items-center">
                                                                             <CalendarIcon className="w-5 h-5 text-gray-400 mr-3" />
                                                                             <div>
-                                                                                <span className="text-sm text-gray-600">Date & Time:</span>
-                                                                                <span className="ml-2 font-medium">{selectedComplaint.date}</span>
+                                                                                <span className="text-sm text-gray-600">Created At:</span>
+                                                                                <span className="ml-2 font-medium">
+                                                                                    {formatDateTime(selectedComplaint.stampIn || selectedComplaint.createdAt)}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
+
+                                                                        <div className="flex items-center">
+                                                                            <CalendarIcon className="w-5 h-5 text-gray-400 mr-3" />
+                                                                            <div>
+                                                                                <span className="text-sm text-gray-600">Resolved At:</span>
+                                                                                <span className="ml-2 font-medium">
+                                                                                    {formatDateTime(selectedComplaint.stampOut || selectedComplaint.resolution?.resolvedAt)}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
                                                                         <div className="flex items-center">
                                                                             <User className="w-5 h-5 text-gray-400 mr-3" />
                                                                             <div>
                                                                                 <span className="text-sm text-gray-600">Patient:</span>
-                                                                                <span className="ml-2 font-medium">{selectedComplaint.patient}</span>
+                                                                                <span className="ml-2 font-medium">
+                                                                                    {selectedComplaint.patientName}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
+
                                                                         <div className="flex items-center">
                                                                             <Phone className="w-5 h-5 text-gray-400 mr-3" />
                                                                             <div>
                                                                                 <span className="text-sm text-gray-600">Contact:</span>
-                                                                                <span className="ml-2 font-medium">{selectedComplaint.contact}</span>
+                                                                                <span className="ml-2 font-medium">
+                                                                                    {selectedComplaint.contact}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
+                                                                        <div className="flex items-center">
+                                                                            <Clock className="w-5 h-5 text-gray-400 mr-3" />
+                                                                            <div>
+                                                                                <span className="text-sm text-gray-600">Total Time:</span>
+                                                                                <span className="ml-2 font-medium">
+                                                                                    {selectedComplaint.contact}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
                                                                         <div className="flex items-center">
                                                                             <Bed className="w-5 h-5 text-gray-400 mr-3" />
                                                                             <div>
                                                                                 <span className="text-sm text-gray-600">Bed No:</span>
-                                                                                <span className="ml-2 font-medium">{selectedComplaint.bedNo}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <User className="w-5 h-5 text-gray-400 mr-3" />
-                                                                            <div>
-                                                                                <span className="text-sm text-gray-600">Doctor:</span>
-                                                                                <span className="ml-2 font-medium">{selectedComplaint.doctor}</span>
+                                                                                <span className="ml-2 font-medium">
+                                                                                    {selectedComplaint.bedNo}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="bg-gray-50 p-3 border rounded-lg">
-                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Status & Priority</h4>
-                                                                    <div className="space-y-3">
-                                                                        <div className="flex items-center">
-                                                                            <span className="text-sm text-gray-600 mr-3">Status:</span>
-                                                                            <span
-                                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getStatusColor(
-                                                                                    selectedComplaint.status,
-                                                                                )}`}
-                                                                            >
-                                                                                {selectedComplaint.status}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <span className="text-sm text-gray-600 mr-3">Priority:</span>
-                                                                            <span
-                                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] ${getPriorityColor(
-                                                                                    selectedComplaint.priority,
-                                                                                )}`}
-                                                                            >
-                                                                                {selectedComplaint.priority}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <span className="text-sm text-gray-600 mr-3">Category:</span>
-                                                                            <span className="font-[500] text-[14px]">{selectedComplaint.category}</span>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <span className="text-sm text-gray-600 mr-3">Assigned To:</span>
-                                                                            <span className="font-[500] text-[14px]">{selectedComplaint.assignedTo}</span>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <span className="text-sm text-gray-600 mr-3">Expected Resolution:</span>
-                                                                            <span className="font-[500] text-[14px]">{selectedComplaint.expectedResolution}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
+
                                                             </div>
 
-                                                            {/* Right Column - Details & Actions */}
+                                                            {/* Right Column */}
                                                             <div className="space-y-4 mb-[15px]">
-                                                                <div className="bg-gray-50 border h-[182px] p-3 rounded-lg">
-                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Complaint Details</h4>
-                                                                    <p className="text-gray-600 leading-[21px] text-[14px] ">{selectedComplaint.details}</p>
+                                                                <div className="bg-gray-50 border p-3 rounded-lg">
+                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                                                                        Complaint Note
+                                                                    </h4>
+
+                                                                    {/* Complaint Text */}
+                                                                    {getAllowedDepartments(selectedComplaint?.departments, allowedBlocks).map((dep, i) => (
+                                                                        <div key={i} className="mb-4">
+                                                                            <h5 className="text-sm font-semibold text-gray-700 mb-1">{dep.department}</h5>
+                                                                            {dep.text && <p className="text-gray-600 text-[14px] mb-2">{dep.text}</p>}
+                                                                            <div className="flex gap-3 flex-wrap">
+                                                                                {dep.attachments?.map((file, idx) => {
+                                                                                    const isImage = file.match(/\.(jpeg|jpg|png|gif)$/i);
+                                                                                    const isAudio = file.match(/\.(mp3|wav|ogg)$/i);
+
+                                                                                    if (isImage) {
+                                                                                        return (
+                                                                                            <img
+                                                                                                key={idx}
+                                                                                                src={file}
+                                                                                                alt="Attachment"
+                                                                                                className="w-32 h-32 object-cover rounded border"
+                                                                                            />
+                                                                                        );
+                                                                                    }
+                                                                                    if (isAudio) {
+                                                                                        return (
+                                                                                            <audio key={idx} controls className="w-full">
+                                                                                                <source src={file} type="audio/mpeg" />
+                                                                                                Your browser does not support the audio element.
+                                                                                            </audio>
+                                                                                        );
+                                                                                    }
+                                                                                    return (
+                                                                                        <a
+                                                                                            key={idx}
+                                                                                            href={file}
+                                                                                            target="_blank"
+                                                                                            rel="noopener noreferrer"
+                                                                                            className="text-blue-600 underline text-sm"
+                                                                                        >
+                                                                                            View Attachment
+                                                                                        </a>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+
+                                                                    {getAllowedDepartments(selectedComplaint?.departments, allowedBlocks).length === 0 && (
+                                                                        <p className="text-gray-500 text-sm">No complaint details available for your role.</p>
+                                                                    )}
+
                                                                 </div>
 
                                                                 <div className="bg-gray-50 p-3 border rounded-lg">
-                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Action History</h4>
-                                                                    <div className="space-y-3">
-                                                                        {(selectedComplaint.actions || []).map((action, index) => (
-                                                                            <div key={index} className="flex items-start space-x-3">
-                                                                                <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                                                                                <div className="flex-1">
-                                                                                    <div className="flex justify-between items-start">
-                                                                                        <p className="text-sm font-medium text-gray-900">{action.action}</p>
-                                                                                        <span className="text-xs text-gray-500">{action.date}</span>
-                                                                                    </div>
-                                                                                    <p className="text-xs text-gray-600">by {action.by}</p>
+                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                                                                        Resolution Note
+                                                                    </h4>
+
+                                                                    {/* Resolution Text */}
+                                                                    <p className="text-gray-600 leading-[21px] text-[14px] mb-3">
+                                                                        {selectedComplaint?.resolution?.note || "-"}
+                                                                    </p>
+
+                                                                    {/* Proof Attachments (only if valid files exist) */}
+                                                                    {selectedComplaint?.resolution?.proof &&
+                                                                        selectedComplaint.resolution.proof.filter(file => file && file.trim() !== "").length > 0 && (
+                                                                            <div className="mt-3">
+                                                                                <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                                                                                    Proof Attachments
+                                                                                </h5>
+                                                                                <div className="flex gap-3 flex-wrap">
+                                                                                    {selectedComplaint.resolution.proof
+                                                                                        .filter(file => file && file.trim() !== "")
+                                                                                        .map((file, idx) => {
+                                                                                            const isImage = file.match(/\.(jpeg|jpg|png|gif)$/i);
+                                                                                            const isAudio = file.match(/\.(mp3|wav|ogg)$/i);
+
+                                                                                            if (isImage) {
+                                                                                                return (
+                                                                                                    <img
+                                                                                                        key={idx}
+                                                                                                        src={file}
+                                                                                                        alt="Resolution Proof"
+                                                                                                        className="w-32 h-32 object-cover rounded border"
+                                                                                                    />
+                                                                                                );
+                                                                                            }
+
+                                                                                            if (isAudio) {
+                                                                                                return (
+                                                                                                    <audio key={idx} controls className="w-full">
+                                                                                                        <source src={file} type="audio/mpeg" />
+                                                                                                        Your browser does not support the audio element.
+                                                                                                    </audio>
+                                                                                                );
+                                                                                            }
+
+                                                                                            return (
+                                                                                                <a
+                                                                                                    key={idx}
+                                                                                                    href={file}
+                                                                                                    target="_blank"
+                                                                                                    rel="noopener noreferrer"
+                                                                                                    className="text-blue-600 underline text-sm"
+                                                                                                >
+                                                                                                    View Proof
+                                                                                                </a>
+                                                                                            );
+                                                                                        })}
                                                                                 </div>
                                                                             </div>
-                                                                        ))}
-                                                                    </div>
+                                                                        )}
+
+
+
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1478,6 +1623,7 @@ export default function ComplaintManagementDashboard() {
                                             </div>
                                         </div>
                                     )}
+
                                 </div>
                             </div>
 

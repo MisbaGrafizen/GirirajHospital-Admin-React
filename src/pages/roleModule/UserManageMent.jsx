@@ -104,6 +104,9 @@ export default function UserManageMent() {
   const [doctorList, setDoctorList] = useState([]);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [doctorGujaratiName, setDoctorGujaratiName] = useState("");
+  const [doctorHindiName, setDoctorHindiName] = useState("");
+
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -356,11 +359,15 @@ export default function UserManageMent() {
       if (editingDoctor) {
         await ApiPut(`/admin/doctor/${editingDoctor._id}`, {
           name: doctorName,
+          gujName: doctorGujaratiName,
+          hindiName: doctorHindiName,
           qualification: doctorQualification,
         });
       } else {
         await ApiPost("/admin/doctor", {
           name: doctorName,
+          gujName: doctorGujaratiName,
+          hindiName: doctorHindiName,
           qualification: doctorQualification,
         });
       }
@@ -390,6 +397,8 @@ export default function UserManageMent() {
   const editDoctor = (doctor) => {
     setDoctorName(doctor.name);
     setDoctorQualification(doctor.qualification);
+    setDoctorGujaratiName(doctor.gujName || "");
+    setDoctorHindiName(doctor.hindiName || "");
     setEditingDoctor(doctor);
     setIsDoctorModalOpen(true);
   };
@@ -428,7 +437,7 @@ export default function UserManageMent() {
             <SideBar />
             <div className="flex  w-[100%] relative max-h-[90%] overflow-y-auto gap-[30px] rounded-[10px]">
               <Preloader />
-              <div className=' flex w-[100%]  flex-col  gap-[20px] py-[10px]'>
+              <div className=' flex w-[100%] flex-col gap-[20px] py-[10px]'>
                 <div className=' flex gap-[5px]  w-[100%] flex-col'>
                   <div className=" w-[100%]  p-2">
                     <div className="">
@@ -462,31 +471,48 @@ export default function UserManageMent() {
 
                           <button
                             onClick={() => setIsDoctorModalOpen(false)}
-                            className="absolute  bg-red-600 top-3  px-[5px] py-[5px]  flex justify-center items-center flex-shrink-0 w-[25px] h-[25px] rounded-full right-3 text-gray-100 hover:text-gray-400"
+                            className="absolute bg-red-600 top-3 px-[5px] py-[5px] flex justify-center items-center w-[25px] h-[25px] rounded-full right-3 text-gray-100 hover:text-gray-400"
                           >
                             <i className="fa-solid fa-xmark text-[15px]"></i>
                           </button>
-                          <div>
 
+                          {/* Row 1: Name + Qualification */}
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <input
+                              type="text"
+                              placeholder="Doctor Name"
+                              value={doctorName}
+                              onChange={(e) => setDoctorName(e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Qualification"
+                              value={doctorQualification}
+                              onChange={(e) => setDoctorQualification(e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                          </div>
 
-                          <input
-                            type="text"
-                            placeholder="Doctor Name"
-                            value={doctorName}
-                            onChange={(e) => setDoctorName(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Doctor Qualification"
-                            value={doctorQualification}
-                            onChange={(e) => setDoctorQualification(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                          />
+                          {/* Row 2: Gujarati Name + Hindi Name */}
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <input
+                              type="text"
+                              placeholder="Gujarati Name"
+                              value={doctorGujaratiName}
+                              onChange={(e) => setDoctorGujaratiName(e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Hindi Name"
+                              value={doctorHindiName}
+                              onChange={(e) => setDoctorHindiName(e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                          </div>
 
-
-                          
-                                                    </div>
+                          {/* Save Button */}
                           <button
                             onClick={saveDoctor}
                             className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-semibold"
@@ -494,6 +520,7 @@ export default function UserManageMent() {
                             {editingDoctor ? "Update" : "Save"}
                           </button>
                         </div>
+
                       )}
 
                       {/* Doctor Cards */}
@@ -535,7 +562,7 @@ export default function UserManageMent() {
                           <h1 className="text-[24px] font-[600]">Manage User</h1>
                         </div>
                         {canCreate && (
-                          <div className="flex justify-end ">
+                          <div className="flex justify-end mb-5">
                             <button
                               onClick={() => setIsModalOpen(true)}
                               className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg"
@@ -557,7 +584,7 @@ export default function UserManageMent() {
 
                       {/* User Cards Grid */}
                       {!isLoading && (
-                        <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-center gap-[15px]">
+                        <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-cente gap-[15px]">
                           {users.map((user) => (
                             <div
                               key={user._id || user.id}
@@ -670,7 +697,7 @@ export default function UserManageMent() {
 
                     {/* Create / Edit User Modal */}
                     {isModalOpen && (
-                      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-3">
+                      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
                         <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn relative">
                           {/* Optional blocker while saving */}
                           {isSavingUser && (

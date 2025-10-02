@@ -1,33 +1,77 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { X, Edit, Trash } from "lucide-react"
 import Preloader from "../../Component/loader/Preloader"
 import CubaSidebar from "../../Component/sidebar/CubaSidebar"
 import Header from "../../Component/header/Header"
+import { ApiDelete, ApiGet, ApiPost, ApiPut } from "../../helper/axios"
 
 export default function BedCreate() {
     const [openModal, setOpenModal] = useState(false)
     const [boards, setBoards] = useState([])
     const [form, setForm] = useState({ name: "", start: "", end: "" })
+    const [loading, setLoading] = useState(false)
 
-    const handleSave = () => {
+
+        const fetchBeds = async () => {
+        try {
+            setLoading(true)
+            const res = await ApiGet("/admin/bed")
+            console.log('res', res)
+            setBoards(res.data)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchBeds()
+    }, [])
+
+     const handleSave = async () => {
         if (!form.name || !form.start || !form.end) return alert("Please fill all fields")
-        const newBoard = { id: Date.now(), ...form }
-        setBoards([...boards, newBoard])
-        setForm({ name: "", start: "", end: "" })
-        setOpenModal(false)
+
+        try {
+            if (form.id) {
+                // update
+                await ApiPut(`/admin/bed/${form.id}`, {
+                    wardName: form.name,
+                    start: form.start,
+                    end: form.end,
+                })
+            } else {
+                // create
+                await ApiPost("/admin/bed", {
+                    wardName: form.name,
+                    start: form.start,
+                    end: form.end,
+                })
+            }
+            fetchBeds()
+            setForm({ name: "", start: "", end: "" })
+            setOpenModal(false)
+        } catch (err) {
+            console.error(err)
+            alert("Error saving bed")
+        }
     }
 
-    const handleDelete = (id) => {
-        setBoards(boards.filter((b) => b.id !== id))
+       const handleDelete = async (id) => {
+        if (!window.confirm("Delete this ward?")) return
+        try {
+            await ApiDelete(`/admin/bed/${id}`)
+            fetchBeds()
+        } catch (err) {
+            console.error(err)
+        }
     }
 
-    const handleEdit = (id) => {
-        const toEdit = boards.find((b) => b.id === id)
-        if (!toEdit) return
-        setForm({ name: toEdit.name, start: toEdit.start, end: toEdit.end })
-        setBoards(boards.filter((b) => b.id !== id))
+    // Edit
+    const handleEdit = (bed) => {
+        setForm({ name: bed.wardName, start: bed.start, end: bed.end })
         setOpenModal(true)
     }
 
@@ -58,21 +102,21 @@ export default function BedCreate() {
                                         key={board.id}
                                         className="p-4 rounded-xl shadow-md border bg-white flex flex-col gap-2 relative"
                                     >
-                                        <h3 className="text-lg font-semibold text-gray-700">{board.name}</h3>
+                                        <h3 className="text-lg font-semibold text-gray-700">{board.wardName}</h3>
                                         <p className="text-sm text-gray-500">
-                                            Bed: {board.start} - {board.end}
+                                            Bed No: {board.start} - {board.end}
                                         </p>
 
                                         {/* Actions */}
                                         <div className="absolute top-3 right-3 flex gap-2">
                                             <button
-                                                onClick={() => handleEdit(board.id)}
+                                                onClick={() => handleEdit(board._id)}
                                                 className="text-red-500 hover:text-red-700"
                                             >
                                                 <Edit size={18} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(board.id)}
+                                                onClick={() => handleDelete(board._id)}
                                                 className="text-red-500 hover:text-red-700"
                                             >
                                                 <Trash size={18} />

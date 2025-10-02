@@ -28,6 +28,7 @@ import OpdAllList from "./pages/reportsMain/allListPages/OpdAllList.jsx";
 import ComplainAllList from "./pages/reportsMain/allListPages/ComplainAllList.jsx";
 import NpsAllList from "./pages/reportsMain/allListPages/NpsAllList.jsx";
 import BedCreate from "./pages/bedCreate/BedCreate.jsx";
+import TATAllList from "./pages/reportsMain/allListPages/TATAllList.jsx";
 
 
 
@@ -117,7 +118,7 @@ function App() {
           <Route path="/dashboards/opd-all-list" element={<OpdAllList />} />
           <Route path="/dashboards/complain-all-list" element={<ComplainAllList />} />
           <Route path="/dashboards/nps-all-list" element={<NpsAllList />} />
-
+          <Route path="/dashboards/tat-all-list" element={<TATAllList />} />
 
 
 
