@@ -467,14 +467,15 @@ const CubaSidebar = () => {
     { id: "pos", label: "User Mana..", href: "/dashboards/user-manage", icon: faUsersCog },
   ]
 
-  const handleLogout = () => {
-    localStorage.removeItem("loginType");
-    localStorage.removeItem("rights");
-    localStorage.removeItem("token"); // if token stored
+   const handleLogout = () => {
+    // 🔥 Clear everything from localStorage and sessionStorage
+    localStorage.clear();
     sessionStorage.clear();
 
-    navigate("/"); // redirect to login
+    // Redirect to login
+    navigate("/");
   };
+
   return (
     <>
 

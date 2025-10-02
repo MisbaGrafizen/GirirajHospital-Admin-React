@@ -17,6 +17,7 @@ import CubaSidebar from "../Component/sidebar/CubaSidebar";
 import { ApiGet } from "../helper/axios";
 import Preloader from "../Component/loader/Preloader";
 import { motion, AnimatePresence } from "framer-motion"
+import socket from "../socket/index";
 
 export default function EmailManagement() {
   const [selectedEmail, setSelectedEmail] = useState(null);
@@ -45,7 +46,7 @@ export default function EmailManagement() {
     return "bg-gray-100 border-gray-200 text-gray-700" // default
   }
 
-  useEffect(() => {
+
     const fetchEmails = async () => {
       try {
         setLoading(true);
@@ -109,9 +110,19 @@ export default function EmailManagement() {
         setLoading(false);
       }
     };
-
+       useEffect(() => {
     fetchEmails();
+     socket.on("ipd:new", fetchEmails);
+    socket.on("opd:new", fetchEmails);
+    socket.on("ipd:complaint", fetchEmails);
+
+    return () => {
+      socket.off("ipd:new", fetchEmails);
+      socket.off("opd:new", fetchEmails);
+      socket.off("ipd:complaint", fetchEmails);
+    };
   }, []);
+
 
 
   const filteredEmails = useMemo(() => {

@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { ApiGet } from "../../helper/axios";
+import socket from "../../socket/index";
 
 function Header({
   pageName = "",
@@ -29,7 +30,24 @@ function Header({
 const [count, setCount] = useState(0);
 const [lastSeen, setLastSeen] = useState(Number(localStorage.getItem("lastSeen")) || 0);
 
+// useEffect(() => {
+//   const fetchCount = async () => {
+//     try {
+//       const data = await ApiGet("/admin/notifications");
+//       setCount(data?.notifications?.length || 0);
+//     } catch (err) {
+//       console.error("Error fetching notifications:", err);
+//     }
+//   };
+
+//   fetchCount(); // initial
+//   const interval = setInterval(fetchCount, 5000); // every 5 sec refresh
+
+//   return () => clearInterval(interval); // cleanup
+// }, []);
+
 useEffect(() => {
+  // initial fetch
   const fetchCount = async () => {
     try {
       const data = await ApiGet("/admin/notifications");
@@ -39,7 +57,17 @@ useEffect(() => {
     }
   };
   fetchCount();
+
+  // ✅ listen for new notifications
+  socket.on("notification:new", () => {
+    fetchCount(); // re-fetch count immediately when new notification comes
+  });
+
+  return () => {
+    socket.off("notification:new");
+  };
 }, []);
+
 
 const handleMail = () => {
   navigate("/mail");

@@ -85,13 +85,13 @@ function App() {
 
 
 
-  useEffect(() => {
-    if (location.pathname === "/") {
-      localStorage.setItem("loginType", "admin"); // full access
-    } else if (location.pathname === "/role-login") {
-      localStorage.setItem("loginType", "user"); // permission-based
-    }
-  }, [location.pathname]);
+  // useEffect(() => {
+  //   if (location.pathname === "/") {
+  //     localStorage.setItem("loginType", "admin"); // full access
+  //   } else if (location.pathname === "/role-login") {
+  //     localStorage.setItem("loginType", "user"); // permission-based
+  //   }
+  // }, [location.pathname]);
 
   return (
     <>
