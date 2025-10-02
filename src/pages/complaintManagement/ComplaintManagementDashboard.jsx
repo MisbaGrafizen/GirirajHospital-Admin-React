@@ -204,17 +204,17 @@ function formatDateTime(isoString) {
 }
 
 function getDoctorName(doc) {
-  if (!doc.consultantDoctorName) return "-";
+    if (!doc.consultantDoctorName) return "-";
 
-  const { name, gujName, hindiName } = doc.consultantDoctorName;
-  const lang = doc.language || "en";  // use complaint language
+    const { name, gujName, hindiName } = doc.consultantDoctorName;
+    const lang = doc.language || "en";  // use complaint language
 
-  let doctorName = name;
-  if (lang === "gu") doctorName = gujName || name;
-  else if (lang === "hi") doctorName = hindiName || name;
+    let doctorName = name;
+    if (lang === "gu") doctorName = gujName || name;
+    else if (lang === "hi") doctorName = hindiName || name;
 
-  // ✅ append qualification
-  return  doctorName;
+    // ✅ append qualification
+    return doctorName;
 }
 
 
@@ -238,7 +238,7 @@ function flattenConcernDoc(doc, allowedBlocks) {
         id: doc._id,
         complaintId: doc.complaintId,
         date: formatDateTime(createdAt),
-        department: departments.join(", "),  
+        department: departments.join(", "),
         doctor: getDoctorName(doc),
         bedNo: doc.bedNo || "-",
         patient: doc.patientName || "-",
@@ -379,9 +379,6 @@ const LABEL_TO_KEY = Object.fromEntries(
     Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
 );
 
-// pick a date field from a concern doc
-const getDocDate = (d) => d?.createdAt || d?.updatedAt || d?.date || null;
-
 // helper to call our backend TAT API
 async function getResolvedComplaints() {
     const res = await ApiGet(`/admin/complaint-details`);
@@ -399,6 +396,32 @@ async function getResolvedComplaints() {
     return [];
 }
 
+function extractFrequentServices(docs, topN = 6) {
+  const serviceCounts = {};
+
+  docs.forEach((doc) => {
+    CONCERN_KEYS.forEach((k) => {
+      const block = doc?.[k];
+      if (!block) return;
+
+      const hasText = block.text && String(block.text).trim().length > 0;
+      const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+
+      if (hasText || hasAttachments) {
+        const label = DEPT_LABEL[k] || k;
+        serviceCounts[label] = (serviceCounts[label] || 0) + 1;
+      }
+    });
+  });
+
+  // sort by frequency and return only top N
+  return Object.entries(serviceCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([service]) => service);
+}
+
+
 
 
 // ===================== COMPONENT =====================
@@ -406,6 +429,7 @@ export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState(firstDayOfThisMonth())
     const [dateTo, setDateTo] = useState(today())
     const { isAdmin, allowedBlocks } = resolvePermissions();
+    const [departmentData, setDepartmentData] = useState([]);
 
     const [selectedStatus, setSelectedStatus] = useState("All Status")
     const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
@@ -423,6 +447,18 @@ export default function ComplaintManagementDashboard() {
         doctor: '',               // blank means All Doctors
     });
     const [doctorOptions, setDoctorOptions] = useState([]);
+    const [frequentServices, setFrequentServices] = useState([]);
+
+useEffect(() => {
+  if (!rawConcerns.length) {
+    setFrequentServices([]);
+    return;
+  }
+  const topServices = extractFrequentServices(rawConcerns, 6);
+  setFrequentServices(topServices);
+}, [rawConcerns]);
+
+
 
     useEffect(() => {
         if (!rawConcerns || !rawConcerns.length) {
@@ -457,6 +493,28 @@ export default function ComplaintManagementDashboard() {
     }, []);
 
 
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await ApiGet("/admin/complaint-summary");
+                const summary = res?.floorSummary || [];
+
+                const total = summary.reduce((acc, s) => acc + s.count, 0);
+
+                setDepartmentData(
+                    summary.map((s, idx) => ({
+                        label: s.ward,
+                        count: s.count,
+                        percentage: total > 0 ? Math.round((s.count / total) * 100) : 0,
+                        color: ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6"][idx % 5],
+                    }))
+                );
+            } catch (err) {
+                console.error("Error loading ward summary:", err);
+            }
+        })();
+    }, []);
+
 
     const [rows, setRows] = useState([])
     const [kpiData, setKpiData] = useState({
@@ -479,7 +537,7 @@ export default function ComplaintManagementDashboard() {
         navigate("/dashboards/complain-all-list");
     };
 
-     const handleTATPageNavigate = () => {
+    const handleTATPageNavigate = () => {
         navigate("/dashboards/tat-all-list");
     };
 
@@ -1014,15 +1072,8 @@ export default function ComplaintManagementDashboard() {
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
                                             </div>
                                             <div className="flex justify-center  max-w-[400px]">
-                                                <AnimatedDonutChart
-                                                    data={[
-                                                        { label: "General", count: 45, percentage: 35, color: "#3B82F6" },
-                                                        { label: "ICU", count: 32, percentage: 25, color: "#EF4444" },
-                                                        { label: "Special", count: 25, percentage: 20, color: "#10B981" },
-                                                        { label: "Deluxe", count: 18, percentage: 14, color: "#F59E0B" },
-                                                        { label: "Emergency", count: 8, percentage: 6, color: "#8B5CF6" },
-                                                    ]}
-                                                />
+                                                <AnimatedDonutChart data={departmentData} />
+
                                             </div>
                                         </div>
                                     </div>
@@ -1101,7 +1152,7 @@ export default function ComplaintManagementDashboard() {
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-1">Frequent Complaint Keywords</h3>
 
                                             </div>
-                                            <div className="flex border-t flex-wrap gap-2 p-[20px] ">
+                                            {/* <div className="flex border-t flex-wrap gap-2 p-[20px] ">
                                                 {[
                                                     "Food",
                                                     // "Discharge",
@@ -1137,7 +1188,31 @@ export default function ComplaintManagementDashboard() {
                                                         {word}
                                                     </span>
                                                 ))}
-                                            </div>
+                                            </div> */}
+                                            <div className="flex border-t flex-wrap gap-2 p-[20px] ">
+  {frequentServices.map((service, index) => (
+    <span
+      key={index}
+      className={`px-4 py-1 rounded-full text-[12px] font-medium transition-all duration-500 hover:scale-110 ${
+        index % 6 === 0
+          ? "bg-blue-100 border border-blue-800 text-blue-800"
+          : index % 6 === 1
+          ? "bg-red-100 border border-red-800 text-red-800"
+          : index % 6 === 2
+          ? "bg-yellow-100 border border-yellow-800 text-yellow-800"
+          : index % 6 === 3
+          ? "bg-green-100 border border-green-800 text-green-800"
+          : index % 6 === 4
+          ? "bg-purple-100 border border-purple-800 text-purple-800"
+          : "bg-indigo-100 border border-indigo-800 text-indigo-800"
+      }`}
+    >
+      {service}
+    </span>
+  ))}
+</div>
+
+
                                         </div>
                                     </div>
 

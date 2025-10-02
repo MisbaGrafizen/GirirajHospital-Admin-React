@@ -145,6 +145,7 @@ export default function OPDFeedbackDashboard() {
   const [metric, setMetric] = useState("avg")
   const [rawOPD, setRawOPD] = useState([])
   const [doctorOptions, setDoctorOptions] = useState([]);
+  const [keywords, setKeywords] = useState([]);
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
     averageRating: 0,
@@ -167,8 +168,6 @@ export default function OPDFeedbackDashboard() {
   ])
 
   const defaultColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
-
-  const { canViewFeedback, canExportFeedback } = resolvePermissions()
 
   const SERVICE_GROUPS = {
     "Appointment": ["appointment"],
@@ -389,6 +388,13 @@ export default function OPDFeedbackDashboard() {
       const res = await ApiGet(`${API_URL}`)
       const data = Array.isArray(res) ? res : (res.data || [])
       setRawOPD(data)
+
+      const resKeywords = await ApiGet("/admin/opd-frequent-ratings")
+      if (resKeywords?.keywords) {
+        setKeywords(resKeywords.keywords)
+      } else {
+        setKeywords([])
+      }
 
       const list = data.map((d) => {
         const id = normId(d._id ?? d.id);
@@ -821,7 +827,7 @@ export default function OPDFeedbackDashboard() {
                           </div>
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">Feedback Keywords</h3>
                         </div>
-                        <div className="flex flex-wrap gap-3">
+                        {/* <div className="flex flex-wrap gap-3">
                           {[
                             "Excellent",
                             // "Nurse", 
@@ -852,7 +858,28 @@ export default function OPDFeedbackDashboard() {
                               {word}
                             </span>
                           ))}
+                        </div> */}
+                        <div className="flex flex-wrap gap-3">
+                          {keywords.length > 0 ? (
+                            keywords.map((word, index) => (
+                              <span
+                                key={index}
+                                className={`px-3 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
+                                    index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
+                                      index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
+                                        index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
+                                          index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
+                                            "bg-indigo-100 border-indigo-800 text-indigo-800"
+                                  }`}
+                              >
+                                {word}
+                              </span>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-500">No keywords available</p>
+                          )}
                         </div>
+
                       </div>
 
                     </div>

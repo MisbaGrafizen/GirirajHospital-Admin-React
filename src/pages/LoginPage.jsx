@@ -5,6 +5,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg"
 import { useNavigate } from "react-router-dom"
 import { requestNotificationPermission } from "../helper/notification"
+import { ApiPost } from "../helper/axios"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -30,36 +31,33 @@ const handleSubmit = async (e) => {
   setError("");
 
   try {
-    const res = await fetch("https://server.grafizen.in/api/v2/giriraj/auth/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    const res = await ApiPost("/auth/admin/login", { email, password });
 
-    if (!res.ok) {
-      const { message } = await res.json();
-      throw new Error(message || "Login failed");
-    }
+
+    // if (!res.ok) {
+    //   const { message } = await res.json();
+    //   throw new Error(message || "Login failed");
+    // }
 
     // 👇 Response is wrapped inside `.user`
-    const data = await res.json();
-    const { user, tokens } = data.user;
+    const { user, tokens } = res;
 
-    console.log("✅ Access Token:", tokens.access.token);
-    console.log("✅ Refresh Token:", tokens.refresh.token);
+
+    console.log("✅ Access Token:", tokens?.access?.token);
+    console.log("✅ Refresh Token:", tokens?.refresh?.token);
     console.log("✅ User:", user);
 
     // Store tokens + userId
     if (rememberMe) {
-      localStorage.setItem("authToken", tokens.access.token);
-      localStorage.setItem("refreshToken", tokens.refresh.token);
-      localStorage.setItem("userId", user._id);
+      localStorage.setItem("authToken", tokens?.access?.token);
+      localStorage.setItem("refreshToken", tokens?.refresh?.token);
+      localStorage.setItem("userId", user?._id);
       localStorage.setItem("savedEmail", email);
       localStorage.setItem("rememberMe", "true");
     } else {
-      localStorage.setItem("authToken", tokens.access.token);
-      localStorage.setItem("refreshToken", tokens.refresh.token);
-      localStorage.setItem("userId", user._id);
+      localStorage.setItem("authToken", tokens?.access?.token);
+      localStorage.setItem("refreshToken", tokens?.refresh?.token);
+      localStorage.setItem("userId", user?._id);
       localStorage.removeItem("savedEmail");
       localStorage.setItem("rememberMe", "false");
     }

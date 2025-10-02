@@ -95,6 +95,7 @@ const OPD_COLORS = {
 }
 const CONCERN_COLORS = { Open: "#ef4444", "In Progress": "#f59e0b", Resolved: "#10b981" }
 
+
 export default function DashBoard() {
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -265,19 +266,33 @@ setKpis(prev => ({
           }));
 
           // ----- Department bars -----
-          const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : []
-          setDepartmentData(
-            dept.map((d) => ({
-              department: d.department,
-              concerns: Math.round((Number(d.value || 0) / 5) * 100),
-              resolved: 0,
-              pending: 0,
-              avgTime: "",
-              satisfaction: Math.round((Number(d.value || 0) / 5) * 100),
-              staff: 0,
-              workload: "—",
-            }))
-          )
+   // Define readable names
+const DEPT_LABEL = {
+  doctorServices: "Doctor Services",
+  billingServices: "Billing Services",
+  housekeeping: "Housekeeping",
+  maintenance: "Maintenance",
+  diagnosticServices: "Diagnostic Services",
+  dietitianServices: "Dietitian Services",
+  security: "Security",
+  nursing: "Nursing",
+  frontDesk: "Front Desk",
+};
+
+const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : []
+
+// Map backend keys into readable department names
+setDepartmentData(
+  dept.map((d) => {
+    const deptName = DEPT_LABEL[d.department] || d.department || "Other";
+    return {
+      department: deptName,  // ✅ show "Housekeeping" not "general"
+      concerns: Number(d.value || 0),
+    };
+  })
+)
+
+
 
           // ----- Recent feedbacks -----
           const rec = Array.isArray(data?.recentFeedbacks) ? data.recentFeedbacks : []
