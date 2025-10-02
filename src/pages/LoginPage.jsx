@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // 🔄 Restore remember me
   useEffect(() => {
     const savedIdentifier = localStorage.getItem("savedIdentifier");
     const savedRemember = localStorage.getItem("rememberMe") === "true";
@@ -25,18 +26,25 @@ export default function LoginPage() {
     }
   }, []);
 
-  // 🔑 Save Auth Data (works for admin & role-user)
+  // 🔑 Save Auth Data (for admin & role-user)
   const saveAuthData = ({ user, tokens, token, permissions, loginType }) => {
-    const accessToken = tokens?.access?.token || token;
+    const accessToken = tokens?.access?.token || token; // normalize token
     const refreshToken = tokens?.refresh?.token || "";
 
     if (!accessToken || !user) return;
 
+    // ✅ Always set tokens
     localStorage.setItem("authToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("userId", user?._id);
+
+    // ✅ Ensure userId exists
+    localStorage.setItem("userId", user?._id || user?.id || "");
+
+    // ✅ Save user & role
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("userType", loginType); // "admin" or "roleUser"
+
+    // ✅ Role-based rights
     localStorage.setItem("rights", JSON.stringify(user?.roleId || []));
 
     if (permissions) {
@@ -44,16 +52,11 @@ export default function LoginPage() {
     }
 
     if (user?.companyId) {
-      localStorage.setItem(
-        "selectedCompanyId",
-        user?.companyId?._id || user?.companyId
-      );
-      localStorage.setItem(
-        "selectedCompanyName",
-        user?.companyId?.firmName || ""
-      );
+      localStorage.setItem("selectedCompanyId", user?.companyId?._id || user?.companyId);
+      localStorage.setItem("selectedCompanyName", user?.companyId?.firmName || "");
     }
 
+    // ✅ Remember me
     if (rememberMe) {
       localStorage.setItem("savedIdentifier", identifier);
       localStorage.setItem("rememberMe", "true");
@@ -63,8 +66,7 @@ export default function LoginPage() {
     }
   };
 
-  // 🚀 Handle Login
-  // 🚀 Handle Login
+ // 🚀 Handle Login
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsLoading(true);
@@ -78,13 +80,24 @@ const handleSubmit = async (e) => {
         password,
       });
 
-      const { user, tokens } = res.data;
-      saveAuthData({ user, tokens, loginType: "admin" }); 
+      const { user, tokens } = res.data?.user;
+
+      console.log('res.data', res.data)
+
+      saveAuthData({
+        user,
+        tokens: {
+          access: { token: tokens?.access?.token },
+          refresh: { token: tokens?.refresh?.token },
+        },
+        loginType: "admin",
+      });
+
       console.log("✅ Admin login success");
 
       await requestNotificationPermission();
-      navigate("/dashboards/super-dashboard");
-      return; 
+      navigate("/dashboards/super-dashboard", { replace: true });
+      return;
     } catch (adminError) {
       console.warn("Admin login failed, trying role-user...");
     }
@@ -96,12 +109,13 @@ const handleSubmit = async (e) => {
         password,
       });
 
-      const { user, token, permissions } = res.data;  // ✅ FIXED
-      saveAuthData({ user, token, permissions, loginType: "roleUser" }); // 🔥 stored immediately
+      const { user, token, permissions } = res.data;
+      saveAuthData({ user, token, permissions, loginType: "roleUser" });
+
       console.log("✅ Role-User login success");
 
       await requestNotificationPermission();
-      navigate("/dashboards/super-dashboard");
+      navigate("/dashboards/super-dashboard", { replace: true });
       return;
     } catch (userError) {
       throw new Error("Incorrect email/username or password");
@@ -112,6 +126,7 @@ const handleSubmit = async (e) => {
     setIsLoading(false);
   }
 };
+
 
   return (
     <div className="min-h-screen bs-giri font-Poppins flex items-center justify-center p-4 relative">
@@ -173,11 +188,7 @@ const handleSubmit = async (e) => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
             >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5" />
-              ) : (
-                <Eye className="w-5 h-5" />
-              )}
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
 
