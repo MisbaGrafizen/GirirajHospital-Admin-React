@@ -950,10 +950,10 @@ export default function UserManageMent() {
 
         {/* View Data Modal */}
         <NextUIModal onClose={handleClosemodal} isOpen={viewdatamodal}>
-          <ModalContent className="md:max-w-[750px] max-w-[733px] relative rounded-2xl z-[700] flex justify-center !py-0 mx-auto h-[600px]">
+          <ModalContent className="md:max-w-[750px] max-w-[733px] relative rounded-2xl z-[700] items-start flex justify-center !py-0 mx-auto h-[430px]">
             {(handleClosemodal) => (
               <>
-                <div className="bg-white w-[100%] font-Poppins max-h-[90vh] overflow-y-auto animate-fadeIn">
+                <div className="bg-white w-[100%] font-Poppins  overflow-y-auto animate-fadeIn">
                   <div className="relative">
                     <div className="h-[53px] bs-spj rounded-t- flex items-end">
                       <div className="absolute top-3 right-4">
