@@ -24,59 +24,6 @@ import { useNavigate } from "react-router-dom"
 import ModernDatePicker from "../../Component/MainInputFolder/ModernDatePicker"
 
 
-function resolvePermissions() {
-  const loginType = localStorage.getItem("loginType")
-  const isAdmin = loginType === "admin"
-
-  let permsArray = []
-  try {
-    const parsed = JSON.parse(localStorage.getItem("rights"))
-    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
-      permsArray = parsed.permissions
-    } else if (Array.isArray(parsed)) {
-      permsArray = parsed
-    }
-  } catch {
-    permsArray = []
-  }
-
-  const findPerm = (mod) =>
-    Array.isArray(permsArray) && permsArray.find((p) => p?.module === mod)
-
-  const modulePerm =
-    findPerm("nps_feedback") || // ✅ specific for NPS
-    findPerm("opd") ||
-    findPerm("ipd") ||
-    findPerm("feedback") ||
-    findPerm("reports") ||
-    null
-
-  const has = (perm) => isAdmin || modulePerm?.permissions?.includes(perm)
-
-  return {
-    isAdmin,
-    canViewNps: has("View"),
-    canExportNps: has("Download") || has("Export"),
-  }
-}
-
-
-function PermissionDenied() {
-  return (
-    <div className="flex items-center justify-center h-[70vh]">
-      <div className="bg-white border rounded-xl p-8 shadow-sm text-center max-w-md">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Permission required
-        </h2>
-        <p className="text-gray-600">
-          You don’t have access to view NPS Dashboard. Please contact an
-          administrator.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 // ---------------- UI pieces (unchanged) ----------------
 function AnimatedDropdown({ label, options, selected, onSelect, icon: Icon, disabled = false }) {
   const [open, setOpen] = useState(false)
@@ -227,7 +174,6 @@ export default function NpsDashboard() {
     d.setDate(d.getDate() - 14)
     return d.toISOString().slice(0, 10)
   })
-  const { canViewNps } = resolvePermissions()
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10))
   const [department, setDepartment] = useState("Both")
   const [doctor, setDoctor] = useState("All Doctors")
@@ -264,7 +210,7 @@ export default function NpsDashboard() {
       } catch (e) {
         console.error("NPS load failed:", e)
         setError("Failed to load NPS data.")
-      } finally {
+      } finally { 
         setLoading(false)
       }
     })()
@@ -386,11 +332,6 @@ export default function NpsDashboard() {
           <Header pageName="NPS Trends (OPD + IPD)" />
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
-            {!canViewNps ? (
-              <div className="flex flex-col w-full max-h-[90%] pb-[50px] md34:!pr-0 md11:!pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
-                <PermissionDenied />
-              </div>
-            ) : (
               <div className="flex flex-col relative  w-[100%] max-h-[90%] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
          <Preloader />
                 <div className="">
@@ -660,7 +601,6 @@ View All
                   </main>
                 </div>
               </div>
-            )}
           </div>
         </div>
       </section>
