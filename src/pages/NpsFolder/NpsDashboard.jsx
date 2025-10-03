@@ -463,7 +463,7 @@ export default function NpsDashboard() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4  ">
                       <Widgets1
                         data={{
-                          title: "Detractors %",
+                          title: "Detractors ",
                           gros: `${kpi.pDetr}%`,
                           total: `${kpi.total} total`,
                           color: "warning",
@@ -472,7 +472,7 @@ export default function NpsDashboard() {
                       />
                       <Widgets1
                         data={{
-                          title: "Passives %",
+                          title: "Passives ",
                           gros: `${kpi.pPass}%`,
                           total: `${kpi.total} total`,
                           color: "warning",
@@ -481,7 +481,7 @@ export default function NpsDashboard() {
                       />
                       <Widgets1
                         data={{
-                          title: "Promoters %",
+                          title: "Promoters ",
                           gros: `${kpi.pProm}%`,
                           total: `${kpi.total} total`,
                           color: "success",
