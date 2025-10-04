@@ -134,6 +134,7 @@ export default function IpdFeedbackDetails() {
         pathologyDiagnosticServices: to05(doc.ratings?.pathologyDiagnosticServices),
         dietitianServices: to05(doc.ratings?.dietitianServices),
         security: to05(doc.ratings?.security),
+        nursing: to05(doc.ratings?.nursing),
       },
       extra: {
         doctorType: doc.doctorType ?? "",
@@ -189,6 +190,7 @@ export default function IpdFeedbackDetails() {
                         { key: "maintenance", label: "Maintenance (A.C., Fan, etc.)" },
                         { key: "dietitianServices", label: "Dietitian (Food, Canteen)" },
                         { key: "security", label: "Security" },
+                        { key: "nursing", label: "Nursing" },
                       ].map(({ key, label }) => (
                         <div
                           key={key}

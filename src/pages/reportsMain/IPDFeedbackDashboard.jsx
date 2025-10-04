@@ -43,6 +43,7 @@
       "Pathology": TestTube2,
       "Dietitian Services": Utensils,
       "Security": ShieldCheck,
+      "Nursing": User,
     };
     import { ApiGet } from '../../helper/axios'
     import { Calendar, ChevronDown, Hospital, MessageSquare, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
@@ -467,6 +468,7 @@
         "Pathology": ["pathologyDiagnosticServices"],
         "Dietitian Services": ["dietitianServices"],
         "Security": ["security"],
+        "Nursing": ["nursing"]
       };
 
       function toArray(maybeArray) {
