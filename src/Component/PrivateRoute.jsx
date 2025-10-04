@@ -3,12 +3,12 @@ import { Navigate } from "react-router-dom";
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("authToken");   // ✅ matches LoginPage
-  const userType = localStorage.getItem("userType"); // ✅ matches LoginPage
+  const loginType = localStorage.getItem("loginType"); // ✅ matches LoginPage
 
-  console.log('userType', userType)
+  console.log('loginType', loginType)
   console.log('token', token)
 
-  if (!token || !userType) {
+  if (!token || !loginType) {
     return <Navigate to="/" replace />;
   }
 

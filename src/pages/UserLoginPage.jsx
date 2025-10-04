@@ -45,7 +45,7 @@ export default function UserLoginPage() {
 
       // Persist auth + role info
       localStorage.setItem("authToken", token)
-      localStorage.setItem("userType", "roleUser") // <-- key for ProtectedRoute checks
+      localStorage.setItem("loginType", "roleUser") // <-- key for ProtectedRoute checks
       localStorage.setItem("user", JSON.stringify(user?._id))
       localStorage.setItem("rights", JSON.stringify(user?.roleId || [])) // your existing structure
       if (permissions) {

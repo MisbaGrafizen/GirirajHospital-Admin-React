@@ -42,7 +42,7 @@ export default function LoginPage() {
 
     // ✅ Save user & role
     localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("userType", loginType); // "admin" or "roleUser"
+    localStorage.setItem("loginType", loginType); // "admin" or "roleUser"
 
     // ✅ Role-based rights
     localStorage.setItem("rights", JSON.stringify(user?.roleId || []));
