@@ -148,7 +148,7 @@ const handleSubmit = async (e) => {
       <div className="relative w-full max-w-md bg-white/20 backdrop-blur-[50px] rounded-3xl p-6 shadow-2xl border border-white/20 z-10">
         <div className="text-center mb-8">
           <img src={logo} alt="logo" className="mx-auto rounded-[8px] w-32" />
-          <h1 className="text-3xl font-bold text-white mt-2">Welcome Back</h1>
+          <h1 className="text-3xl font-bold text-white mt-2">Welcome</h1>
           <p className="text-gray-300">Sign in to your account</p>
         </div>
 

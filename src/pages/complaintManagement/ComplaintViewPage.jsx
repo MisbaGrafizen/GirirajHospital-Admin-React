@@ -1035,7 +1035,6 @@ export default function ComplaintViewPage() {
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <div className="bg-white px-6 pt-6 pb-4">
-                                                            {currentPerms.includes("forward") && (
                                                                 <>
                                                                     <div className="flex justify-between items-center mb-6">
                                                                         <h3 className="text-xl font-bold text-gray-900">
@@ -1081,7 +1080,6 @@ export default function ComplaintViewPage() {
                                                                         </div>
                                                                     </div>
                                                                 </>
-                                                            )}
                                                         </div>
 
                                                         <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
