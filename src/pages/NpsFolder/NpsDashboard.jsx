@@ -123,17 +123,23 @@ function categoryFromRating(r) {
   if (r >= 7) return "Passive"
   return "Detractor"
 }
+
 function aggregateTrends(records, dates) {
   const dayMap = new Map()
   dates.forEach((d) => dayMap.set(d, { date: d, Detractors: 0, Passives: 0, Promoters: 0, total: 0 }))
+
   records.forEach((r) => {
     const m = dayMap.get(r.date) || { date: r.date, Detractors: 0, Passives: 0, Promoters: 0, total: 0 }
     m.total++
-    m[r.category + "s"]++
+    if (r.category === "Detractor") m.Detractors++
+    else if (r.category === "Passive") m.Passives++
+    else if (r.category === "Promoter") m.Promoters++
     dayMap.set(r.date, m)
   })
+
   const areaData = []
   const lineData = []
+
   for (const d of dates) {
     const m = dayMap.get(d)
     const total = m.total || 1
@@ -144,8 +150,10 @@ function aggregateTrends(records, dates) {
     areaData.push({ date: d, Detractors: detr, Passives: pass, Promoters: prom })
     lineData.push({ date: d, NPS: nps })
   }
+
   return { areaData, lineData }
 }
+
 
 // ---------------- NEW: real-data normalizers ----------------
 const pick = (...vals) => vals.find((v) => v != null && v !== "") ?? "-"
@@ -193,7 +201,7 @@ export default function NpsDashboard() {
   const navigate = useNavigate();
 
 
-  const handlenavigate =() =>{
+  const handlenavigate = () => {
     navigate("/dashboards/nps-all-list")
   };
 
@@ -210,7 +218,7 @@ export default function NpsDashboard() {
       } catch (e) {
         console.error("NPS load failed:", e)
         setError("Failed to load NPS data.")
-      } finally { 
+      } finally {
         setLoading(false)
       }
     })()
@@ -237,29 +245,29 @@ export default function NpsDashboard() {
     const doctorFilter = doctor !== "All Doctors" ? doctor.toLowerCase() : null
 
     const project = (list, dept) => {
-  if (!Array.isArray(list)) return []
-  return list
-    .map((d) => {
-      const nps = toNps(d.overallRecommendation)
-      if (nps === null) return null
-      const when = pickCreatedAt(d)
-      if (!inRange(when, dateFrom, dateTo)) return null
-      const docName = pickDoctor(d)
-      if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null
-      return {
-        date: when.toISOString().slice(0, 10),
-        datetime: when.toLocaleString(),
-        patient: pickPatient(d),
-        room: pickRoom(d, dept),
-        doctor: docName,
-        department: dept,
-        rating: nps,
-        category: categoryFromRating(nps),
-        comment: pick(d.comments, d.comment, ""),
-      }
-    })
-    .filter(Boolean)
-}
+      if (!Array.isArray(list)) return []
+      return list
+        .map((d) => {
+          const nps = toNps(d.overallRecommendation)
+          if (nps === null) return null
+          const when = pickCreatedAt(d)
+          if (!inRange(when, dateFrom, dateTo)) return null
+          const docName = pickDoctor(d)
+          if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null
+          return {
+            date: when.toISOString().slice(0, 10),
+            datetime: when.toLocaleString(),
+            patient: pickPatient(d),
+            room: pickRoom(d, dept),
+            doctor: docName,
+            department: dept,
+            rating: nps,
+            category: categoryFromRating(nps),
+            comment: pick(d.comments, d.comment, ""),
+          }
+        })
+        .filter(Boolean)
+    }
 
     let recs = []
     if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"))
@@ -305,12 +313,21 @@ export default function NpsDashboard() {
     const detractors = filteredRecords.filter((r) => r.category === "Detractor").length
     const passives = filteredRecords.filter((r) => r.category === "Passive").length
     const promoters = filteredRecords.filter((r) => r.category === "Promoter").length
-    const pDetr = Math.round((detractors / total) * 100)
-    const pPass = Math.round((passives / total) * 100)
-    const pProm = Math.round((promoters / total) * 100)
-    const nps = pProm - pDetr
-    return { pDetr, pPass, pProm, nps, total: filteredRecords.length }
+
+    const detrPercent = Math.round((detractors / total) * 100)
+    const passPercent = Math.round((passives / total) * 100)
+    const promPercent = Math.round((promoters / total) * 100)
+    const nps = promPercent - detrPercent
+
+    console.log('detrPercent', detrPercent)
+    console.log('passPercent', passPercent)
+
+    return { detrPercent, passPercent, promPercent, nps }
   }, [filteredRecords])
+
+
+  console.log('kpi', kpi.detrPercent)
+
 
   const areaKey = JSON.stringify({
     dateFrom,
@@ -332,19 +349,19 @@ export default function NpsDashboard() {
           <Header pageName="NPS Trends (OPD + IPD)" />
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
-              <div className="flex flex-col relative  w-[100%] max-h-[90%] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
-         <Preloader />
-                <div className="">
-                  <main className="">
-                    {/* optional lightweight state messages */}
-                    {loading && <div className="text-sm text-gray-500 px-2 pb-1">Loading NPS…</div>}
-                    {error && <div className="text-sm text-red-600 px-2 pb-1">{error}</div>}
+            <div className="flex flex-col relative  w-[100%] max-h-[90%] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+              <Preloader />
+              <div className="">
+                <main className="">
+                  {/* optional lightweight state messages */}
+                  {loading && <div className="text-sm text-gray-500 px-2 pb-1">Loading NPS…</div>}
+                  {error && <div className="text-sm text-red-600 px-2 pb-1">{error}</div>}
 
-                    {/* Filters */}
-                    <div className="bg-white rounded-lg shadow-sm border h-fit border-gray-100  px-3 pt-3 pb-3 mb-3">
-                      <div className="grid grid-cols-2 md77:!grid-cols-3  md11:!grid-cols-5 h-fit gap-x-4">
-                        <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
-                          {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                  {/* Filters */}
+                  <div className="bg-white rounded-lg shadow-sm border h-fit border-gray-100  px-3 pt-3 pb-3 mb-3">
+                    <div className="grid grid-cols-2 md77:!grid-cols-3  md11:!grid-cols-5 h-fit gap-x-4">
+                      <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
+                        {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                             From
                           </label>
                           <div className="relative">
@@ -359,10 +376,10 @@ export default function NpsDashboard() {
                           </div> */}
 
 
-                          <ModernDatePicker/>
-                        </div>
-                        <div className="relative  md11:!mb-[0px] md34:!mb-[14px]">
-                          {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
+                        <ModernDatePicker />
+                      </div>
+                      <div className="relative  md11:!mb-[0px] md34:!mb-[14px]">
+                        {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
                             To
                           </label>
                           <div className="relative">
@@ -376,231 +393,235 @@ export default function NpsDashboard() {
                             />
                           </div> */}
 
-                           <ModernDatePicker/>
+                        <ModernDatePicker />
 
 
 
-                        </div>
-                        <div className="  md11:!mb-[0px] md34:mb-[14px]  w-[100%]">
-                          <AnimatedDropdown label="Department" options={deptOptions} selected={department} onSelect={setDepartment} icon={Hospital} />
-                        </div>
-                        <div className="  md11:!mb-[0px] w-[100%]">
-                          <AnimatedDropdown label="Doctor Name" options={doctorOptions} selected={doctor} onSelect={setDoctor} icon={User} />
-                        </div>
+                      </div>
+                      <div className="  md11:!mb-[0px] md34:mb-[14px]  w-[100%]">
+                        <AnimatedDropdown label="Department" options={deptOptions} selected={department} onSelect={setDepartment} icon={Hospital} />
+                      </div>
+                      <div className="  md11:!mb-[0px] w-[100%]">
+                        <AnimatedDropdown label="Doctor Name" options={doctorOptions} selected={doctor} onSelect={setDoctor} icon={User} />
+                      </div>
 
-                        <div className="  md:11!mb-[0px]   w-[100%]">
-                          <AnimatedDropdown
-                            label="Room No"
-                            options={roomOptions}
-                            selected={room}
-                            onSelect={setRoom}
-                            icon={Activity}
-                            disabled={roomOptions.length === 0}
-                          />
+                      <div className="  md:11!mb-[0px]   w-[100%]">
+                        <AnimatedDropdown
+                          label="Room No"
+                          options={roomOptions}
+                          selected={room}
+                          onSelect={setRoom}
+                          icon={Activity}
+                          disabled={roomOptions.length === 0}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4  ">
+                    <Widgets1
+                      data={{
+                        title: "Detractors",
+                        gros: `${kpi.detrPercent}%`,
+                        total: `${kpi.detrPercent}%`,
+                        color: "warning",
+                        icon: <i className="fa-solid fa-face-frown !text-[24px] text-orange-600"></i>,
+                      }}
+                    />
+
+                    <Widgets1
+                      data={{
+                        title: "Passives",
+                        gros: `${kpi.passPercent}%`,
+                        total: `${kpi.passPercent}%`,
+                        color: "warning",
+                        icon: <i className="fa-solid fa-minus !text-[24px] text-amber-600"></i>,
+                      }}
+                    />
+
+                    <Widgets1
+                      data={{
+                        title: "Promoters",
+                        gros: `${kpi.promPercent}%`,
+                        total: `${kpi.promPercent}%`,
+                        color: "success",
+                        icon: <i className="fa-regular fa-heart-pulse !text-[24px] text-emerald-600"></i>,
+                      }}
+                    />
+
+                    <Widgets1
+                      data={{
+                        title: "Overall NPS",
+                        gros: `${kpi.nps}`,
+                        total: `${kpi.nps}%`,
+                        color: "secondary",
+                        icon: <i className="fa-regular fa-chart-line !text-[20px] text-gray-600"></i>,
+                      }}
+                    />
+
+                  </div>
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-2 px-[10px] mb-3">
+                    <div className="flex flex-col md:flex-row  items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <label className="inline-flex   !mb-0 items-center gap-2">
+                          <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
+                          <span className="text-sm text-gray-700">Detractors</span>
+                        </label>
+                        <label className="inline-flex !mb-0  items-center gap-2">
+                          <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
+                          <span className="text-sm text-gray-700">Passives</span>
+                        </label>
+                        <label className="inline-flex !mb-0 items-center gap-2">
+                          <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
+                          <span className="text-sm text-gray-700">Promoters</span>
+                        </label>
+                      </div>
+                      <div className="relative w-full md:w-80">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          placeholder="Search patient, doctor, room, comment..."
+                          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6  mb-3">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                      <div className=" flex mb-[10px] items-center gap-[10px]">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                          <i className="fa-regular fa-chart-line text-[#fff] text-[19px]"></i>
                         </div>
+                        <h3 className="text-lg font-semibold text-gray-900 ">Distribution Over Time</h3>
+                      </div>
+                      <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={areaData} key={areaKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="gradDetractors" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                              </linearGradient>
+                              <linearGradient id="gradPassives" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
+                              </linearGradient>
+                              <linearGradient id="gradPromoters" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                            <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                            <Tooltip contentStyle={{ fontSize: 12 }} />
+                            <Legend />
+                            <Area type="monotone" dataKey="Detractors" stackId="1" stroke="#ef4444" fill="url(#gradDetractors)" isAnimationActive animationDuration={600} />
+                            <Area type="monotone" dataKey="Passives" stackId="1" stroke="#f59e0b" fill="url(#gradPassives)" isAnimationActive animationDuration={600} />
+                            <Area type="monotone" dataKey="Promoters" stackId="1" stroke="#10b981" fill="url(#gradPromoters)" isAnimationActive animationDuration={600} />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4  ">
-                      <Widgets1
-                        data={{
-                          title: "Detractors ",
-                          gros: `${kpi.pDetr}%`,
-                          total: `${kpi.total} total`,
-                          color: "warning",
-                          icon: <i className="fa-solid fa-face-frown !text-[24px] text-orange-600"></i>,
-                        }}
-                      />
-                      <Widgets1
-                        data={{
-                          title: "Passives ",
-                          gros: `${kpi.pPass}%`,
-                          total: `${kpi.total} total`,
-                          color: "warning",
-                          icon: <i className="fa-solid fa-minus !text-[24px] text-amber-600"></i>,
-                        }}
-                      />
-                      <Widgets1
-                        data={{
-                          title: "Promoters ",
-                          gros: `${kpi.pProm}%`,
-                          total: `${kpi.total} total`,
-                          color: "success",
-                          icon: <i className="fa-regular fa-heart-pulse !text-[24px] text-emerald-600"></i>,
-                        }}
-                      />
-                      <Widgets1
-                        data={{
-                          title: "Overall NPS",
-                          gros: `${kpi.nps}`,
-                          total: "Promoters − Detractors",
-                          color: "secondary",
-                          icon: <i className="fa-regular fa-chart-line !text-[20px] text-gray-600"></i>,
-                        }}
-                      />
-                    </div>
-       <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-2 px-[10px] mb-3">
-                      <div className="flex flex-col md:flex-row  items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <label className="inline-flex   !mb-0 items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" checked={showDetractors} onChange={(e) => setShowDetractors(e.target.checked)} />
-                            <span className="text-sm text-gray-700">Detractors</span>
-                          </label>
-                          <label className="inline-flex !mb-0  items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" checked={showPassives} onChange={(e) => setShowPassives(e.target.checked)} />
-                            <span className="text-sm text-gray-700">Passives</span>
-                          </label>
-                          <label className="inline-flex !mb-0 items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" checked={showPromoters} onChange={(e) => setShowPromoters(e.target.checked)} />
-                            <span className="text-sm text-gray-700">Promoters</span>
-                          </label>
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-[18px] p-4">
+                      <div className=" flex mb-[10px] items-center gap-[10px]">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                          <i className="fa-regular fa-arrow-trend-up text-[#fff] text-[19px]"></i>
+
                         </div>
-                        <div className="relative w-full md:w-80">
-                          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search patient, doctor, room, comment..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
-                          />
-                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900">Overall NPS Trend</h3>
+                      </div>
+                      <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={lineData} key={lineKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                            <CartesianGrid stroke="#f3f4f6" vertical={false} />
+                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                            <YAxis domain={[-100, 100]} tick={{ fontSize: 12 }} />
+                            <Tooltip contentStyle={{ fontSize: 12 }} />
+                            <Legend />
+                            <Line type="monotone" dataKey="NPS" stroke="#374151" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive animationDuration={600} />
+                          </LineChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
-                    {/* Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6  mb-3">
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                        <div className=" flex mb-[10px] items-center gap-[10px]">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                            <i className="fa-regular fa-chart-line text-[#fff] text-[19px]"></i>
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 ">Distribution Over Time</h3>
-                        </div>
-                        <div className="h-72">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={areaData} key={areaKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                              <defs>
-                                <linearGradient id="gradDetractors" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.35} />
-                                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                                </linearGradient>
-                                <linearGradient id="gradPassives" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
-                                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
-                                </linearGradient>
-                                <linearGradient id="gradPromoters" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                              <Tooltip contentStyle={{ fontSize: 12 }} />
-                              <Legend />
-                              <Area type="monotone" dataKey="Detractors" stackId="1" stroke="#ef4444" fill="url(#gradDetractors)" isAnimationActive animationDuration={600} />
-                              <Area type="monotone" dataKey="Passives" stackId="1" stroke="#f59e0b" fill="url(#gradPassives)" isAnimationActive animationDuration={600} />
-                              <Area type="monotone" dataKey="Promoters" stackId="1" stroke="#10b981" fill="url(#gradPromoters)" isAnimationActive animationDuration={600} />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
+                  </div>
 
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-[18px] p-4">
-                        <div className=" flex mb-[10px] items-center gap-[10px]">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                            <i className="fa-regular fa-arrow-trend-up text-[#fff] text-[19px]"></i>
+                  {/* Table Controls */}
 
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900">Overall NPS Trend</h3>
-                        </div>
-                        <div className="h-72">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={lineData} key={lineKey} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                              <CartesianGrid stroke="#f3f4f6" vertical={false} />
-                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                              <YAxis domain={[-100, 100]} tick={{ fontSize: 12 }} />
-                              <Tooltip contentStyle={{ fontSize: 12 }} />
-                              <Legend />
-                              <Line type="monotone" dataKey="NPS" stroke="#374151" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive animationDuration={600} />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Table Controls */}
-             
-
-                    {/* Table */}
-                    <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-100">
-                            {filteredRecords
-                              .slice() // clone
-                              .sort((a, b) => new Date(b.datetime) - new Date(a.datetime)) // latest first
-                              .slice(0, 5) // ✅ latest 5
-                              .map((rec, idx) => (
-                                <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                                  <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
-                                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
-                                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
-                                  <td className="px-4 py-3 text-sm">
-                                    <span
-                                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
-                                        ? "bg-emerald-100 text-emerald-800"
-                                        : rec.category === "Passive"
-                                          ? "bg-amber-100 text-amber-800"
-                                          : "bg-red-100 text-red-800"
-                                        }`}
-                                    >
-                                      {rec.category}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
-                                </tr>
-                              ))}
-                            {filteredRecords.length === 0 && (
-                              <tr>
-                                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                                  No records match your filters.
+                  {/* Table */}
+                  <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {filteredRecords
+                            .slice() // clone
+                            .sort((a, b) => new Date(b.datetime) - new Date(a.datetime)) // latest first
+                            .slice(0, 5) // ✅ latest 5
+                            .map((rec, idx) => (
+                              <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
+                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span
+                                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : rec.category === "Passive"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-red-100 text-red-800"
+                                      }`}
+                                  >
+                                    {rec.category}
+                                  </span>
                                 </td>
+                                <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
                               </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
-                        <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
-                                            <button
-                       
-                            className="flex items-center px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                            onClick={handlenavigate}
-                          >
-                            <Eye className="w-5 h-5 " />
-View All
-                          </button>
-                      </div>
+                            ))}
+                          {filteredRecords.length === 0 && (
+                            <tr>
+                              <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
+                                No records match your filters.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
-                  </main>
-                </div>
+                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
+                      <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
+                      <button
+
+                        className="flex items-center px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        onClick={handlenavigate}
+                      >
+                        <Eye className="w-5 h-5 " />
+                        View All
+                      </button>
+                    </div>
+                  </div>
+                </main>
               </div>
+            </div>
           </div>
         </div>
       </section>
