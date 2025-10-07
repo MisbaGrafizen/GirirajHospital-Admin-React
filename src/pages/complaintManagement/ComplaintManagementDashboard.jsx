@@ -397,28 +397,28 @@ async function getResolvedComplaints() {
 }
 
 function extractFrequentServices(docs, topN = 6) {
-  const serviceCounts = {};
+    const serviceCounts = {};
 
-  docs.forEach((doc) => {
-    CONCERN_KEYS.forEach((k) => {
-      const block = doc?.[k];
-      if (!block) return;
+    docs.forEach((doc) => {
+        CONCERN_KEYS.forEach((k) => {
+            const block = doc?.[k];
+            if (!block) return;
 
-      const hasText = block.text && String(block.text).trim().length > 0;
-      const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
+            const hasText = block.text && String(block.text).trim().length > 0;
+            const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
 
-      if (hasText || hasAttachments) {
-        const label = DEPT_LABEL[k] || k;
-        serviceCounts[label] = (serviceCounts[label] || 0) + 1;
-      }
+            if (hasText || hasAttachments) {
+                const label = DEPT_LABEL[k] || k;
+                serviceCounts[label] = (serviceCounts[label] || 0) + 1;
+            }
+        });
     });
-  });
 
-  // sort by frequency and return only top N
-  return Object.entries(serviceCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, topN)
-    .map(([service]) => service);
+    // sort by frequency and return only top N
+    return Object.entries(serviceCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topN)
+        .map(([service]) => service);
 }
 
 
@@ -449,14 +449,14 @@ export default function ComplaintManagementDashboard() {
     const [doctorOptions, setDoctorOptions] = useState([]);
     const [frequentServices, setFrequentServices] = useState([]);
 
-useEffect(() => {
-  if (!rawConcerns.length) {
-    setFrequentServices([]);
-    return;
-  }
-  const topServices = extractFrequentServices(rawConcerns, 6);
-  setFrequentServices(topServices);
-}, [rawConcerns]);
+    useEffect(() => {
+        if (!rawConcerns.length) {
+            setFrequentServices([]);
+            return;
+        }
+        const topServices = extractFrequentServices(rawConcerns, 6);
+        setFrequentServices(topServices);
+    }, [rawConcerns]);
 
 
 
@@ -1190,153 +1190,179 @@ useEffect(() => {
                                                 ))}
                                             </div> */}
                                             <div className="flex border-t flex-wrap gap-2 p-[20px] ">
-  {frequentServices.map((service, index) => (
-    <span
-      key={index}
-      className={`px-4 py-1 rounded-full text-[12px] font-medium transition-all duration-500 hover:scale-110 ${
-        index % 6 === 0
-          ? "bg-blue-100 border border-blue-800 text-blue-800"
-          : index % 6 === 1
-          ? "bg-red-100 border border-red-800 text-red-800"
-          : index % 6 === 2
-          ? "bg-yellow-100 border border-yellow-800 text-yellow-800"
-          : index % 6 === 3
-          ? "bg-green-100 border border-green-800 text-green-800"
-          : index % 6 === 4
-          ? "bg-purple-100 border border-purple-800 text-purple-800"
-          : "bg-indigo-100 border border-indigo-800 text-indigo-800"
-      }`}
-    >
-      {service}
-    </span>
-  ))}
-</div>
+                                                {frequentServices.map((service, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className={`px-4 py-1 rounded-full text-[12px] font-medium transition-all duration-500 hover:scale-110 ${index % 6 === 0
+                                                            ? "bg-blue-100 border border-blue-800 text-blue-800"
+                                                            : index % 6 === 1
+                                                                ? "bg-red-100 border border-red-800 text-red-800"
+                                                                : index % 6 === 2
+                                                                    ? "bg-yellow-100 border border-yellow-800 text-yellow-800"
+                                                                    : index % 6 === 3
+                                                                        ? "bg-green-100 border border-green-800 text-green-800"
+                                                                        : index % 6 === 4
+                                                                            ? "bg-purple-100 border border-purple-800 text-purple-800"
+                                                                            : "bg-indigo-100 border border-indigo-800 text-indigo-800"
+                                                            }`}
+                                                    >
+                                                        {service}
+                                                    </span>
+                                                ))}
+                                            </div>
 
 
                                         </div>
                                     </div>
-{(isAdmin || allowedBlocks.includes("tat")) && (
+                                    {(isAdmin || allowedBlocks.includes("tat")) && (
 
-                                    <div className="bg-white border rounded-lg mb-[20px] shadow-sm overflow-hidden">
-                                        <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
-                                            <div className=" w-[100%]  flex  items-center gap-[10px] ">
-
-
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-regular fa-stopwatch text-[17px] text-[#fff] "></i>
+                                        <div className="bg-white border rounded-lg mb-[20px] shadow-sm overflow-hidden">
+                                            <div className="px-3 py-3 border-b flex justify-between items-center border-gray-200">
+                                                <div className="flex items-center gap-[10px]">
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                        <i className="fa-regular fa-stopwatch text-[17px] text-[#fff]"></i>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-gray-900">TAT</h3>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900">TAT</h3>
+
+                                                <div className=" flex gap-[10px]">
+                                                    {/* ✅ Export to Excel first */}
+                                                    <button
+                                                        className=" md34:!hidden md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    //   onClick={() => exportToExcel(tatComplaints)}
+                                                    >
+                                                        <i className="fa-regular fa-file-excel text-[16px] text-white"></i>
+                                                        Export to Excel
+                                                    </button>
+
+                                                    {/* 👁️ View All second */}
+                                                    <button
+                                                        className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                        onClick={handleTATPageNavigate}
+                                                    >
+                                                        <Eye className="w-5 h-5" />
+                                                        View All
+                                                    </button>
+                                                          <button
+
+                                                    className=" md34:!flex md11:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                >
+                                                    <Download className="w-5 h-5 " />
+
+                                                </button>
+                                                <button
+
+                                                    className=" md34:! md11:!hidden items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    onClick={handleTATPageNavigate}
+                                                >
+                                                    <Eye className="w-5 h-5 " />
+
+                                                </button>
+                                                </div>
+
+                                          
                                             </div>
-                                            <button
 
-                                                className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                onClick={handleTATPageNavigate}
-                                            >
-                                                <Eye className="w-5 h-5 " />
-                                                View All
-                                            </button>
 
-                                        </div>
-
-                                        <div className="overflow-x-auto">
-                                            <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                                <thead className="bg-gray-50">
-                                                    <tr>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Complaint ID
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Patient Name
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Department
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Stamp In
-                                                        </th>
-                                                        <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Stamp Out
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Total Time
-                                                        </th>
-                                                        {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <div className="overflow-x-auto">
+                                                <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Complaint ID
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Patient Name
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Department
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Stamp In
+                                                            </th>
+                                                            <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Stamp Out
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Total Time
+                                                            </th>
+                                                            {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
                                                         </th> */}
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white">
-                                                    {tatComplaints
-                                                        .slice()
-                                                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                                                        .slice(0, 5)
-                                                        .map((complaint, index) => {
-                                                            const fullDoc = rawConcerns.find(d => d._id === complaint.id);
-                                                            return (
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white">
+                                                        {tatComplaints
+                                                            .slice()
+                                                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                            .slice(0, 5)
+                                                            .map((complaint, index) => {
+                                                                const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                                return (
 
-                                                                <tr
-                                                                    key={complaint.id}
-                                                                    onClick={() => openModal(complaint)}
-                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
-                                                                >
-                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-
-
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <div className="flex items-center">
-                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                            {complaint.patientName}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
-                                                                            ? getAllowedDepartments(complaint.departments, allowedBlocks)
-                                                                                .map((d) => d.department)
-                                                                                .join(", ")
-                                                                            : "-"}
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <div className="flex items-center">
-
-                                                                            {formatDateTime(complaint.stampIn)}
-                                                                        </div>
-                                                                    </td>
+                                                                    <tr
+                                                                        key={complaint.id}
+                                                                        onClick={() => openModal(complaint)}
+                                                                        className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
+                                                                    >
+                                                                        <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
 
 
-                                                                    <td className="px-3 min-w-[200px] flex-shrink-0 py-2 text-sm">
-                                                                        <span
-                                                                            className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
+                                                                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                                {complaint.patientName}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
+                                                                                ? getAllowedDepartments(complaint.departments, allowedBlocks)
+                                                                                    .map((d) => d.department)
+                                                                                    .join(", ")
+                                                                                : "-"}
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
 
-                                                                        >
-                                                                            {formatDateTime(complaint.stampOut)}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-3 py-2 text-sm">
-                                                                        <span
-                                                                            className={`flex items-center  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+                                                                                {formatDateTime(complaint.stampIn)}
+                                                                            </div>
+                                                                        </td>
 
-                                                                        >
-                                                                            {complaint.totalTimeTaken}
-                                                                        </span>
-                                                                    </td>
-                                                                    {/* <td className="px-6 py-2 text-sm text-gray-900">
+
+                                                                        <td className="px-3 min-w-[200px] flex-shrink-0 py-2 text-sm">
+                                                                            <span
+                                                                                className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+
+                                                                            >
+                                                                                {formatDateTime(complaint.stampOut)}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-sm">
+                                                                            <span
+                                                                                className={`flex items-center  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+
+                                                                            >
+                                                                                {complaint.totalTimeTaken}
+                                                                            </span>
+                                                                        </td>
+                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
 
                                                                     </td> */}
-                                                                </tr>
-                                                            )
-                                                        })}
-                                                    {filteredComplaints.length === 0 && (
-                                                        <tr>
-                                                            <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
-                                                                No complaints found for the selected range.
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                                                    </tr>
+                                                                )
+                                                            })}
+                                                        {filteredComplaints.length === 0 && (
+                                                            <tr>
+                                                                <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                    No complaints found for the selected range.
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
-)}
+                                    )}
 
 
 
@@ -1464,7 +1490,7 @@ useEffect(() => {
                                     {/* Modal */}
                                     {isModalOpen && selectedComplaint && (
                                         <div className="fixed inset-0 z-50 bg-[#00000097] ">
-                                            <div className="flex items-center justify-center h-[350px] pt-4 px-4 text-center sm:block sm:p-0">
+                                            <div className="flex items-center justify-center md11:!h-[350px] pt-4 px-4 text-center sm:block sm:p-0">
                                                 <div
                                                     className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                                                     onClick={closeModal}

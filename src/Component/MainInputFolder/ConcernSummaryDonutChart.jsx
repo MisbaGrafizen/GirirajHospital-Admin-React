@@ -42,7 +42,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
       // initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
       // animate={{ opacity: 1, scale: 1, rotate: 0 }}
       // transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
-      className="relative bg-white w-[100%] rounded-2xl flex flex-col md34:!max-h-[380px] md11:!max-h-[100%]  shadow-sm border border-gray-100 p-6 "
+      className="relative bg-white w-[100%] rounded-2xl flex flex-col md34:!max-h-[400px] md11:!max-h-[100%]  shadow-sm border border-gray-100 p-6 "
     >
 
       <div className=' flex  mb-[6px] items-center gap-[10px]'>
@@ -53,7 +53,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Rating Distribution</h3>
       </div>
-      <div className="relative w-80 md34:!h-[380px] md77:!h-60  md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
+      <div className="relative w-80 md34:!h-60 md77:!h-60  md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
         <ResponsiveContainer width="80%" height="100%">
           <PieChart>
             <Pie
