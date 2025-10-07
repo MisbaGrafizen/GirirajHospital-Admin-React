@@ -1310,22 +1310,34 @@
                           </div>
 
                           {/* Export only if permitted */}
-                          <button
-                            onClick={exportToExcel}
-                            className="flex items-center flex-shrink-0 px-2  py-[4px] bg-blue-600 text-white text-[13px] rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Export to Excel
-                          </button>
-
-                              <button
-                          
-                                className="flex items-center px-2 py-[6px] h-[35px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                onClick={handlenavigate}
-                              >
-                                <Eye className="w-5 h-5 " />
-
-                              </button>
+                           <div className=' flex gap-[10px]'>
+                        
+                        
+                                                    <button
+                                                      onClick={exportToExcel}
+                                                      className=" md34:!hidden md77:!flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    >
+                                                      <Download className="w-4 h-4 mr-2" />
+                                                      Export to Excel
+                                                    </button>
+                        
+                        
+                                                    <button
+                                                      onClick={exportToExcel}
+                                                      className=" flex md77:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    >
+                                                      <Download className="w-5 h-5 " />
+                        
+                                                    </button>
+                                                    <button
+                        
+                                                      className="flex items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                      onClick={handlenavigate}
+                                                    >
+                                                      <Eye className="w-5 h-5 " />
+                        
+                                                    </button>
+                                                  </div>
                         </div>
                       </div>
 

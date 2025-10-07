@@ -1215,6 +1215,7 @@ useEffect(() => {
 
                                         </div>
                                     </div>
+{(isAdmin || allowedBlocks.includes("tat")) && (
 
                                     <div className="bg-white border rounded-lg mb-[20px] shadow-sm overflow-hidden">
                                         <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
@@ -1335,6 +1336,7 @@ useEffect(() => {
                                             </table>
                                         </div>
                                     </div>
+)}
 
 
 

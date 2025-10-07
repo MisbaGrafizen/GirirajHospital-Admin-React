@@ -217,14 +217,11 @@ const CubaSidebar = () => {
             { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
             { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard", icon: faChartLine },
             { id: "nft", label: "Executive Report", href: "/dashboards/executive-report", icon: faFileAlt },
-                  { id: "bed", label: "Bed Manage", href: "/dashboards/bed-manage", icon: faBed },
             ...(isAdmin
               ? [
+                { id: "bed", label: "Bed Manage", href: "/dashboards/bed-manage", icon: faBed },
                 { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage", icon: faUserShield },
                 { id: "pos", label: "User Mana..", href: "/dashboards/user-manage", icon: faUsersCog },
-          
-
-
               ]
               : []),
           ]
