@@ -21,6 +21,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
   faTachometerAlt,
   faUserMd,
+  faStopwatch,
   faHospitalUser,
   faListAlt,
   faChartLine,
@@ -220,6 +221,7 @@ const CubaSidebar = () => {
             ...(isAdmin
               ? [
                 { id: "bed", label: "Bed Manage", href: "/dashboards/bed-manage", icon: faBed },
+                         { id: "pos", label: "TAT", href: "/dashboards/tat-view", icon: faStopwatch },
                 { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage", icon: faUserShield },
                 { id: "pos", label: "User Mana..", href: "/dashboards/user-manage", icon: faUsersCog },
               ]

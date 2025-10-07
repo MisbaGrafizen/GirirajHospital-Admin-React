@@ -824,7 +824,7 @@ export default function ComplaintViewPage() {
                                                                     <div className="flex-1">
                                                                         {h.type === "created" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-gray-900">Complaint Created</p>
+                                                                                <p className="text-sm font-medium text-gray-900">{h.label}</p>
                                                                                 <p className="text-xs text-gray-600">
                                                                                     {h.details.patientName} ({h.details.complaintId})
                                                                                 </p>
@@ -836,17 +836,20 @@ export default function ComplaintViewPage() {
                                                                         {h.type === "forwarded" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                                    Forwarded to {DEPT_LABEL[h.department] || h.department}
+                                                                                    {h.label}
                                                                                 </p>
                                                                                 {h.details?.topic && (
                                                                                     <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
                                                                                 )}
+                                                                                 <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.at).toLocaleString()}
+                                                                                </p>
                                                                             </>
                                                                         )}
                                                                         {h.type === "escalated" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                                    Escalated to {h.level}
+                                                                                    {h.label}
                                                                                 </p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                                 <p className="text-xs text-gray-500">
@@ -856,7 +859,7 @@ export default function ComplaintViewPage() {
                                                                         )}
                                                                       {h.type === "resolved" && (
   <>
-    <p className="text-sm font-medium text-green-700">Resolved</p>
+    <p className="text-sm font-medium text-green-700">{h.label}</p>
     <p className="text-xs text-gray-600">Note: {h.note}</p>
 
     {/* Only show "View Proof" if proof exists AND is an image */}
@@ -879,7 +882,7 @@ export default function ComplaintViewPage() {
 
                                                                         {h.type === "in_progress" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-blue-700">Progress Update</p>
+                                                                                <p className="text-sm font-medium text-blue-700">{h.label}</p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                                 <p className="text-xs text-gray-500">
                                                                                     {new Date(h.at).toLocaleString()}
@@ -966,7 +969,7 @@ export default function ComplaintViewPage() {
                                                                     {h.type === "forwarded" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-gray-900">
-                                                                                Forwarded to {DEPT_LABEL[h.department] || h.department}
+                                                                                {h.label}
                                                                             </p>
                                                                             {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
                                                                         </>
@@ -974,7 +977,7 @@ export default function ComplaintViewPage() {
                                                                     
                                                                     {h.type === "in_progress" && (
                                                                         <>
-                                                                            <p className="text-sm font-medium text-blue-700">Progress Update</p>
+                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
                                                                     )}
@@ -983,7 +986,7 @@ export default function ComplaintViewPage() {
                                                                     {h.type === "escalated" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-red-700">
-                                                                                Escalated to {h.level}
+                                                                                {h.label}
                                                                             </p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
@@ -991,13 +994,13 @@ export default function ComplaintViewPage() {
 
                                                                     {h.type === "resolved" && (
                                                                         <>
-                                                                            <p className="text-sm font-medium text-green-700">Resolved</p>
+                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
                                                                     )}
 
                                                                     {h.type === "created" && (
-                                                                        <p className="text-sm text-gray-700">Complaint Created</p>
+                                                                        <p className="text-sm text-gray-700">{h.label}</p>
                                                                     )}
 
                                                                     <p className="text-xs text-gray-500">

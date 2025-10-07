@@ -144,15 +144,15 @@ function App() {
             path="/dashboards/nps-all-list"
             element={<PrivateRoute><NpsAllList /></PrivateRoute>}
           />
-          <Route
+          {/* <Route
             path="/dashboards/tat-all-list"
             element={<PrivateRoute><TATAllList /></PrivateRoute>}
-          />
+          /> */}
           <Route
             path="/mail"
             element={<PrivateRoute><EmailManagement /></PrivateRoute>}
           />
-          {/* <Route path="/chat" element={<PrivateRoute><ChatPage /></PrivateRoute>} /> */}
+          <Route path="/dashboards/tat-view" element={<PrivateRoute><TATAllList /></PrivateRoute>} />
         </Routes>
       </div>
     </>

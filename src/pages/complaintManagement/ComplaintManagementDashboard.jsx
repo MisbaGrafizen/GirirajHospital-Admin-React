@@ -20,6 +20,7 @@ import {
     FileText,
     CalendarIcon,
 } from "lucide-react"
+import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faTriangleExclamation,
@@ -424,6 +425,9 @@ function extractFrequentServices(docs, topN = 6) {
 
 
 
+
+
+
 // ===================== COMPONENT =====================
 export default function ComplaintManagementDashboard() {
     const [dateFrom, setDateFrom] = useState(firstDayOfThisMonth())
@@ -492,6 +496,8 @@ export default function ComplaintManagementDashboard() {
         return () => { alive = false; };
     }, []);
 
+    console.log('tatComplaints', tatComplaints)
+
 
     useEffect(() => {
         (async () => {
@@ -538,7 +544,7 @@ export default function ComplaintManagementDashboard() {
     };
 
     const handleTATPageNavigate = () => {
-        navigate("/dashboards/tat-all-list");
+        navigate("/dashboards/tat-view");
     };
 
 
@@ -760,6 +766,77 @@ export default function ComplaintManagementDashboard() {
         setSelectedComplaint(null)
         document.body.style.overflow = ""
     }
+
+    const exportToExcel = (data) => {
+        if (!data || data.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+
+        // Transform API data into flat Excel structure
+        const exportData = [];
+
+        data.forEach((item, index) => {
+            // if multiple departments per complaint, export each as a separate row
+            if (Array.isArray(item.departments) && item.departments.length > 0) {
+                item.departments.forEach((dept, deptIndex) => {
+                    exportData.push({
+                        "SR. NO": exportData.length + 1,
+                        "COMPLAIN ID": item.complaintId || "-",
+                        "PATIENT NAME": item.patientName || "-",
+                        "BED NO": item.bedNo || "-",
+                        "DEPARTMENT": dept.department || "-",
+                        "COMPLAIN DETAILS": dept.text || "-",
+                        "RESOLUTION DETAILS": item.resolution?.note || "-",
+                        "STAMP IN": formatDateTime(item.stampIn),
+                        "STAMP OUT": formatDateTime(item.stampOut),
+                        "TAT TIME": item.totalTimeTaken || "-",
+                    });
+                });
+            } else {
+                exportData.push({
+                    "SR. NO": index + 1,
+                    "COMPLAIN ID": item.complaintId || "-",
+                    "PATIENT NAME": item.patientName || "-",
+                    "BED NO": item.bedNo || "-",
+                    "DEPARTMENT": "-",
+                    "COMPLAIN DETAILS": "-",
+                    "RESOLUTION DETAILS": item.resolution?.note || "-",
+                    "STAMP IN": formatDateTime(item.stampIn),
+                    "STAMP OUT": formatDateTime(item.stampOut),
+                    "TAT TIME": item.totalTimeTaken || "-",
+                });
+            }
+        });
+
+        // Create and format worksheet
+        const worksheet = XLSX.utils.json_to_sheet(exportData, { origin: "A1" });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "TAT_Report");
+
+        // Bold header row
+        const headerStyle = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "E0E0E0" } },
+        };
+        const headerRange = XLSX.utils.decode_range(worksheet["!ref"]);
+        for (let C = headerRange.s.c; C <= headerRange.e.c; C++) {
+            const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: C })];
+            if (cell) cell.s = headerStyle;
+        }
+
+        // Auto-fit columns
+        const maxWidths = Object.keys(exportData[0]).map((key) =>
+            Math.max(
+                key.length,
+                ...exportData.map((row) => (row[key] ? row[key].toString().length : 10))
+            )
+        );
+        worksheet["!cols"] = maxWidths.map((w) => ({ wch: w + 2 }));
+
+        // Download
+        XLSX.writeFile(workbook, "TAT_Report.xlsx");
+    };
 
     // ===================== CHARTS (design preserved) =====================
     const AnimatedDonutChart = ({ data }) => {
@@ -1142,7 +1219,7 @@ export default function ComplaintManagementDashboard() {
 
 
                                         {/* Word Cloud */}
-                                        <div className="bg-white border  md34min-h-[348px]  rounded-lg  mb-[20px] md11:!h-[200px] shadow-sm md11:!w-[400px]">
+                                        <div className="bg-white border    rounded-lg  mb-[20px] md11:!h-[230px] shadow-sm md11:!w-[400px]">
                                             <div className="flex ml-[19px] py-3 items-center  gap-[10px]">
 
 
@@ -1229,7 +1306,7 @@ export default function ComplaintManagementDashboard() {
                                                     {/* ✅ Export to Excel first */}
                                                     <button
                                                         className=" md34:!hidden md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                    //   onClick={() => exportToExcel(tatComplaints)}
+                                                        onClick={() => exportToExcel(tatComplaints)}
                                                     >
                                                         <i className="fa-regular fa-file-excel text-[16px] text-white"></i>
                                                         Export to Excel
@@ -1243,24 +1320,24 @@ export default function ComplaintManagementDashboard() {
                                                         <Eye className="w-5 h-5" />
                                                         View All
                                                     </button>
-                                                          <button
+                                                    <button
 
-                                                    className=" md34:!flex md11:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                >
-                                                    <Download className="w-5 h-5 " />
+                                                        className=" md34:!flex md11:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    >
+                                                        <Download className="w-5 h-5 " />
 
-                                                </button>
-                                                <button
+                                                    </button>
+                                                    <button
 
-                                                    className=" md34:! md11:!hidden items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                    onClick={handleTATPageNavigate}
-                                                >
-                                                    <Eye className="w-5 h-5 " />
+                                                        className=" md34:! md11:!hidden items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                        onClick={handleTATPageNavigate}
+                                                    >
+                                                        <Eye className="w-5 h-5 " />
 
-                                                </button>
+                                                    </button>
                                                 </div>
 
-                                          
+
                                             </div>
 
 
@@ -1269,14 +1346,26 @@ export default function ComplaintManagementDashboard() {
                                                     <thead className="bg-gray-50">
                                                         <tr>
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Sr.no
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Complaint ID
                                                             </th>
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Patient Name
                                                             </th>
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Bed no
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Department
                                                             </th>
+                                                            {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Compalin details
+                                                            </th>
+                                                            <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Resolution details
+                                                            </th> */}
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Stamp In
                                                             </th>
@@ -1284,7 +1373,7 @@ export default function ComplaintManagementDashboard() {
                                                                 Stamp Out
                                                             </th>
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Total Time
+                                                TAT Time
                                                             </th>
                                                             {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
@@ -1305,6 +1394,7 @@ export default function ComplaintManagementDashboard() {
                                                                         onClick={() => openModal(complaint)}
                                                                         className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                     >
+                                                                        <td className="px-6 py-2 text-sm text-center font-medium text-blue-600">{index + 1}</td>
                                                                         <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
 
 
@@ -1314,13 +1404,28 @@ export default function ComplaintManagementDashboard() {
                                                                                 {complaint.patientName}
                                                                             </div>
                                                                         </td>
-                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                               <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    098
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm min-w-[350px] text-gray-900">
                                                                             {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
                                                                                 ? getAllowedDepartments(complaint.departments, allowedBlocks)
                                                                                     .map((d) => d.department)
                                                                                     .join(", ")
                                                                                 : "-"}
                                                                         </td>
+                                                                                                                                             {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex min-w-[200px] items-center">
+
+                                                                    {}
+                                                                            </div>
+                                                                        </td> */}
+                                                                                                           {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex min-w-[200px] items-center">
+
+                                                                    what you do , please tell me a one things grafizen 
+                                                                            </div>
+                                                                        </td> */}
                                                                         <td className="px-6 py-2 text-sm text-gray-900">
                                                                             <div className="flex items-center">
 
@@ -1339,7 +1444,7 @@ export default function ComplaintManagementDashboard() {
                                                                         </td>
                                                                         <td className="px-3 py-2 text-sm">
                                                                             <span
-                                                                                className={`flex items-center  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+                                                                                className={`flex items-center min-w-[130px]  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
 
                                                                             >
                                                                                 {complaint.totalTimeTaken}
@@ -1363,9 +1468,6 @@ export default function ComplaintManagementDashboard() {
                                             </div>
                                         </div>
                                     )}
-
-
-
 
                                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
                                         <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
