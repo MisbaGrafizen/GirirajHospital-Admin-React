@@ -614,7 +614,7 @@ export default function ComplaintViewPage() {
                                             {/* Patient Information */}
                                             <div className="bg-white  border rounded-xl shadow-sm p-3">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                                                     <div className="flex  shadow-sm border !border-[#eaeaea] p-3 bg-gray-50 rounded-lg">
                                                         <User className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
@@ -664,11 +664,10 @@ export default function ComplaintViewPage() {
                                             <div className="bg-white rounded-xl shadow-sm border p-4">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Complaint Details</h2>
                                                 <div className="space-y-4">
-                                                    {/* Service Feedback Section */}
+                                        
                                                     <div className="space-y-4">
                                                         {Object.keys(fullDoc).map((key) => {
                                                             if (!DEPT_LABEL[key]) return null;
-                                                            // ✅ only show if user has rights for this block
                                                             if (!permissionsByBlock[key]) return null;
                                                             const block = fullDoc[key];
                                                             if (!blockHasContent(block)) return null;

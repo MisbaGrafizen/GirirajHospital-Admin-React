@@ -1489,7 +1489,7 @@ export default function ComplaintManagementDashboard() {
 
                                     {/* Modal */}
                                     {isModalOpen && selectedComplaint && (
-                                        <div className="fixed inset-0 z-50 bg-[#00000097] ">
+                                        <div className="fixed inset-0 z-[50000] bg-[#00000097] ">
                                             <div className="flex items-center justify-center md11:!h-[350px] pt-4 px-4 text-center sm:block sm:p-0">
                                                 <div
                                                     className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
@@ -1517,7 +1517,7 @@ export default function ComplaintManagementDashboard() {
                                                             </button>
                                                         </div>
 
-                                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                                                        <div className="grid grid-cols-1  overflow-y-auto lg:grid-cols-2 gap-5">
                                                             {/* Left Column */}
                                                             <div className="space-y-4">
                                                                 <div className="bg-gray-50 p-3 border rounded-lg">
