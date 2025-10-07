@@ -2693,9 +2693,7 @@ blockquote {
   position: relative;
 }
 
-:focus {
-  outline-color: var(--theme-default);
-}
+ 
 
 .disabled {
   cursor: not-allowed;

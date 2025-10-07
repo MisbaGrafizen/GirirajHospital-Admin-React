@@ -81,13 +81,20 @@ const WidgetsWrapper = ({ kpis }) => {
   ];
 
   return (
-<Row className="gx-3 gy-1">
-  {widgets.map((widget, index) => (
-    <Col key={index} xs="6" md="4" lg="3">
-      <Widgets1 data={widget} />
-    </Col>
-  ))}
-</Row>
+    <Row className="gx-3 gy-1">
+      {widgets.map((widget, index) => (
+        <>
+          <Col key={index} className="  mx-auto md77:!block" xs="6" md="4" lg="3">
+            <Widgets1 data={widget} />
+          </Col>
+          {/* <div className=" grid grid-cols-2  ">
+            <div key={index} className="  ">
+              <Widgets1 data={widget} />
+            </div>
+          </div> */}
+        </>
+      ))}
+    </Row>
 
   );
 };

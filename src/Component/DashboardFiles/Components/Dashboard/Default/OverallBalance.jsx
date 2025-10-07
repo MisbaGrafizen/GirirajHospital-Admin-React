@@ -14,8 +14,8 @@ const OverallBalance = ({ kpis, opdSummary }) => {
     <Col className='box-col-12'>
       <Card>
         <CardHeader className='card-no-border  items-center  gap-[10px] !flex'>
-          <div className=' flex  profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px] '>
-            <i className="fa-regular text-[23px] fa-chart-waterfall"></i>
+          <div className=' flex  profile-box1 rounded-md justify-center items-center w-10 h-10 '>
+            <i className="fa-regular text-[17px] fa-chart-waterfall"></i>
 
           </div>
           <H5>Overall Ratings</H5>
@@ -46,7 +46,7 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                       <div className="w-full">
                         <ReactApexChart
                           type="bar"
-                          height={250}
+                          height={220}
                           width="100%"
                           options={{
                             ...CurrencyChartData.options,

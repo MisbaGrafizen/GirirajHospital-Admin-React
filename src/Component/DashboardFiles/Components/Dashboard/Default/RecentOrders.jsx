@@ -49,27 +49,27 @@ const RecentOrders = ({ overallNps = 0 }) => {
       <Card className="height-equal">
         <CardHeader className="card-no-border">
           <div className="flex items-center gap-[10px]">
-            <div className="flex profile-box1 rounded-[10px] justify-center items-center w-[48px] h-[48px]">
-              <i className="fa-regular text-[23px] fa-chart-user"></i>
+            <div className="flex profile-box1 rounded-md justify-center items-center w-10 h-10">
+              <i className="fa-regular text-[17px] fa-chart-user"></i>
             </div>
             <H5>NPS Rating</H5>
           </div>
         </CardHeader>
 
-        <CardBody className="pt-0 pb-2">
+        <CardBody className="pt-0 pb-[5px]">
           <div className="recent-wrapper">
             {/* Chart */}
             <div className="recent-chart md11:!w-[300px] mx-auto">
               <ReactApexChart
                 type="radialBar"
-                height={290}
+              
                 options={options}
                 series={[seriesValue]}
               />
             </div>
 
             {/* KPI Section */}
-            <div className="flex flex-col items-center mt-4">
+            <div className="flex flex-col items-center ">
               <H4 attrH4={{ className: `mb-1 ${textColorClass}` }}>
                 {displayText}
               </H4>

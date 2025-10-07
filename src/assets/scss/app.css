@@ -15572,10 +15572,10 @@ blockquote {
 .row>div {
   position: relative;
 }
-
 :focus {
-  outline-color: var(--theme-default);
+  outline:none
 }
+ 
 
 .disabled {
   cursor: not-allowed;

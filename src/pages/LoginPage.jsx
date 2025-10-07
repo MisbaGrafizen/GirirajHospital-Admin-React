@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg";
 import { useNavigate } from "react-router-dom";
-import { requestNotificationPermission } from "../helper/notification";
+// import { requestNotificationPermission } from "../helper/notification";
 import { ApiPost } from "../helper/axios";
 
 export default function LoginPage() {
@@ -80,6 +80,7 @@ const handleSubmit = async (e) => {
         password,
       });
 
+      console.log('res', res)
       const { user, tokens } = res.data?.user;
 
       console.log('res.data', res.data)
@@ -95,7 +96,7 @@ const handleSubmit = async (e) => {
 
       console.log("✅ Admin login success");
 
-      await requestNotificationPermission();
+      // await requestNotificationPermission();
       navigate("/dashboards/super-dashboard", { replace: true });
       return;
     } catch (adminError) {
@@ -114,7 +115,7 @@ const handleSubmit = async (e) => {
 
       console.log("✅ Role-User login success");
 
-      await requestNotificationPermission();
+      // await requestNotificationPermission();
       navigate("/dashboards/super-dashboard", { replace: true });
       return;
     } catch (userError) {

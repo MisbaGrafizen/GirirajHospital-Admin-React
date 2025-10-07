@@ -896,7 +896,7 @@ export const RecentOrderChart = {
   series: [100],
   options: {
     chart: {
-      height: 290,
+      height: 230,
       type: "radialBar",
       toolbar: {
         show: false,
@@ -906,7 +906,7 @@ export const RecentOrderChart = {
       radialBar: {
         hollow: {
           margin: 0,
-          size: "60%",
+          size: "50%",
           background: "var(--recent-chart-bg)",
           image: undefined,
           imageOffsetX: 0,
@@ -1008,7 +1008,7 @@ export const RecentOrderChart = {
         breakpoint: 1660,
         options: {
           chart: {
-            height: 280,
+            height: 260,
             dataLabels: {
               name: {
                 fontSize: "15px",
@@ -1029,7 +1029,7 @@ export const RecentOrderChart = {
         breakpoint: 1400,
         options: {
           chart: {
-            height: 300,
+            height: 240,
           },
         },
       },
@@ -1037,7 +1037,7 @@ export const RecentOrderChart = {
         breakpoint: 1361,
         options: {
           chart: {
-            height: 270,
+            height: 250,
           },
         },
       },
@@ -1045,7 +1045,7 @@ export const RecentOrderChart = {
         breakpoint: 1200,
         options: {
           chart: {
-            height: 280,
+            height: 250,
           },
         },
       },
@@ -1053,7 +1053,7 @@ export const RecentOrderChart = {
         breakpoint: 1007,
         options: {
           chart: {
-            height: 280,
+            height: 250,
           },
         },
       },
@@ -1061,7 +1061,7 @@ export const RecentOrderChart = {
         breakpoint: 600,
         options: {
           chart: {
-            height: 280,
+            height: 240,
           },
         },
       },

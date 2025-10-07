@@ -337,7 +337,7 @@ setDepartmentData(
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] 2xl:pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[100px] m md11:!pb-[20px] py-[10px] 2xl:pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -346,12 +346,14 @@ setDepartmentData(
                   {/* <Row className=""> */}
 
                   <div className=" ">
+<div className="">
+       <WidgetsWrapper kpis={kpis} />
+</div>
 
-
-                    <WidgetsWrapper kpis={kpis} />
+             
                     <div className=" flex md11:!flex-row flex-col  gap-[25px] w-[100%]">
 
-                      <div className=" md11:!w-[850px] max-w-[900px]">
+                      <div className=" md11:!w-[850px] max-w-[900px] ">
 
 
                         <OverallBalance kpis={kpis} opdSummary={opdSummary} />
@@ -384,7 +386,7 @@ setDepartmentData(
                           <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
                             <div className="flex items-center justify-between mb-6">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                                   <BarChart3 className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
@@ -393,7 +395,7 @@ setDepartmentData(
                                 </div>
                               </div>
                             </div>
-                            <div className="h-72">
+                            <div className="md34:!h-[350px] md34:!ml-[-30px] md11:!ml-[0px] md11:!h-72">
                               <ResponsiveContainer width="100%" height="100%">
                                 {/* keep your original 'concerns' key */}
                                 <BarChart data={departmentData} margin={{ top: 10, right: 20, left: 10, bottom: 60 }}>
@@ -404,7 +406,7 @@ setDepartmentData(
                                     </linearGradient>
                                   </defs>
                                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                  <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#6b7280" }} angle={-45} textAnchor="end" height={80} />
+                                  <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#6b7280" }} angle={-45} textAnchor="end" height={20} />
                                   <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
                                   <Tooltip />
                                   <Bar dataKey="concerns" fill="url(#barGradient)" radius={[6, 6, 0, 0]} animationDuration={800} />
