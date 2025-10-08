@@ -47,7 +47,7 @@ const MODULE_TO_BLOCK = {
     maintenance: "maintenance",
     diagnostic_service: "diagnosticServices",
     dietetics: "dietitianServices",
-    nursing: "nursing", // if you have it
+    nursing: "nursing", 
     security: "security",
     nursing: "nursing",
 };
