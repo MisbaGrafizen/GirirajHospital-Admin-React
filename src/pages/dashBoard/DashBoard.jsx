@@ -198,27 +198,29 @@ export default function DashBoard() {
 
 
           // ----- Concerns (Admin vs Non-admin) -----
+          // ----- Concerns (Admin vs Non-admin) -----
           let statusCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
           let totalForThisWeek = 0;
 
           if (loginType === "admin") {
-            // ✅ For admins, trust KPI values
+            // ✅ For admins, trust KPI values (supports both inProgressIssues & in_progressIssues)
             statusCounts = {
               Open: Number(data.kpis?.openIssues || 0),
-              "In Progress": Number(data.kpis?.inProgressIssues || 0),
+              "In Progress": Number(data.kpis?.inProgressIssues || data.kpis?.in_progressIssues || 0),
               Resolved: Number(data.kpis?.resolvedIssues || 0),
             };
             totalForThisWeek = Number(data.kpis?.totalConcern || 0);
 
           } else {
-            // ✅ For non-admin, fallback to concerns array
+            // ✅ For non-admin, fallback to concerns array (supports in_progress key)
             const latestWeek = (data.concerns || [])[0] || { countsByModule: {}, total: 0 };
             totalForThisWeek = latestWeek.total || 0;
 
             // sum across modules
             Object.values(latestWeek.countsByModule || {}).forEach(mod => {
               statusCounts.Open += mod.Open || 0;
-              statusCounts["In Progress"] += mod["In Progress"] || 0;
+              // ✅ use in_progress if present, fallback to "In Progress"
+              statusCounts["In Progress"] += mod.in_progress || mod["In Progress"] || 0;
               statusCounts.Resolved += mod.Resolved || 0;
             });
 
@@ -232,7 +234,7 @@ export default function DashBoard() {
             }
           }
 
-          // finally set donut data
+          // ✅ finally set donut data
           setConcernData(
             ["Open", "In Progress", "Resolved"].map(k => ({
               name: k,
@@ -242,11 +244,12 @@ export default function DashBoard() {
             }))
           );
 
-          // sync total concerns in KPIs as well
+          // ✅ sync total concerns in KPIs as well
           setKpis(prev => ({
             ...(data.kpis || prev),
             totalConcern: totalForThisWeek,
           }));
+
 
 
 
@@ -265,37 +268,37 @@ export default function DashBoard() {
           }));
 
           // ----- Department bars -----
-const DEPT_LABEL = {
-  doctorServices: "Doctor",
-  billingServices: "Front Desk",
-  housekeeping: "Housekeeping",
-  maintenance: "Maintenance",
-  diagnosticServices: "Diagnostic",
-  dietitianServices: "Dietitian",
-  security: "Security",
-  nursing: "Nursing",
-};
+          const DEPT_LABEL = {
+            doctorServices: "Doctor",
+            billingServices: "Front Desk",
+            housekeeping: "Housekeeping",
+            maintenance: "Maintenance",
+            diagnosticServices: "Diagnostic",
+            dietitianServices: "Dietitian",
+            security: "Security",
+            nursing: "Nursing",
+          };
 
-const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : [];
+          const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : [];
 
-// ✅ Convert backend array into quick lookup for existing departments
-const backendDeptMap = Object.fromEntries(
-  dept.map((d) => [d.department, d])
-);
+          // ✅ Convert backend array into quick lookup for existing departments
+          const backendDeptMap = Object.fromEntries(
+            dept.map((d) => [d.department, d])
+          );
 
-// ✅ Build final list — include *all known departments* from DEPT_LABEL
-const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
-  const match = backendDeptMap[label] || {};
-  return {
-    department: label,
-    concerns: Number(match.concerns || 0),
-    resolved: Number(match.resolved || 0),
-    pending: Number(match.pending || 0),
-  };
-});
+          // ✅ Build final list — include *all known departments* from DEPT_LABEL
+          const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
+            const match = backendDeptMap[label] || {};
+            return {
+              department: label,
+              concerns: Number(match.concerns || 0),
+              resolved: Number(match.resolved || 0),
+              pending: Number(match.pending || 0),
+            };
+          });
 
-// ✅ Now set all departments (including missing ones)
-setDepartmentData(fullDeptList);
+          // ✅ Now set all departments (including missing ones)
+          setDepartmentData(fullDeptList);
 
 
 
@@ -351,11 +354,11 @@ setDepartmentData(fullDeptList);
                   {/* <Row className=""> */}
 
                   <div className=" ">
-<div className="">
-       <WidgetsWrapper kpis={kpis} />
-</div>
+                    <div className="">
+                      <WidgetsWrapper kpis={kpis} />
+                    </div>
 
-             
+
                     <div className=" flex md11:!flex-row flex-col  gap-[25px] w-[100%]">
 
                       <div className=" md11:!w-[850px] max-w-[900px] ">

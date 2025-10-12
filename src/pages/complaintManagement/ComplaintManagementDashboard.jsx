@@ -338,7 +338,7 @@ function buildTrendData(rows) {
 // KPIs from rows
 function computeKpis(rows) {
     const total = rows.length
-    const pending = rows.filter((r) => r.status === "Pending").length
+    const pending = rows.filter((r) => r.status === "Open").length
     const inProgress = rows.filter((r) => r.status === "In Progress").length
     const resolved = rows.filter((r) => r.status === "Resolved").length
     const escalated = rows.filter((r) => r.status === "Escalated").length
@@ -1066,7 +1066,7 @@ export default function ComplaintManagementDashboard() {
 
                                         <Widgets1
                                             data={{
-                                                title: "Pending",
+                                                title: "Open/Pending",
                                                 gros: kpiData.pending,
                                                 total: kpiData.pending,
                                                 color: "warning",
