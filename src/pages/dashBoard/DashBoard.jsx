@@ -250,23 +250,7 @@ export default function DashBoard() {
             totalConcern: totalForThisWeek,
           }));
 
-
-
-
-          setConcernData(
-            ["Open", "In Progress", "Resolved"].map(k => ({
-              name: k,
-              value: Number(statusCounts[k] || 0),
-              color: CONCERN_COLORS[k],
-              details: `This week's total: ${totalForThisWeek}`,
-            }))
-          );
-
-          setKpis(prev => ({
-            ...(data.kpis || prev),
-            totalConcern: totalForThisWeek,
-          }));
-
+          
           // ----- Department bars -----
           const DEPT_LABEL = {
             doctorServices: "Doctor",
@@ -299,8 +283,6 @@ export default function DashBoard() {
 
           // ✅ Now set all departments (including missing ones)
           setDepartmentData(fullDeptList);
-
-
 
           // ----- Recent feedbacks -----
           const rec = Array.isArray(data?.recentFeedbacks) ? data.recentFeedbacks : []

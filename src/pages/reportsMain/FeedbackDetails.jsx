@@ -127,7 +127,6 @@ export default function FeedbackDetails() {
         cleanliness: to05(ratings.cleanliness),
         security: to05(ratings.security),
       },
-
       comments: doc.comments ?? doc.comment ?? '',
     }
   }, [doc])

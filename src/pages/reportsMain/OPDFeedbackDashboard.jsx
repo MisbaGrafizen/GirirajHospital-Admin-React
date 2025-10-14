@@ -412,16 +412,23 @@ export default function OPDFeedbackDashboard() {
         };
       });
 
-      const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0
-      const nps = calcNpsPercent(data)
-      const overallScore =
-        avg >= 4.5 ? "Excellent" :
-          avg >= 4.0 ? "Good" :
-            avg >= 3.0 ? "Av" :
-              avg >= 2.0 ? "Poor" : "Very Poor"
 
-      setRows(list)
-      setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore })
+      const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
+      const nps = calcNpsPercent(data);
+
+      let overallLabel = "Poor";
+      if (avg >= 4.5) overallLabel = "Excellent";
+      else if (avg >= 3.5) overallLabel = "Good";
+      else if (avg >= 2.5) overallLabel = "Average";
+
+      setRows(list);
+      setKpiData({
+        totalFeedback: list.length,
+        averageRating: avg,
+        npsRating: nps,
+        overallScore: overallLabel,
+      });
+
       setServiceSummary(buildServiceSummary(data))
       setOpdServiceChart(buildOPDServiceChart(data))
     } catch (e) {
@@ -754,7 +761,22 @@ export default function OPDFeedbackDashboard() {
                           <Widgets1
                             data={{
                               title: "Overall Score",
-                              total: kpiData.overallScore,
+                              total: (
+                                <span
+                                  className={`font-semibold ${kpiData.overallScore === "Excellent"
+                                    ? "text-green-600"
+                                    : kpiData.overallScore === "Good"
+                                      ? "text-blue-600"
+                                      : kpiData.overallScore === "Average"
+                                        ? "text-yellow-600"
+                                        : kpiData.overallScore === "Poor"
+                                          ? "text-orange-600"
+                                          : "text-red-600"
+                                    }`}
+                                >
+                                  {kpiData.overallScore}
+                                </span>
+                              ),
                               gros: kpiData.overallScore,
                               color: "purple",
                               icon: <Award className="w-5 h-5 text-purple-600" />,
@@ -865,11 +887,11 @@ export default function OPDFeedbackDashboard() {
                               <span
                                 key={index}
                                 className={`px-3 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
-                                    index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
-                                      index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
-                                        index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
-                                          index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
-                                            "bg-indigo-100 border-indigo-800 text-indigo-800"
+                                  index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
+                                    index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
+                                      index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
+                                        index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
+                                          "bg-indigo-100 border-indigo-800 text-indigo-800"
                                   }`}
                               >
                                 {word}
