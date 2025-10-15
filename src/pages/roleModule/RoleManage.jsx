@@ -73,7 +73,7 @@ const MODULE_NAME_BY_ID = {
   // Departments
   medical_admin: "Medical Admin",
   nursing: "Nursing",
-  dietetics: "Dietetics",
+  dietitian: "Dietetics",
   maintenance: "Maintenance",
   security: "Security",
   front_desk: "Front Desk",
@@ -93,7 +93,7 @@ const CORE_APPS = [
 const DEPARTMENT_MODULES = [
   { id: "doctor_service", name: "Doctor Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "nursing", name: "Nursing", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "dietetics", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "dietitian", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "maintenance", name: "Maintenance", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "security", name: "Security", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
