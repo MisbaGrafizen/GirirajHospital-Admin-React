@@ -1,53 +1,74 @@
-// import { deleteToken, getToken, onMessage } from "firebase/messaging";
-// import { messaging } from "../firebase.config";
-// import { ApiPost } from "./axios";
+import { getToken, onMessage } from "firebase/messaging";
+import { messaging } from "../firebase.config";
+import { ApiPost } from "./axios";
 
-// // Ask user permission & get token
-// export const requestNotificationPermission = async () => {
-//   try {
-//     const permission = await Notification.requestPermission();
-//     if (permission === "granted") {
-//       console.log("✅ Notification permission granted.");
+// ✅ Request notification permission and get FCM token
+export const requestNotificationPermission = async () => {
+  try {
+    const permission = await Notification.requestPermission();
 
-//       // ❌ remove deleteToken
-//       // await deleteToken(messaging);
+    if (permission !== "granted") {
+      console.warn("🚫 Notification permission denied by user.");
+      return null;
+    }
 
-//       const token = await getToken(messaging, {
-//         vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-//       });
+    console.log("✅ Notification permission granted.");
 
-//       if (token) {
-//         console.log("📌 FCM Token:", token);
+    // ✅ Get FCM token
+    const token = await getToken(messaging, {
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+    });
 
-//         const userId = localStorage.getItem("userId");
+    if (!token) {
+      console.warn("⚠️ FCM token not received.");
+      return null;
+    }
 
-//         if (!userId) {
-//           console.warn("⚠️ No userId found in localStorage. Did you save it at login?");
-//         }
+    console.log("📌 FCM Token:", token);
 
-//         await ApiPost("/admin/tokens/save", { userId, token });
-//       }
+    // ✅ Try to get userId from localStorage
+    let userId = localStorage.getItem("userId");
+    console.log('userId', userId)
 
-//       return token;
-//     } else {
-//       console.warn("Notification permission denied.");
-//       return null;
-//     }
-//   } catch (error) {
-//     console.error("Error getting token:", error);
-//     return null;
-//   }
-// };
+    // 🧠 If not found yet, wait briefly and retry (handles login race condition)
+    if (!userId) {
+      console.warn("⚠️ userId not found yet, retrying...");
+      await new Promise((resolve) => setTimeout(resolve, 500)); // wait 0.5s
+      userId = localStorage.getItem("userId");
+    }
 
+    if (!userId) {
+      console.error("❌ No userId found even after retry — skipping token save.");
+      return token; // Return token but don’t call API
+    }
 
-// // Foreground notification listener
-// export const listenForMessages = () => {
-//   onMessage(messaging, (payload) => {
-//     console.log("📩 Foreground message received:", payload);
+    console.log("✅ Found userId:", userId);
 
-//     new Notification(payload.notification.title, {
-//       body: payload.notification.body,
-//       icon: "/images.png",
-//     });
-//   });
-// };
+    // ✅ Save token with userId
+    const payload = { userId, token };
+    console.log("📤 Sending token payload:", payload);
+
+    await ApiPost("/admin/tokens/save", payload);
+
+    console.log("✅ FCM token saved successfully for user:", userId);
+    return token;
+  } catch (error) {
+    console.error("❌ Error getting or saving FCM token:", error);
+    return null;
+  }
+};
+
+// ✅ Foreground notification listener
+export const listenForMessages = () => {
+  onMessage(messaging, (payload) => {
+    console.log("📩 Foreground message received:", payload);
+
+    const { title, body } = payload?.notification || {};
+    if (title && body) {
+      new Notification(title, {
+        body,
+        icon: "/images.png",
+      });
+    }
+  });
+};

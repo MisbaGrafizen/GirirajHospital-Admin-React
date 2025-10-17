@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
     Calendar,
     Download,
@@ -47,7 +48,7 @@ const MODULE_TO_BLOCK = {
     maintenance: "maintenance",
     diagnostic_service: "diagnosticServices",
     dietetics: "dietitianServices",
-    nursing: "nursing", 
+    nursing: "nursing",
     security: "security",
     nursing: "nursing",
 };
@@ -162,20 +163,26 @@ const fmtDateLabel = (iso) => {
 }
 
 // ===================== STATUS / PRIORITY UI =====================
-const mapStatusUI = (status) => {
-    switch (status) {
-        case "resolved":
-            return "Resolved";
-        case "in_progress":
-            return "In Progress";
-        case "escalated":
-            return "Escalated";
+function mapStatusUI(status) {
+    switch (status?.toLowerCase()) {
         case "open":
             return "Open";
-        default:
+        case "pending":
             return "Pending";
+        case "resolved":
+            return "Resolved";
+        case "escalated":
+            return "Escalated";
+        case "inprogress":
+        case "in-progress":
+            return "In Progress";
+        case "partial":
+            return "Partial";
+        default:
+            return "Unknown";
     }
-};
+}
+
 
 const getStatusColor = (status) => {
     switch (status) {
@@ -184,6 +191,8 @@ const getStatusColor = (status) => {
         case "Resolved":
             return "bg-green-100 text-green-800"
         case "In Progress":
+            return "bg-blue-100 text-blue-800"
+        case "partial":
             return "bg-blue-100 text-blue-800"
         default:
             return "bg-gray-100 text-gray-800"
@@ -422,11 +431,19 @@ function extractFrequentServices(docs, topN = 6) {
         .map(([service]) => service);
 }
 
-
-
-
-
-
+// async function getPartialResolveDetails(complaintId) {
+//     try {
+//         const res = await ApiGet(`/admin/partial-resolve/${complaintId}`);
+//         console.log('reswewrew', res)
+//         if (res?.data?.success) {
+//             return res.data.data;
+//         }
+//         return null;
+//     } catch (err) {
+//         console.error("Failed to fetch partial resolve details:", err);
+//         return null;
+//     }
+// }
 
 // ===================== COMPONENT =====================
 export default function ComplaintManagementDashboard() {
@@ -444,6 +461,65 @@ export default function ComplaintManagementDashboard() {
     const [top5Departments, setTop5Departments] = useState([]);
     const [rawConcerns, setRawConcerns] = useState([]);
     const [tatComplaints, setTatComplaints] = useState([]);
+
+    const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
+
+    function StatusBadge({ status }) {
+        let color = "bg-gray-200 text-gray-800";
+        let text = status;
+
+        switch (status.toLowerCase()) {
+            case "resolved":
+                color = "bg-green-100 text-green-700";
+                text = "Resolved ✅";
+                break;
+            case "pending":
+                color = "bg-red-100 text-red-700";
+                text = "Pending 🔴";
+                break;
+            case "in progress":
+            case "in_progress":
+                color = "bg-blue-100 text-blue-700";
+                text = "In Progress 🟡";
+                break;
+            case "partial":
+                color = "bg-yellow-100 text-yellow-700";
+                text = "Partial ⚠️";
+                break;
+        }
+
+        return (
+            <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}
+            >
+                {text}
+            </span>
+        );
+    }
+
+    // const handlePartialModalOpen = async (complaint) => {
+    //     try {
+    //         setSelectedComplaint(null);
+    //         setIsPartialModalOpen(true);
+
+    //         const details = await getPartialResolveDetails(complaint.id);
+    //         if (details) {
+    //             setSelectedComplaint(details);
+    //         } else {
+    //             setSelectedComplaint({ error: true });
+    //         }
+    //     } catch (err) {
+    //         console.error("Error loading partial details:", err);
+    //         setSelectedComplaint({ error: true });
+    //     }
+    // };
+
+
+    const closePartialModal = () => {
+        setSelectedComplaint(null);
+        setIsPartialModalOpen(false);
+    };
+
     const [filters, setFilters] = useState({
         from: '',                 // "YYYY-MM-DD"
         to: '',                   // "YYYY-MM-DD"
@@ -495,8 +571,6 @@ export default function ComplaintManagementDashboard() {
         })();
         return () => { alive = false; };
     }, []);
-
-    console.log('tatComplaints', tatComplaints)
 
 
     useEffect(() => {
@@ -1373,7 +1447,7 @@ export default function ComplaintManagementDashboard() {
                                                                 Stamp Out
                                                             </th>
                                                             <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                TAT Time
+                                                                TAT Time
                                                             </th>
                                                             {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
@@ -1404,8 +1478,8 @@ export default function ComplaintManagementDashboard() {
                                                                                 {complaint.patientName}
                                                                             </div>
                                                                         </td>
-                                                                               <td className="px-6 py-2 text-sm text-gray-900">
-                                                                    098
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            098
                                                                         </td>
                                                                         <td className="px-6 py-2 text-sm min-w-[350px] text-gray-900">
                                                                             {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
@@ -1414,13 +1488,13 @@ export default function ComplaintManagementDashboard() {
                                                                                     .join(", ")
                                                                                 : "-"}
                                                                         </td>
-                                                                                                                                             {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
                                                                             <div className="flex min-w-[200px] items-center">
 
                                                                     {}
                                                                             </div>
                                                                         </td> */}
-                                                                                                           {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
                                                                             <div className="flex min-w-[200px] items-center">
 
                                                                     what you do , please tell me a one things grafizen 
@@ -1557,14 +1631,48 @@ export default function ComplaintManagementDashboard() {
                                                                     </td>
 
                                                                     <td className="px-3 py-2 text-sm">
-                                                                        <span
-                                                                            className={`flex items-center px-2 py-1   !flex-shrink-0 justify-center  w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
-                                                                                complaint.status,
-                                                                            )}`}
-                                                                        >
-                                                                            {complaint.status}
-                                                                        </span>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <span
+                                                                                className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
+                                                                                    mapStatusUI(complaint.status)
+                                                                                )}`}
+                                                                            >
+                                                                                {mapStatusUI(complaint.status)}
+
+                                                                                {complaint.status?.toLowerCase() === "partial" && (
+                                                                                    <button
+                                                                                        onClick={async () => {
+                                                                                            try {
+                                                                                                // show modal first
+                                                                                                setIsPartialModalOpen(true);
+                                                                                                setSelectedComplaint(null);
+
+                                                                                                const res = await ApiGet(
+                                                                                                    `/admin/partial-resolve/${complaint.id}`
+                                                                                                );
+                                                                                                console.log("res", res);
+
+                                                                                                if (res.data) {
+                                                                                                    setSelectedComplaint(res.data);
+                                                                                                } else {
+                                                                                                    setSelectedComplaint({ error: true });
+                                                                                                }
+                                                                                            } catch (err) {
+                                                                                                console.error("Error fetching partial-resolve details:", err);
+                                                                                                setSelectedComplaint({ error: true });
+                                                                                            }
+                                                                                        }}
+                                                                                        className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
+                                                                                    >
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </button>
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+
                                                                     </td>
+
+
                                                                     <td className="px-6 py-2 text-sm text-gray-900">
                                                                         <button
                                                                             onClick={() => handlenavigate(complaint, fullDoc)}
@@ -1588,6 +1696,185 @@ export default function ComplaintManagementDashboard() {
                                             </table>
                                         </div>
                                     </div>
+
+
+                                    <AnimatePresence>
+                                        {isPartialModalOpen && selectedComplaint && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+                                                onClick={closePartialModal}
+                                            >
+                                                <motion.div
+                                                    initial={{ scale: 0.95, y: 20 }}
+                                                    animate={{ scale: 1, y: 0 }}
+                                                    exit={{ scale: 0.95, y: 20 }}
+                                                    transition={{ duration: 0.25 }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="bg-white rounded-2xl shadow-xl p-6 w-[500px] max-w-full"
+                                                >
+                                                    {/* Header */}
+                                                    <div className="flex justify-between items-center mb-6 border-b pb-3">
+                                                        <h3 className="text-xl font-bold text-gray-900">
+                                                            Department Complaint Status
+                                                        </h3>
+                                                        <button
+                                                            onClick={closePartialModal}
+                                                            className="text-gray-400 hover:text-gray-600 transition"
+                                                        >
+                                                            <X className="w-6 h-6" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Department Complaint Status */}
+                                                    <div className="flex flex-col overflow-y-auto gap-3">
+                                                        {!selectedComplaint ? (
+                                                            <p className="text-center text-gray-500 text-sm py-6">
+                                                                Loading department details...
+                                                            </p>
+                                                        ) : selectedComplaint.error ? (
+                                                            <p className="text-center text-gray-500 text-sm py-6">
+                                                                ⚠️ Failed to load department complaint data.
+                                                            </p>
+                                                        ) : (
+                                                            (() => {
+                                                                const filteredDepartments = Object.entries(selectedComplaint)
+                                                                    // ✅ include only valid departments
+                                                                    .filter(([key]) =>
+                                                                        [
+                                                                            "doctorServices",
+                                                                            "billingServices",
+                                                                            "housekeeping",
+                                                                            "maintenance",
+                                                                            "diagnosticServices",
+                                                                            "dietitianServices",
+                                                                            "security",
+                                                                            "nursing",
+                                                                        ].includes(key)
+                                                                    )
+                                                                    // ✅ include only departments with non-empty text or attachments
+                                                                    .filter(([_, value]) => {
+                                                                        const hasText = value?.text && value.text.trim() !== "";
+                                                                        const hasAttachments =
+                                                                            Array.isArray(value?.attachments) && value.attachments.length > 0;
+                                                                        return hasText || hasAttachments;
+                                                                    });
+
+                                                                if (filteredDepartments.length === 0) {
+                                                                    return (
+                                                                        <p className="text-center text-gray-500 text-sm py-6">
+                                                                            ⚠️ No department complaints contain text or attachments for this patient.
+                                                                        </p>
+                                                                    );
+                                                                }
+
+                                                                return filteredDepartments.map(([key, value], i) => (
+                                                                    <motion.div
+                                                                        key={key}
+                                                                        initial={{ opacity: 0, y: 10 }}
+                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                        transition={{ delay: i * 0.05 }}
+                                                                        className="border rounded-lg p-4 flex flex-col bg-gray-50 hover:bg-gray-100 transition"
+                                                                    >
+                                                                        {/* Department Header */}
+                                                                        <div className="flex justify-between items-center mb-1">
+                                                                            <span className="font-semibold text-gray-900">
+                                                                                {key
+                                                                                    .replace("Services", "")
+                                                                                    .replace(/([A-Z])/g, " $1")
+                                                                                    .trim()
+                                                                                    .replace(/^./, (c) => c.toUpperCase())}
+                                                                            </span>
+                                                                            <StatusBadge status={value?.status || "Pending"} />
+                                                                        </div>
+
+                                                                        {/* Mode */}
+                                                                        {value?.mode && (
+                                                                            <p className="text-xs text-gray-500 mb-1">
+                                                                                <strong>Mode:</strong> {value.mode}
+                                                                            </p>
+                                                                        )}
+
+                                                                        {/* Text */}
+                                                                        {value?.text && value.text.trim() !== "" && (
+                                                                            <p className="text-sm text-gray-700 mb-1">📝 {value.text}</p>
+                                                                        )}
+
+                                                                        {/* Attachments */}
+                                                                        {Array.isArray(value?.attachments) && value.attachments.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                                                {value.attachments.map((url, idx) => (
+                                                                                    <a
+                                                                                        key={idx}
+                                                                                        href={url}
+                                                                                        target="_blank"
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="text-xs text-blue-600 underline"
+                                                                                    >
+                                                                                        Attachment {idx + 1}
+                                                                                    </a>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Resolution Note & Proof */}
+                                                                        {value?.resolution && (
+                                                                            <div className="mt-2 text-sm text-gray-600">
+                                                                                {value.resolution.note && (
+                                                                                    <p>
+                                                                                        <strong>Resolution Note:</strong> {value.resolution.note}
+                                                                                    </p>
+                                                                                )}
+                                                                                {Array.isArray(value.resolution.proof) &&
+                                                                                    value.resolution.proof.length > 0 && (
+                                                                                        <div className="flex flex-wrap gap-2 mt-1">
+                                                                                            {value.resolution.proof.map((p, i) => (
+                                                                                                <a
+                                                                                                    key={i}
+                                                                                                    href={p}
+                                                                                                    target="_blank"
+                                                                                                    rel="noopener noreferrer"
+                                                                                                    className="text-xs text-green-600 underline"
+                                                                                                >
+                                                                                                    Proof {i + 1}
+                                                                                                </a>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Timestamp */}
+                                                                        <p className="text-xs text-gray-500 mt-2">
+                                                                            Updated:{" "}
+                                                                            {value?.resolution?.resolvedAt
+                                                                                ? new Date(value.resolution.resolvedAt).toLocaleString()
+                                                                                : new Date(selectedComplaint.updatedAt).toLocaleString()}
+                                                                        </p>
+                                                                    </motion.div>
+                                                                ));
+                                                            })()
+                                                        )}
+                                                    </div>
+
+
+                                                    {/* Footer */}
+                                                    <div className="mt-6 flex justify-end">
+                                                        <button
+                                                            onClick={closePartialModal}
+                                                            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
+                                                        >
+                                                            Close
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+
 
                                     {/* Modal */}
                                     {isModalOpen && selectedComplaint && (

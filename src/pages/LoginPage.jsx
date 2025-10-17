@@ -4,19 +4,19 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg";
 import { useNavigate } from "react-router-dom";
-// import { requestNotificationPermission } from "../helper/notification";
+import { requestNotificationPermission } from "../helper/notification";
 import { ApiPost } from "../helper/axios";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [identifier, setIdentifier] = useState(""); // email OR username
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // 🔄 Restore remember me
+  // Restore "remember me"
   useEffect(() => {
     const savedIdentifier = localStorage.getItem("savedIdentifier");
     const savedRemember = localStorage.getItem("rememberMe") === "true";
@@ -26,37 +26,22 @@ export default function LoginPage() {
     }
   }, []);
 
-  // 🔑 Save Auth Data (for admin & role-user)
+  // ✅ Save login session
   const saveAuthData = ({ user, tokens, token, permissions, loginType }) => {
-    const accessToken = tokens?.access?.token || token; // normalize token
+    const accessToken = tokens?.access?.token || token;
     const refreshToken = tokens?.refresh?.token || "";
 
     if (!accessToken || !user) return;
 
-    // ✅ Always set tokens
     localStorage.setItem("authToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
-
-    // ✅ Ensure userId exists
     localStorage.setItem("userId", user?._id || user?.id || "");
-
-    // ✅ Save user & role
     localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("loginType", loginType); // "admin" or "roleUser"
+    localStorage.setItem("loginType", loginType);
 
-    // ✅ Role-based rights
-    localStorage.setItem("rights", JSON.stringify(user?.roleId || []));
-
-    if (permissions) {
+    if (permissions)
       localStorage.setItem("permissions", JSON.stringify(permissions));
-    }
 
-    if (user?.companyId) {
-      localStorage.setItem("selectedCompanyId", user?.companyId?._id || user?.companyId);
-      localStorage.setItem("selectedCompanyName", user?.companyId?.firmName || "");
-    }
-
-    // ✅ Remember me
     if (rememberMe) {
       localStorage.setItem("savedIdentifier", identifier);
       localStorage.setItem("rememberMe", "true");
@@ -66,67 +51,72 @@ export default function LoginPage() {
     }
   };
 
- // 🚀 Handle Login
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError("");
+  // 🚀 Handle Login
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  try {
-    // 1️⃣ Try Admin login
     try {
-      const res = await ApiPost("/auth/admin/login", {
-        email: identifier,
-        password,
-      });
+      // ✅ Try Admin Login
+      try {
+        const res = await ApiPost("/auth/admin/login", {
+          email: identifier,
+          password,
+        });
 
-      console.log('res', res)
-      const { user, tokens } = res.data?.user;
+        const { user, tokens } = res.data?.user || res.data;
+        console.log("user", user);
 
-      console.log('res.data', res.data)
+        saveAuthData({
+          user,
+          tokens: {
+            access: { token: tokens?.access?.token },
+            refresh: { token: tokens?.refresh?.token },
+          },
+          loginType: "admin",
+        });
 
-      saveAuthData({
-        user,
-        tokens: {
-          access: { token: tokens?.access?.token },
-          refresh: { token: tokens?.refresh?.token },
-        },
-        loginType: "admin",
-      });
+        // ✅ Wait a bit for userId to be stored before saving FCM token
+        setTimeout(() => {
+          requestNotificationPermission();
+        }, 800);
 
-      console.log("✅ Admin login success");
+        console.log("✅ Admin login success");
+        navigate("/dashboards/super-dashboard", { replace: true });
+        return;
+      } catch (adminError) {
+        console.warn("Admin login failed, trying role-user...");
+      }
 
-      // await requestNotificationPermission();
-      navigate("/dashboards/super-dashboard", { replace: true });
-      return;
-    } catch (adminError) {
-      console.warn("Admin login failed, trying role-user...");
+      // ✅ Try Role-User Login
+      try {
+        const res = await ApiPost("/auth/role-user/login", {
+          identifier,
+          password,
+        });
+
+        const { user, token, permissions } = res.data;
+        saveAuthData({ user, token, permissions, loginType: "roleUser" });
+
+        // ✅ Wait a bit for userId to be stored before saving FCM token
+        setTimeout(() => {
+          requestNotificationPermission();
+        }, 800);
+
+        console.log("✅ Role-user login success");
+        navigate("/dashboards/super-dashboard", { replace: true });
+        return;
+      } catch (userError) {
+        throw new Error("Incorrect email/username or password");
+      }
+    } catch (err) {
+      console.error("❌ Login error:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
-
-    // 2️⃣ Try Role-User login
-    try {
-      const res = await ApiPost("/auth/role-user/login", {
-        identifier,
-        password,
-      });
-
-      const { user, token, permissions } = res.data;
-      saveAuthData({ user, token, permissions, loginType: "roleUser" });
-
-      console.log("✅ Role-User login success");
-
-      // await requestNotificationPermission();
-      navigate("/dashboards/super-dashboard", { replace: true });
-      return;
-    } catch (userError) {
-      throw new Error("Incorrect email/username or password");
-    }
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
   return (
@@ -160,7 +150,7 @@ const handleSubmit = async (e) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email / Username */}
+          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input

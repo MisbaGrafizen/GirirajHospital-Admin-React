@@ -97,17 +97,19 @@ function blockHasContent(block) {
 
 
 function mapStatusUI(status) {
-  const s = String(status || "")
-    .toLowerCase()
-    .replace("-", "_"); // normalize dash → underscore
+    const s = String(status || "")
+        .toLowerCase()
+        .replace("-", "_");
 
-  if (s === "open") return "Open";
-  if (s === "in_progress") return "In Progress";
-  if (s === "resolved") return "Resolved";
-  if (s === "escalated") return "Escalated";
-  if (s === "forwarded") return "Forwarded";
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
+    if (s === "open") return "Open";
+    if (s === "in_progress") return "In Progress";
+    if (s === "resolved") return "Resolved";
+    if (s === "escalated") return "Escalated";
+    if (s === "forwarded") return "Forwarded";
+    if (s === "partial") return "Partial"; // ✅ Add this
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
 }
+
 
 
 
@@ -134,10 +136,11 @@ export default function ComplaintViewPage() {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [status, setStatus] = useState("IN-PROGRESS")
     const [isEditing, setIsEditing] = useState(false)
+    const [selectedDepartment, setSelectedDepartment] = useState("");
 
     const [isOpen, setIsOpen] = useState(false)
 
-
+    const [priority, setPriority] = useState("");
 
     const statusConfig = {
         OPEN: { color: "bg-red-100 text-red-800 border-red-200", label: "OPEN" },
@@ -308,16 +311,53 @@ export default function ComplaintViewPage() {
             throw new Error(error.message || "Failed to escalate complaint");
         }
     }
+
+    // ✅ Department-level escalation API
+async function escalateDepartmentComplaint(complaintId, department, { level, note, userId }) {
+    try {
+        const response = await ApiPost(`/admin/${complaintId}/partial-escalate`, {
+            department, // backend key like "billingServices"
+            level,
+            note,
+            userId,
+        });
+
+        return response;
+    } catch (error) {
+        throw new Error(error.message || "Failed to escalate department complaint");
+    }
+}
+
+
     const handleEscalateSubmit = async () => {
-        if (!escalationLevel || !escalationNote) {
-            alert("Please select escalation level and provide a note.");
-            return;
-        }
+    if (!escalationLevel || !escalationNote) {
+        alert("Please select escalation level and provide a note.");
+        return;
+    }
 
-        try {
-            // replace this with your auth/user context
-            const currentUserId = "12345";
+    try {
+        const currentUserId = localStorage.getItem("userId") || "12345";
 
+        // ✅ If a department is selected, escalate only that department
+        if (selectedDepartment) {
+            const deptKey = Object.keys(DEPT_LABEL).find(
+                (k) => DEPT_LABEL[k] === selectedDepartment
+            );
+
+            if (!deptKey) {
+                alert("Invalid department selected.");
+                return;
+            }
+
+            const res = await escalateDepartmentComplaint(complaint.id, deptKey, {
+                level: escalationLevel,
+                note: escalationNote,
+                userId: currentUserId,
+            });
+
+            alert(res.message || `Department ${selectedDepartment} escalated to ${escalationLevel}`);
+        } else {
+            // ✅ If no department selected, escalate entire complaint
             const res = await escalateComplaint(complaint.id, {
                 level: escalationLevel,
                 note: escalationNote,
@@ -325,24 +365,20 @@ export default function ComplaintViewPage() {
             });
 
             alert(res.message || `Complaint escalated to ${escalationLevel}`);
-            closeAllModals();
-        } catch (error) {
-            console.error("Escalation Error:", error);
-            alert(error.message || "Something went wrong while escalating");
         }
-    };
 
-    async function resolveComplaintAPI(complaintId, { note, proof }) {
-        try {
-            const response = await ApiPost(`/admin/${complaintId}/resolve`, {
-                note,
-                proof, // url string or empty
-            });
-            return response;
-        } catch (error) {
-            throw new Error(error.message || "Failed to resolve complaint");
-        }
+        // ✅ Refresh history after escalation
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+    } catch (error) {
+        console.error("Escalation Error:", error);
+        alert(error.message || "Something went wrong while escalating complaint");
     }
+};
+
+
 
     const handleResolveSubmit = async () => {
         if (!resolutionNote) {
@@ -351,24 +387,54 @@ export default function ComplaintViewPage() {
         }
 
         try {
+            // ✅ Upload proof if provided
             let proofUrl = "";
             if (uploadedFile) {
                 const uploadRes = await uploadToHPanel(uploadedFile);
-                proofUrl = uploadRes.url; // must match backend expectation
+                proofUrl = uploadRes.url;
             }
 
-            const res = await resolveComplaintAPI(complaint.id, {
+            // ✅ Determine backend endpoint
+            let endpoint = `/admin/${complaint.id}/resolve`;
+            const payload = {
                 note: resolutionNote,
-                proof: proofUrl,
-            });
+                proof: proofUrl ? [proofUrl] : [],
+                userId: localStorage.getItem("userId") || "",
+            };
 
-            alert(res.message || "Complaint resolved successfully.");
+            // ✅ If department selected → call partial resolve
+            if (selectedDepartment) {
+                endpoint = `/admin/${complaint.id}/partial-resolve`;
+                const deptKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+                if (deptKey) payload.department = deptKey;
+            }
+
+            const res = await ApiPost(endpoint, payload);
+
+            // ✅ Handle response
+            const newStatus = res?.data?.status || res?.data?.data?.status;
+            if (newStatus === "partial") {
+                alert("Complaint partially resolved.");
+            } else if (newStatus === "resolved") {
+                alert("✅ Complaint fully resolved.");
+            } else {
+                alert(res?.message || "Resolution submitted successfully.");
+            }
+
             closeAllModals();
+            window.location.reload();
+            await fetchConcernHistory(complaint.id);
+            setIsResolveModalOpen(false);
         } catch (error) {
             console.error("Resolve Error:", error);
-            alert(error.message || "Something went wrong while resolving complaint");
+            alert(error.message || "Something went wrong while resolving complaint.");
         }
     };
+
+
+
 
     async function fetchConcernHistory(complaintId) {
         try {
@@ -394,26 +460,47 @@ export default function ComplaintViewPage() {
         }
     }
 
+    async function updateDepartmentProgressAPI(complaintId, department, note, proofFile) {
+        try {
+            let proofUrl = "";
+            if (proofFile) {
+                const uploadRes = await uploadToHPanel(proofFile);
+                proofUrl = uploadRes.url;
+            }
 
+            const response = await ApiPost(`/admin/${complaintId}/partial-inprogress`, {
+                department,
+                note,
+                proof: proofUrl ? [proofUrl] : [],
+                userId: localStorage.getItem("userId") || "",
+            });
 
+            return response;
+        } catch (error) {
+            throw new Error(error.message || "Failed to update department progress");
+        }
+    }
 
 
     const getStatusColor = (status) => {
-  switch (status) {
-    case "open":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200"; // 🟡 Open
-    case "in_progress":
-      return "bg-blue-100 text-blue-800 border-blue-200"; // 🔵 In Progress
-    case "forwarded":
-      return "bg-purple-100 text-purple-800 border-purple-200"; // 🟣 Forwarded
-    case "resolved":
-      return "bg-green-100 text-green-800 border-green-200"; // ✅ Resolved
-    case "escalated":
-      return "bg-red-100 text-red-800 border-red-200"; // 🔴 Escalated
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200"; // ⚪ Default / Unknown
-  }
-};
+        switch (status.toLowerCase()) {
+            case "open":
+                return "bg-yellow-100 text-yellow-800 border-yellow-200";
+            case "in_progress":
+                return "bg-blue-100 text-blue-800 border-blue-200";
+            case "forwarded":
+                return "bg-purple-100 text-purple-800 border-purple-200";
+            case "resolved":
+                return "bg-green-100 text-green-800 border-green-200";
+            case "escalated":
+                return "bg-red-100 text-red-800 border-red-200";
+            case "partial":
+                return "bg-orange-100 text-orange-800 border-orange-200";
+            default:
+                return "bg-gray-100 text-gray-800 border-gray-200";
+        }
+    };
+
 
 
 
@@ -525,7 +612,7 @@ export default function ComplaintViewPage() {
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none  transition-colors"
                 >
                     <div className="flex items-center">
                         {Icon && <Icon className="w-5 h-5 text-gray-400 mr-3" />}
@@ -569,16 +656,13 @@ export default function ComplaintViewPage() {
 
     return (
         <>
-
-
-
             <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
                 <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
                     <Header pageName="Complaint Details" />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
                         <div className="flex  relative flex-col w-[100%] max-h-[94%]  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
-                        <Preloader />
+                            <Preloader />
                             <div className="">
                                 <div className="">
                                     {/* Header */}
@@ -594,9 +678,14 @@ export default function ComplaintViewPage() {
 
                                             <div className="flex items-center space-x-3">
                                                 <span
-                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(complaint.status)}`}
+                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                                                        complaint.status
+                                                    )}`}
                                                 >
-                                                    {complaint.status}
+                                                    {complaint.status?.toLowerCase() === "partial"
+                                                        ? "🟠 Partial"
+                                                        : mapStatusUI(complaint.status)}
+
                                                 </span>
                                             </div>
                                         </div>
@@ -664,7 +753,7 @@ export default function ComplaintViewPage() {
                                             <div className="bg-white rounded-xl shadow-sm border p-4">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Complaint Details</h2>
                                                 <div className="space-y-4">
-                                        
+
                                                     <div className="space-y-4">
                                                         {Object.keys(fullDoc).map((key) => {
                                                             if (!DEPT_LABEL[key]) return null;
@@ -674,9 +763,17 @@ export default function ComplaintViewPage() {
 
                                                             return (
                                                                 <div key={key} className="bg-gray-50 border rounded-lg p-3 mb-3">
-                                                                    <h3 className="text-md font-semibold text-gray-900 mb-2">
-                                                                        {DEPT_LABEL[key]}
+                                                                    <h3 className="text-md font-semibold text-gray-900 mb-2 flex items-center justify-between">
+                                                                        <span>{DEPT_LABEL[key]}</span>
+                                                                        {block?.status && (
+                                                                            <span
+                                                                                className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(block.status)}`}
+                                                                            >
+                                                                                {mapStatusUI(block.status)}
+                                                                            </span>
+                                                                        )}
                                                                     </h3>
+
 
                                                                     {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
@@ -722,9 +819,6 @@ export default function ComplaintViewPage() {
                                                             );
                                                         })}
 
-
-
-
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                 {latestForward && (
@@ -750,46 +844,8 @@ export default function ComplaintViewPage() {
                                                             </div>
                                                         )}
                                                     </div>
-
-
-                                                    {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div className="p-3 bg-blue-50 rounded-lg">
-                                                            <p className="text-sm text-blue-600 font-medium">Assigned To</p>
-                                                            <p className="text-blue-900">{complaint.assignedTo}</p>
-                                                        </div>
-                                                        <div className="p-3 bg-orange-50 rounded-lg">
-                                                            <p className="text-sm text-orange-600 font-medium">Expected Resolution</p>
-                                                            <p className="text-orange-900">{complaint.expectedResolution}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="p-4 bg-yellow-50 rounded-lg">
-                                                        <h3 className="font-medium text-yellow-900 mb-2">Escalation Remarks</h3>
-                                                        <p className="text-yellow-800">{complaint.escalationRemarks}</p>
-                                                    </div> */}
                                                 </div>
                                             </div>
-
-                                            {/* Attachments */}
-                                            {/* {complaint.attachments.length > 0 && (
-                                                <div className="bg-white rounded-xl border  shadow-sm p-4">
-                                                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Attachments</h2>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        {complaint.attachments.map((attachment, index) => (
-                                                            <div
-                                                                key={index}
-                                                                className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                                                            >
-                                                                <Paperclip className="w-5 h-5 text-gray-400 mr-3" />
-                                                                <div>
-                                                                    <p className="font-medium text-blue-600">{attachment}</p>
-                                                                    <p className="text-sm text-gray-500">Click to view/download</p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )} */}
                                         </motion.div>
 
                                         {/* Right Column - Actions & Activity */}
@@ -799,7 +855,6 @@ export default function ComplaintViewPage() {
                                             transition={{ delay: 0.2 }}
                                             className="space-y-6"
                                         >
-                                            {/* Action Buttons */}
                                             {/* Action Buttons */}
                                             <div className="bg-white border rounded-xl shadow-sm p-4">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
@@ -841,7 +896,7 @@ export default function ComplaintViewPage() {
                                                                                 {h.details?.topic && (
                                                                                     <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
                                                                                 )}
-                                                                                 <p className="text-xs text-gray-500">
+                                                                                <p className="text-xs text-gray-500">
                                                                                     {new Date(h.at).toLocaleString()}
                                                                                 </p>
                                                                             </>
@@ -857,28 +912,28 @@ export default function ComplaintViewPage() {
                                                                                 </p>
                                                                             </>
                                                                         )}
-                                                                      {h.type === "resolved" && (
-  <>
-    <p className="text-sm font-medium text-green-700">{h.label}</p>
-    <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        {h.type === "resolved" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
 
-    {/* Only show "View Proof" if proof exists AND is an image */}
-    {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
-      <a
-        href={h.proof}
-        target="_blank"
-        rel="noreferrer"
-        className="text-xs text-blue-600 underline"
-      >
-        View Proof
-      </a>
-    )}
+                                                                                {/* Only show "View Proof" if proof exists AND is an image */}
+                                                                                {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+                                                                                    <a
+                                                                                        href={h.proof}
+                                                                                        target="_blank"
+                                                                                        rel="noreferrer"
+                                                                                        className="text-xs text-blue-600 underline"
+                                                                                    >
+                                                                                        View Proof
+                                                                                    </a>
+                                                                                )}
 
-    <p className="text-xs text-gray-500">
-      {new Date(h.at).toLocaleString()}
-    </p>
-  </>
-)}
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.at).toLocaleString()}
+                                                                                </p>
+                                                                            </>
+                                                                        )}
 
                                                                         {h.type === "in_progress" && (
                                                                             <>
@@ -974,7 +1029,7 @@ export default function ComplaintViewPage() {
                                                                             {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
                                                                         </>
                                                                     )}
-                                                                    
+
                                                                     {h.type === "in_progress" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-blue-700">{h.label}</p>
@@ -1037,51 +1092,51 @@ export default function ComplaintViewPage() {
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <div className="bg-white px-6 pt-6 pb-4">
-                                                                <>
-                                                                    <div className="flex justify-between items-center mb-6">
-                                                                        <h3 className="text-xl font-bold text-gray-900">
-                                                                            Forward to Another Department
-                                                                        </h3>
-                                                                        <button
-                                                                            onClick={closeAllModals}
-                                                                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                                                                        >
-                                                                            <X className="w-6 h-6" />
-                                                                        </button>
+                                                            <>
+                                                                <div className="flex justify-between items-center mb-6">
+                                                                    <h3 className="text-xl font-bold text-gray-900">
+                                                                        Forward to Another Department
+                                                                    </h3>
+                                                                    <button
+                                                                        onClick={closeAllModals}
+                                                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                                    >
+                                                                        <X className="w-6 h-6" />
+                                                                    </button>
+                                                                </div>
+
+                                                                <div className="space-y-6">
+                                                                    {/* Select Department */}
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Select Department <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <AnimatedDropdown
+                                                                            isOpen={isForwardDeptDropdownOpen}
+                                                                            setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                            selected={forwardDepartment || "Select Department"}
+                                                                            setSelected={setForwardDepartment}
+                                                                            options={forwardDepartments}
+                                                                            placeholder="Select Department"
+                                                                            icon={MapPin}
+                                                                        />
                                                                     </div>
 
-                                                                    <div className="space-y-6">
-                                                                        {/* Select Department */}
-                                                                        <div>
-                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                                Select Department <span className="text-red-500">*</span>
-                                                                            </label>
-                                                                            <AnimatedDropdown
-                                                                                isOpen={isForwardDeptDropdownOpen}
-                                                                                setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                                selected={forwardDepartment || "Select Department"}
-                                                                                setSelected={setForwardDepartment}
-                                                                                options={forwardDepartments}
-                                                                                placeholder="Select Department"
-                                                                                icon={MapPin}
-                                                                            />
-                                                                        </div>
-
-                                                                        {/* Reason for Forwarding */}
-                                                                        <div>
-                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                                Reason for Forwarding <span className="text-red-500">*</span>
-                                                                            </label>
-                                                                            <textarea
-                                                                                value={forwardReason}
-                                                                                onChange={(e) => setForwardReason(e.target.value)}
-                                                                                rows={4}
-                                                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                                                                placeholder="Please provide reason for forwarding this complaint..."
-                                                                            />
-                                                                        </div>
+                                                                    {/* Reason for Forwarding */}
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Reason for Forwarding <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <textarea
+                                                                            value={forwardReason}
+                                                                            onChange={(e) => setForwardReason(e.target.value)}
+                                                                            rows={4}
+                                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                                            placeholder="Please provide reason for forwarding this complaint..."
+                                                                        />
                                                                     </div>
-                                                                </>
+                                                                </div>
+                                                            </>
                                                         </div>
 
                                                         <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
@@ -1133,6 +1188,17 @@ export default function ComplaintViewPage() {
                                                             </div>
 
                                                             <div className="space-y-6">
+
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={selectedDepartment || "Select Department"}
+                                                                    setSelected={setSelectedDepartment}
+                                                                    options={forwardDepartments}
+                                                                    placeholder="Select Department"
+                                                                    icon={MapPin}
+                                                                />
+
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Resolution Note <span className="text-red-500">*</span>
@@ -1229,6 +1295,15 @@ export default function ComplaintViewPage() {
                                                             </div>
 
                                                             <div className="space-y-6">
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={selectedDepartment || "Select Department"}
+                                                                    setSelected={setSelectedDepartment}
+                                                                    options={forwardDepartments}
+                                                                    placeholder="Select Department"
+                                                                    icon={MapPin}
+                                                                />
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Select Escalation Level <span className="text-red-500">*</span>
@@ -1388,28 +1463,28 @@ export default function ComplaintViewPage() {
                                                                                         </p>
                                                                                     </>
                                                                                 )}
-                                                                               {h.type === "resolved" && (
-  <>
-    <p className="text-sm font-medium text-green-700">Resolved</p>
-    <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                                {h.type === "resolved" && (
+                                                                                    <>
+                                                                                        <p className="text-sm font-medium text-green-700">Resolved</p>
+                                                                                        <p className="text-xs text-gray-600">Note: {h.note}</p>
 
-    {/* Only show "View Proof" if proof exists AND is an image */}
-    {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
-      <a
-        href={h.proof}
-        target="_blank"
-        rel="noreferrer"
-        className="text-xs text-blue-600 underline"
-      >
-        View Proof
-      </a>
-    )}
+                                                                                        {/* Only show "View Proof" if proof exists AND is an image */}
+                                                                                        {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+                                                                                            <a
+                                                                                                href={h.proof}
+                                                                                                target="_blank"
+                                                                                                rel="noreferrer"
+                                                                                                className="text-xs text-blue-600 underline"
+                                                                                            >
+                                                                                                View Proof
+                                                                                            </a>
+                                                                                        )}
 
-    <p className="text-xs text-gray-500">
-      {new Date(h.at).toLocaleString()}
-    </p>
-  </>
-)}
+                                                                                        <p className="text-xs text-gray-500">
+                                                                                            {new Date(h.at).toLocaleString()}
+                                                                                        </p>
+                                                                                    </>
+                                                                                )}
 
                                                                                 {h.type === "in_progress" && (
                                                                                     <>
@@ -1469,11 +1544,11 @@ export default function ComplaintViewPage() {
                                                             initial={{ opacity: 0, y: -20 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ delay: 0.1 }}
-                                                            className="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+                                                            className="px-6 pt-4 border-b border-gray-100 flex items-center justify-between"
                                                         >
                                                             <div>
                                                                 <h2 className="text-2xl font-bold text-gray-900">Progress Remark  </h2>
-                                                                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                                                                <div className="flex items-center gap-4 mt-2   text-sm text-gray-600">
                                                                     <span className="flex items-center gap-1">
                                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                             <path
@@ -1506,13 +1581,22 @@ export default function ComplaintViewPage() {
                                                         </motion.div>
 
                                                         {/* Content */}
-                                                        <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+                                                        <div className="px-6 py-4 mb-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+                                                            <AnimatedDropdown
+                                                                isOpen={isForwardDeptDropdownOpen}
+                                                                setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                selected={selectedDepartment || "Select Department"}
+                                                                setSelected={setSelectedDepartment}
+                                                                options={forwardDepartments}
+                                                                placeholder="Select Department"
+                                                                icon={MapPin}
+                                                            />
                                                             {/* Patient Info */}
                                                             <motion.div
                                                                 initial={{ opacity: 0, x: -20 }}
                                                                 animate={{ opacity: 1, x: 0 }}
                                                                 transition={{ delay: 0.2 }}
-                                                                className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100"
+                                                                className="mb-6 p-4 mt-3 bg-blue-50 rounded-xl border border-blue-100"
                                                             >
                                                                 <div className="flex items-center gap-2 mb-2">
                                                                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1593,29 +1677,6 @@ export default function ComplaintViewPage() {
                                                                                 <p className="text-sm text-gray-500">
                                                                                     <span className="font-medium">Last updated:</span> {new Date().toLocaleString()}
                                                                                 </p>
-                                                                                {/* <div className="flex gap-2">
-                                                                                    <button
-                                                                                        onClick={() => {
-                                                                                            setIsEditing(false)
-                                                                                            setTempText(complaintText)
-                                                                                        }}
-                                                                                        className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors rounded-lg hover:bg-gray-100"
-                                                                                    >
-                                                                                        Cancel
-                                                                                    </button>
-                                                                                    <button
-                                                                                        onClick={() => {
-                                                                                            setComplaintText(tempText)
-                                                                                            setIsEditing(false)
-                                                                                        }}
-                                                                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
-                                                                                    >
-                                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                                        </svg>
-                                                                                        Save Changes
-                                                                                    </button>
-                                                                                </div> */}
                                                                             </div>
                                                                         </div>
                                                                     ) : (
@@ -1630,96 +1691,6 @@ export default function ComplaintViewPage() {
                                                                     )}
                                                                 </div>
                                                             </motion.div>
-
-                                                            {/* Section 2: Status */}
-                                                            {/* <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="mb-6"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <h3 className="text-lg font-semibold text-gray-900">Current Status</h3>
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                    <p className="text-gray-700 mb-3">
-                      Status of complaint changes to{" "}
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border ${statusConfig[status].color} ml-1`}
-                      >
-                        {statusConfig[status].label}
-                      </span>
-                    </p>
-
-                 
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {Object.keys(statusConfig).map((statusKey) => (
-                        <button
-                          key={statusKey}
-                          onClick={() => setStatus(statusKey)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-all hover:scale-105 ${
-                            status === statusKey
-                              ? statusConfig[statusKey].color
-                              : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          {statusConfig[statusKey].label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div> */}
-
-                                                            {/* Timeline */}
-                                                            {/* <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="mb-4"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <h3 className="text-lg font-semibold text-gray-900">Activity Timeline</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { time: "2 hours ago", action: "Complaint registered", status: "OPEN" },
-                      { time: "1 hour ago", action: "Assigned to Dr. Sarah Wilson", status: "IN-PROGRESS" },
-                      { time: "30 min ago", action: "Initial assessment completed", status: "IN-PROGRESS" },
-                    ].map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100"
-                      >
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{item.action}</p>
-                          <p className="text-xs text-gray-500">{item.time}</p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[item.status].color}`}
-                        >
-                          {item.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div> */}
                                                         </div>
 
                                                         {/* Footer */}
@@ -1738,29 +1709,45 @@ export default function ComplaintViewPage() {
                                                             <button
                                                                 onClick={async () => {
                                                                     try {
-                                                                        const res = await updateProgressRemarkAPI(
-                                                                            complaint.complaintId,
-                                                                            tempText
-                                                                        );
+                                                                        // If department is selected → call department in-progress API
+                                                                        if (selectedDepartment) {
+                                                                            const deptKey = Object.keys(DEPT_LABEL).find(
+                                                                                (k) => DEPT_LABEL[k] === selectedDepartment
+                                                                            );
 
-                                                                        // ✅ Update frontend state with backend result
-                                                                        if (res.updatedConcern?.note) {
-                                                                            setComplaintText(res.updatedConcern.note);
+                                                                            const res = await updateDepartmentProgressAPI(
+                                                                                complaint.id,
+                                                                                deptKey,
+                                                                                tempText,
+                                                                                uploadedFile
+                                                                            );
+
+                                                                            alert(res.message || `Department ${selectedDepartment} marked In-Progress.`);
                                                                         } else {
-                                                                            setComplaintText(tempText);
+                                                                            // Otherwise → general progress remark update
+                                                                            const res = await updateProgressRemarkAPI(
+                                                                                complaint.complaintId,
+                                                                                tempText
+                                                                            );
+
+                                                                            if (res.updatedConcern?.note) {
+                                                                                setComplaintText(res.updatedConcern.note);
+                                                                            } else {
+                                                                                setComplaintText(tempText);
+                                                                            }
+
+                                                                            alert(res.message || "Progress remark updated successfully");
                                                                         }
 
-                                                                        // ✅ Refresh history
+                                                                        // ✅ Refresh timeline
                                                                         const newHistory = await fetchConcernHistory(complaint.id);
                                                                         setHistoryData(newHistory);
 
                                                                         setIsEditing(false);
                                                                         setIsOpen(false);
-
-                                                                        alert(res.message || "Progress remark updated successfully");
                                                                     } catch (error) {
                                                                         console.error("Progress Remark Error:", error);
-                                                                        alert(error.message || "Failed to update in_progress remark");
+                                                                        alert(error.message || "Failed to update progress");
                                                                     }
                                                                 }}
                                                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
@@ -1770,10 +1757,6 @@ export default function ComplaintViewPage() {
                                                                 </svg>
                                                                 Save Changes
                                                             </button>
-
-
-
-
 
                                                         </motion.div>
                                                     </motion.div>

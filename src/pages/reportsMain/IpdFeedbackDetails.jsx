@@ -179,10 +179,10 @@ export default function IpdFeedbackDetails() {
                     <h3 className="text-base font-semibold text-gray-900 mb-4">Department-wise Ratings</h3>
                     <div className="space-y-4">
                       {[
-                        { key: "overallExperience", label: " Experience" },
+                        // { key: "overallExperience", label: " Experience" },
                         { key: "consultantDoctorServices", label: "Doctor Services (Consultant Doctor)" },
                         { key: "medicalAdminDoctorService", label: "Doctor Services (Medical Officers)" },
-                        { key: "nursingServices", label: "Nursing Services" },
+                        { key: "nursing", label: "Nursing Services" },
                         { key: "billingServices", label: "Billing Services (Admission/ Discharge/ Cashless)" },
                         { key: "pathologyDiagnosticServices", label: "Diagnostic Services (Pathology)" },
                         { key: "radiologyDiagnosticServices", label: "Diagnostic Services (Radiology)" },
@@ -190,7 +190,7 @@ export default function IpdFeedbackDetails() {
                         { key: "maintenance", label: "Maintenance (A.C., Fan, etc.)" },
                         { key: "dietitianServices", label: "Dietitian (Food, Canteen)" },
                         { key: "security", label: "Security" },
-                        { key: "nursing", label: "Nursing" },
+                        // { key: "nursing", label: "Nursing Service" },
                       ].map(({ key, label }) => (
                         <div
                           key={key}

@@ -29,6 +29,7 @@ import TATAllList from "./pages/reportsMain/allListPages/TATAllList.jsx";
 
 import socket from "./socket/index.js";
 import PrivateRoute from "./Component/PrivateRoute.jsx"; // ✅ import
+import PushNotification from "./pages/bedCreate/pushNotification.jsx";
 
 function App() {
   const location = useLocation();
@@ -153,6 +154,7 @@ function App() {
             element={<PrivateRoute><EmailManagement /></PrivateRoute>}
           />
           <Route path="/dashboards/tat-view" element={<PrivateRoute><TATAllList /></PrivateRoute>} />
+          <Route path="/dashboards/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
         </Routes>
       </div>
     </>
