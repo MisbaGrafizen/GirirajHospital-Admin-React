@@ -29,7 +29,7 @@ import TATAllList from "./pages/reportsMain/allListPages/TATAllList.jsx";
 
 import socket from "./socket/index.js";
 import PrivateRoute from "./Component/PrivateRoute.jsx"; // ✅ import
-import PushNotification from "./pages/bedCreate/pushNotification.jsx";
+import PushNotification from "./pages/bedCreate/PushNotification.jsx";
 
 function App() {
   const location = useLocation();
