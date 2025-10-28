@@ -29,7 +29,7 @@ const MODULE_TO_BLOCK = {
     doctor_service: "doctorServices",
     diagnostic_service: "diagnosticServices",
     nursing: "nursing",
-    dietetics: "dietitianServices",
+    dietitian: "dietitianServices",
     maintenance: "maintenance",
     security: "security",
     billing_service: "billingServices",
