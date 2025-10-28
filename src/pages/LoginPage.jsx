@@ -40,7 +40,7 @@ export default function LoginPage() {
     localStorage.setItem("loginType", loginType);
 
     if (permissions)
-      localStorage.setItem("permissions", JSON.stringify(permissions));
+      localStorage.setItem("rights", JSON.stringify(permissions));
 
     if (rememberMe) {
       localStorage.setItem("savedIdentifier", identifier);
@@ -52,7 +52,7 @@ export default function LoginPage() {
   };
 
   // 🚀 Handle Login
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -96,8 +96,11 @@ export default function LoginPage() {
           password,
         });
 
-        const { user, token, permissions } = res.data;
+        const { user, token } = res.data;
+        const permissions = user?.roleId || [];
+        console.log("Role-user login response:", res);
         saveAuthData({ user, token, permissions, loginType: "roleUser" });
+
 
         // ✅ Wait a bit for userId to be stored before saving FCM token
         setTimeout(() => {
@@ -192,9 +195,8 @@ export default function LoginPage() {
               className="sr-only"
             />
             <span
-              className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${
-                rememberMe ? "bg-white" : "border-gray-400"
-              }`}
+              className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${rememberMe ? "bg-white" : "border-gray-400"
+                }`}
             >
               {rememberMe && (
                 <svg

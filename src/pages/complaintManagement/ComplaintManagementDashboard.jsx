@@ -47,7 +47,7 @@ const MODULE_TO_BLOCK = {
     housekeeping: "housekeeping",
     maintenance: "maintenance",
     diagnostic_service: "diagnosticServices",
-    dietetics: "dietitianServices",
+    dietitian: "dietitianServices",
     nursing: "nursing",
     security: "security",
     nursing: "nursing",
@@ -80,7 +80,6 @@ function resolvePermissions() {
         allowedBlocks,
     };
 }
-
 
 
 function PermissionDenied() {
@@ -230,6 +229,7 @@ function getDoctorName(doc) {
 
 function flattenConcernDoc(doc, allowedBlocks) {
     const createdAt = doc?.createdAt || doc?.updatedAt || new Date().toISOString();
+    // console.log('allowedBlocks', allowedBlocks)
 
     const departments = [];
     allowedBlocks.forEach((k) => {
@@ -379,10 +379,40 @@ function computeKpis(rows) {
 }
 
 // Safe JSON fetch (avoids the "<!doctype" crash and ignores AbortError)
+// ✅ Final, Safe & Universal Version
 async function getConcerns(from, to) {
-    const res = await ApiGet(`/admin/ipd-concern`)
-    return Array.isArray(res?.data) ? res.data : [res?.data].filter(Boolean)
+  try {
+    const res = await ApiGet(`/admin/ipd-concern`);
+    // console.log("🔍 getConcerns raw response:", res);
+
+    // CASE 1: ApiGet already returns an array of docs
+    if (Array.isArray(res)) {
+      return res;
+    }
+
+    // CASE 2: ApiGet returns { success: true, data: [...] }
+    if (Array.isArray(res?.data)) {
+      return res.data;
+    }
+
+    // CASE 3: Sometimes backend wraps it in { response: { data: [...] } }
+    if (Array.isArray(res?.response?.data)) {
+      return res.response.data;
+    }
+
+    // CASE 4: If single object, wrap it in array
+    if (res && typeof res === "object") {
+      return [res];
+    }
+
+    // Default → empty array
+    return [];
+  } catch (err) {
+    console.error("❌ Error fetching concerns:", err);
+    return [];
+  }
 }
+
 
 // Reverse map: "Doctor Services" -> "doctorServices"
 const LABEL_TO_KEY = Object.fromEntries(
@@ -755,8 +785,7 @@ export default function ComplaintManagementDashboard() {
         })();
         return () => { alive = false; };
     }, []);
-
-
+    
 
     useEffect(() => {
         if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
@@ -822,7 +851,6 @@ export default function ComplaintManagementDashboard() {
             allowed.some((block) => block.includes(dep.department.toLowerCase()))
         );
     }
-
 
 
     const handleFilterChange = useCallback((next) => {

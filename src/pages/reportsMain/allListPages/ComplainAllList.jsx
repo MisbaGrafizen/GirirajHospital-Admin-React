@@ -40,7 +40,7 @@ const MODULE_TO_BLOCK = {
     housekeeping: "housekeeping",
     maintenance: "maintenance",
     diagnostic_service: "diagnosticServices",
-    dietetics: "dietitianServices",
+    dietitian: "dietitianServices",
     nursing: "nursing", // if you have it
     security: "security",
     nursing: "nursing",
@@ -178,20 +178,38 @@ useEffect(() => {
 
       setRawConcerns(Array.isArray(docs) ? docs : []);
 
-      // ✅ Transform docs into "rows" for table display
-      const mapped = docs.map((d) => ({
-        id: d._id,
-        complaintId: d.complaintId,
-        createdAt: d.createdAt,
-        date: new Date(d.createdAt).toLocaleString(), // format for display
-        patient: d.patientName || "-",
-        doctor: d.consultantDoctorName?.name || "-",
-        bedNo: d.bedNo || "-",
-        department: d.department || "-",
-        status: d.status || "Pending",
-        details: d.details || "",
-      }));
-      setRows(mapped);
+     // ✅ Filter docs by allowedBlocks and map only those complaints the user can access
+const filteredDocs = docs.filter((d) => {
+  // Admins see everything
+  if (isAdmin) return true;
+
+  // Role-user: show complaints only from their allowed departments
+  return allowedBlocks.some((block) => {
+    const deptBlock = d[block];
+    if (!deptBlock) return false;
+    const hasText = deptBlock.text && deptBlock.text.trim().length > 0;
+    const hasAttachments =
+      Array.isArray(deptBlock.attachments) && deptBlock.attachments.length > 0;
+    return hasText || hasAttachments;
+  });
+});
+
+// ✅ Now map filtered complaints to display rows
+const mapped = filteredDocs.map((d) => ({
+  id: d._id,
+  complaintId: d.complaintId,
+  createdAt: d.createdAt,
+  date: new Date(d.createdAt).toLocaleString(),
+  patient: d.patientName || "-",
+  doctor: d.consultantDoctorName?.name || "-",
+  bedNo: d.bedNo || "-",
+  department: getDepartmentsString(d, allowedBlocks) || "-", // 👈 only allowed departments
+  status: d.status || "Pending",
+  details: d.details || "",
+}));
+
+setRows(mapped);
+
     } catch (e) {
       if (!alive) return;
       console.error("Failed to load concerns", e);
