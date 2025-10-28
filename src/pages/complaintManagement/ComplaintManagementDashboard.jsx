@@ -356,16 +356,28 @@ function computeKpis(rows) {
     const resolvedRows = rows.filter((r) => r.status === "Resolved")
     let avgResolutionStr = "—"
     if (resolvedRows.length) {
-        const mins = Math.round(
-            resolvedRows.reduce((acc, r) => {
-                const start = new Date(r.createdAt).getTime()
-                const end = new Date().getTime()
-                return acc + Math.max(0, end - start) / 60000
-            }, 0) / resolvedRows.length,
-        )
-        const h = Math.floor(mins / 60)
-        const m = mins % 60
-        avgResolutionStr = `${h}/${m} `
+const mins = Math.round(
+    resolvedRows.reduce((acc, r) => {
+        const start = new Date(r.createdAt).getTime();
+        const end = new Date().getTime();
+        return acc + Math.max(0, end - start) / 60000;
+    }, 0) / resolvedRows.length
+);
+
+if (mins >= 1440) { // more than 24 hours
+    const days = Math.floor(mins / 1440);
+    const hours = Math.floor((mins % 1440) / 60);
+    const minutes = mins % 60;
+    avgResolutionStr = `${days} day${days > 1 ? "s" : ""} ${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
+} else if (mins >= 60) { // between 1 hour and 24 hours
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    avgResolutionStr = `${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
+} else { // less than 1 hour
+    avgResolutionStr = `${mins} min${mins !== 1 ? "s" : ""}`;
+}
+
+
     }
 
     return {
@@ -378,39 +390,66 @@ function computeKpis(rows) {
     }
 }
 
+// ✅ Compute TAT time (only hours if <24h, days+hours if ≥24h)
+function computeTATTime(stampIn, stampOut) {
+  if (!stampIn || !stampOut) return "-";
+
+  const start = new Date(stampIn);
+  const end = new Date(stampOut);
+  if (isNaN(start) || isNaN(end)) return "-";
+
+  const diffMs = end - start;
+  if (diffMs <= 0) return "-";
+
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const totalHours = Math.floor(totalMinutes / 60);
+
+  // ⏱️ Less than 24 hours → show only hours
+  if (totalHours < 24) {
+    return `${totalHours} hr${totalHours !== 1 ? "s" : ""}`;
+  }
+
+  // 📅 More than 24 hours → show days + remaining hours
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  return `${days} day${days > 1 ? "s" : ""}${hours ? ` ${hours} hr${hours !== 1 ? "s" : ""}` : ""}`;
+}
+
+
+
 // Safe JSON fetch (avoids the "<!doctype" crash and ignores AbortError)
 // ✅ Final, Safe & Universal Version
 async function getConcerns(from, to) {
-  try {
-    const res = await ApiGet(`/admin/ipd-concern`);
-    // console.log("🔍 getConcerns raw response:", res);
+    try {
+        const res = await ApiGet(`/admin/ipd-concern`);
+        // console.log("🔍 getConcerns raw response:", res);
 
-    // CASE 1: ApiGet already returns an array of docs
-    if (Array.isArray(res)) {
-      return res;
+        // CASE 1: ApiGet already returns an array of docs
+        if (Array.isArray(res)) {
+            return res;
+        }
+
+        // CASE 2: ApiGet returns { success: true, data: [...] }
+        if (Array.isArray(res?.data)) {
+            return res.data;
+        }
+
+        // CASE 3: Sometimes backend wraps it in { response: { data: [...] } }
+        if (Array.isArray(res?.response?.data)) {
+            return res.response.data;
+        }
+
+        // CASE 4: If single object, wrap it in array
+        if (res && typeof res === "object") {
+            return [res];
+        }
+
+        // Default → empty array
+        return [];
+    } catch (err) {
+        console.error("❌ Error fetching concerns:", err);
+        return [];
     }
-
-    // CASE 2: ApiGet returns { success: true, data: [...] }
-    if (Array.isArray(res?.data)) {
-      return res.data;
-    }
-
-    // CASE 3: Sometimes backend wraps it in { response: { data: [...] } }
-    if (Array.isArray(res?.response?.data)) {
-      return res.response.data;
-    }
-
-    // CASE 4: If single object, wrap it in array
-    if (res && typeof res === "object") {
-      return [res];
-    }
-
-    // Default → empty array
-    return [];
-  } catch (err) {
-    console.error("❌ Error fetching concerns:", err);
-    return [];
-  }
 }
 
 
@@ -785,7 +824,7 @@ export default function ComplaintManagementDashboard() {
         })();
         return () => { alive = false; };
     }, []);
-    
+
 
     useEffect(() => {
         if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
@@ -1549,7 +1588,8 @@ export default function ComplaintManagementDashboard() {
                                                                                 className={`flex items-center min-w-[130px]  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
 
                                                                             >
-                                                                                {complaint.totalTimeTaken}
+                                                                                {computeTATTime(complaint.stampIn, complaint.stampOut)}
+
                                                                             </span>
                                                                         </td>
                                                                         {/* <td className="px-6 py-2 text-sm text-gray-900">

@@ -10,9 +10,12 @@ import {
   Activity,
   TrendingUp,
   ClipboardList,
+  User,
+  Timer,
 } from "lucide-react";
 
-const WidgetsWrapper = ({ kpis }) => {
+const WidgetsWrapper = ({ kpis, totals }) => {
+  // --- KPIs ---
   const totalFeedback = kpis?.totalFeedback || 0;
   const avgRating = kpis?.averageRating?.value?.toFixed(1) || "0.0";
   const responseRate =
@@ -20,6 +23,13 @@ const WidgetsWrapper = ({ kpis }) => {
   const openIssues = kpis?.openIssues || 0;
   const npsRating = kpis?.npsRating?.value?.toFixed(1) || "0.0";
   const totalConcern = kpis?.totalConcern || 0;
+
+  // --- Totals ---
+  const totalRoleUsers = totals?.totalRoleUsers || 0;
+  const totalTAT = totals?.totalTAT || 0;
+
+  console.log("📊 KPIs:", kpis);
+  console.log("👥 Totals:", totals);
 
   const widgets = [
     {
@@ -65,37 +75,29 @@ const WidgetsWrapper = ({ kpis }) => {
       icon: <ClipboardList className="w-5 text-[#f83164] h-5" />,
     },
     {
-      title: "Coming Soon",
-      gros: npsRating,
-      total: 0,
+      title: "Total TAT",
+      gros: totalTAT,
+      total: totalTAT,
       color: "info",
-      icon: <TrendingUp className="w-5 h-5" />,
+      icon: <Timer className="w-5 h-5" />,
     },
     {
-      title: "Coming Soon",
-      gros: openIssues,
-      total: 0,
+      title: "Total Users",
+      gros: totalRoleUsers,
+      total: totalRoleUsers,
       color: "danger",
-      icon: <AlertCircle className="w-5 text-[#ffaa06] h-5" />,
+      icon: <User className="w-5 text-[#ffaa06] h-5" />,
     },
   ];
 
   return (
     <Row className="gx-3 gy-1">
       {widgets.map((widget, index) => (
-        <>
-          <Col key={index} className="  mx-auto md77:!block" xs="6" md="4" lg="3">
-            <Widgets1 data={widget} />
-          </Col>
-          {/* <div className=" grid grid-cols-2  ">
-            <div key={index} className="  ">
-              <Widgets1 data={widget} />
-            </div>
-          </div> */}
-        </>
+        <Col key={index} className="mx-auto md77:!block" xs="6" md="4" lg="3">
+          <Widgets1 data={widget} />
+        </Col>
       ))}
     </Row>
-
   );
 };
 

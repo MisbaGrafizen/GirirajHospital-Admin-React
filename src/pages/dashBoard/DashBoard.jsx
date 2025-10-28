@@ -108,16 +108,27 @@ export default function DashBoard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [concernData, setConcernData] = useState([])
-  const [kpis, setKpis] = useState({
-    totalFeedback: 0,
-    averageRatixng: { value: 0 },
-    npsRating: { value: 0 },
-    openIssues: 0,
-    resolvedIssues: 0,
-    totalConcern: 0,
-    earning: { weeklyAverage: 0, series: [], labels: [] },
-    expense: { weeklyAverage: 0, series: [], labels: [] },
-  });
+// ✅ keep KPIs clean and separate from totals
+const [kpis, setKpis] = useState({
+  totalFeedback: 0,
+  averageRating: { value: 0 },
+  npsRating: { value: 0 },
+  openIssues: 0,
+  resolvedIssues: 0,
+  totalConcern: 0,
+  earning: { weeklyAverage: 0, series: [], labels: [] },
+  expense: { weeklyAverage: 0, series: [], labels: [] },
+});
+
+// ✅ separate totals
+const [totals, setTotals] = useState({
+  totalUsers: 0,
+  totalRoleUsers: 0,
+  totalAdmins: 0,
+  totalTAT: 0,
+});
+
+
 
 
   const [recentFeedbacks, setRecentFeedbacks] = useState([])
@@ -156,8 +167,24 @@ export default function DashBoard() {
 
           if (!mounted) return
 
-          // KPIs
-          setKpis(data.kpis || kpis)
+if (data.kpis || data.totals) {
+  const kpiData = data.kpis || {};
+  const totalsData = data.totals || {};
+
+  setKpis(kpiData);
+  setTotals({
+    totalUsers: totalsData.totalUsers ?? 0,
+    totalRoleUsers: totalsData.totalRoleUsers ?? 0,
+    totalAdmins: totalsData.totalAdmins ?? 0,
+    totalTAT: totalsData.totalTAT ?? 0,
+  });
+
+  console.log("✅ KPIs:", kpiData);
+  console.log("✅ Totals:", totalsData);
+}
+
+
+
 
           const series = Array.isArray(data?.ipdTrends?.series) ? data.ipdTrends.series : []
           const ipdTrendMapped = series.map((row) => {
@@ -250,7 +277,7 @@ export default function DashBoard() {
             totalConcern: totalForThisWeek,
           }));
 
-          
+
           // ----- Department bars -----
           const DEPT_LABEL = {
             doctorServices: "Doctor",
@@ -337,7 +364,7 @@ export default function DashBoard() {
 
                   <div className=" ">
                     <div className="">
-                      <WidgetsWrapper kpis={kpis} />
+                      <WidgetsWrapper kpis={kpis} totals={totals} />
                     </div>
 
 

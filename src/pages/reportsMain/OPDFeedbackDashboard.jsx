@@ -462,21 +462,32 @@ export default function OPDFeedbackDashboard() {
   )
 
   useEffect(() => {
-    if (!rawOPD || !rawOPD.length) {
-      setDoctorOptions(["All Doctors"]);
-      return;
+  (async () => {
+    try {
+      // ✅ Fetch all doctors from your backend
+      const res = await ApiGet("/admin/doctor"); // <-- update this endpoint to your actual doctors API
+
+      const allDoctors = Array.isArray(res?.data)
+        ? res.data.map(d => d.name || d.fullName || d.doctorName).filter(Boolean)
+        : [];
+
+      const uniqueDoctors = Array.from(new Set(allDoctors)).sort();
+      setDoctorOptions(["All Doctors", ...uniqueDoctors]);
+    } catch (err) {
+      console.error("Failed to fetch doctor list:", err);
+      // fallback to what’s available in feedback data
+      const fallback = Array.from(
+        new Set(
+          rawOPD
+            ?.map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
+            ?.filter(Boolean) || []
+        )
+      ).sort();
+      setDoctorOptions(["All Doctors", ...fallback]);
     }
+  })();
+}, [rawOPD]);
 
-    const uniqueDoctors = Array.from(
-      new Set(
-        rawOPD
-          .map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
-          .filter(Boolean)
-      )
-    ).sort();
-
-    setDoctorOptions(["All Doctors", ...uniqueDoctors]);
-  }, [rawOPD]);
 
 
 

@@ -68,17 +68,24 @@ export default function EmailManagement() {
                 📋 Patient Details
               </h4>
               <div class="divide-y divide-gray-200">
-                ${Object.entries(n.data)
-                .map(
-                  ([key, value]) => `
-                    <div class="flex items-start py-2">
-                      <div class="w-40 font-medium text-gray-900 capitalize">${formatKey(
-                    key
-                  )}</div>
-                      <div class="flex-1 text-gray-700 break-words">${value}</div>
-                    </div>`
-                )
-                .join("")}
+    ${Object.entries(n.data)
+  .filter(([key]) => !["complaintid","_id", "__v"].includes(key.toLowerCase()))
+  .map(([key, value]) => {
+    // 👇 Rename 'complaint' or 'complaintid' → 'Complaint Id'
+    let label =
+      key.toLowerCase() === "complaint"
+        ? "ComplaintId"
+        : formatKey(key);
+
+    return `
+      <div class="flex items-start py-2">
+        <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
+        <div class="flex-1 text-gray-700 break-words">${value}</div>
+      </div>`;
+  })
+  .join("")}
+
+
               </div>
             </div>`
               : ""
