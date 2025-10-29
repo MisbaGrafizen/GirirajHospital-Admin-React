@@ -136,7 +136,7 @@ export default function TATAllList() {
   return (
     <section className="flex w-full h-full select-none overflow-hidden">
       <div className="flex w-full flex-col h-[100vh]">
-        <Header pageName="TAT List" />
+        <Header pageName="TAT List " />
         <div className="flex w-full h-full">
           <CubaSidebar />
           <div className="flex flex-col w-full relative max-h-[93%] py-3 px-2 overflow-y-auto gap-3 rounded-[10px]">
@@ -146,7 +146,7 @@ export default function TATAllList() {
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                   <i className="fa-regular fa-users-medical text-[17px] text-[#fff]"></i>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">TAT Details</h3>
+                <h3 className="text-lg font-semibold text-gray-900">TAT (Turnaround Time)</h3>
               </div>
 
               <div className="overflow-x-auto">

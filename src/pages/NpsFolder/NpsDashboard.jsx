@@ -418,7 +418,7 @@ export default function NpsDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4  ">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 md34:!gap-x-4  mb-[-4px] mt -[-4px]  ">
                     <Widgets1
                       data={{
                         title: "Detractors",

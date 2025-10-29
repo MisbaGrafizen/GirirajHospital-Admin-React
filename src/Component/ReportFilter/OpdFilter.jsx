@@ -136,7 +136,7 @@ export default function OpdFilter({
 
   return (
     <div className="">
-      <div className="md34:!hidden md11:!grid grid-cols-2 md11:grid-cols-4 gap-x-6">
+      <div className="md34:!hidden md11:!grid grid-cols-2 md11:grid-cols-4 gap-x-[9px]">
         <ModernDatePicker label="From Date" selectedDate={dateFrom} setSelectedDate={setDateFrom} />
         <ModernDatePicker label="To Date" selectedDate={dateTo} setSelectedDate={setDateTo} />
         {shouldShowServiceDropdown && (

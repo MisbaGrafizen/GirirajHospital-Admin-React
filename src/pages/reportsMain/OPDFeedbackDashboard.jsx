@@ -721,7 +721,7 @@ export default function OPDFeedbackDashboard() {
           <div className="flex gap-[10px] w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[0px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[0px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
               <div className="mx-auto w-full">
                 <div className="bg-white rounded-lg shadow-sm p-[13px]  md34:!mx-[7px] md11:!mx-0   mb-[10px] border border-gray-100  ">

@@ -27,55 +27,55 @@ function Header({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-const [count, setCount] = useState(0);
-const [lastSeen, setLastSeen] = useState(Number(localStorage.getItem("lastSeen")) || 0);
+  const [count, setCount] = useState(0);
+  const [lastSeen, setLastSeen] = useState(Number(localStorage.getItem("lastSeen")) || 0);
 
-// useEffect(() => {
-//   const fetchCount = async () => {
-//     try {
-//       const data = await ApiGet("/admin/notifications");
-//       setCount(data?.notifications?.length || 0);
-//     } catch (err) {
-//       console.error("Error fetching notifications:", err);
-//     }
-//   };
+  // useEffect(() => {
+  //   const fetchCount = async () => {
+  //     try {
+  //       const data = await ApiGet("/admin/notifications");
+  //       setCount(data?.notifications?.length || 0);
+  //     } catch (err) {
+  //       console.error("Error fetching notifications:", err);
+  //     }
+  //   };
 
-//   fetchCount(); // initial
-//   const interval = setInterval(fetchCount, 5000); // every 5 sec refresh
+  //   fetchCount(); // initial
+  //   const interval = setInterval(fetchCount, 5000); // every 5 sec refresh
 
-//   return () => clearInterval(interval); // cleanup
-// }, []);
+  //   return () => clearInterval(interval); // cleanup
+  // }, []);
 
-useEffect(() => {
-  // initial fetch
-  const fetchCount = async () => {
-    try {
-      const data = await ApiGet("/admin/notifications");
-      setCount(data?.notifications?.length || 0);
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-    }
+  useEffect(() => {
+    // initial fetch
+    const fetchCount = async () => {
+      try {
+        const data = await ApiGet("/admin/notifications");
+        setCount(data?.notifications?.length || 0);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
+    };
+    fetchCount();
+
+    // ✅ listen for new notifications
+    socket.on("notification:new", () => {
+      fetchCount(); // re-fetch count immediately when new notification comes
+    });
+
+    return () => {
+      socket.off("notification:new");
+    };
+  }, []);
+
+
+  const handleMail = () => {
+    navigate("/mail");
+    setLastSeen(count);
+    localStorage.setItem("lastSeen", count);
   };
-  fetchCount();
 
-  // ✅ listen for new notifications
-  socket.on("notification:new", () => {
-    fetchCount(); // re-fetch count immediately when new notification comes
-  });
-
-  return () => {
-    socket.off("notification:new");
-  };
-}, []);
-
-
-const handleMail = () => {
-  navigate("/mail");
-  setLastSeen(count);
-  localStorage.setItem("lastSeen", count);
-};
-
-const unreadCount = count - lastSeen;
+  const unreadCount = count - lastSeen;
 
 
   const handleBack = () => {
@@ -103,6 +103,10 @@ const unreadCount = count - lastSeen;
     navigate("/"); // redirect to login
   };
 
+
+  const handleNotes = () => {
+    navigate("/notes");
+  }
   return (
     <>
 
@@ -129,7 +133,7 @@ const unreadCount = count - lastSeen;
 
             {/* ✅ Show only on dashboard */}
             {location.pathname === "/dashboards/super-dashboard" && (
-              <div className=" md34:hidden md11:!grid grid-cols-1 md:grid-cols-4 gap-x-6">
+              <div className=" md34:hidden md11:!grid grid-cols-1 md:grid-cols-4 gap-x-3">
                 <ModernDatePicker
                   label="From Date"
                   selectedDate={dateFrom}
@@ -156,45 +160,53 @@ const unreadCount = count - lastSeen;
 
 
 
-<div className="relative mr-[30px] flex items-center">
-  <button
-    onClick={handleMail}
-    className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
-  >
-    <i className="fa-solid fa-bell text-gray-700 text-lg"></i>
-  </button>
+          <div className="relative mr-[30px] flex items-center">
 
-  {unreadCount > 0 && (
-    <span
-      onClick={handleMail}
-      className="absolute top-[-5px] right-[-5px] flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-600 rounded-full border-2 border-white shadow"
-    >
-      {unreadCount}
-    </span>
-  )}
-</div>
+            <button
+  onClick={handleNotes}
+              className=" flex mr-[20px]  items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
+            >
+             <i className="fa-regular text-[20px] fa-pen-to-square"></i>
+            </button>
 
-        </section>
-{["/dashboards/super-dashboard", "/dashboards/opd-feedback","/dashboards/ipd-feedback", "/dashboards/complaint-dashboard","/dashboards/nps-dashboard"].includes(location.pathname) && (
-        <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
+            <button
+              onClick={handleMail}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
+            >
+              <i className="fa-solid fa-bell text-gray-700 text-lg"></i>
+            </button>
 
-          <div className="flex h-[50px] px-[10px]  items-center justify-center w-[100%]">
-            <AnimatedDropdownNavigate
-              label="Go to Page"
-              // icon={Menu}
-              options={[
-                { id: "super-admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
-                { id: "opd", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserDoctor },
-                { id: "ipd", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
-                { id: "complaints", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListCheck },
-                { id: "nps", label: "Nps Dashboard", href: "/dashboards/nps-dashboard", icon: faSmile },
-              ]}
-            />
+            {unreadCount > 0 && (
+              <span
+                onClick={handleMail}
+                className="absolute top-[-5px] right-[-5px] flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-600 rounded-full border-2 border-white shadow"
+              >
+                {unreadCount}
+              </span>
+            )}
           </div>
 
+        </section>
+        {["/dashboards/super-dashboard", "/dashboards/opd-feedback", "/dashboards/ipd-feedback", "/dashboards/complaint-dashboard", "/dashboards/nps-dashboard"].includes(location.pathname) && (
+          <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
 
-        </div>
-   )}
+            <div className="flex h-[50px] px-[10px]  items-center justify-center w-[100%]">
+              <AnimatedDropdownNavigate
+                label="Go to Page"
+                // icon={Menu}
+                options={[
+                  { id: "super-admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
+                  { id: "opd", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserDoctor },
+                  { id: "ipd", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
+                  { id: "complaints", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListCheck },
+                  { id: "nps", label: "Nps Dashboard", href: "/dashboards/nps-dashboard", icon: faSmile },
+                ]}
+              />
+            </div>
+
+
+          </div>
+        )}
       </div>
 
     </>

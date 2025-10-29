@@ -46,7 +46,7 @@ const RecentOrders = ({ overallNps = 0 }) => {
 
   return (
     <Col className="w-[100%] md11:!pb-0">
-      <Card className="height-equal">
+      <Card className="">
         <CardHeader className="card-no-border">
           <div className="flex items-center gap-[10px]">
             <div className="flex profile-box1 rounded-md justify-center items-center w-10 h-10">

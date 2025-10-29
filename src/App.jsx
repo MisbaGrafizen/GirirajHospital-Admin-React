@@ -27,6 +27,8 @@ import NpsAllList from "./pages/reportsMain/allListPages/NpsAllList.jsx";
 import BedCreate from "./pages/bedCreate/BedCreate.jsx";
 import TATAllList from "./pages/reportsMain/allListPages/TATAllList.jsx";
 import PushNotification from "./pages/bedCreate/PushNotification.jsx";
+import NotesAdd from "./pages/notesPage/NotesAdd.jsx";
+import TodoPage from "./pages/notesPage/TodoPage.jsx";
 
 function App() {
   const location = useLocation();
@@ -97,6 +99,9 @@ function App() {
           <Route path="/dashboards/nps-all-list" element={<PrivateRoute><NpsAllList /></PrivateRoute>} />
           <Route path="/mail" element={<PrivateRoute><EmailManagement /></PrivateRoute>} />
           <Route path="/dashboards/tat-view" element={<PrivateRoute><TATAllList /></PrivateRoute>} />
+           <Route path="/notes" element={<PrivateRoute><NotesAdd /></PrivateRoute>} />
+           <Route path="/todolist" element={<PrivateRoute><TodoPage /></PrivateRoute>} />
+
           <Route path="/dashboards/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
         </Routes>
       </div>
