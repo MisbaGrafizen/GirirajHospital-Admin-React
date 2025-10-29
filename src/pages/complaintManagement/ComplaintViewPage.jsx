@@ -151,6 +151,44 @@ export default function ComplaintViewPage() {
 
     const escalationLevels = ["PGRO", "CEO", "Board of Directors", "Medical Director"]
 
+    // 🔹 FIXED ESCALATION USER MAP
+const ESCALATION_USER_MAP = {
+  "CEO": {
+    _id: "68ef88c724a8a2a8317e0cb3",
+    name: "Jalpa Raichura",
+    email: "jr.grj@feedbacks.live",
+    mobileNumber: "9924022922",
+    fcmTokens: [
+      "eUviBDD32z_4IwQ8IZCnVy:APA91bHiaUvm_fG86tZ6IbQnW6RHGxV-O5sAolZAxpfDUP0zOcnDnoDokG2kJkZWk5SH-OUEV0N0EoSULOEPpMY2hynjEdPjBiYFPDzhgFZT-hme8lTDQr4"
+    ],
+  },
+  "Board of Directors": {
+    _id: "68ef884624a8a2a8317e0cab",
+    name: "Mayank Thakkar",
+    email: "mt.grj@feedbacks.live",
+    mobileNumber: "9924022911",
+    fcmTokens: [
+      "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8",
+      "c06WC1uMbylI6YjNx0qRU7:APA91bFOgOALzusK1HWR_rpZ_NbGFkT10q-NeOg-5034YhdYr65JCz7o1f1IUYTpQ9ulL7unXVerGReU5Z6J3kcwUuJjIaFu737Y6glhcTO0YTh2B9sTB-s",
+      "cNScS4yueulGgnV7j9fcsr:APA91bE4suE86YiiTnPfpLcbGfwMBS4u1adPHA3aFrvyVb_cjPl4eQBh5IY5LklAFM7hN-k7_wMob1PQZUqiUqbTs6nE9XidMHcMH3-5yQonaqV9o032e4E",
+      "c4aaNywdDZj6TRmX90qn6g:APA91bF2RGN3f3JVYqvQm3gpwIyMDqpxoX7TE4KCrEWfte-q3O_aAJrf_8sfDNyMjVrovJuOJEyqj8ILxE9ad_3693ijFE-4MxJix-M28UZyLBmOdPYFfuw",
+      "dO9oS8NgqH3fU_b__GQPwb:APA91bH-rUW8e8vdUYGexL2U9r45Nt1aspKgNqpXD4E_9CcL8HOQMSx3jsZph1MtzBwh2wygpuMFIfzbfUPfs0-XRGT1kihhiXIsywQRf3l-3-caXsBc-2k",
+      "eKxt4jNeMDk5akRGDE_hss:APA91bGDvdxE5awm0ImycsvRF9yPse7_c1la-wGz828OiatqcAe3_tDUCk35Q1fCwYOdedzPZguc8C5x8rpHg80DtPv4s4uAvZnArCQJul2rGS24oN8Frzs",
+      "eKxt4jNeMDk5akRGDE_hss:APA91bHEJcMWaCOG1X3j5Zl8O2HExS3kEqPOlLoHrJgZDMpuIq55l41FiPWnpkrlDWF0LH7FYyxbJ5mhyCH7BSkEp4thz1s62tHObHl4tuAorVIaFCNy-UA"
+    ],
+  },
+  "Medical Director": {
+    _id: "68ef88b124a8a2a8317e0caf",
+    name: "Shivani Kathrotiya",
+    email: "sk.grj@feedbacks.live",
+    mobileNumber: "9924022912",
+    fcmTokens: [
+      "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8"
+    ],
+  },
+};
+
+
     const { state } = useLocation();
     const row = state?.complaint || {};
     const fullDoc = state?.doc || row;
@@ -330,53 +368,57 @@ async function escalateDepartmentComplaint(complaintId, department, { level, not
 
 
     const handleEscalateSubmit = async () => {
-    if (!escalationLevel || !escalationNote) {
-        alert("Please select escalation level and provide a note.");
+  if (!escalationLevel || !escalationNote) {
+    alert("Please select escalation level and provide a note.");
+    return;
+  }
+
+  try {
+    const currentUserId = localStorage.getItem("userId") || "12345";
+
+    // ✅ Automatically find target user from level
+    const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
+
+    const payload = {
+      level: escalationLevel,
+      note: escalationNote,
+      userId: currentUserId,
+      escalatedTo: targetUser?._id || null, // backend receives this
+    };
+
+    // ✅ Department-specific escalation
+    if (selectedDepartment) {
+      const deptKey = Object.keys(DEPT_LABEL).find(
+        (k) => DEPT_LABEL[k] === selectedDepartment
+      );
+
+      if (!deptKey) {
+        alert("Invalid department selected.");
         return;
+      }
+
+      await escalateDepartmentComplaint(complaint.id, deptKey, payload);
+      alert(
+        `Complaint for ${selectedDepartment} escalated to ${escalationLevel} `
+      );
+    } else {
+      // ✅ Escalate entire complaint
+      await escalateComplaint(complaint.id, payload);
+      alert(
+        `Complaint escalated to ${escalationLevel}`
+      );
     }
 
-    try {
-        const currentUserId = localStorage.getItem("userId") || "12345";
-
-        // ✅ If a department is selected, escalate only that department
-        if (selectedDepartment) {
-            const deptKey = Object.keys(DEPT_LABEL).find(
-                (k) => DEPT_LABEL[k] === selectedDepartment
-            );
-
-            if (!deptKey) {
-                alert("Invalid department selected.");
-                return;
-            }
-
-            const res = await escalateDepartmentComplaint(complaint.id, deptKey, {
-                level: escalationLevel,
-                note: escalationNote,
-                userId: currentUserId,
-            });
-
-            alert(res.message || `Department ${selectedDepartment} escalated to ${escalationLevel}`);
-        } else {
-            // ✅ If no department selected, escalate entire complaint
-            const res = await escalateComplaint(complaint.id, {
-                level: escalationLevel,
-                note: escalationNote,
-                userId: currentUserId,
-            });
-
-            alert(res.message || `Complaint escalated to ${escalationLevel}`);
-        }
-
-        // ✅ Refresh history after escalation
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
-
-        closeAllModals();
-    } catch (error) {
-        console.error("Escalation Error:", error);
-        alert(error.message || "Something went wrong while escalating complaint");
-    }
+    // ✅ Refresh history after escalation
+    const newHistory = await fetchConcernHistory(complaint.id);
+    setHistoryData(newHistory);
+    closeAllModals();
+  } catch (error) {
+    console.error("Escalation Error:", error);
+    alert(error.message || "Something went wrong while escalating complaint");
+  }
 };
+
 
 
 
