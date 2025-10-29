@@ -33,43 +33,72 @@ import TodoPage from "./pages/notesPage/TodoPage.jsx";
 function App() {
   const location = useLocation();
 
+  // useEffect(() => {
+  //   // Ask for notification permission
+  //   if (Notification.permission !== "granted") {
+  //     Notification.requestPermission().then((perm) =>
+  //       console.log("🔔 Permission:", perm)
+  //     );
+  //   }
+
+  //   // Show notification
+  //   const showNotification = (title, body) => {
+  //     if (Notification.permission === "granted") {
+  //       new Notification(title, {
+  //         body,
+  //         icon: "/images/feedbacklogo.png",
+  //       });
+  //     }
+  //   };
+
+  //   // Subscribe to Centrifugo channels
+  //   const subs = [
+  //     subscribeToCentrifugo("hospital-doctor_service", (data) => {
+  //       console.log("🩺 Doctor Service Data:", data);
+  //       showNotification("New Doctor Alert", `${data.patientName} - ${data.message}`);
+  //     }),
+  //     subscribeToCentrifugo("hospital-ipd_feedback", (data) => {
+  //       showNotification("New IPD Feedback", `${data.patientName} - ${data.message}`);
+  //     }),
+  //     subscribeToCentrifugo("hospital-opd_feedback", (data) => {
+  //       showNotification("New OPD Feedback", `${data.patientName} - ${data.message}`);
+  //     }),
+  //     subscribeToCentrifugo("hospital-complaints", (data) => {
+  //       showNotification("📝 Complaint Registered", `${data.patientName} - ${data.department}`);
+  //     }),
+  //   ];
+
+  //   return () => subs.forEach((s) => s.unsubscribe());
+  // }, []);
+
+
   useEffect(() => {
-    // Ask for notification permission
-    if (Notification.permission !== "granted") {
-      Notification.requestPermission().then((perm) =>
-        console.log("🔔 Permission:", perm)
-      );
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission().then((perm) =>
+      console.log("🔔 Permission:", perm)
+    );
+  }
+
+  const showNotification = (title, body) => {
+    if (Notification.permission === "granted") {
+      new Notification(title, {
+        body,
+        icon: "/images/feedbacklogo.png",
+      });
     }
+  };
 
-    // Show notification
-    const showNotification = (title, body) => {
-      if (Notification.permission === "granted") {
-        new Notification(title, {
-          body,
-          icon: "/images/feedbacklogo.png",
-        });
-      }
-    };
+  const subs = [
+    subscribeToCentrifugo("hospital-all", (data) => {
+      showNotification(data.title, data.message);
+    }),
+    subscribeToCentrifugo("hospital-doctor_service", (data) => {
+      showNotification(data.title, data.message);
+    }),
+  ];
 
-    // Subscribe to Centrifugo channels
-    const subs = [
-      subscribeToCentrifugo("hospital-doctor_service", (data) => {
-        console.log("🩺 Doctor Service Data:", data);
-        showNotification("New Doctor Alert", `${data.patientName} - ${data.message}`);
-      }),
-      subscribeToCentrifugo("hospital-ipd_feedback", (data) => {
-        showNotification("New IPD Feedback", `${data.patientName} - ${data.message}`);
-      }),
-      subscribeToCentrifugo("hospital-opd_feedback", (data) => {
-        showNotification("New OPD Feedback", `${data.patientName} - ${data.message}`);
-      }),
-      subscribeToCentrifugo("hospital-complaints", (data) => {
-        showNotification("📝 Complaint Registered", `${data.patientName} - ${data.department}`);
-      }),
-    ];
-
-    return () => subs.forEach((s) => s.unsubscribe());
-  }, []);
+  return () => subs.forEach((s) => s.unsubscribe());
+}, []);
 
   return (
     <>
