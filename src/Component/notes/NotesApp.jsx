@@ -1,112 +1,134 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import NotesSidebar from "./NotesSidebar"
 import NotesEditor from "./NotesEditor"
+import { ApiGet, ApiPost, ApiPut, ApiDelete } from "../../helper/axios"
 
 export default function NotesApp() {
   const [notes, setNotes] = useState([])
   const [selectedNoteId, setSelectedNoteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const saveTimeoutRef = useRef(null)
 
-  // Load notes from localStorage on mount
+  // 🧠 Helper to get userId from localStorage
+  const getActiveUserId = () => {
+    const id = localStorage.getItem("userId")
+    return id && id !== "undefined" && id !== "null" ? id : null
+  }
+
+  // 🔹 Fetch notes for logged-in user
   useEffect(() => {
-    const savedNotes = localStorage.getItem("notes")
-    if (savedNotes) {
+    const fetchNotes = async () => {
+      const userId = getActiveUserId()
+      if (!userId) return
+
       try {
-        setNotes(JSON.parse(savedNotes))
-      } catch (error) {
-        console.error("Error loading notes:", error)
+        const res = await ApiGet(`/admin/note/user/${userId}`)
+        const data = res?.data || []
+        setNotes(data)
+        if (data.length && !selectedNoteId) setSelectedNoteId(data[0]._id)
+      } catch (err) {
+        console.error("❌ Failed to fetch notes:", err)
       }
     }
+
+    fetchNotes()
   }, [])
 
-  // Save notes to localStorage whenever they change
-  useEffect(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
+  // 🟢 Create blank note immediately when user clicks “+ New Note”
+  const createNewNote = async () => {
+    try {
+      const userId = getActiveUserId()
+      if (!userId) return alert("User not found")
 
-    saveTimeoutRef.current = setTimeout(() => {
-      localStorage.setItem("notes", JSON.stringify(notes))
-    }, 1000)
+      const res = await ApiPost("/admin/note", { userId })
+      const newNote = res.data?.data || res.data
 
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
+      // Insert on top and select it
+      setNotes((prev) => [newNote, ...prev])
+      setSelectedNoteId(newNote._id)
+    } catch (err) {
+      console.error("❌ Error creating new note:", err)
     }
-  }, [notes])
-
-  // Create new note
-  const createNewNote = () => {
-    const newNote = {
-      id: Date.now().toString(),
-      title: "New Note",
-      content: "",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isPinned: false,
-    }
-    setNotes([newNote, ...notes])
-    setSelectedNoteId(newNote.id)
   }
 
-  // Update note
-  const updateNote = (id, updates) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id
-          ? {
-              ...note,
-              ...updates,
-              updatedAt: new Date().toISOString(),
-            }
-          : note,
-      ),
-    )
+  // 🟣 Handle auto-save (like Apple Notes)
+  const handleTyping = async (field, value) => {
+  const activeNote = notes.find((n) => n._id === selectedNoteId)
+  if (!activeNote) return
+
+  // 🧠 Update the note locally
+  const updatedNote = {
+    ...activeNote,
+    [field]: value,
+    updatedAt: new Date().toISOString(),
   }
 
-  // Delete note
-  const deleteNote = (id) => {
-    setNotes(notes.filter((note) => note.id !== id))
-    if (selectedNoteId === id) {
+  setNotes((prev) =>
+    prev.map((n) => (n._id === activeNote._id ? updatedNote : n))
+  )
+
+  // 🕒 Debounced full auto-save (send both fields)
+  clearTimeout(activeNote._saveTimeout)
+  activeNote._saveTimeout = setTimeout(async () => {
+    try {
+      await ApiPut(`/admin/note/${activeNote._id}`, {
+        title: updatedNote.title,
+        content: updatedNote.content,
+      })
+    } catch (err) {
+      console.error("❌ Auto-save failed:", err)
+    }
+  }, 800)
+}
+
+
+  // 🗑️ Auto-delete if both fields empty
+  // 🗑️ Auto-delete if both fields empty
+const handleAutoDelete = async (noteId) => {
+  const note = notes.find((n) => n._id === noteId)
+  console.log('note', note)
+  if (!note) return
+
+    try {
+      await ApiDelete(`/admin/note/${noteId}`)
+      setNotes((prev) => prev.filter((n) => n._id !== noteId))
       setSelectedNoteId(null)
+    } catch (err) {
+      console.error("❌ Auto-delete failed:", err)
     }
-  }
+}
 
-  // Toggle pin
-  const togglePin = (id) => {
-    updateNote(id, { isPinned: !notes.find((n) => n.id === id).isPinned })
-  }
 
-  // Get selected note
-  const selectedNote = notes.find((note) => note.id === selectedNoteId)
+  // 🧭 Selected Note
+  const selectedNote = notes.find((n) => n._id === selectedNoteId) || null
 
-  // Filter notes based on search
+  // 🔍 Search notes
   const filteredNotes = notes.filter(
-    (note) =>
-      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchQuery.toLowerCase()),
+    (n) =>
+      n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      n.content?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
-    <div className="flex  bg-white">
+    <div className="flex bg-white">
       {/* Sidebar */}
       <NotesSidebar
         notes={filteredNotes}
-        selectedNoteId={selectedNoteId}
+        selectedNoteId={selectedNote?._id}
         onSelectNote={setSelectedNoteId}
         onCreateNote={createNewNote}
-        onDeleteNote={deleteNote}
-        onTogglePin={togglePin}
+        onDeleteNote={handleAutoDelete}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
 
       {/* Editor */}
-      <NotesEditor note={selectedNote} onUpdateNote={updateNote} onCreateNote={createNewNote} />
+      <NotesEditor
+        note={selectedNote}
+        onTyping={handleTyping}
+        onAutoDelete={handleAutoDelete}
+      />
     </div>
   )
 }

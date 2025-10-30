@@ -72,33 +72,33 @@ function App() {
   // }, []);
 
 
-  useEffect(() => {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission().then((perm) =>
-      console.log("🔔 Permission:", perm)
-    );
-  }
+//   useEffect(() => {
+//   if (Notification.permission !== "granted") {
+//     Notification.requestPermission().then((perm) =>
+//       console.log("🔔 Permission:", perm)
+//     );
+//   }
 
-  const showNotification = (title, body) => {
-    if (Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/images/feedbacklogo.png",
-      });
-    }
-  };
+//   const showNotification = (title, body) => {
+//     if (Notification.permission === "granted") {
+//       new Notification(title, {
+//         body,
+//         icon: "/images/feedbacklogo.png",
+//       });
+//     }
+//   };
 
-  const subs = [
-    subscribeToCentrifugo("hospital-all", (data) => {
-      showNotification(data.title, data.message);
-    }),
-    subscribeToCentrifugo("hospital-doctor_service", (data) => {
-      showNotification(data.title, data.message);
-    }),
-  ];
+//   const subs = [
+//     subscribeToCentrifugo("hospital-all", (data) => {
+//       showNotification(data.title, data.message);
+//     }),
+//     subscribeToCentrifugo("hospital-doctor_service", (data) => {
+//       showNotification(data.title, data.message);
+//     }),
+//   ];
 
-  return () => subs.forEach((s) => s.unsubscribe());
-}, []);
+//   return () => subs.forEach((s) => s.unsubscribe());
+// }, []);
 
   return (
     <>

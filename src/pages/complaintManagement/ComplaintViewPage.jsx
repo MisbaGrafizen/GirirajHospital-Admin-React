@@ -152,41 +152,41 @@ export default function ComplaintViewPage() {
     const escalationLevels = ["PGRO", "CEO", "Board of Directors", "Medical Director"]
 
     // 🔹 FIXED ESCALATION USER MAP
-const ESCALATION_USER_MAP = {
-  "CEO": {
-    _id: "68ef88c724a8a2a8317e0cb3",
-    name: "Jalpa Raichura",
-    email: "jr.grj@feedbacks.live",
-    mobileNumber: "9924022922",
-    fcmTokens: [
-      "eUviBDD32z_4IwQ8IZCnVy:APA91bHiaUvm_fG86tZ6IbQnW6RHGxV-O5sAolZAxpfDUP0zOcnDnoDokG2kJkZWk5SH-OUEV0N0EoSULOEPpMY2hynjEdPjBiYFPDzhgFZT-hme8lTDQr4"
-    ],
-  },
-  "Board of Directors": {
-    _id: "68ef884624a8a2a8317e0cab",
-    name: "Mayank Thakkar",
-    email: "mt.grj@feedbacks.live",
-    mobileNumber: "9924022911",
-    fcmTokens: [
-      "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8",
-      "c06WC1uMbylI6YjNx0qRU7:APA91bFOgOALzusK1HWR_rpZ_NbGFkT10q-NeOg-5034YhdYr65JCz7o1f1IUYTpQ9ulL7unXVerGReU5Z6J3kcwUuJjIaFu737Y6glhcTO0YTh2B9sTB-s",
-      "cNScS4yueulGgnV7j9fcsr:APA91bE4suE86YiiTnPfpLcbGfwMBS4u1adPHA3aFrvyVb_cjPl4eQBh5IY5LklAFM7hN-k7_wMob1PQZUqiUqbTs6nE9XidMHcMH3-5yQonaqV9o032e4E",
-      "c4aaNywdDZj6TRmX90qn6g:APA91bF2RGN3f3JVYqvQm3gpwIyMDqpxoX7TE4KCrEWfte-q3O_aAJrf_8sfDNyMjVrovJuOJEyqj8ILxE9ad_3693ijFE-4MxJix-M28UZyLBmOdPYFfuw",
-      "dO9oS8NgqH3fU_b__GQPwb:APA91bH-rUW8e8vdUYGexL2U9r45Nt1aspKgNqpXD4E_9CcL8HOQMSx3jsZph1MtzBwh2wygpuMFIfzbfUPfs0-XRGT1kihhiXIsywQRf3l-3-caXsBc-2k",
-      "eKxt4jNeMDk5akRGDE_hss:APA91bGDvdxE5awm0ImycsvRF9yPse7_c1la-wGz828OiatqcAe3_tDUCk35Q1fCwYOdedzPZguc8C5x8rpHg80DtPv4s4uAvZnArCQJul2rGS24oN8Frzs",
-      "eKxt4jNeMDk5akRGDE_hss:APA91bHEJcMWaCOG1X3j5Zl8O2HExS3kEqPOlLoHrJgZDMpuIq55l41FiPWnpkrlDWF0LH7FYyxbJ5mhyCH7BSkEp4thz1s62tHObHl4tuAorVIaFCNy-UA"
-    ],
-  },
-  "Medical Director": {
-    _id: "68ef88b124a8a2a8317e0caf",
-    name: "Shivani Kathrotiya",
-    email: "sk.grj@feedbacks.live",
-    mobileNumber: "9924022912",
-    fcmTokens: [
-      "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8"
-    ],
-  },
-};
+    const ESCALATION_USER_MAP = {
+        "CEO": {
+            _id: "68ef88c724a8a2a8317e0cb3",
+            name: "Jalpa Raichura",
+            email: "jr.grj@feedbacks.live",
+            mobileNumber: "9924022922",
+            fcmTokens: [
+                "eUviBDD32z_4IwQ8IZCnVy:APA91bHiaUvm_fG86tZ6IbQnW6RHGxV-O5sAolZAxpfDUP0zOcnDnoDokG2kJkZWk5SH-OUEV0N0EoSULOEPpMY2hynjEdPjBiYFPDzhgFZT-hme8lTDQr4"
+            ],
+        },
+        "Board of Directors": {
+            _id: "68ef884624a8a2a8317e0cab",
+            name: "Mayank Thakkar",
+            email: "mt.grj@feedbacks.live",
+            mobileNumber: "9924022911",
+            fcmTokens: [
+                "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8",
+                "c06WC1uMbylI6YjNx0qRU7:APA91bFOgOALzusK1HWR_rpZ_NbGFkT10q-NeOg-5034YhdYr65JCz7o1f1IUYTpQ9ulL7unXVerGReU5Z6J3kcwUuJjIaFu737Y6glhcTO0YTh2B9sTB-s",
+                "cNScS4yueulGgnV7j9fcsr:APA91bE4suE86YiiTnPfpLcbGfwMBS4u1adPHA3aFrvyVb_cjPl4eQBh5IY5LklAFM7hN-k7_wMob1PQZUqiUqbTs6nE9XidMHcMH3-5yQonaqV9o032e4E",
+                "c4aaNywdDZj6TRmX90qn6g:APA91bF2RGN3f3JVYqvQm3gpwIyMDqpxoX7TE4KCrEWfte-q3O_aAJrf_8sfDNyMjVrovJuOJEyqj8ILxE9ad_3693ijFE-4MxJix-M28UZyLBmOdPYFfuw",
+                "dO9oS8NgqH3fU_b__GQPwb:APA91bH-rUW8e8vdUYGexL2U9r45Nt1aspKgNqpXD4E_9CcL8HOQMSx3jsZph1MtzBwh2wygpuMFIfzbfUPfs0-XRGT1kihhiXIsywQRf3l-3-caXsBc-2k",
+                "eKxt4jNeMDk5akRGDE_hss:APA91bGDvdxE5awm0ImycsvRF9yPse7_c1la-wGz828OiatqcAe3_tDUCk35Q1fCwYOdedzPZguc8C5x8rpHg80DtPv4s4uAvZnArCQJul2rGS24oN8Frzs",
+                "eKxt4jNeMDk5akRGDE_hss:APA91bHEJcMWaCOG1X3j5Zl8O2HExS3kEqPOlLoHrJgZDMpuIq55l41FiPWnpkrlDWF0LH7FYyxbJ5mhyCH7BSkEp4thz1s62tHObHl4tuAorVIaFCNy-UA"
+            ],
+        },
+        "Medical Director": {
+            _id: "68ef88b124a8a2a8317e0caf",
+            name: "Shivani Kathrotiya",
+            email: "sk.grj@feedbacks.live",
+            mobileNumber: "9924022912",
+            fcmTokens: [
+                "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8"
+            ],
+        },
+    };
 
 
     const { state } = useLocation();
@@ -303,6 +303,17 @@ const ESCALATION_USER_MAP = {
         }
     }
 
+    async function fetchComplaintDetails(id) {
+        try {
+            const response = await ApiGet(`/admin/complaint/${id}`);
+            return response.data || response; // assumes backend returns updated complaint object
+        } catch (error) {
+            console.error("Failed to fetch updated complaint:", error);
+            return null;
+        }
+    }
+
+
 
     // in handleForwardSubmit
     const handleForwardSubmit = async () => {
@@ -312,29 +323,39 @@ const ESCALATION_USER_MAP = {
         }
 
         try {
-            const departmentKey = DEPT_KEY[forwardDepartment]; // convert label to backend key
+            const departmentKey = DEPT_KEY[forwardDepartment];
             if (!departmentKey) {
                 alert("Invalid department selected");
                 return;
             }
 
             const payload = {
-                department: departmentKey,           // ✅ required
-                topic: "Forwarded Complaint",        // ✅ required
-                text: forwardReason,                 // ✅ your reason
+                department: departmentKey,
+                topic: "Forwarded Complaint",
+                text: forwardReason,
                 attachments: uploadedFile ? [uploadedFile.name] : [],
-                mode: "text",                        // ✅ default to "text"
+                mode: "text",
             };
 
             const res = await ApiPost(`/admin/${complaint.id}/forward`, payload);
-
             alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
+
+            // ✅ Re-fetch complaint & history to update UI
+            const updated = await fetchComplaintDetails(complaint.id);
+            if (updated) {
+                setStatus(updated.status || updated.data?.status);
+            }
+
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
             closeAllModals();
         } catch (error) {
             console.error("Forward Error:", error);
             alert(error.message || "Something went wrong while forwarding");
         }
     };
+
 
 
     async function escalateComplaint(complaintId, { level, note, userId }) {
@@ -351,73 +372,73 @@ const ESCALATION_USER_MAP = {
     }
 
     // ✅ Department-level escalation API
-async function escalateDepartmentComplaint(complaintId, department, { level, note, userId }) {
-    try {
-        const response = await ApiPost(`/admin/${complaintId}/partial-escalate`, {
-            department, // backend key like "billingServices"
-            level,
-            note,
-            userId,
-        });
+    async function escalateDepartmentComplaint(complaintId, department, { level, note, userId }) {
+        try {
+            const response = await ApiPost(`/admin/${complaintId}/partial-escalate`, {
+                department, // backend key like "billingServices"
+                level,
+                note,
+                userId,
+            });
 
-        return response;
-    } catch (error) {
-        throw new Error(error.message || "Failed to escalate department complaint");
+            return response;
+        } catch (error) {
+            throw new Error(error.message || "Failed to escalate department complaint");
+        }
     }
-}
-
 
     const handleEscalateSubmit = async () => {
-  if (!escalationLevel || !escalationNote) {
-    alert("Please select escalation level and provide a note.");
-    return;
-  }
+        if (!escalationLevel || !escalationNote) {
+            alert("Please select escalation level and provide a note.");
+            return;
+        }
 
-  try {
-    const currentUserId = localStorage.getItem("userId") || "12345";
+        try {
+            const currentUserId = localStorage.getItem("userId") || "12345";
+            const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
 
-    // ✅ Automatically find target user from level
-    const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
+            const payload = {
+                level: escalationLevel,
+                note: escalationNote,
+                userId: currentUserId,
+                escalatedTo: targetUser?._id || null,
+            };
 
-    const payload = {
-      level: escalationLevel,
-      note: escalationNote,
-      userId: currentUserId,
-      escalatedTo: targetUser?._id || null, // backend receives this
+            if (selectedDepartment) {
+                const deptKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+
+                if (!deptKey) {
+                    alert("Invalid department selected.");
+                    return;
+                }
+
+                await escalateDepartmentComplaint(complaint.id, deptKey, payload);
+                alert(
+                    `Complaint for ${selectedDepartment} escalated to ${escalationLevel}`
+                );
+            } else {
+                await escalateComplaint(complaint.id, payload);
+                alert(`Complaint escalated to ${escalationLevel}`);
+            }
+
+            // ✅ Re-fetch complaint & history to refresh UI
+            const updated = await fetchComplaintDetails(complaint.id);
+            if (updated) {
+                setStatus(updated.status || updated.data?.status);
+            }
+
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+        } catch (error) {
+            console.error("Escalation Error:", error);
+            alert(error.message || "Something went wrong while escalating complaint");
+        }
     };
 
-    // ✅ Department-specific escalation
-    if (selectedDepartment) {
-      const deptKey = Object.keys(DEPT_LABEL).find(
-        (k) => DEPT_LABEL[k] === selectedDepartment
-      );
-
-      if (!deptKey) {
-        alert("Invalid department selected.");
-        return;
-      }
-
-      await escalateDepartmentComplaint(complaint.id, deptKey, payload);
-      alert(
-        `Complaint for ${selectedDepartment} escalated to ${escalationLevel} `
-      );
-    } else {
-      // ✅ Escalate entire complaint
-      await escalateComplaint(complaint.id, payload);
-      alert(
-        `Complaint escalated to ${escalationLevel}`
-      );
-    }
-
-    // ✅ Refresh history after escalation
-    const newHistory = await fetchConcernHistory(complaint.id);
-    setHistoryData(newHistory);
-    closeAllModals();
-  } catch (error) {
-    console.error("Escalation Error:", error);
-    alert(error.message || "Something went wrong while escalating complaint");
-  }
-};
 
 
 
@@ -481,11 +502,24 @@ async function escalateDepartmentComplaint(complaintId, department, { level, not
     async function fetchConcernHistory(complaintId) {
         try {
             const response = await ApiGet(`/admin/${complaintId}/history`);
-            return response.history.timeline;
+
+            // ✅ Safely handle your current backend format
+            if (response?.history?.timeline) return response.history.timeline;
+
+            // ✅ Also handle future-compatible structures
+            if (response?.timeline) return response.timeline;
+            if (response?.data?.timeline) return response.data.timeline;
+
+            console.warn("⚠️ Unexpected history response format:", response);
+            return [];
         } catch (error) {
-            throw new Error(error.message || "Failed to fetch complaint history");
+            console.error("❌ Failed to fetch complaint history:", error);
+            alert(error.message || "Failed to fetch complaint history");
+            return [];
         }
     }
+
+
 
     async function updateProgressRemarkAPI(complaintId, note) {
         try {
@@ -625,20 +659,71 @@ async function escalateDepartmentComplaint(complaintId, department, { level, not
         })();
     }, [complaint.id]);
 
-    // Get latest forwarded department
+    // 🟢 Latest Forward (handles partial + full forwards)
     const latestForward = React.useMemo(() => {
         if (!Array.isArray(historyData)) return null;
-        const last = [...historyData].reverse().find(h => h.type === "forwarded");
-        return last ? DEPT_LABEL[last.department] || last.department : null;
+
+        // find the last forwarded event (department-level or full)
+        const lastForward = [...historyData]
+            .filter(h => h?.type === "forwarded")
+            .sort((a, b) => new Date(b.at) - new Date(a.at))[0];
+
+        if (!lastForward) return null;
+
+        // If it’s a department-level forward
+        if (lastForward.department) {
+            const deptLabel =
+                DEPT_LABEL[lastForward.department] || lastForward.department;
+            return {
+                title: "Department Forward",
+                text: `${deptLabel} Dept → Forwarded`,
+                date: new Date(lastForward.at).toLocaleString(),
+                color: "bg-blue-50 text-blue-900",
+            };
+        }
+
+        // If it’s a full complaint forward
+        return {
+            title: "Complaint Forward",
+            text: lastForward.label || "Complaint Forwarded",
+            date: new Date(lastForward.at).toLocaleString(),
+            color: "bg-blue-50 text-blue-900",
+        };
     }, [historyData]);
 
-
-    // Get latest escalation
+    // 🔴 Latest Escalation (handles partial + full escalations)
     const latestEscalation = React.useMemo(() => {
         if (!Array.isArray(historyData)) return null;
-        const last = [...historyData].reverse().find(h => h.type === "escalated");
-        return last ? last.level : null;
+
+        // find the last escalation event
+        const lastEsc = [...historyData]
+            .filter(h => h?.type === "escalated")
+            .sort((a, b) => new Date(b.at) - new Date(a.at))[0];
+
+        if (!lastEsc) return null;
+
+        // If it’s a department-level escalation
+        if (lastEsc.department) {
+            const deptLabel = DEPT_LABEL[lastEsc.department] || lastEsc.department;
+            const target = lastEsc.label || lastEsc.level || "Higher Authority";
+            return {
+                title: "Department Escalation",
+                text: `${deptLabel} Dept → ${target}`,
+                date: new Date(lastEsc.at).toLocaleString(),
+                color: "bg-orange-50 text-orange-900",
+            };
+        }
+
+        // If it’s a full complaint escalation
+        const target = lastEsc.level || lastEsc.label || "Higher Authority";
+        return {
+            title: "Complaint Escalation",
+            text: `Complaint Escalated to ${target}`,
+            date: new Date(lastEsc.at).toLocaleString(),
+            color: "bg-orange-50 text-orange-900",
+        };
     }, [historyData]);
+
 
 
     const handleFileUpload = (event) => {
@@ -863,19 +948,27 @@ async function escalateDepartmentComplaint(complaintId, department, { level, not
 
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {latestForward && (
-                                                                    <div className="p-3 bg-blue-50 rounded-lg">
-                                                                        <p className="text-sm text-blue-600 font-medium">Assigned To</p>
-                                                                        <p className="text-blue-900">{latestForward}</p>
-                                                                    </div>
-                                                                )}
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    {/* 🔹 Latest Forward & Escalation (Horizontal layout) */}
+                                                                    {/* <div className="flex flex-wrap items-stretch gap-4 w-full mt-4">
+                                                                        {latestForward && (
+                                                                            <div className="flex-1 min-w-[250px] bg-blue-50 border border-blue-200 text-blue-900 rounded-lg shadow-sm p-4">
+                                                                                <p className="text-sm font-semibold text-blue-600 mb-1">{latestForward.title}</p>
+                                                                                <p className="font-medium mb-1">{latestForward.text}</p>
+                                                                                <p className="text-xs text-blue-500">{latestForward.date}</p>
+                                                                            </div>
+                                                                        )}
 
-                                                                {latestEscalation && (
-                                                                    <div className="p-3 bg-orange-50 rounded-lg">
-                                                                        <p className="text-sm text-orange-600 font-medium">Expected Resolution</p>
-                                                                        <p className="text-orange-900">{latestEscalation}</p>
-                                                                    </div>
-                                                                )}
+                                                                        {latestEscalation && (
+                                                                            <div className="flex-1 min-w-[250px] bg-orange-50 border border-orange-200 text-orange-900 rounded-lg shadow-sm p-4">
+                                                                                <p className="text-sm font-semibold text-orange-600 mb-1">{latestEscalation.title}</p>
+                                                                                <p className="font-medium mb-1">{latestEscalation.text}</p>
+                                                                                <p className="text-xs text-orange-500">{latestEscalation.date}</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div> */}
+                                                                </div>
+
                                                             </div>
 
                                                         </div>
