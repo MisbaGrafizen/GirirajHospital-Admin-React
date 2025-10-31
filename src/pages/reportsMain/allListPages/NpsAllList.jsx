@@ -146,11 +146,11 @@ export default function NpsAllList() {
           <Header pageName="Nps All Record"  />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
-          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px]  py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
              <div>
 
-       <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
+       <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[96%] mx-auto  md11:!mb-[0px] border-gray-100 overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
                           <thead className="bg-gray-50">

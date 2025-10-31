@@ -481,7 +481,7 @@ const CubaSidebar = () => {
       <div className="   md34:!hidden md11:!flex relative  h-screen bg-gray-50">
         {/* Sidebar */}
         <motion.div
-          className="bg-white shadow-sm flex flex-col border-r  min-w-[220px]   border-gray-200 relative"
+          className="bg-white shadow-sm flex flex-col border-r  min-w-[190px]   border-gray-200 relative"
           // variants={sidebarVariants}
           animate={isCollapsed ? "collapsed" : "expanded"}
           initial={false}
@@ -500,7 +500,7 @@ const CubaSidebar = () => {
                     // animate="expanded"
                     // exit="collapsed"
                     >
-                      <img className=" w-[160px] mx-auto !ml-[20px] h-[60px] object-contain" src={textlogo} />
+                      <img className=" w-[160px] mx-auto !ml-[7px] h-[60px] object-contain" src={textlogo} />
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -600,7 +600,7 @@ const CubaSidebar = () => {
                               // exit="collapsed"
                               className="overflow-hidden"
                             >
-                              <div className="ml-6 mt-1 border-l border-gray-200 pl-4 space-y-1">
+                              <div className="ml-7px] mt-1 border-l border-gray-200 pl-4 space-y-1">
                                 {item.submenu?.map((subItem, index) => (
                                   <div key={subItem.id} className="relative">
                                     {/* Connecting line */}
@@ -622,7 +622,7 @@ const CubaSidebar = () => {
                                         : "!text-gray-200"
                                         }`} />
                                       )}
-                                      <span className="flex-1 flex-shrink-0 text-left">{subItem.label}</span>
+                                      <span className="flex-1 flex-shrink-0 text-[13px] text-left">{subItem.label}</span>
                                       {subItem.isNew && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 ml-2">
                                           New

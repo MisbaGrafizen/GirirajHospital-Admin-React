@@ -16,6 +16,7 @@ import {
     Eye,
     MapPin,
     RefreshCw,
+    XCircle,
     X,
     Phone,
     FileText,
@@ -1172,6 +1173,34 @@ export default function ComplaintManagementDashboard() {
         )
     }
 
+
+    const [showPopup, setShowPopup] = useState(false);
+
+   const handleWidgetClick = (type) => {
+    switch (type) {
+      case "total":
+        navigate("/complain-list", { state: { filter: "All" } });
+        break;
+      case "pending":
+        navigate("/complain-list", { state: { filter: "Pending" } });
+        break;
+      case "resolved":
+        navigate("/complain-list", { state: { filter: "Resolved" } });
+        break;
+      case "escalated":
+        navigate("/complain-list", { state: { filter: "Escalated" } });
+        break;
+      case "inprogress":
+        navigate("/complain-list", { state: { filter: "In Progress" } });
+        break;
+      case "avgResolution":
+        setShowPopup(true);
+        break;
+      default:
+        break;
+    }
+  };
+
     // ===================== UI (design unchanged) =====================
     return (
         <>
@@ -1194,71 +1223,113 @@ export default function ComplaintManagementDashboard() {
                                         />
                                     </div>
 
-                                    <div className="grid md34:!grid-cols-2  md11:!grid-cols-4 mt-[10px] lg:grid-cols-6 gap-2 mb-2">
-                                        <Widgets1
-                                            data={{
-                                                title: "Total Complaints",
-                                                gros: kpiData.totalComplaints,
-                                                total: kpiData.totalComplaints,
-                                                color: "",
-                                                icon: <FontAwesomeIcon icon={faTriangleExclamation} className="w-6 h-6 text-blue-600" />,
-                                            }}
-                                        />
+ <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 lg:grid-cols-6 gap-2 mt-[10px] mb-2">
+        <div onClick={() => handleWidgetClick("total")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Total Complaints",
+              gros: kpiData.totalComplaints,
+              total: kpiData.totalComplaints,
+              icon: <FontAwesomeIcon icon={faTriangleExclamation} className="w-6 h-6 text-blue-600" />,
+            }}
+          />
+        </div>
 
-                                        <Widgets1
-                                            data={{
-                                                title: "Open/Pending",
-                                                gros: kpiData.pending,
-                                                total: kpiData.pending,
-                                                color: "warning",
-                                                icon: <FontAwesomeIcon icon={faClock} className="w-6 h-6 text-yellow-600" />,
-                                            }}
-                                        />
+        <div onClick={() => handleWidgetClick("pending")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Open / Pending",
+              gros: kpiData.pending,
+              total: kpiData.pending,
+              icon: <FontAwesomeIcon icon={faClock} className="w-6 h-6 text-yellow-600" />,
+            }}
+          />
+        </div>
 
-                                        <Widgets1
-                                            data={{
-                                                title: "Resolved",
-                                                gros: kpiData.resolved,
-                                                total: kpiData.resolved,
-                                                color: "success",
-                                                icon: <FontAwesomeIcon icon={faCircleCheck} className="w-6 h-6 text-green-600" />,
-                                            }}
-                                        />
+        <div onClick={() => handleWidgetClick("resolved")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Resolved",
+              gros: kpiData.resolved,
+              total: kpiData.resolved,
+              icon: <FontAwesomeIcon icon={faCircleCheck} className="w-6 h-6 text-green-600" />,
+            }}
+          />
+        </div>
 
-                                        <Widgets1
-                                            data={{
-                                                title: "Escalated",
-                                                gros: kpiData.escalated,
-                                                total: kpiData.escalated,
-                                                color: "danger",
-                                                icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
-                                            }}
-                                        />
-                                        <div className=" mt-[-10px]">
-                                            <Widgets1
-                                                data={{
-                                                    title: "Avg Resolution",
-                                                    gros: kpiData.avgResolutionTime,
-                                                    total: kpiData.avgResolutionTime,
-                                                    color: "purple",
-                                                    icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
-                                                }}
-                                            />
-                                        </div>
-                                        <div className=" mt-[-10px]">
+        <div onClick={() => handleWidgetClick("escalated")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Escalated",
+              gros: kpiData.escalated,
+              total: kpiData.escalated,
+              icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
+            }}
+          />
+        </div>
 
+        <div onClick={() => handleWidgetClick("avgResolution")} className="cursor-pointer mt-[-10px]">
+          <Widgets1
+            data={{
+              title: "Avg Resolution Time",
+              gros: kpiData.avgResolutionTime,
+              total: kpiData.avgResolutionTime,
+              icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
+            }}
+          />
+        </div>
 
-                                            <Widgets1
-                                                data={{
-                                                    title: "In Progress",
-                                                    gros: kpiData.inProgress,
-                                                    total: kpiData.inProgress,
-                                                    color: "purple",
-                                                    icon: <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-purple-600" spin />,
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
+        <div onClick={() => handleWidgetClick("inprogress")} className="cursor-pointer mt-[-10px]">
+          <Widgets1
+            data={{
+              title: "In Progress",
+              gros: kpiData.inProgress,
+              total: kpiData.inProgress,
+              icon: <FontAwesomeIcon icon={faSpinner} spin className="w-6 h-6 text-purple-600" />,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Modal for Avg Resolution */}
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
+            >
+              <button
+                onClick={() => setShowPopup(false)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+
+              <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                Average Resolution Time
+              </h2>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                This shows the average time taken to resolve complaints across departments.
+              </p>
+
+              <div className="text-center mt-2">
+                <p className="text-4xl font-bold text-purple-600">{kpiData.avgResolutionTime}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Based on historical resolution data.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
                                     {/* Charts Row */}
@@ -1611,160 +1682,350 @@ export default function ComplaintManagementDashboard() {
                                         </div>
                                     )}
 
-                                    <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                                        <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
-                                            <div className=" w-[100%]  flex  items-center gap-[10px] ">
+                                        <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+                                            <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
+                                                <div className=" w-[100%]  flex  items-center gap-[10px] ">
 
 
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                        <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
+                                                <button
+
+                                                    className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    onClick={handleAllPageNavigate}
+                                                >
+                                                    <Eye className="w-5 h-5 " />
+                                                    View All
+                                                </button>
+
                                             </div>
-                                            <button
 
-                                                className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                onClick={handleAllPageNavigate}
-                                            >
-                                                <Eye className="w-5 h-5 " />
-                                                View All
-                                            </button>
+                                            <div className="overflow-x-auto">
+                                                <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Complaint ID
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Date & Time
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Patient Name
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Doctor Name
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Bed No.
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Department
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Status
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Details
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white">
+                                                        {rows
+                                                            .slice()
+                                                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                            .slice(0, 5)
+                                                            .map((complaint, index) => {
+                                                                const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                                return (
+                                                                    <tr
+                                                                        key={complaint.id}
+                                                                        className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                                                                    >
+                                                                        <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
 
-                                        </div>
+                                                                                {complaint.date}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
+                                                                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                                {complaint.doctor}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
+                                                                                <Bed className="w-4 h-4 text-gray-400 mr-2" />
+                                                                                {complaint.bedNo}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
+                                                                        </td>
 
-                                        <div className="overflow-x-auto">
-                                            <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                                <thead className="bg-gray-50">
-                                                    <tr>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Complaint ID
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Date & Time
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Patient Name
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Doctor Name
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Bed No.
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Department
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Status
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Details
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white">
-                                                    {rows
-                                                        .slice()
-                                                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                                                        .slice(0, 5)
-                                                        .map((complaint, index) => {
-                                                            const fullDoc = rawConcerns.find(d => d._id === complaint.id);
-                                                            return (
-                                                                <tr
-                                                                    key={complaint.id}
-                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
-                                                                >
-                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <div className="flex items-center">
+                                                                        <td className="px-3 py-2 text-sm">
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <span
+                                                                                    className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
+                                                                                        mapStatusUI(complaint.status)
+                                                                                    )}`}
+                                                                                >
+                                                                                    {mapStatusUI(complaint.status)}
 
-                                                                            {complaint.date}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <div className="flex items-center">
-                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                            {complaint.doctor}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <div className="flex items-center">
-                                                                            <Bed className="w-4 h-4 text-gray-400 mr-2" />
-                                                                            {complaint.bedNo}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
-                                                                    </td>
+                                                                                    {complaint.status?.toLowerCase() === "partial" && (
+                                                                                        <button
+                                                                                            onClick={async () => {
+                                                                                                try {
+                                                                                                    // show modal first
+                                                                                                    setIsPartialModalOpen(true);
+                                                                                                    setSelectedComplaint(null);
 
-                                                                    <td className="px-3 py-2 text-sm">
-                                                                        <div className="flex items-center space-x-2">
-                                                                            <span
-                                                                                className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
-                                                                                    mapStatusUI(complaint.status)
-                                                                                )}`}
-                                                                            >
-                                                                                {mapStatusUI(complaint.status)}
+                                                                                                    const res = await ApiGet(
+                                                                                                        `/admin/partial-resolve/${complaint.id}`
+                                                                                                    );
+                                                                                                    console.log("res", res);
 
-                                                                                {complaint.status?.toLowerCase() === "partial" && (
-                                                                                    <button
-                                                                                        onClick={async () => {
-                                                                                            try {
-                                                                                                // show modal first
-                                                                                                setIsPartialModalOpen(true);
-                                                                                                setSelectedComplaint(null);
-
-                                                                                                const res = await ApiGet(
-                                                                                                    `/admin/partial-resolve/${complaint.id}`
-                                                                                                );
-                                                                                                console.log("res", res);
-
-                                                                                                if (res.data) {
-                                                                                                    setSelectedComplaint(res.data);
-                                                                                                } else {
+                                                                                                    if (res.data) {
+                                                                                                        setSelectedComplaint(res.data);
+                                                                                                    } else {
+                                                                                                        setSelectedComplaint({ error: true });
+                                                                                                    }
+                                                                                                } catch (err) {
+                                                                                                    console.error("Error fetching partial-resolve details:", err);
                                                                                                     setSelectedComplaint({ error: true });
                                                                                                 }
-                                                                                            } catch (err) {
-                                                                                                console.error("Error fetching partial-resolve details:", err);
-                                                                                                setSelectedComplaint({ error: true });
-                                                                                            }
-                                                                                        }}
-                                                                                        className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
-                                                                                    >
-                                                                                        <Eye className="w-4 h-4" />
-                                                                                    </button>
-                                                                                )}
-                                                                            </span>
-                                                                        </div>
+                                                                                            }}
+                                                                                            className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
+                                                                                        >
+                                                                                            <Eye className="w-4 h-4" />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
 
-                                                                    </td>
+                                                                        </td>
 
 
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <button
-                                                                            onClick={() => handlenavigate(complaint, fullDoc)}
-                                                                            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                                                                        >
-                                                                            <Eye className="w-4 h-4 mr-1" />
-                                                                            View
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            )
-                                                        })}
-                                                    {filteredComplaints.length === 0 && (
-                                                        <tr>
-                                                            <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
-                                                                No complaints found for the selected range.
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <button
+                                                                                onClick={() => handlenavigate(complaint, fullDoc)}
+                                                                                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                            >
+                                                                                <Eye className="w-4 h-4 mr-1" />
+                                                                                View
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                )
+                                                            })}
+                                                        {filteredComplaints.length === 0 && (
+                                                            <tr>
+                                                                <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                    No complaints found for the selected range.
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
 
+
+
+
+                                        <div className="bg-white border rounded-lg mb-[20px] mt-[20px] shadow-sm overflow-hidden">
+                                            <div className="px-3 py-3 border-b flex justify-between items-center border-gray-200">
+                                                <div className="flex items-center gap-[10px]">
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                        <i className="fa-solid fa-list text-[17px] text-[#fff]"></i>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-gray-900">Internal Compalints</h3>
+                                                </div>
+
+                                                <div className=" flex gap-[10px]">
+                                                    {/* ✅ Export to Excel first */}
+                                           
+                                                    {/* 👁️ View All second */}
+                                                    <button
+                                                        className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                        onClick={handleTATPageNavigate}
+                                                    >
+                                                        <Eye className="w-5 h-5" />
+                                                        View All
+                                                    </button>
+                                             
+                                                </div>
+
+
+                                            </div>
+
+
+                                            <div className="overflow-x-auto">
+                                                <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                             
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Complaint ID
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Name
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                             Contact No
+                                                            </th>
+                                                               <th className="px-6 py-2 text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                             Employee Id
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                               Floor No
+                                                            </th>
+                                            
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                          Department
+                                                            </th>
+                                                            <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Status
+                                                            </th>
+                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                         Action
+                                                            </th>
+                                                            {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Status
+                                                        </th> */}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white">
+                                                        {tatComplaints
+                                                            .slice()
+                                                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                            .slice(0, 5)
+                                                            .map((complaint, index) => {
+                                                                const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                                return (
+
+                                                                    <tr
+                                                                        key={complaint.id}
+                                                                        onClick={() => openModal(complaint)}
+                                                                        className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
+                                                                    >
+                                                                        
+                                                                        <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+
+
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
+                                                                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                                {complaint.patientName}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            098
+                                                                        </td>
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            098
+                                                                        </td>   
+                                                                        <td className="px-6 py-2 text-sm min-w-[150px] text-gray-900">
+                                                                            {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
+                                                                                ? getAllowedDepartments(complaint.departments, allowedBlocks)
+                                                                                    .map((d) => d.department)
+                                                                                    .join(", ")
+                                                                                : "-"}
+                                                                        </td>
+                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex min-w-[200px] items-center">
+
+                                                                    {}
+                                                                            </div>
+                                                                        </td> */}
+                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex min-w-[200px] items-center">
+
+                                                                    what you do , please tell me a one things grafizen 
+                                                                            </div>
+                                                                        </td> */}
+                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                            <div className="flex items-center">
+
+                                                                                {formatDateTime(complaint.stampIn)}
+                                                                            </div>
+                                                                        </td>
+
+
+                                                                   <td className="px-3 py-2 text-sm">
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <span
+                                                                                    className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
+                                                                                        mapStatusUI(complaint.status)
+                                                                                    )}`}
+                                                                                >
+                                                                                    {mapStatusUI(complaint.status)}
+
+                                                                                    {complaint.status?.toLowerCase() === "partial" && (
+                                                                                        <button
+                                                                                            onClick={async () => {
+                                                                                                try {
+                                                                                                    // show modal first
+                                                                                                    setIsPartialModalOpen(true);
+                                                                                                    setSelectedComplaint(null);
+
+                                                                                                    const res = await ApiGet(
+                                                                                                        `/admin/partial-resolve/${complaint.id}`
+                                                                                                    );
+                                                                                                    console.log("res", res);
+
+                                                                                                    if (res.data) {
+                                                                                                        setSelectedComplaint(res.data);
+                                                                                                    } else {
+                                                                                                        setSelectedComplaint({ error: true });
+                                                                                                    }
+                                                                                                } catch (err) {
+                                                                                                    console.error("Error fetching partial-resolve details:", err);
+                                                                                                    setSelectedComplaint({ error: true });
+                                                                                                }
+                                                                                            }}
+                                                                                            className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
+                                                                                        >
+                                                                                            <Eye className="w-4 h-4" />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
+
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-sm">
+                                                                            <button
+                                                                                onClick={() => handlenavigate(complaint, fullDoc)}
+                                                                                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                            >
+                                                                                <Eye className="w-4 h-4 mr-1" />
+                                                                                View
+                                                                            </button>
+                 
+                                                                        </td>
+                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
+
+                                                                    </td> */}
+                                                                    </tr>
+                                                                )
+                                                            })}
+                                                        {filteredComplaints.length === 0 && (
+                                                            <tr>
+                                                                <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                    No complaints found for the selected range.
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
 
                                     <AnimatePresence>
                                         {isPartialModalOpen && selectedComplaint && (

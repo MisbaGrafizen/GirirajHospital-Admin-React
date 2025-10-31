@@ -349,8 +349,9 @@ if (data.kpis || data.totals) {
   return (
     <>
 
-      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
+          
           <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />

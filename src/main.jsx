@@ -14,9 +14,7 @@ createRoot(document.getElementById('root')).render(
     <StrictMode>
       <NextUIProvider>
         <BrowserRouter>
-
           <App />
-
         </BrowserRouter>
       </NextUIProvider>
     </StrictMode>

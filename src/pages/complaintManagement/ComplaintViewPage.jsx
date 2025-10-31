@@ -404,6 +404,8 @@ export default function ComplaintViewPage() {
                 escalatedTo: targetUser?._id || null,
             };
 
+            let response;
+
             if (selectedDepartment) {
                 const deptKey = Object.keys(DEPT_LABEL).find(
                     (k) => DEPT_LABEL[k] === selectedDepartment
@@ -414,21 +416,19 @@ export default function ComplaintViewPage() {
                     return;
                 }
 
-                await escalateDepartmentComplaint(complaint.id, deptKey, payload);
-                alert(
-                    `Complaint for ${selectedDepartment} escalated to ${escalationLevel}`
-                );
+                response = await escalateDepartmentComplaint(complaint.id, deptKey, payload);
+                alert(`Complaint for ${selectedDepartment} escalated to ${escalationLevel}`);
             } else {
-                await escalateComplaint(complaint.id, payload);
+                response = await escalateComplaint(complaint.id, payload);
                 alert(`Complaint escalated to ${escalationLevel}`);
             }
 
-            // ✅ Re-fetch complaint & history to refresh UI
-            const updated = await fetchComplaintDetails(complaint.id);
-            if (updated) {
-                setStatus(updated.status || updated.data?.status);
-            }
+            // ✅ Determine and set status
+            const newStatus =
+                response?.data?.status || response?.data?.data?.status || "escalated";
+            setStatus(mapStatusUI(newStatus));
 
+            // ✅ Re-fetch history for timeline
             const newHistory = await fetchConcernHistory(complaint.id);
             setHistoryData(newHistory);
 
@@ -438,6 +438,56 @@ export default function ComplaintViewPage() {
             alert(error.message || "Something went wrong while escalating complaint");
         }
     };
+
+
+    const handleInProgressSubmit = async () => {
+        if (!tempText.trim()) {
+            alert("Please enter progress update text.");
+            return;
+        }
+
+        try {
+            let response;
+
+            // ✅ If a department is selected, mark partial in-progress
+            if (selectedDepartment) {
+                const deptKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+
+                response = await updateDepartmentProgressAPI(
+                    complaint.id,
+                    deptKey,
+                    tempText,
+                    uploadedFile
+                );
+            } else {
+                // ✅ Otherwise mark full complaint in-progress
+                response = await updateProgressRemarkAPI(complaint.id, tempText);
+            }
+
+            // ✅ Detect returned status from backend or fallback
+            const newStatus =
+                response?.data?.status ||
+                response?.data?.data?.status ||
+                "in_progress";
+
+            // ✅ Immediately update UI
+            setStatus(mapStatusUI(newStatus));
+
+            alert("Progress updated successfully!");
+
+            // ✅ Refresh history for latest timeline
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+        } catch (error) {
+            console.error("Progress update failed:", error);
+            alert(error.message || "Failed to update complaint progress");
+        }
+    };
+
 
 
 
@@ -476,8 +526,11 @@ export default function ComplaintViewPage() {
 
             const res = await ApiPost(endpoint, payload);
 
-            // ✅ Handle response
-            const newStatus = res?.data?.status || res?.data?.data?.status;
+            // ✅ Detect and set new status
+            const newStatus =
+                res?.data?.status || res?.data?.data?.status || "resolved";
+            setStatus(mapStatusUI(newStatus));
+
             if (newStatus === "partial") {
                 alert("Complaint partially resolved.");
             } else if (newStatus === "resolved") {
@@ -486,15 +539,17 @@ export default function ComplaintViewPage() {
                 alert(res?.message || "Resolution submitted successfully.");
             }
 
+            // ✅ Refresh history without full reload
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
             closeAllModals();
-            window.location.reload();
-            await fetchConcernHistory(complaint.id);
-            setIsResolveModalOpen(false);
         } catch (error) {
             console.error("Resolve Error:", error);
             alert(error.message || "Something went wrong while resolving complaint.");
         }
     };
+
 
 
 
@@ -526,15 +581,12 @@ export default function ComplaintViewPage() {
             const response = await ApiPut(`/admin/update-progress/${complaintId}`, {
                 updateNote: note,
             });
-
-            return {
-                message: response.message,
-                updatedConcern: response.data,
-            };
+            return response; // ✅ keep full response for status
         } catch (error) {
             throw new Error(error.message || "Failed to update in_progress remark");
         }
     }
+
 
     async function updateDepartmentProgressAPI(complaintId, department, note, proofFile) {
         try {
@@ -551,11 +603,12 @@ export default function ComplaintViewPage() {
                 userId: localStorage.getItem("userId") || "",
             });
 
-            return response;
+            return response; // ✅ keep full response
         } catch (error) {
             throw new Error(error.message || "Failed to update department progress");
         }
     }
+
 
 
     const getStatusColor = (status) => {
@@ -1589,15 +1642,57 @@ export default function ComplaintViewPage() {
                                                                                 )}
                                                                                 {h.type === "escalated" && (
                                                                                     <>
-                                                                                        <p className="text-sm font-medium text-gray-900">
-                                                                                            Escalated to {h.level}
-                                                                                        </p>
-                                                                                        <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                        <p className="text-xs text-gray-500">
-                                                                                            {new Date(h.at).toLocaleString()}
-                                                                                        </p>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <TrendingUp className="w-4 h-4 text-red-600" />
+                                                                                            <p className="text-sm font-semibold text-red-700">
+                                                                                                {h.department
+                                                                                                    ? `${DEPT_LABEL[h.department] || h.department} Escalated`
+                                                                                                    : "Complaint Escalated"}
+                                                                                                {h.level && (
+                                                                                                    <span className="ml-1 text-gray-800 font-semibold">
+                                                                                                        → {h.level.toUpperCase()}
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </p>
+                                                                                        </div>
+
+                                                                                        {/* Escalation Note */}
+                                                                                        {h.note && (
+                                                                                            <p className="text-xs text-gray-700 mt-1">
+                                                                                                <span className="font-medium text-gray-800">Note:</span>{" "}
+                                                                                                {h.note}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Level name (explicit display below for better visibility) */}
+                                                                                        {h.level && (
+                                                                                            <p className="text-xs text-gray-700 mt-1">
+                                                                                                <span className="font-medium text-gray-800">Escalation Level:</span>{" "}
+                                                                                                {h.level}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Display escalated by user */}
+                                                                                        {h.by?.name && (
+                                                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                                                <span className="font-medium text-gray-700">By:</span>{" "}
+                                                                                                {h.by.name}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Display date/time */}
+                                                                                        {h.at && (
+                                                                                            <p className="text-xs text-gray-400 mt-1">
+                                                                                                {new Date(h.at).toLocaleString()}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Divider */}
+                                                                                        <div className="border-b border-gray-200 mt-2"></div>
                                                                                     </>
                                                                                 )}
+
+
                                                                                 {h.type === "resolved" && (
                                                                                     <>
                                                                                         <p className="text-sm font-medium text-green-700">Resolved</p>
@@ -1844,37 +1939,47 @@ export default function ComplaintViewPage() {
                                                             <button
                                                                 onClick={async () => {
                                                                     try {
-                                                                        // If department is selected → call department in-progress API
+                                                                        let response;
+
                                                                         if (selectedDepartment) {
+                                                                            // 🔹 Partial In-Progress
                                                                             const deptKey = Object.keys(DEPT_LABEL).find(
                                                                                 (k) => DEPT_LABEL[k] === selectedDepartment
                                                                             );
 
-                                                                            const res = await updateDepartmentProgressAPI(
+                                                                            response = await updateDepartmentProgressAPI(
                                                                                 complaint.id,
                                                                                 deptKey,
                                                                                 tempText,
                                                                                 uploadedFile
                                                                             );
 
-                                                                            alert(res.message || `Department ${selectedDepartment} marked In-Progress.`);
-                                                                        } else {
-                                                                            // Otherwise → general progress remark update
-                                                                            const res = await updateProgressRemarkAPI(
-                                                                                complaint.complaintId,
-                                                                                tempText
+                                                                            alert(
+                                                                                response?.message ||
+                                                                                `Department ${selectedDepartment} marked In-Progress.`
                                                                             );
+                                                                        } else {
+                                                                            // 🔹 Full In-Progress
+                                                                            response = await updateProgressRemarkAPI(complaint.id, tempText);
 
-                                                                            if (res.updatedConcern?.note) {
-                                                                                setComplaintText(res.updatedConcern.note);
-                                                                            } else {
-                                                                                setComplaintText(tempText);
-                                                                            }
-
-                                                                            alert(res.message || "Progress remark updated successfully");
+                                                                            alert(response?.message || "Progress remark updated successfully");
                                                                         }
 
-                                                                        // ✅ Refresh timeline
+                                                                        // ✅ Update local text
+                                                                        if (response?.data?.note || response?.updatedConcern?.note) {
+                                                                            setComplaintText(response.data?.note || response.updatedConcern.note);
+                                                                        } else {
+                                                                            setComplaintText(tempText);
+                                                                        }
+
+                                                                        // ✅ Update complaint status immediately
+                                                                        const newStatus =
+                                                                            response?.data?.status ||
+                                                                            response?.data?.data?.status ||
+                                                                            "in_progress";
+                                                                        setStatus(mapStatusUI(newStatus));
+
+                                                                        // ✅ Refresh timeline for UI
                                                                         const newHistory = await fetchConcernHistory(complaint.id);
                                                                         setHistoryData(newHistory);
 
@@ -1885,6 +1990,7 @@ export default function ComplaintViewPage() {
                                                                         alert(error.message || "Failed to update progress");
                                                                     }
                                                                 }}
+
                                                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
                                                             >
                                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

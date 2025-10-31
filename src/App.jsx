@@ -29,6 +29,11 @@ import TATAllList from "./pages/reportsMain/allListPages/TATAllList.jsx";
 import PushNotification from "./pages/bedCreate/PushNotification.jsx";
 import NotesAdd from "./pages/notesPage/NotesAdd.jsx";
 import TodoPage from "./pages/notesPage/TodoPage.jsx";
+import EmployeeProfile from "./pages/profile/EmployeeProfile.jsx";
+import OpdIpdAllDetails from "./pages/DashboardCapsulePages/OpdIpdAllDetails.jsx";
+import OpenIssues from "./pages/DashboardCapsulePages/OpenIssues.jsx";
+import UserAllList from "./pages/DashboardCapsulePages/UserAllList.jsx";
+import AllComplaintPage from "./pages/DashboardCapsulePages/AllCompalinPage.jsx";
 
 function App() {
   const location = useLocation();
@@ -130,6 +135,19 @@ function App() {
           <Route path="/dashboards/tat-view" element={<PrivateRoute><TATAllList /></PrivateRoute>} />
            <Route path="/notes" element={<PrivateRoute><NotesAdd /></PrivateRoute>} />
            <Route path="/todolist" element={<PrivateRoute><TodoPage /></PrivateRoute>} />
+           <Route path="/profile" element={<PrivateRoute><EmployeeProfile /></PrivateRoute>} />
+           <Route path="/ipd-opd-list" element={<PrivateRoute><OpdIpdAllDetails /></PrivateRoute>} />
+           <Route path="/open-issues" element={<PrivateRoute><OpenIssues /></PrivateRoute>} />
+                 <Route path="/user-all-list" element={<PrivateRoute><UserAllList /></PrivateRoute>} />
+                 <Route path="/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
+
+
+
+
+
+
+
+
 
           <Route path="/dashboards/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
         </Routes>

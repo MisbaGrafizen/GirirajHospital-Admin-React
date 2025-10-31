@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg";
 import { useNavigate } from "react-router-dom";
-import { requestNotificationPermission } from "../helper/notification";
+// import { requestNotificationPermission } from "../helper/notification";
 import { ApiPost } from "../helper/axios";
 
 export default function LoginPage() {
@@ -78,9 +78,9 @@ export default function LoginPage() {
         });
 
         // ✅ Wait a bit for userId to be stored before saving FCM token
-        setTimeout(() => {
-          requestNotificationPermission();
-        }, 800);
+        // setTimeout(() => {
+        //   requestNotificationPermission();
+        // }, 800);
 
         console.log("✅ Admin login success");
         navigate("/dashboards/super-dashboard", { replace: true });
@@ -103,9 +103,9 @@ export default function LoginPage() {
 
 
         // ✅ Wait a bit for userId to be stored before saving FCM token
-        setTimeout(() => {
-          requestNotificationPermission();
-        }, 800);
+        // setTimeout(() => {
+        //   requestNotificationPermission();
+        // }, 800);
 
         console.log("✅ Role-user login success");
         navigate("/dashboards/super-dashboard", { replace: true });

@@ -11,7 +11,7 @@ import {
   ThumbsUp,
   Award,
   Phone,
-
+XCircle,
   Clock,
   Bed,
   Eye,
@@ -957,6 +957,30 @@ export default function IPDFeedbackDashboard() {
     </div>
   )
 
+
+
+
+   const [showPopup, setShowPopup] = useState(null);
+
+  // 🎯 Handlers for each KPI
+  const handleWidgetClick = (type) => {
+    switch (type) {
+      case "totalFeedback":
+        navigate("/ipd-opd-list");
+        break;
+      case "npsRating":
+        navigate("/dashboards/nps-all-list");
+        break;
+      case "averageRating":
+        setShowPopup("averageRating");
+        break;
+      case "overallScore":
+        setShowPopup("overallScore");
+        break;
+      default:
+        break;
+    }
+  };
   // ---------------- Render ----------------
   return (
     <>
@@ -1033,63 +1057,140 @@ export default function IPDFeedbackDashboard() {
               </div>
               <div className="mx-auto w-full">
                 {/* KPI Cards */}
-                <div className="  md34:!grid-cols-2 gap-x-[10px] md11:!grid-cols-4 grid w-[100%]">
-                  <Widgets1
-                    data={{
-                      title: "Total Feedback",
-                      gros: kpiData.totalFeedback,
-                      total: kpiData.totalFeedback,
-                      color: "primary",
-                      icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
-                    }}
-                  />
+                 <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 gap-x-[10px] w-[100%]">
+        {/* 📨 Total Feedback (Navigate) */}
+        <div onClick={() => handleWidgetClick("totalFeedback")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Total Feedback",
+              gros: kpiData.totalFeedback,
+              total: kpiData.totalFeedback,
+              color: "primary",
+              icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
+            }}
+          />
+        </div>
 
-                  <Widgets1
-                    data={{
-                      title: "Average Rating",
-                      gros: `${kpiData.averageRating} `,
-                      total: `${kpiData.averageRating} `,
-                      color: "warning",
-                      icon: <Star className="w-5 h-5 text-yellow-600" />,
-                    }}
-                  />
+        {/* ⭐ Average Rating (Modal) */}
+        <div onClick={() => handleWidgetClick("averageRating")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Average Rating",
+              gros: `${kpiData.averageRating}`,
+              total: `${kpiData.averageRating}`,
+              color: "warning",
+              icon: <Star className="w-5 h-5 text-yellow-600" />,
+            }}
+          />
+        </div>
 
-                  <Widgets1
-                    data={{
-                      title: "NPS Rating",
-                      gros: `${kpiData.npsRating}%`,
-                      total: `${kpiData.npsRating}%`,
-                      color: "success",
-                      icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
-                    }}
-                  />
+        {/* 👍 NPS Rating (Navigate) */}
+        <div onClick={() => handleWidgetClick("npsRating")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "NPS Rating",
+              gros: `${kpiData.npsRating}%`,
+              total: `${kpiData.npsRating}%`,
+              color: "success",
+              icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
+            }}
+          />
+        </div>
 
-                  <Widgets1
-                    data={{
-                      title: "Overall Score",
-                      total: (
-                        <span
-                          className={`font-semibold ${kpiData.overallScore === "Excellent"
-                              ? "text-green-600"
-                              : kpiData.overallScore === "Good"
-                                ? "text-blue-600"
-                                : kpiData.overallScore === "Average"
-                                  ? "text-yellow-600"
-                                  : kpiData.overallScore === "Poor"
-                                    ? "text-orange-600"
-                                    : "text-red-600"
-                            }`}
-                        >
-                          {kpiData.overallScore}
-                        </span>
-                      ),
-                      gros: kpiData.overallScore,
-                      color: "purple",
-                      icon: <Award className="w-5 h-5 text-purple-600" />,
-                    }}
-                  />
+        {/* 🏆 Overall Score (Modal) */}
+        <div onClick={() => handleWidgetClick("overallScore")} className="cursor-pointer">
+          <Widgets1
+            data={{
+              title: "Overall Score",
+              total: (
+                <span
+                  className={`font-semibold ${
+                    kpiData.overallScore === "Excellent"
+                      ? "text-green-600"
+                      : kpiData.overallScore === "Good"
+                      ? "text-blue-600"
+                      : kpiData.overallScore === "Average"
+                      ? "text-yellow-600"
+                      : kpiData.overallScore === "Poor"
+                      ? "text-orange-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {kpiData.overallScore}
+                </span>
+              ),
+              gros: kpiData.overallScore,
+              color: "purple",
+              icon: <Award className="w-5 h-5 text-purple-600" />,
+            }}
+          />
+        </div>
+      </div>
 
-                </div>
+      {/* 🌟 Popups for Average Rating & Overall Score */}
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowPopup(null)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+
+              {/* Title */}
+              <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                {showPopup === "averageRating"
+                  ? "Average Rating Overview"
+                  : "Overall Score Summary"}
+              </h2>
+
+              {/* Description */}
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                {showPopup === "averageRating"
+                  ? "The Average Rating represents the mean satisfaction level across all feedback received. Aim for 4.5+ for exceptional service quality."
+                  : "Overall Score is a combined evaluation of patient satisfaction, response rate, and service quality. Higher scores reflect consistent excellence across departments."}
+              </p>
+
+              {/* Values */}
+              <div className="mt-4 text-center">
+                <p
+                  className={`text-4xl font-bold ${
+                    showPopup === "averageRating"
+                      ? "text-yellow-600"
+                      : kpiData.overallScore === "Excellent"
+                      ? "text-green-600"
+                      : kpiData.overallScore === "Good"
+                      ? "text-blue-600"
+                      : kpiData.overallScore === "Average"
+                      ? "text-yellow-600"
+                      : kpiData.overallScore === "Poor"
+                      ? "text-orange-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {showPopup === "averageRating"
+                    ? kpiData.averageRating
+                    : kpiData.overallScore}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
                 {/* Charts Row */}
                 <div className="flex  md11:!flex-row flex-col  justify-start  gap-[20px] mb-2  ">

@@ -342,20 +342,11 @@ setRows(mapped);
                         <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
                             <Preloader />
                             <div>
-                                <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                                    <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                            <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
-                                    </div>
-                                                  
-                                </div>
+                  
 
-
-                                <div className="overflow-x-auto">
+                                <div className=" w-[95%] mx-auto border overflow-hidden rounded-[10px]">
                                     <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                        <thead className="bg-gray-50">
+                                        <thead className="bg-gray-100">
                                             <tr>
                                                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Complaint ID

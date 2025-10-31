@@ -2,10 +2,16 @@ import React from 'react';
 import { Card, CardBody } from 'reactstrap';
 import { H4 } from '../../../../../AbstractElements';
 import SvgIcon from '../Component/SvgIcon';
+import CountUp from "react-countup";
 
 const Widgets1 = ({ data }) => {
   return (
-    <Card className='widget-1 min-w-[170px]'>
+    <Card   className="
+    widget-1 min-w-[170px] 
+    transition-all duration-300 
+    hover:scale-[1.05] active:scale-[0.97] 
+    hover:shadow-lg cursor-pointer
+  ">
       <CardBody>
         <div className='widget-content'>
           <div className={`widget-round ${data.color}`}>
@@ -16,7 +22,20 @@ const Widgets1 = ({ data }) => {
             <div className='bg-round md34:!flex md11:!hidden '>
               <div className={` font-${data.color} f-w-500`}>
                 {/* <i className={`  icon-arrow-${data.gros < 50 ? 'down' : 'up'} icon-rotate me-1`} /> */}
-                <span>{`${data.gros < 50 ? '' : ''}${data.gros}`}</span>
+       <span>
+<span>
+  <CountUp
+    key={data.title}
+    start={0}
+    end={Number(data.gros) || 0}
+    duration={1.8}
+    delay={Math.random() * 0.5} // 👈 small random delay
+    separator=","
+    redraw={true}
+  />
+</span>
+
+</span>
               </div>
               <SvgIcon className='half-circle svg-fill' iconId='halfcircle' />
             </div>

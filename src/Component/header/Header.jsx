@@ -112,20 +112,24 @@ function Header({
 
       <div className=" flex flex-col ">
 
+<section className=" w-[100%] bg-[#fff] border-b h-[30px]">
 
-        <section className="flex w-[100%] justify-between px-[12px] items-center border-b-[1.5px]">
-          <div className="gap-[60px] flex items-center justify-between px-[0px] pb-[25px] pt-[32px] bg h-[42px]">
+</section>
+        <section className="flex w-[100%]  bg-[#fff]  justify-between px-[12px] items-center border-b-[1.5px]">
+          <div className="gap-[40px] flex items-center justify-between px-[0px] pb-[20px] pt-[22px] bg h-[25px]">
             {/* Left side back + title */}
-            <div className="flex w-fit cursor-pointer items-center gap-[5px]">
-              <img
+            <div className="flex w-fit cursor-pointer items-center gap-[5px]"               onClick={handleBack}>
+              {/* <img
                 className="flex w-[27px] h-[27px]"
                 src={backArrow}
                 onClick={handleBack}
-              />
-              <div className="flex w-[4px] bg-[#e21e23] h-[30px]"></div>
+              /> */}
+
+              <i class="fa-solid fa-chevron-left text-[15px] pl-[10px] pr-[2px]"></i>
+              <div className="flex w-[3px] bg-[#e21e23] h-[24px]"></div>
               <h1
-                className="pl-[6px] text-[#3d3d3d] flex font-Poppins md34:!text-[14px] md11:!text-[20px] font-[600]"
-                onClick={handleBack}
+                className="pl-[6px] text-[#3d3d3d] flex font-Poppins md34:!text-[14px] md11:!text-[20px] font-[500]"
+        
               >
                 {pageName}
               </h1>
@@ -161,25 +165,24 @@ function Header({
 
 
           <div className="relative mr-[30px] flex items-center">
-
-            {/* <button
-  onClick={handleNotes}
-              className=" flex mr-[20px]  items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
+            <button
+              onClick={handleNotes}
+              className=" flex mr-[20px]  items-center justify-center rounded-full  hover:bg-gray-200 transition"
             >
-             <i className="fa-regular text-[20px] fa-pen-to-square"></i>
-            </button> */}
+              <i className="fa-light text-[17px] fa-pen-to-square"></i>
+            </button>
 
             <button
               onClick={handleMail}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
+              className="w-[28px] h-[28px] flex items-center justify-center rounded-full  transition"
             >
-              <i className="fa-solid fa-bell text-gray-700 text-lg"></i>
+              <i className="fa-light fa-bell text-gray-700 text-[20px]"></i>
             </button>
 
             {unreadCount > 0 && (
               <span
                 onClick={handleMail}
-                className="absolute top-[-5px] right-[-5px] flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-600 rounded-full border-2 border-white shadow"
+                className="absolute top-[-6px] right-[-6px] flex items-center pt-[px] justify-center w-[18px] h-[18px] text-[9px] font-[500] text-white bg-red-600 rounded-full border-2 border-white shadow"
               >
                 {unreadCount}
               </span>
