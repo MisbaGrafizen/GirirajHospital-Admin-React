@@ -162,12 +162,12 @@ function Header({
 
           <div className="relative mr-[30px] flex items-center">
 
-            <button
+            {/* <button
   onClick={handleNotes}
               className=" flex mr-[20px]  items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
             >
              <i className="fa-regular text-[20px] fa-pen-to-square"></i>
-            </button>
+            </button> */}
 
             <button
               onClick={handleMail}
