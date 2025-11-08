@@ -234,8 +234,6 @@ function mapStatusUI(status) {
             return "Resolved";
         case "escalated":
             return "Escalated";
-        case "inprogress":
-        case "in-progress":
         case "in_progress":
             return "In Progress";
         case "partial":
@@ -644,7 +642,6 @@ export default function ComplaintManagementDashboard() {
                 color = "bg-red-100 text-red-700";
                 text = "Pending 🔴";
                 break;
-            case "in progress":
             case "in_progress":
                 color = "bg-blue-100 text-blue-700";
                 text = "In Progress 🟡";
