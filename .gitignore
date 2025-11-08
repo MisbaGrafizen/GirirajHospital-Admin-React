@@ -1,0 +1,129 @@
+# ======================================================
+# 🧠 STANDARD NODE / BACKEND IGNORE FILE (ENHANCED)
+# ======================================================
+
+# ------------------------------------------------------
+# 🧩 Logs & Runtime Data
+# ------------------------------------------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------------------
+# 🧩 Build & Coverage
+# ------------------------------------------------------
+lib-cov
+coverage/
+*.lcov
+.nyc_output
+dist/
+build/
+.cache/
+.tmp/
+out/
+.next/
+.nuxt/
+.vuepress/dist
+
+# ------------------------------------------------------
+# 🧩 Dependency Directories
+# ------------------------------------------------------
+node_modules/
+bower_components/
+jspm_packages/
+web_modules/
+
+# ------------------------------------------------------
+# 🧩 TypeScript / Tooling Cache
+# ------------------------------------------------------
+*.tsbuildinfo
+.npm
+.eslintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# ------------------------------------------------------
+# 🧩 Packaging / Test Files
+# ------------------------------------------------------
+*.tgz
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+.yarn/
+.node_repl_history
+.vscode-test
+.tern-port
+
+# ------------------------------------------------------
+# 🧩 Frontend / Framework Outputs
+# ------------------------------------------------------
+.out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.serverless/
+.fusebox/
+.dynamodb/
+
+# ------------------------------------------------------
+# 🧩 Environment / Config Files
+# ------------------------------------------------------
+# Keep real secrets OUT of Git
+config.env
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.staging
+
+# Template for teammates (safe to commit)
+!.env.example
+
+# ------------------------------------------------------
+# 🧩 Sensitive Keys / Credentials
+# ------------------------------------------------------
+serviceAccountKey.json
+firebase-key.json
+*.pem
+*.pub
+*.key
+id_rsa
+id_rsa.pub
+*.crt
+*.csr
+*.pfx
+
+# ------------------------------------------------------
+# 🧩 Editor / System Files
+# ------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ------------------------------------------------------
+# 🧩 Uploads / Local Assets
+# ------------------------------------------------------
+uploads/
+temp/
+__tests__/
+*.tmp
+*.bak

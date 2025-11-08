@@ -1,39 +1,56 @@
+// src/utils/centrifugoClient.js
 import { Centrifuge } from "centrifuge";
 
-let centrifugeInstance = null;
+let centrifuge = null;
 
-export const connectCentrifugo = () => {
-  if (centrifugeInstance && centrifugeInstance.state === "connected")
-    return centrifugeInstance;
+/**
+ * Initialize Centrifugo connection
+ * @param {string} token - JWT token received from your backend for the logged-in user
+ */
+export const initCentrifugo = (token) => {
+  if (centrifuge) {
+    console.log("Centrifugo already initialized");
+    return centrifuge;
+  }
 
-  centrifugeInstance = new Centrifuge("ws://localhost:8000/connection/websocket", {
-    insecure: true,
+  // ✅ Replace with your Centrifugo WebSocket URL
+  const WEBSOCKET_URL = "wss://localhost:8000/connection/websocket"; 
+
+  centrifuge = new Centrifuge(WEBSOCKET_URL, {
+    token,
+    debug: true, // Remove in production
   });
 
-  centrifugeInstance.on("connected", () => console.log("✅ Connected to Centrifugo"));
-  centrifugeInstance.on("disconnected", (ctx) =>
-    console.warn("⚠️ Disconnected:", ctx.reason)
-  );
-  centrifugeInstance.on("error", (err) =>
-    console.error("❌ Centrifugo Error:", err)
-  );
+  centrifuge.on('connecting', ctx => console.log("🟡 Connecting:", ctx));
+  centrifuge.on('connected', ctx => console.log("🟢 Connected:", ctx));
+  centrifuge.on('disconnected', ctx => console.log("🔴 Disconnected:", ctx));
+  centrifuge.on('error', err => console.error("❌ Centrifugo Error:", err));
 
-  centrifugeInstance.connect();
-  return centrifugeInstance;
+  centrifuge.connect();
+  return centrifuge;
 };
 
-export const subscribeToCentrifugo = (channel, callback) => {
-  const centrifuge = connectCentrifugo();
+/**
+ * Subscribe to a channel
+ * @param {string} channel - e.g., "user#123" or "complaints"
+ * @param {function} callback - triggered on message received
+ */
+export const subscribeChannel = (channel, callback) => {
+  if (!centrifuge) {
+    console.error("⚠️ Centrifugo not initialized yet!");
+    return;
+  }
 
-  console.log("🌀 Subscribing to:", channel);
   const sub = centrifuge.newSubscription(channel);
 
-  sub.on("subscribed", () => console.log("✅ Subscribed to:", channel));
   sub.on("publication", (ctx) => {
-    console.log("📩 Received data:", ctx.data);
-    callback && callback(ctx.data);
+    console.log(`📩 Message from ${channel}:`, ctx.data);
+    callback?.(ctx.data);
   });
-  sub.on("error", (err) => console.error("❌ Subscription Error:", err));
+
+  sub.on("subscribed", () => console.log(`✅ Subscribed to ${channel}`));
+  sub.on("unsubscribed", () => console.log(`🚪 Unsubscribed from ${channel}`));
+  sub.on("error", (err) => console.error(`❌ Subscription error on ${channel}:`, err));
 
   sub.subscribe();
   return sub;

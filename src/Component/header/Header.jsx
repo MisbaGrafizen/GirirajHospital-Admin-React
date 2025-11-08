@@ -72,7 +72,7 @@ function Header({
   const handleMail = () => {
     navigate("/mail");
     setLastSeen(count);
-    localStorage.setItem("lastSeen", count);
+    localStorage.setItem("lastSeen", count);  
   };
 
   const unreadCount = count - lastSeen;
@@ -161,12 +161,11 @@ function Header({
 
 
           <div className="relative mr-[30px] flex items-center">
-
             {/* <button
-  onClick={handleNotes}
-              className=" flex mr-[20px]  items-center justify-center rounded-full bg-gray-200 hover:bg-gray-200 transition"
+              onClick={handleNotes}
+              className=" flex mr-[20px]  items-center justify-center rounded-full  hover:bg-gray-200 transition"
             >
-             <i className="fa-regular text-[20px] fa-pen-to-square"></i>
+              <i className="fa-light text-[17px] fa-pen-to-square"></i>
             </button> */}
 
             <button

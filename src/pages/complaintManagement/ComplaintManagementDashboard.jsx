@@ -146,6 +146,68 @@ function normalizeServiceName(name = "") {
     return SERVICE_NORMALIZATION_MAP[name] || name;
 }
 
+function getActiveDepartments(complaint) {
+  const allDepartments = [
+    "maintenance",
+    "itDepartment",
+    "bioMedical",
+    "nursing",
+    "medicalAdmin",
+    "frontDesk",
+    "housekeeping",
+    "dietitian",
+    "pharmacy",
+    "security",
+    "hr",
+    "icn",
+    "mrd",
+    "accounts",
+  ];
+
+  const labelMap = {
+    hr: "HR",
+    itDepartment: "IT Department",
+    bioMedicalDepartment: "Bio Medical Department",
+    medicalAdmin: "Medical Admin",
+    frontDesk: "Front Desk",
+    housekeeping: "Housekeeping",
+    dietitian: "Dietitian",
+    pharmacy: "Pharmacy",
+    security: "Security",
+    nursing: "Nursing",
+    maintenance: "Maintenance",
+    icn: "ICN",
+    mrd: "MRD",
+    accounts: "Accounts",
+  };
+
+  const activeDepartments = [];
+
+  for (const dept of allDepartments) {
+    const d = complaint?.[dept];
+    if (!d) continue;
+
+    const hasText = d.text && d.text.trim().length > 0;
+    const hasAttachments =
+      Array.isArray(d.attachments) && d.attachments.length > 0;
+
+    if (hasText || hasAttachments) {
+      const displayName =
+        labelMap[dept] ||
+        dept
+          .replace(/([A-Z])/g, " $1")
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+          .trim();
+      activeDepartments.push(displayName);
+    }
+  }
+
+  return activeDepartments.length > 0
+    ? activeDepartments.join(", ")
+    : "-";
+}
+
+
 
 
 // ===================== DATE HELPERS =====================
@@ -174,6 +236,7 @@ function mapStatusUI(status) {
             return "Escalated";
         case "inprogress":
         case "in-progress":
+        case "in_progress":
             return "In Progress";
         case "partial":
             return "Partial";
@@ -356,26 +419,26 @@ function computeKpis(rows) {
     const resolvedRows = rows.filter((r) => r.status === "Resolved")
     let avgResolutionStr = "—"
     if (resolvedRows.length) {
-const mins = Math.round(
-    resolvedRows.reduce((acc, r) => {
-        const start = new Date(r.createdAt).getTime();
-        const end = new Date().getTime();
-        return acc + Math.max(0, end - start) / 60000;
-    }, 0) / resolvedRows.length
-);
+        const mins = Math.round(
+            resolvedRows.reduce((acc, r) => {
+                const start = new Date(r.createdAt).getTime();
+                const end = new Date().getTime();
+                return acc + Math.max(0, end - start) / 60000;
+            }, 0) / resolvedRows.length
+        );
 
-if (mins >= 1440) { // more than 24 hours
-    const days = Math.floor(mins / 1440);
-    const hours = Math.floor((mins % 1440) / 60);
-    const minutes = mins % 60;
-    avgResolutionStr = `${days} day${days > 1 ? "s" : ""} ${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
-} else if (mins >= 60) { // between 1 hour and 24 hours
-    const hours = Math.floor(mins / 60);
-    const minutes = mins % 60;
-    avgResolutionStr = `${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
-} else { // less than 1 hour
-    avgResolutionStr = `${mins} min${mins !== 1 ? "s" : ""}`;
-}
+        if (mins >= 1440) { // more than 24 hours
+            const days = Math.floor(mins / 1440);
+            const hours = Math.floor((mins % 1440) / 60);
+            const minutes = mins % 60;
+            avgResolutionStr = `${days} day${days > 1 ? "s" : ""} ${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
+        } else if (mins >= 60) { // between 1 hour and 24 hours
+            const hours = Math.floor(mins / 60);
+            const minutes = mins % 60;
+            avgResolutionStr = `${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
+        } else { // less than 1 hour
+            avgResolutionStr = `${mins} min${mins !== 1 ? "s" : ""}`;
+        }
 
 
     }
@@ -392,27 +455,27 @@ if (mins >= 1440) { // more than 24 hours
 
 // ✅ Compute TAT time (only hours if <24h, days+hours if ≥24h)
 function computeTATTime(stampIn, stampOut) {
-  if (!stampIn || !stampOut) return "-";
+    if (!stampIn || !stampOut) return "-";
 
-  const start = new Date(stampIn);
-  const end = new Date(stampOut);
-  if (isNaN(start) || isNaN(end)) return "-";
+    const start = new Date(stampIn);
+    const end = new Date(stampOut);
+    if (isNaN(start) || isNaN(end)) return "-";
 
-  const diffMs = end - start;
-  if (diffMs <= 0) return "-";
+    const diffMs = end - start;
+    if (diffMs <= 0) return "-";
 
-  const totalMinutes = Math.floor(diffMs / 60000);
-  const totalHours = Math.floor(totalMinutes / 60);
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const totalHours = Math.floor(totalMinutes / 60);
 
-  // ⏱️ Less than 24 hours → show only hours
-  if (totalHours < 24) {
-    return `${totalHours} hr${totalHours !== 1 ? "s" : ""}`;
-  }
+    // ⏱️ Less than 24 hours → show only hours
+    if (totalHours < 24) {
+        return `${totalHours} hr${totalHours !== 1 ? "s" : ""}`;
+    }
 
-  // 📅 More than 24 hours → show days + remaining hours
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  return `${days} day${days > 1 ? "s" : ""}${hours ? ` ${hours} hr${hours !== 1 ? "s" : ""}` : ""}`;
+    // 📅 More than 24 hours → show days + remaining hours
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    return `${days} day${days > 1 ? "s" : ""}${hours ? ` ${hours} hr${hours !== 1 ? "s" : ""}` : ""}`;
 }
 
 
@@ -475,6 +538,22 @@ async function getResolvedComplaints() {
     return [];
 }
 
+async function getInternalComplaints() {
+    try {
+        const res = await ApiGet("/admin/internal-complaints");
+        console.log("Internal complaints response:", res);
+
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res?.data)) return res.data;
+        if (Array.isArray(res?.response?.data)) return res.response.data;
+        return [];
+    } catch (err) {
+        console.error("❌ Error fetching internal complaints:", err);
+        return [];
+    }
+}
+
+
 function extractFrequentServices(docs, topN = 6) {
     const serviceCounts = {};
 
@@ -525,13 +604,32 @@ export default function ComplaintManagementDashboard() {
     const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedComplaint, setSelectedComplaint] = useState(null)
+    const [selectedInternalComplaint, setSelectedInternalComplaint] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [chartAnimated, setChartAnimated] = useState(false)
     const [top5Departments, setTop5Departments] = useState([]);
     const [rawConcerns, setRawConcerns] = useState([]);
     const [tatComplaints, setTatComplaints] = useState([]);
+    const [internalComplaints, setInternalComplaints] = useState([]);
 
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
+    const [isPartialInternalModalOpen, setIsPartialInternalModalOpen] = useState(false);
+
+
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            try {
+                const data = await getInternalComplaints();
+                if (!alive) return;
+                setInternalComplaints(Array.isArray(data) ? data : []);
+            } catch (err) {
+                console.error("Error loading internal complaints:", err);
+                setInternalComplaints([]);
+            }
+        })();
+        return () => { alive = false };
+    }, []);
 
     function StatusBadge({ status }) {
         let color = "bg-gray-200 text-gray-800";
@@ -587,6 +685,11 @@ export default function ComplaintManagementDashboard() {
     const closePartialModal = () => {
         setSelectedComplaint(null);
         setIsPartialModalOpen(false);
+    };
+
+    const closeInternalPartialModal = () => {
+        setSelectedInternalComplaint(null);
+        setIsPartialInternalModalOpen(false);
     };
 
     const [filters, setFilters] = useState({
@@ -1172,10 +1275,49 @@ export default function ComplaintManagementDashboard() {
         )
     }
 
+    const [showPopup, setShowPopup] = useState(false);
+
+    const handleWidgetClick = (type) => {
+        switch (type) {
+            case "total":
+                navigate("/complain-list", { state: { filter: "All" } });
+                break;
+            case "pending":
+                navigate("/complain-list", { state: { filter: "Pending" } });
+                break;
+            case "resolved":
+                navigate("/complain-list", { state: { filter: "Resolved" } });
+                break;
+            case "escalated":
+                navigate("/complain-list", { state: { filter: "Escalated" } });
+                break;
+            case "inprogress":
+                navigate("/complain-list", { state: { filter: "In Progress" } });
+                break;
+            case "avgResolution":
+                setShowPopup(true);
+                break;
+            default:
+                break;
+        }
+    };
+
+
+    const handleInternalNavigate = () => {
+
+        navigate("/internal-complint-list")
+    }
+
+    const handleInternaldetailsNavigate = (row) => {
+  navigate("/internal-complaint-details", {
+    state: { complaint: row }, 
+  });
+};
+
     // ===================== UI (design unchanged) =====================
     return (
         <>
-            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] overflow-hidden flex-col  h-[100vh]">
                     <Header pageName="Complaint Management " />
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
@@ -1246,8 +1388,6 @@ export default function ComplaintManagementDashboard() {
                                             />
                                         </div>
                                         <div className=" mt-[-10px]">
-
-
                                             <Widgets1
                                                 data={{
                                                     title: "In Progress",
@@ -1259,6 +1399,47 @@ export default function ComplaintManagementDashboard() {
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Modal for Avg Resolution */}
+                                    <AnimatePresence>
+                                        {showPopup && (
+                                            <motion.div
+                                                className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                            >
+                                                <motion.div
+                                                    initial={{ scale: 0.9, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    exit={{ scale: 0.9, opacity: 0 }}
+                                                    className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
+                                                >
+                                                    <button
+                                                        onClick={() => setShowPopup(false)}
+                                                        className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                                                    >
+                                                        <XCircle className="w-6 h-6" />
+                                                    </button>
+
+                                                    <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                                                        Average Resolution Time
+                                                    </h2>
+                                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                                        This shows the average time taken to resolve complaints across departments.
+                                                    </p>
+
+                                                    <div className="text-center mt-2">
+                                                        <p className="text-4xl font-bold text-purple-600">{kpiData.avgResolutionTime}</p>
+                                                        <p className="text-sm text-gray-500 mt-1">
+                                                            Based on historical resolution data.
+                                                        </p>
+                                                    </div>
+                                                </motion.div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
 
 
                                     {/* Charts Row */}
@@ -1766,6 +1947,172 @@ export default function ComplaintManagementDashboard() {
                                     </div>
 
 
+
+
+                                    <div className="bg-white border rounded-lg mb-[20px] mt-[20px] shadow-sm overflow-hidden">
+                                        <div className="px-3 py-3 border-b flex justify-between items-center border-gray-200">
+                                            <div className="flex items-center gap-[10px]">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-solid fa-list text-[17px] text-[#fff]"></i>
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900">Internal Complaints</h3>
+                                            </div>
+
+                                            <div className=" flex gap-[10px]">
+                                                {/* ✅ Export to Excel first */}
+
+                                                {/* 👁️ View All second */}
+                                                <button
+                                                    className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    onClick={handleInternalNavigate}
+                                                >
+                                                    <Eye className="w-5 h-5" />
+                                                    View All
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Complaint ID
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Date & Time
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Employee Name
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Contact No
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Employee Id
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Floor No
+                                                        </th>
+
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Department
+                                                        </th>
+                                                        <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Status
+                                                        </th>
+                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Action
+                                                        </th>
+                                                        {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                                    Status
+                                                                                                </th> */}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white">
+                                                    {internalComplaints
+                                                        .slice()
+                                                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                        .slice(0, 5)
+                                                        .map((complaint, index) => {
+                                                            const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                            return (
+
+                                                                <tr
+                                                                    key={complaint.id}
+                                                                    // onClick={() => openModal(complaint)}
+                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
+                                                                >
+
+                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+                                                                     <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {formatDateTime(complaint?.createdAt)}
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <div className="flex items-center">
+                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                            {complaint.employeeName}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {complaint.contactNo}
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {complaint.employeeId}
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm min-w-[150px] text-gray-900">
+                                                                        {complaint.floorNo}
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-sm min-w-[150px] text-gray-900">
+                                                                            {getActiveDepartments(complaint, allowedBlocks)}
+                                                                    </td>
+                                                                    <td className="px-3 py-2 text-sm">
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <span
+                                                                                className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
+                                                                                    mapStatusUI(complaint.status)
+                                                                                )}`}
+                                                                            >
+                                                                                {mapStatusUI(complaint.status)}
+
+                                                                                {complaint.status?.toLowerCase() === "partial" && (
+                                                                                    <button
+                                                                                        onClick={async () => {
+                                                                                            try {
+                                                                                                // show modal first
+                                                                                                setIsPartialInternalModalOpen(true);
+                                                                                                setSelectedInternalComplaint(null);
+
+                                                                                                const res = await ApiGet(
+                                                                                                    `/admin/internal/partial-resolve/${complaint._id}`
+                                                                                                );
+                                                                                                console.log("res", res);
+                                                                                                if (res.data) {
+                                                                                                    setSelectedInternalComplaint(res.data);
+                                                                                                } else {
+                                                                                                    setSelectedInternalComplaint({ error: true });
+                                                                                                }
+                                                                                            } catch (err) {
+                                                                                                console.error("Error fetching partial-resolve details:", err);
+                                                                                                setSelectedInternalComplaint({ error: true });
+                                                                                            }
+                                                                                        }}
+                                                                                        className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
+                                                                                    >
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </button>
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+
+                                                                    </td>
+                                                                    <td className="px-3 py-2 text-sm">
+                                                                        <button
+                                                                            onClick={() => handleInternaldetailsNavigate(complaint, fullDoc)}
+                                                                            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1" />
+                                                                            View
+                                                                        </button>
+
+                                                                    </td>
+
+                                                                </tr>
+                                                            )
+                                                        })}
+                                                    {filteredComplaints.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                No complaints found for the selected range.
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+
                                     <AnimatePresence>
                                         {isPartialModalOpen && selectedComplaint && (
                                             <motion.div
@@ -1932,6 +2279,189 @@ export default function ComplaintManagementDashboard() {
                                                     <div className="mt-6 flex justify-end">
                                                         <button
                                                             onClick={closePartialModal}
+                                                            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
+                                                        >
+                                                            Close
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    <AnimatePresence>
+                                        {isPartialInternalModalOpen && selectedInternalComplaint && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+                                                onClick={closePartialModal}
+                                            >
+                                                <motion.div
+                                                    initial={{ scale: 0.95, y: 20 }}
+                                                    animate={{ scale: 1, y: 0 }}
+                                                    exit={{ scale: 0.95, y: 20 }}
+                                                    transition={{ duration: 0.25 }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="bg-white rounded-2xl shadow-xl p-6 w-[500px] max-w-full"
+                                                >
+                                                    {/* Header */}
+                                                    <div className="flex justify-between items-center mb-6 border-b pb-3">
+                                                        <h3 className="text-xl font-bold text-gray-900">
+                                                            Department Complaint Status
+                                                        </h3>
+                                                        <button
+                                                            onClick={closeInternalPartialModal}
+                                                            className="text-gray-400 hover:text-gray-600 transition"
+                                                        >
+                                                            <X className="w-6 h-6" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Department Complaint Status */}
+                                                    <div className="flex flex-col overflow-y-auto gap-3">
+                                                        {!selectedInternalComplaint ? (
+                                                            <p className="text-center text-gray-500 text-sm py-6">
+                                                                Loading department details...
+                                                            </p>
+                                                        ) : selectedInternalComplaint.error ? (
+                                                            <p className="text-center text-gray-500 text-sm py-6">
+                                                                ⚠️ Failed to load department complaint data.
+                                                            </p>
+                                                        ) : (
+                                                            (() => {
+                                                                const filteredDepartments = Object.entries(selectedInternalComplaint)
+                                                                    .filter(([key]) =>
+                                                                        [
+                                                                            "doctorServices",
+                                                                            "billingServices",
+                                                                            "housekeeping",
+                                                                            "maintenance",
+                                                                            "diagnosticServices",
+                                                                            "dietitianServices",
+                                                                            "security",
+                                                                            "nursing",
+                                                                            "pharmacy",
+                                                                            "itDepartment",
+                                                                            "bioMedical",
+                                                                            "hr",
+                                                                            "icn",
+                                                                            "mrd",
+                                                                            "accounts",
+                                                                            "medicalAdmin",
+                                                                        ].includes(key)
+                                                                    )
+                                                                    // ✅ include only departments with non-empty text or attachments
+                                                                    .filter(([_, value]) => {
+                                                                        const hasText = value?.text && value.text.trim() !== "";
+                                                                        const hasAttachments =
+                                                                            Array.isArray(value?.attachments) && value.attachments.length > 0;
+                                                                        return hasText || hasAttachments;
+                                                                    });
+
+                                                                if (filteredDepartments.length === 0) {
+                                                                    return (
+                                                                        <p className="text-center text-gray-500 text-sm py-6">
+                                                                            ⚠️ No department complaints contain text or attachments for this patient.
+                                                                        </p>
+                                                                    );
+                                                                }
+
+                                                                return filteredDepartments.map(([key, value], i) => (
+                                                                    <motion.div
+                                                                        key={key}
+                                                                        initial={{ opacity: 0, y: 10 }}
+                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                        transition={{ delay: i * 0.05 }}
+                                                                        className="border rounded-lg p-4 flex flex-col bg-gray-50 hover:bg-gray-100 transition"
+                                                                    >
+                                                                        {/* Department Header */}
+                                                                        <div className="flex justify-between items-center mb-1">
+                                                                            <span className="font-semibold text-gray-900">
+                                                                                {key
+                                                                                    .replace("Services", "")
+                                                                                    .replace(/([A-Z])/g, " $1")
+                                                                                    .trim()
+                                                                                    .replace(/^./, (c) => c.toUpperCase())}
+                                                                            </span>
+                                                                            <StatusBadge status={value?.status || "Pending"} />
+                                                                        </div>
+
+                                                                        {/* Mode */}
+                                                                        {value?.mode && (
+                                                                            <p className="text-xs text-gray-500 mb-1">
+                                                                                <strong>Mode:</strong> {value.mode}
+                                                                            </p>
+                                                                        )}
+
+                                                                        {/* Text */}
+                                                                        {value?.text && value.text.trim() !== "" && (
+                                                                            <p className="text-sm text-gray-700 mb-1">📝 {value.text}</p>
+                                                                        )}
+
+                                                                        {/* Attachments */}
+                                                                        {Array.isArray(value?.attachments) && value.attachments.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                                                {value.attachments.map((url, idx) => (
+                                                                                    <a
+                                                                                        key={idx}
+                                                                                        href={url}
+                                                                                        target="_blank"
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="text-xs text-blue-600 underline"
+                                                                                    >
+                                                                                        Attachment {idx + 1}
+                                                                                    </a>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Resolution Note & Proof */}
+                                                                        {value?.resolution && (
+                                                                            <div className="mt-2 text-sm text-gray-600">
+                                                                                {value.resolution.note && (
+                                                                                    <p>
+                                                                                        <strong>Resolution Note:</strong> {value.resolution.note}
+                                                                                    </p>
+                                                                                )}
+                                                                                {Array.isArray(value.resolution.proof) &&
+                                                                                    value.resolution.proof.length > 0 && (
+                                                                                        <div className="flex flex-wrap gap-2 mt-1">
+                                                                                            {value.resolution.proof.map((p, i) => (
+                                                                                                <a
+                                                                                                    key={i}
+                                                                                                    href={p}
+                                                                                                    target="_blank"
+                                                                                                    rel="noopener noreferrer"
+                                                                                                    className="text-xs text-green-600 underline"
+                                                                                                >
+                                                                                                    Proof {i + 1}
+                                                                                                </a>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Timestamp */}
+                                                                        <p className="text-xs text-gray-500 mt-2">
+                                                                            Updated:{" "}
+                                                                            {value?.resolution?.resolvedAt
+                                                                                ? new Date(value.resolution.resolvedAt).toLocaleString()
+                                                                                : new Date(selectedInternalComplaint.updatedAt).toLocaleString()}
+                                                                        </p>
+                                                                    </motion.div>
+                                                                ));
+                                                            })()
+                                                        )}
+                                                    </div>
+
+
+                                                    {/* Footer */}
+                                                    <div className="mt-6 flex justify-end">
+                                                        <button
+                                                            onClick={closeInternalPartialModal}
                                                             className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
                                                         >
                                                             Close

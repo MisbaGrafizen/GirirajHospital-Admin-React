@@ -3,7 +3,7 @@ import "../src/App.css";
 import { Route, Routes, useLocation } from "react-router-dom";
 import ScrollToTop from "./Component/Scrooltop";
 import PrivateRoute from "./Component/PrivateRoute.jsx";
-import { subscribeToCentrifugo } from "./utils/centrifugoClient";
+import { initCentrifugo } from "./utils/centrifugoClient";
 
 // import all your pages below...
 import DashBoard from "./pages/dashBoard/DashBoard";
@@ -29,6 +29,13 @@ import TATAllList from "./pages/reportsMain/allListPages/TATAllList.jsx";
 import PushNotification from "./pages/bedCreate/PushNotification.jsx";
 import NotesAdd from "./pages/notesPage/NotesAdd.jsx";
 import TodoPage from "./pages/notesPage/TodoPage.jsx";
+// import EmployeeProfile from "./pages/profile/EmployeeProfile.jsx";
+import OpdIpdAllDetails from "./pages/DashboardCapsulePages/OpdIpdAllDetails.jsx";
+import OpenIssues from "./pages/DashboardCapsulePages/OpenIssues.jsx";
+import UserAllList from "./pages/DashboardCapsulePages/UserAllList.jsx";
+import AllComplaintPage from "./pages/DashboardCapsulePages/AllCompalinPage.jsx";
+import InternalComplaintsList from "./pages/complaintManagement/InternalComplaintsList.jsx";
+import InternalComplaintsDetails from "./pages/complaintManagement/InternalComplaintsDetails.jsx";
 
 function App() {
   const location = useLocation();
@@ -99,6 +106,13 @@ function App() {
 
 //   return () => subs.forEach((s) => s.unsubscribe());
 // }, []);
+useEffect(() => {
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const token = userData?.centrifugoToken || ""; // ✅ Get token from backend
+  if (token) {
+    initCentrifugo(token);
+  }
+}, []);
 
   return (
     <>
@@ -130,6 +144,15 @@ function App() {
           <Route path="/dashboards/tat-view" element={<PrivateRoute><TATAllList /></PrivateRoute>} />
            <Route path="/notes" element={<PrivateRoute><NotesAdd /></PrivateRoute>} />
            <Route path="/todolist" element={<PrivateRoute><TodoPage /></PrivateRoute>} />
+           {/* <Route path="/profile" element={<PrivateRoute><EmployeeProfile /></PrivateRoute>} /> */}
+           <Route path="/ipd-opd-list" element={<PrivateRoute><OpdIpdAllDetails /></PrivateRoute>} />
+           <Route path="/open-issues" element={<PrivateRoute><OpenIssues /></PrivateRoute>} />
+                 <Route path="/user-all-list" element={<PrivateRoute><UserAllList /></PrivateRoute>} />
+                 <Route path="/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
+      <Route path="/internal-complint-list" element={<PrivateRoute><InternalComplaintsList /></PrivateRoute>} />
+                 <Route path="/internal-complaint-details" element={<PrivateRoute><InternalComplaintsDetails /></PrivateRoute>} />
+
+
 
           <Route path="/dashboards/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
         </Routes>

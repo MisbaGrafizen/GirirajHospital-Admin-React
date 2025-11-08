@@ -137,54 +137,59 @@ const [totals, setTotals] = useState({
 
 
   useEffect(() => {
-    let mounted = true
-      ; (async () => {
-        try {
-          setLoading(true)
-          setError(null)
+  let mounted = true;
+  (async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-          const query = [];
-          if (dateRange.from) query.push(`from=${dateRange.from}`);
-          if (dateRange.to) query.push(`to=${dateRange.to}`);
+      let fromDate = dateRange.from;
+      let toDate = dateRange.to;
 
-          const rights = JSON.parse(localStorage.getItem("rights") || "{}");
-          const modules = (rights?.permissions || []).map(p => p.module);
-          const loginType = localStorage.getItem("loginType") || "user";
+      // ✅ Step 1: Default last 7 days if no filter applied
+      if (!fromDate || !toDate) {
+        const today = dayjs();
+        const sevenDaysAgo = today.subtract(6, "day"); // includes today
 
-          if (modules.length) {
-            query.push(`modules=${modules.join(",")}`);
-          }
+        fromDate = sevenDaysAgo.format("YYYY-MM-DD");
+        toDate = today.format("YYYY-MM-DD");
 
-          query.push(`loginType=${loginType}`);
+        // 🔹 set the range in state so header shows correct dates
+        setDateRange({ from: fromDate, to: toDate });
+      }
 
-          const qs = query.length ? `?${query.join("&")}` : "";
+      // ✅ Step 2: Build query string dynamically
+      const query = [`from=${fromDate}`, `to=${toDate}`];
 
-          console.log('qs', qs)
+      const rights = JSON.parse(localStorage.getItem("rights") || "{}");
+      const modules = (rights?.permissions || []).map((p) => p.module);
+      const loginType = localStorage.getItem("loginType") || "user";
 
-          const res = await ApiGet(`/admin/dashboard${qs}`);
-          console.log('res', res)
-          const data = res?.data?.data || res?.data || {}
+      if (modules.length) query.push(`modules=${modules.join(",")}`);
+      query.push(`loginType=${loginType}`);
 
-          if (!mounted) return
+      const qs = query.length ? `?${query.join("&")}` : "";
+      console.log("📅 Fetching dashboard data for:", fromDate, "→", toDate);
 
-if (data.kpis || data.totals) {
-  const kpiData = data.kpis || {};
-  const totalsData = data.totals || {};
+      // ✅ Step 3: Fetch dashboard data
+      const res = await ApiGet(`/admin/dashboard${qs}`);
+      const data = res?.data?.data || res?.data || {};
 
-  setKpis(kpiData);
-  setTotals({
-    totalUsers: totalsData.totalUsers ?? 0,
-    totalRoleUsers: totalsData.totalRoleUsers ?? 0,
-    totalAdmins: totalsData.totalAdmins ?? 0,
-    totalTAT: totalsData.totalTAT ?? 0,
-  });
+      if (!mounted) return;
 
-  console.log("✅ KPIs:", kpiData);
-  console.log("✅ Totals:", totalsData);
-}
+      // ✅ Step 4: Update KPI, charts, and data as before
+      if (data.kpis || data.totals) {
+        const kpiData = data.kpis || {};
+        const totalsData = data.totals || {};
 
-
-
+        setKpis(kpiData);
+        setTotals({
+          totalUsers: totalsData.totalUsers ?? 0,
+          totalRoleUsers: totalsData.totalRoleUsers ?? 0,
+          totalAdmins: totalsData.totalAdmins ?? 0,
+          totalTAT: totalsData.totalTAT ?? 0,
+        });
+      }
 
           const series = Array.isArray(data?.ipdTrends?.series) ? data.ipdTrends.series : []
           const ipdTrendMapped = series.map((row) => {

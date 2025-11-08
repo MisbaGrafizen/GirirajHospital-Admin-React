@@ -91,15 +91,23 @@ const CORE_APPS = [
 
 // Departments from your note (we include CRUD + View to be flexible)
 const DEPARTMENT_MODULES = [
-  { id: "doctor_service", name: "Doctor Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "nursing", name: "Nursing", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "dietitian", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "maintenance", name: "Maintenance", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "security", name: "Security", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve"] },
-  { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "doctor_service", name: "Doctor Services", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "nursing", name: "Nursing", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "dietitian", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "maintenance", name: "Maintenance", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "security", name: "Security", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
   { id: "tat", name: "TAT", permissions: ["View"] },
+  { id: "pharmacy", name: "Pharmacy", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "it_department", name: "IT Department", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "bio_medical", name: "Bio Medical", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "hr", name: "HR", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "icn", name: "ICN", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "mrd", name: "MRD", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "accounts", name: "Accounts", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "medical_admin", name: "Medical Admin", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
 ]
 
 // final ordered list shown in modal: core first, then departments
