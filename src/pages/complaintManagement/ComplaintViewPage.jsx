@@ -37,44 +37,44 @@ const MODULE_TO_BLOCK = {
 };
 
 function resolvePermissions() {
-  const loginType = localStorage.getItem("loginType");
-  const isAdmin = loginType === "admin";
+    const loginType = localStorage.getItem("loginType");
+    const isAdmin = loginType === "admin";
 
-  let permsArray = [];
-  try {
-    const parsed = JSON.parse(localStorage.getItem("rights"));
-    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
-      permsArray = parsed.permissions;
-    } else if (Array.isArray(parsed)) {
-      permsArray = parsed;
+    let permsArray = [];
+    try {
+        const parsed = JSON.parse(localStorage.getItem("rights"));
+        if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+            permsArray = parsed.permissions;
+        } else if (Array.isArray(parsed)) {
+            permsArray = parsed;
+        }
+    } catch {
+        permsArray = [];
     }
-  } catch {
-    permsArray = [];
-  }
 
-  const permissionsByBlock = {};
-  if (isAdmin) {
-    Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
-      permissionsByBlock[block] = [
-        "view",
-        "forward",
-        "escalate",
-        "resolve",
-        "in_progress",
-      ];
-    });
-  } else {
-    permsArray.forEach((p) => {
-      const blockKey = MODULE_TO_BLOCK[p.module];
-      if (blockKey) {
-        permissionsByBlock[blockKey] = p.permissions.map((x) =>
-          x.toLowerCase()
-        );
-      }
-    });
-  }
+    const permissionsByBlock = {};
+    if (isAdmin) {
+        Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
+            permissionsByBlock[block] = [
+                "view",
+                "forward",
+                "escalate",
+                "resolve",
+                "in_progress",
+            ];
+        });
+    } else {
+        permsArray.forEach((p) => {
+            const blockKey = MODULE_TO_BLOCK[p.module];
+            if (blockKey) {
+                permissionsByBlock[blockKey] = p.permissions.map((x) =>
+                    x.toLowerCase()
+                );
+            }
+        });
+    }
 
-  return { isAdmin, loginType, permissionsByBlock };
+    return { isAdmin, loginType, permissionsByBlock };
 }
 
 
@@ -103,17 +103,17 @@ function blockHasContent(block) {
 
 
 function mapStatusUI(status) {
-  const s = String(status || "").toLowerCase().replace("-", "_");
+    const s = String(status || "").toLowerCase().replace("-", "_");
 
-  if (s === "open") return "Open";
-  if (s === "in_progress") return "In Progress";
-  if (s === "resolved") return "Resolved";
-  if (s === "resolved_by_admin") return "Resolved by Admin";
-  if (s === "escalated") return "Escalated";
-  if (s === "forwarded") return "Forwarded";
-  if (s === "partial") return "Partial";
-  
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
+    if (s === "open") return "Open";
+    if (s === "in_progress") return "In Progress";
+    if (s === "resolved") return "Resolved";
+    if (s === "resolved_by_admin") return "Resolved by Admin";
+    if (s === "escalated") return "Escalated";
+    if (s === "forwarded") return "Forwarded";
+    if (s === "partial") return "Partial";
+
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
 }
 
 
@@ -419,189 +419,97 @@ export default function ComplaintViewPage() {
         }
     };
 
-    // const handleResolveSubmit = async () => {
-    //     if (!resolutionNote) {
-    //         alert("Please provide a resolution note.");
-    //         return;
-    //     }
-
-    //     try {
-    //         // ✅ Upload proof if provided
-    //         let proofUrl = "";
-    //         if (uploadedFile) {
-    //             const uploadRes = await uploadToHPanel(uploadedFile);
-    //             proofUrl = uploadRes.url;
-    //         }
-
-    //         // ✅ Determine backend endpoint
-    //         let endpoint = `/admin/${complaint.id}/resolve`;
-    //         const payload = {
-    //             note: resolutionNote,
-    //             proof: proofUrl ? [proofUrl] : [],
-    //             userId: localStorage.getItem("userId") || "",
-    //         };
-
-    //         // ✅ If department selected → call partial resolve
-    //         if (selectedDepartment) {
-    //             endpoint = `/admin/${complaint.id}/partial-resolve`;
-    //             const deptKey = Object.keys(DEPT_LABEL).find(
-    //                 (k) => DEPT_LABEL[k] === selectedDepartment
-    //             );
-    //             if (deptKey) payload.department = deptKey;
-    //         }
-
-    //         const res = await ApiPost(endpoint, payload);
-
-    //         // ✅ Detect and set new status
-    //         const newStatus =
-    //             res?.data?.status || res?.data?.data?.status || "resolved";
-    //         setStatus(mapStatusUI(newStatus));
-
-    //         if (newStatus === "partial") {
-    //             alert("Complaint partially resolved.");
-    //         } else if (newStatus === "resolved") {
-    //             alert("✅ Complaint fully resolved.");
-    //         } else {
-    //             alert(res?.message || "Resolution submitted successfully.");
-    //         }
-
-    //         // ✅ Refresh history without full reload
-    //         const newHistory = await fetchConcernHistory(complaint.id);
-    //         setHistoryData(newHistory);
-
-    //         closeAllModals();
-    //     } catch (error) {
-    //         console.error("Resolve Error:", error);
-    //         alert(error.message || "Something went wrong while resolving complaint.");
-    //     }
-    // };
-
-
-const handleResolveSubmit = async () => {
-  if (!resolutionNote.trim()) {
-    alert("Please provide a resolution note.");
-    return;
-  }
-
-  try {
-    let proofUrl = "";
-    if (uploadedFile) {
-      const uploadRes = await uploadToHPanel(uploadedFile);
-      proofUrl = uploadRes.url;
+    function isFullResolution(allowedBlocks, presentBlocks) {
+        if (!Array.isArray(presentBlocks) || presentBlocks.length === 0) return true;
+        const allowedSet = new Set(allowedBlocks);
+        return presentBlocks.every((deptKey) => allowedSet.has(deptKey));
     }
 
-    const loginType = localStorage.getItem("loginType");
-    const concernId = complaint.id;
-
-    // Determine whether this is a full or partial resolve
-    const hasSingleDept = !selectedDepartment;
-    const isFull = hasSingleDept;
-
-    let endpoint = "";
-
-    // ✅ Match backend pattern for admin vs role
-    if (loginType === "admin") {
-      endpoint = isFull
-        ? `/admin/${concernId}/admin-resolve`           // full admin resolve
-        : `/admin/${concernId}/admin-partial-resolve`;  // partial admin resolve
-    } else {
-      endpoint = isFull
-        ? `/role/${concernId}/resolve`                 // full role resolve
-        : `/role/${concernId}/partial-resolve`;        // partial role resolve
-    }
-
-    // ✅ Build payload (aligned with adminResolveConcern service)
-    const payload = {
-      note: resolutionNote,
-      proof: proofUrl ? [proofUrl] : [],
-      isPartial: !isFull, // backend expects boolean flag
-      department: selectedDepartment
-        ? Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === selectedDepartment)
-        : undefined,
-      affectedDepartments: selectedDepartment ? [selectedDepartment] : [],
-      userId: localStorage.getItem("userId") || "",
-    };
-
-    const res = await ApiPost(endpoint, payload);
-
-    // ✅ Detect and update status
-    const newStatus =
-      res?.data?.status || res?.data?.data?.status || "resolved";
-    setStatus(mapStatusUI(newStatus));
-
-    // ✅ Feedback to user
-    if (newStatus === "partial") {
-      alert("Complaint partially resolved by admin.");
-    } else {
-      alert("✅ Complaint fully resolved successfully.");
-    }
-
-    // ✅ Refresh updated data
-    const updated = await fetchComplaintDetails(complaint.id);
-    if (updated) setStatus(updated.status || updated.data?.status);
-
-    const newHistory = await fetchConcernHistory(complaint.id);
-    setHistoryData(newHistory);
 
     const handleResolveSubmit = async () => {
-        if (!resolutionNote) {
+        if (!resolutionNote.trim()) {
             alert("Please provide a resolution note.");
             return;
         }
 
         try {
-            // ✅ Upload proof if provided
+            // ✅ Upload proof file if provided
             let proofUrl = "";
             if (uploadedFile) {
                 const uploadRes = await uploadToHPanel(uploadedFile);
                 proofUrl = uploadRes.url;
             }
 
-            // ✅ Determine backend endpoint
-            let endpoint = `/admin/${complaint.id}/resolve`;
+            const loginType = localStorage.getItem("loginType");
+            const concernId = complaint.id;
+
+            // 🔹 Determine which departments the user can resolve
+            const allowedBlocks = Object.keys(permissionsByBlock).filter((block) =>
+                permissionsByBlock[block]?.includes("resolve")
+            );
+
+            // 🔹 Determine all departments involved in complaint
+            const presentBlocks = CONCERN_KEYS.filter((key) => blockHasContent(fullDoc[key]));
+
+            // 🔹 Decide whether this is full or partial resolution
+            const canResolveAll = isFullResolution(allowedBlocks, presentBlocks);
+            const isPartial = !canResolveAll;
+
+            // 🔹 Handle single department restriction
+            let departmentKey = undefined;
+            if (allowedBlocks.length === 1) {
+                departmentKey = allowedBlocks[0];
+            } else if (selectedDepartment) {
+                departmentKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+            }
+
+            // ✅ Choose correct endpoint
+            let endpoint = "";
+            if (loginType === "admin") {
+                endpoint = isPartial
+                    ? `/admin/${concernId}/admin-partial-resolve`
+                    : `/admin/${concernId}/admin-resolve`;
+            } else {
+                endpoint = isPartial
+                    ? `/admin/${concernId}/partial-resolve`
+                    : `/admin/${concernId}/resolve`;
+            }
+
+            // ✅ Build payload
             const payload = {
                 note: resolutionNote,
                 proof: proofUrl ? [proofUrl] : [],
+                isPartial,
+                department: departmentKey,
                 userId: localStorage.getItem("userId") || "",
             };
 
-            // ✅ If department selected → call partial resolve
-            if (selectedDepartment) {
-                endpoint = `/admin/${complaint.id}/partial-resolve`;
-                const deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
-                if (deptKey) payload.department = deptKey;
-            }
-
             const res = await ApiPost(endpoint, payload);
+            const newStatus =
+                res?.data?.status || res?.data?.data?.status || "resolved";
 
-            // ✅ Handle response
-            const newStatus = res?.data?.status || res?.data?.data?.status;
-            if (newStatus === "partial") {
+            setStatus(mapStatusUI(newStatus));
+
+            if (isPartial) {
                 alert("Complaint partially resolved.");
-            } else if (newStatus === "resolved") {
-                alert("✅ Complaint fully resolved.");
             } else {
-                alert(res?.message || "Resolution submitted successfully.");
+                alert("✅ Complaint fully resolved.");
             }
 
+            // ✅ Refresh UI
+            const updated = await fetchComplaintDetails(complaint.id);
+            if (updated) setStatus(updated.status || updated.data?.status);
+
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
             closeAllModals();
-            window.location.reload();
-            await fetchConcernHistory(complaint.id);
-            setIsResolveModalOpen(false);
         } catch (error) {
             console.error("Resolve Error:", error);
-            alert(error.message || "Something went wrong while resolving complaint.");
+            alert(error.message || "Failed to resolve complaint.");
         }
     };
-
-    closeAllModals();
-  } catch (error) {
-    console.error("Resolve Error:", error);
-    alert(error.message || "Failed to resolve complaint.");
-  }
-};
 
 
 
@@ -1402,153 +1310,206 @@ const handleResolveSubmit = async () => {
                                         )}
                                     </AnimatePresence>
 
-
                                     {/* Modal 2: Resolve Complaint */}
-<AnimatePresence>
-  {isResolveModalOpen && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-      onClick={closeAllModals}
-    >
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="bg-white px-6 pt-6 pb-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
-              <button
-                onClick={closeAllModals}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+                                    <AnimatePresence>
+                                        {isResolveModalOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+                                                onClick={closeAllModals}
+                                            >
+                                                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <div className="bg-white px-6 pt-6 pb-4">
+                                                            <div className="flex justify-between items-center mb-6">
+                                                                <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
+                                                                <button
+                                                                    onClick={closeAllModals}
+                                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                                >
+                                                                    <X className="w-6 h-6" />
+                                                                </button>
+                                                            </div>
 
-            <div className="space-y-6">
-              {/* 🔹 Department Dropdown (multi-department users only) */}
-              {(() => {
-                const allowedBlocks = Object.keys(permissionsByBlock)
-                  .filter(
-                    (block) =>
-                      permissionsByBlock[block]?.includes("resolve") ||
-                      permissionsByBlock[block]?.includes("partial")
-                  )
-                  .map((b) => DEPT_LABEL[b])
-                  .filter(Boolean);
+                                                            <div className="space-y-6">
+                                                                {/* 🔹 Department Dropdown (multi-department users only) */}
+{(() => {
+  // 🔹 1. Find all departments with complaint content
+  const presentBlocks = CONCERN_KEYS.filter((key) => blockHasContent(fullDoc[key]));
 
-                if (allowedBlocks.length > 1) {
-                  return (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Department <span className="text-red-500">*</span>
-                      </label>
-                      <AnimatedDropdown
-                        isOpen={isForwardDeptDropdownOpen}
-                        setIsOpen={setIsForwardDeptDropdownOpen}
-                        selected={selectedDepartment || "Select Department"}
-                        setSelected={setSelectedDepartment}
-                        options={allowedBlocks}
-                        placeholder="Select Department"
-                        icon={MapPin}
-                      />
-                    </div>
-                  );
-                } else if (allowedBlocks.length === 1) {
-                  // auto-select for single-department users
-                  if (!selectedDepartment) setSelectedDepartment(allowedBlocks[0]);
-                  return null;
+  // 🔹 2. Get allowed departments (those user can resolve)
+  const allowedBlocks = Object.keys(permissionsByBlock).filter((block) =>
+    permissionsByBlock[block]?.includes("resolve")
+  );
+
+  // 🔹 3. Only keep departments both in complaint and allowed
+  const allowedInComplaint = allowedBlocks.filter((b) => presentBlocks.includes(b));
+
+  // 🔹 4. Detect which complaint departments are already resolved
+  const unresolvedDepts = allowedInComplaint.filter(
+    (deptKey) =>
+      fullDoc[deptKey]?.status &&
+      fullDoc[deptKey].status.toLowerCase() !== "resolved" &&
+      fullDoc[deptKey].status.toLowerCase() !== "resolved_by_admin"
+  );
+
+  // 🔹 5. Labels for unresolved departments only
+  const unresolvedLabels = unresolvedDepts.map((b) => DEPT_LABEL[b]).filter(Boolean);
+
+  // 🧠 CASE A: Multiple unresolved departments left → show dropdown
+  if (unresolvedLabels.length > 1) {
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Select Department <span className="text-red-500">*</span>
+        </label>
+        <div className="relative">
+          <button
+            onClick={() => setIsForwardDeptDropdownOpen(!isForwardDeptDropdownOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none transition-colors"
+          >
+            <div className="flex items-center">
+              <MapPin className="w-5 h-5 text-gray-400 mr-3" />
+              <span
+                className={
+                  selectedDepartment ? "text-gray-900" : "text-gray-500"
                 }
-                return null;
-              })()}
-
-              {/* 🔹 Resolution Note */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Resolution Note <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={resolutionNote}
-                  onChange={(e) => setResolutionNote(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                  placeholder="Please provide details about how the complaint was resolved..."
-                />
-              </div>
-
-              {/* 🔹 Upload Proof */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Proof (Optional)
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                    accept="image/*,.pdf,.doc,.docx"
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex flex-col items-center justify-center"
-                  >
-                    <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                    <span className="text-sm text-gray-600 mb-1">
-                      Click to upload file
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      PNG, JPG, PDF up to 10MB
-                    </span>
-                    {uploadedFile && (
-                      <span className="text-sm text-green-600 mt-2 font-medium">
-                        File: {uploadedFile.name}
-                      </span>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              {/* 🔹 Info Box */}
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                  <span className="text-sm text-green-800">
-                    Patient will receive an SMS notification about the resolution.
-                  </span>
-                </div>
-              </div>
+              >
+                {selectedDepartment || "Select Department"}
+              </span>
             </div>
-          </div>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-400 transition-transform ${
+                isForwardDeptDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
 
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-            <button
-              onClick={closeAllModals}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleResolveSubmit}
-              disabled={!resolutionNote}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Resolve Complaint
-            </button>
-          </div>
-        </motion.div>
+          {isForwardDeptDropdownOpen && (
+            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+              {unresolvedLabels.map((label, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setSelectedDepartment(label);
+                    setIsForwardDeptDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 focus:bg-blue-50 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </motion.div>
-  )}
-</AnimatePresence>
+    );
+  }
+
+  // 🧠 CASE B: Only one unresolved department left → auto-select and hide dropdown
+  if (unresolvedLabels.length === 1 && !selectedDepartment) {
+    setSelectedDepartment(unresolvedLabels[0]);
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center">
+        <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+        Auto-selected department: <b className="ml-1">{unresolvedLabels[0]}</b>
+      </div>
+    );
+  }
+
+  // 🧠 CASE C: No unresolved departments (should not happen but safe)
+  return null;
+})()}
+
+
+                                                                {/* 🔹 Resolution Note */}
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Resolution Note <span className="text-red-500">*</span>
+                                                                    </label>
+                                                                    <textarea
+                                                                        value={resolutionNote}
+                                                                        onChange={(e) => setResolutionNote(e.target.value)}
+                                                                        rows={4}
+                                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                                                        placeholder="Please provide details about how the complaint was resolved..."
+                                                                    />
+                                                                </div>
+
+                                                                {/* 🔹 Upload Proof */}
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Upload Proof (Optional)
+                                                                    </label>
+                                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                                                                        <input
+                                                                            type="file"
+                                                                            onChange={handleFileUpload}
+                                                                            className="hidden"
+                                                                            id="file-upload"
+                                                                            accept="image/*,.pdf,.doc,.docx"
+                                                                        />
+                                                                        <label
+                                                                            htmlFor="file-upload"
+                                                                            className="cursor-pointer flex flex-col items-center justify-center"
+                                                                        >
+                                                                            <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                                                                            <span className="text-sm text-gray-600 mb-1">
+                                                                                Click to upload file
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                PNG, JPG, PDF up to 10MB
+                                                                            </span>
+                                                                            {uploadedFile && (
+                                                                                <span className="text-sm text-green-600 mt-2 font-medium">
+                                                                                    File: {uploadedFile.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* 🔹 Info Box */}
+                                                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                                                    <div className="flex items-center">
+                                                                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                                                                        <span className="text-sm text-green-800">
+                                                                            Patient will receive an SMS notification about the resolution.
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Footer */}
+                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                                                            <button
+                                                                onClick={closeAllModals}
+                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={handleResolveSubmit}
+                                                                disabled={!resolutionNote}
+                                                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                            >
+                                                                Resolve Complaint
+                                                            </button>
+                                                        </div>
+                                                    </motion.div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
 
 
