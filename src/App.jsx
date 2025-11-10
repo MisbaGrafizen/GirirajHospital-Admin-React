@@ -34,7 +34,7 @@ import OpdIpdAllDetails from "./pages/DashboardCapsulePages/OpdIpdAllDetails.jsx
 import OpenIssues from "./pages/DashboardCapsulePages/OpenIssues.jsx";
 import UserAllList from "./pages/DashboardCapsulePages/UserAllList.jsx";
 import AllComplaintPage from "./pages/DashboardCapsulePages/AllCompalinPage.jsx";
-import InternalChat from "./pages/ChatSystem/InternalChat.jsx";
+// import InternalChat from "./pages/ChatSystem/InternalChat.jsx";
 import InternalComplaintsList from "./pages/complaintManagement/InternalComplaintsList.jsx";
 import InternalComplaintsDetails from "./pages/complaintManagement/InternalComplaintsDetails.jsx";
 import { onMessage } from "firebase/messaging";
