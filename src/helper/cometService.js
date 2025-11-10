@@ -1,43 +1,28 @@
+import axios from "axios";
 import CometChat from "../config/comet.config";
-import { ApiPost } from "./axios"; // ✅ use your existing helper
 
+const baseURL = import.meta.env.VITE_API_BASE;
 
 /* ---------- Fetch token from your backend ---------- */
 export async function getAuthToken(uid) {
-  try {
-    const res = await ApiPost(`/comet-chat/get-token`, { uid });
-    if (!res.data?.token) throw new Error("Failed to fetch CometChat token");
-    return res.data.token;
-  } catch (err) {
-    console.error("❌ Token Fetch Error:", err);
-    throw new Error(err.message || "Error fetching CometChat token");
-  }
+  const res = await axios.post(`${baseURL}/api/cometchat/get-token`, { uid });
+  if (!res.data?.token) throw new Error("Failed to fetch CometChat token");
+  return res.data.token;
 }
 
 /* ---------- Login user ---------- */
 export async function loginToComet(uid) {
-  try {
-    const token = await getAuthToken(uid);
-    const user = await CometChat.login(token);
-    console.log("🟢 Logged in as:", user.name);
-    return user;
-  } catch (err) {
-    console.error("❌ CometChat Login Error:", err);
-    throw new Error(err.message || "CometChat login failed");
-  }
+  const token = await getAuthToken(uid);
+  const user = await CometChat.login(token);
+  console.log("🟢 Logged in as:", user.name);
+  return user;
 }
 
 /* ---------- Send a message ---------- */
 export async function sendMessage(receiver, text, receiverType = "user") {
-  try {
-    const message = new CometChat.TextMessage(receiver, text, receiverType);
-    const sent = await CometChat.sendMessage(message);
-    console.log("📤 Message Sent:", sent);
-    return sent;
-  } catch (err) {
-    console.error("❌ Message Send Error:", err);
-    throw new Error(err.message || "Message send failed");
-  }
+  const message = new CometChat.TextMessage(receiver, text, receiverType);
+  const sent = await CometChat.sendMessage(message);
+  return sent;
 }
 
 /* ---------- Listen for incoming messages ---------- */
@@ -52,5 +37,4 @@ export function listenForMessages(callback) {
       },
     })
   );
-  console.log("👂 Listening for incoming CometChat messages...");
 }

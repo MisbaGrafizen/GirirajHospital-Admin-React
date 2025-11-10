@@ -115,34 +115,34 @@ export default function TodoApp() {
   const getStatusColor = (c) => (c ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700")
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="w-full mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-slate-900">To-Do</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-2xl font-bold text-slate-900"></h1>
           <div className="flex gap-3">
             <button
               onClick={handleMarkAllFinished}
               className="flex items-center gap-2 px-4 py-2 text-red-600 font-semibold hover:bg-red-50 rounded-lg"
             >
-              ✅ Mark all as finished
+      <i className="fa-regular text-green-500 text-[18px] fa-circle-check"></i>Mark all as finished
             </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
             >
-              ➕ Add new task
+           <i className="fa-solid fa-plus"></i> Add new task
             </button>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-6 mb-8 border-b border-slate-200">
+        <div className="flex  gap-6 mb-8 border-b border-slate-200">
           {["all", "active", "completed"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`pb-3 font-semibold capitalize ${
+              className={`pb-2 px-[10px] font-semibold capitalize ${
                 filter === f ? "text-indigo-600 border-b-2 border-indigo-600" : "text-slate-500"
               }`}
             >
@@ -260,8 +260,8 @@ function AddTaskModal({
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-slate-900">Add Task</h2>
-          <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
-            ✖
+          <button onClick={() => setShowAddModal(false)} className="text-[#f00]">
+     <i className="fa-solid text-[23px] fa-circle-xmark"></i>
           </button>
         </div>
 

@@ -16,6 +16,7 @@ import {
     Eye,
     MapPin,
     RefreshCw,
+    XCircle,
     X,
     Phone,
     FileText,
@@ -146,65 +147,71 @@ function normalizeServiceName(name = "") {
     return SERVICE_NORMALIZATION_MAP[name] || name;
 }
 
-function getActiveDepartments(complaint) {
-  const allDepartments = [
-    "maintenance",
-    "itDepartment",
-    "bioMedical",
-    "nursing",
-    "medicalAdmin",
-    "frontDesk",
-    "housekeeping",
-    "dietitian",
-    "pharmacy",
-    "security",
-    "hr",
-    "icn",
-    "mrd",
-    "accounts",
-  ];
+function getActiveDepartments(complaint, allowedBlocks = []) {
+    const allDepartments = [
+        "maintenance",
+        "itDepartment",
+        "bioMedicalDepartment",
+        "nursing",
+        "medicalAdmin",
+        "frontDesk",
+        "housekeeping",
+        "dietitian",
+        "pharmacy",
+        "security",
+        "hr",
+        "icn",
+        "mrd",
+        "accounts",
+    ];
 
-  const labelMap = {
-    hr: "HR",
-    itDepartment: "IT Department",
-    bioMedicalDepartment: "Bio Medical Department",
-    medicalAdmin: "Medical Admin",
-    frontDesk: "Front Desk",
-    housekeeping: "Housekeeping",
-    dietitian: "Dietitian",
-    pharmacy: "Pharmacy",
-    security: "Security",
-    nursing: "Nursing",
-    maintenance: "Maintenance",
-    icn: "ICN",
-    mrd: "MRD",
-    accounts: "Accounts",
-  };
+    const labelMap = {
+        hr: "HR",
+        itDepartment: "IT Department",
+        bioMedicalDepartment: "Bio Medical",
+        medicalAdmin: "Medical Admin",
+        frontDesk: "Front Desk",
+        housekeeping: "Housekeeping",
+        dietitian: "Dietitian",
+        pharmacy: "Pharmacy",
+        security: "Security",
+        nursing: "Nursing",
+        maintenance: "Maintenance",
+        icn: "ICN",
+        mrd: "MRD",
+        accounts: "Accounts",
+    };
 
-  const activeDepartments = [];
+    const activeDepartments = [];
 
-  for (const dept of allDepartments) {
-    const d = complaint?.[dept];
-    if (!d) continue;
+    for (const dept of allDepartments) {
+        const d = complaint?.[dept];
+        if (!d) continue;
 
-    const hasText = d.text && d.text.trim().length > 0;
-    const hasAttachments =
-      Array.isArray(d.attachments) && d.attachments.length > 0;
+        const hasText = d.text && d.text.trim().length > 0;
+        const hasAttachments =
+            Array.isArray(d.attachments) && d.attachments.length > 0;
 
-    if (hasText || hasAttachments) {
-      const displayName =
-        labelMap[dept] ||
-        dept
-          .replace(/([A-Z])/g, " $1")
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-          .trim();
-      activeDepartments.push(displayName);
+        if (hasText || hasAttachments) {
+            const displayName = labelMap[dept] || dept.charAt(0).toUpperCase() + dept.slice(1);
+            activeDepartments.push(displayName);
+        }
     }
-  }
 
-  return activeDepartments.length > 0
-    ? activeDepartments.join(", ")
-    : "-";
+    // 🔹 Apply permission filter only if allowedBlocks passed
+    const filteredDepartments =
+        allowedBlocks && allowedBlocks.length > 0
+            ? activeDepartments.filter((name) =>
+                allowedBlocks.some((block) =>
+                    block.toLowerCase().includes(name.toLowerCase())
+                )
+            )
+            : activeDepartments;
+
+    // 🔹 Return formatted string or fallback
+    return filteredDepartments.length > 0
+        ? filteredDepartments.join(", ")
+        : "-";
 }
 
 
@@ -234,7 +241,8 @@ function mapStatusUI(status) {
             return "Resolved";
         case "escalated":
             return "Escalated";
-        case "in_progress":
+        case "inprogress":
+        case "in-progress":
             return "In Progress";
         case "partial":
             return "Partial";
@@ -602,17 +610,26 @@ export default function ComplaintManagementDashboard() {
     const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedComplaint, setSelectedComplaint] = useState(null)
-    const [selectedInternalComplaint, setSelectedInternalComplaint] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [chartAnimated, setChartAnimated] = useState(false)
     const [top5Departments, setTop5Departments] = useState([]);
     const [rawConcerns, setRawConcerns] = useState([]);
     const [tatComplaints, setTatComplaints] = useState([]);
     const [internalComplaints, setInternalComplaints] = useState([]);
+const doctorOptions = useMemo(() => {
+  const unique = new Set();
+  (Array.isArray(rawConcerns) ? rawConcerns : []).forEach((d) => {
+    const name =
+      d?.consultantDoctorName?.name ||
+      d?.doctorName ||
+      d?.consultant;
+    if (name) unique.add(name);
+  });
+  return ["All Doctors", ...Array.from(unique).sort((a, b) => a.localeCompare(b))];
+}, [rawConcerns]);
+
 
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
-    const [isPartialInternalModalOpen, setIsPartialInternalModalOpen] = useState(false);
-
 
     useEffect(() => {
         let alive = true;
@@ -642,6 +659,7 @@ export default function ComplaintManagementDashboard() {
                 color = "bg-red-100 text-red-700";
                 text = "Pending 🔴";
                 break;
+            case "in progress":
             case "in_progress":
                 color = "bg-blue-100 text-blue-700";
                 text = "In Progress 🟡";
@@ -684,18 +702,13 @@ export default function ComplaintManagementDashboard() {
         setIsPartialModalOpen(false);
     };
 
-    const closeInternalPartialModal = () => {
-        setSelectedInternalComplaint(null);
-        setIsPartialInternalModalOpen(false);
-    };
-
     const [filters, setFilters] = useState({
         from: '',                 // "YYYY-MM-DD"
         to: '',                   // "YYYY-MM-DD"
         service: 'All Services',  // matches your UI labels
         doctor: '',               // blank means All Doctors
     });
-    const [doctorOptions, setDoctorOptions] = useState([]);
+    // const [doctorOptions, setDoctorOptions] = useState([]);
     const [frequentServices, setFrequentServices] = useState([]);
 
     useEffect(() => {
@@ -709,22 +722,22 @@ export default function ComplaintManagementDashboard() {
 
 
 
-    useEffect(() => {
-        if (!rawConcerns || !rawConcerns.length) {
-            setDoctorOptions([]);
-            return;
-        }
+    // useEffect(() => {
+    //     if (!rawConcerns || !rawConcerns.length) {
+    //         setDoctorOptions([]);
+    //         return;
+    //     }
 
-        const uniqueDoctors = Array.from(
-            new Set(
-                rawConcerns
-                    .map(d => d.consultantDoctorName?.name)
-                    .filter(Boolean)
-            )
-        );
+    //     const uniqueDoctors = Array.from(
+    //         new Set(
+    //             rawConcerns
+    //                 .map(d => d.consultantDoctorName?.name)
+    //                 .filter(Boolean)
+    //         )
+    //     );
 
-        setDoctorOptions(uniqueDoctors);
-    }, [rawConcerns]);
+    //     setDoctorOptions(uniqueDoctors);
+    // }, [rawConcerns]);
 
     useEffect(() => {
         let alive = true;
@@ -1081,8 +1094,8 @@ export default function ComplaintManagementDashboard() {
 
     // ===================== CHARTS (design preserved) =====================
     const AnimatedDonutChart = ({ data }) => {
-        const size = 200
-        const strokeWidth = 40
+        const size = 160
+        const strokeWidth = 30
         const radius = (size - strokeWidth) / 2
         const circumference = radius * 2 * Math.PI
         let cumulativePercentage = 0
@@ -1116,7 +1129,7 @@ export default function ComplaintManagementDashboard() {
                         )
                     })}
                 </svg>
-                <div className="mt-4 flex flex-wrap justify-center   gap-2 text-sm">
+                <div className="mt-2 flex flex-wrap justify-center   gap-x-2  text-sm">
                     {data.map((item, index) => (
                         <div
                             key={index}
@@ -1124,8 +1137,8 @@ export default function ComplaintManagementDashboard() {
                                 }`}
                             style={{ transitionDelay: `${index * 200}ms` }}
                         >
-                            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: item.color }}></div>
-                            <span className="text-gray-700">
+                            <div className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: item.color }}></div>
+                            <span className=" text-[11px] md13:!text-[12px] font-[400] text-gray-700">
                                 {item.label}: {item.percentage}%
                             </span>
                         </div>
@@ -1272,6 +1285,7 @@ export default function ComplaintManagementDashboard() {
         )
     }
 
+
     const [showPopup, setShowPopup] = useState(false);
 
     const handleWidgetClick = (type) => {
@@ -1306,24 +1320,33 @@ export default function ComplaintManagementDashboard() {
     }
 
     const handleInternaldetailsNavigate = (row) => {
-  navigate("/internal-complaint-details", {
-    state: { complaint: row }, 
-  });
-};
+        navigate("/internal-complaint-details", {
+            state: { complaint: row },
+        });
+    };
+
 
     // ===================== UI (design unchanged) =====================
     return (
         <>
             <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] overflow-hidden flex-col  h-[100vh]">
-                    <Header pageName="Complaint Management " />
+                    <Header
+  pageName="Complaints"
+  serviceVariant="concern"       // show concern-type services
+  doctors={doctorOptions}        // doctor dropdown data
+  onDateRangeChange={(next) => { // update filters when dropdown/date changes
+    setFilters((prev) => ({ ...prev, ...next }));
+  }}
+/>
+
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
-                        <div className="flex relative flex-col w-[100%] max-h-[97%] md34:!pb-[80px] md11:!pb-0 py-[10px] px-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex relative flex-col w-[100%] max-h-[97%] md34:!pb-[80px] md11:!pb-0 py-[10px] px-[10px] overflow-y-auto gap-[10px] ">
                             <Preloader />
                             <div className="">
                                 <div className="">
-                                    <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
+                                    {/* <div className="bg-white rounded-lg shadow-sm p-[13px]  mb-[10px] border border-gray-100  ">
                                         <OpdFilter
                                             value={filters}
                                             onChange={handleFilterChange}
@@ -1331,176 +1354,142 @@ export default function ComplaintManagementDashboard() {
                                             doctors={doctorOptions}
                                             isAdmin={isAdmin}
                                         />
-                                    </div>
+                                    </div> */}
+                                    <div className=" flex  gap-[15px]">
+                                        <div className="grid md34:!grid-cols-2 md11:!grid-cols-2 w-[600px] gap-2 ">
+                                            <div onClick={() => handleWidgetClick("total")} className="cursor-pointer">
+                                                <Widgets1
+                                                    data={{
+                                                        title: "Total Complaints",
+                                                        gros: kpiData.totalComplaints,
+                                                        total: kpiData.totalComplaints,
+                                                        icon: <FontAwesomeIcon icon={faTriangleExclamation} className="w-6 h-6 text-blue-600" />,
+                                                    }}
+                                                />
+                                            </div>
 
-                                    <div className="grid md34:!grid-cols-2  md11:!grid-cols-4 mt-[10px] lg:grid-cols-6 gap-2 mb-2">
-                                        <Widgets1
-                                            data={{
-                                                title: "Total Complaints",
-                                                gros: kpiData.totalComplaints,
-                                                total: kpiData.totalComplaints,
-                                                color: "",
-                                                icon: <FontAwesomeIcon icon={faTriangleExclamation} className="w-6 h-6 text-blue-600" />,
-                                            }}
-                                        />
+                                            <div onClick={() => handleWidgetClick("pending")} className="cursor-pointer">
+                                                <Widgets1
+                                                    data={{
+                                                        title: "Open / Pending",
+                                                        gros: kpiData.pending,
+                                                        total: kpiData.pending,
+                                                        icon: <FontAwesomeIcon icon={faClock} className="w-6 h-6 text-yellow-600" />,
+                                                    }}
+                                                />
+                                            </div>
 
-                                        <Widgets1
-                                            data={{
-                                                title: "Open/Pending",
-                                                gros: kpiData.pending,
-                                                total: kpiData.pending,
-                                                color: "warning",
-                                                icon: <FontAwesomeIcon icon={faClock} className="w-6 h-6 text-yellow-600" />,
-                                            }}
-                                        />
+                                            <div onClick={() => handleWidgetClick("resolved")} className="cursor-pointer mt-[-10px]">
+                                                <Widgets1
+                                                    data={{
+                                                        title: "Resolved",
+                                                        gros: kpiData.resolved,
+                                                        total: kpiData.resolved,
+                                                        icon: <FontAwesomeIcon icon={faCircleCheck} className="w-6 h-6 text-green-600" />,
+                                                    }}
+                                                />
+                                            </div>
 
-                                        <Widgets1
-                                            data={{
-                                                title: "Resolved",
-                                                gros: kpiData.resolved,
-                                                total: kpiData.resolved,
-                                                color: "success",
-                                                icon: <FontAwesomeIcon icon={faCircleCheck} className="w-6 h-6 text-green-600" />,
-                                            }}
-                                        />
+                                            <div onClick={() => handleWidgetClick("escalated")} className="cursor-pointer mt-[-10px]">
+                                                <Widgets1
+                                                    data={{
+                                                        title: "Escalated",
+                                                        gros: kpiData.escalated,
+                                                        total: kpiData.escalated,
+                                                        icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
+                                                    }}
+                                                />
+                                            </div>
 
-                                        <Widgets1
-                                            data={{
-                                                title: "Escalated",
-                                                gros: kpiData.escalated,
-                                                total: kpiData.escalated,
-                                                color: "danger",
-                                                icon: <FontAwesomeIcon icon={faArrowTrendUp} className="w-6 h-6 text-red-600" />,
-                                            }}
-                                        />
-                                        <div className=" mt-[-10px]">
-                                            <Widgets1
-                                                data={{
-                                                    title: "Avg Resolution",
-                                                    gros: kpiData.avgResolutionTime,
-                                                    total: kpiData.avgResolutionTime,
-                                                    color: "purple",
-                                                    icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
-                                                }}
-                                            />
+                                            <div onClick={() => handleWidgetClick("avgResolution")} className="cursor-pointer mt-[-10px]">
+                                                <Widgets1
+                                                    data={{
+                                                        title: "Avg Resolution Time",
+                                                        gros: kpiData.avgResolutionTime,
+                                                        total: kpiData.avgResolutionTime,
+                                                        icon: <FontAwesomeIcon icon={faStopwatch} className="w-6 h-6 text-purple-600" />,
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div onClick={() => handleWidgetClick("inprogress")} className="cursor-pointer mt-[-10px]">
+                                                <Widgets1
+                                                    data={{
+                                                        title: "In Progress",
+                                                        gros: kpiData.inProgress,
+                                                        total: kpiData.inProgress,
+                                                        icon: <FontAwesomeIcon icon={faSpinner} spin className="w-6 h-6 text-purple-600" />,
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className=" mt-[-10px]">
-                                            <Widgets1
-                                                data={{
-                                                    title: "In Progress",
-                                                    gros: kpiData.inProgress,
-                                                    total: kpiData.inProgress,
-                                                    color: "purple",
-                                                    icon: <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-purple-600" spin />,
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
 
-                                    {/* Modal for Avg Resolution */}
-                                    <AnimatePresence>
-                                        {showPopup && (
-                                            <motion.div
-                                                className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                            >
+                                        {/* Modal for Avg Resolution */}
+                                        <AnimatePresence>
+                                            {showPopup && (
                                                 <motion.div
-                                                    initial={{ scale: 0.9, opacity: 0 }}
-                                                    animate={{ scale: 1, opacity: 1 }}
-                                                    exit={{ scale: 0.9, opacity: 0 }}
-                                                    className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
+                                                    className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
                                                 >
-                                                    <button
-                                                        onClick={() => setShowPopup(false)}
-                                                        className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                                                    <motion.div
+                                                        initial={{ scale: 0.9, opacity: 0 }}
+                                                        animate={{ scale: 1, opacity: 1 }}
+                                                        exit={{ scale: 0.9, opacity: 0 }}
+                                                        className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
                                                     >
-                                                        <XCircle className="w-6 h-6" />
-                                                    </button>
+                                                        <button
+                                                            onClick={() => setShowPopup(false)}
+                                                            className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                                                        >
+                                                            <XCircle className="w-6 h-6" />
+                                                        </button>
 
-                                                    <h2 className="text-xl font-semibold mb-3 text-gray-800">
-                                                        Average Resolution Time
-                                                    </h2>
-                                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                                        This shows the average time taken to resolve complaints across departments.
-                                                    </p>
-
-                                                    <div className="text-center mt-2">
-                                                        <p className="text-4xl font-bold text-purple-600">{kpiData.avgResolutionTime}</p>
-                                                        <p className="text-sm text-gray-500 mt-1">
-                                                            Based on historical resolution data.
+                                                        <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                                                            Average Resolution Time
+                                                        </h2>
+                                                        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                                            This shows the average time taken to resolve complaints across departments.
                                                         </p>
-                                                    </div>
+
+                                                        <div className="text-center mt-2">
+                                                            <p className="text-4xl font-bold text-purple-600">{kpiData.avgResolutionTime}</p>
+                                                            <p className="text-sm text-gray-500 mt-1">
+                                                                Based on historical resolution data.
+                                                            </p>
+                                                        </div>
+                                                    </motion.div>
                                                 </motion.div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                                            )}
+                                        </AnimatePresence>
 
-
-
-                                    {/* Charts Row */}
-                                    <div className=" flex  md11:!flex-row md34:!flex-col  md11:!min-w-[600px]  gap-6 mb-3">
-                                        <div className="bg-white border rounded-lg shadow-sm p-4">
-                                            <div className=" flex gap-[10px]">
-
-
-
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className=" text-[#fff] text-[17px] fa-solid fa-star-sharp-half-stroke"></i>
+                                        <div className="bg-white  rounded-xl dashShadow w-[60%] overflow-hidden mb-4">
+                                            <div className=" p-[13px] items-center gap-[10px] flex   border-b border-gray-200">
+                                                <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-solid  text-[15px] text-[#fff] fa-keyboard-brightness"></i>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Complaint Trend by Department</h3>
-                                            </div>
-                                            <div className="flex justify-center">
-
-                                                <SimpleBarChart trendData={trendData} />
-
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white  rounded-lg  border shadow-sm p-4">
-                                            <div className="flex gap-[10px]">
-
-
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-regular fa-hospitals text-[#fff] text-[19px]"></i>
-                                                </div>
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Floor-wise Complaints Distribution</h3>
-                                            </div>
-                                            <div className="flex justify-center  max-w-[400px]">
-                                                <AnimatedDonutChart data={departmentData} />
-
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className=" flex md11:!flex-row md34:!flex-col w-[100%] items-start gap-[10px]">
-                                        <div className="bg-white border md34:!w-[100%] md11:!w-[70%] shadow-sm rounded-lg overflow-hidden mb-6">
-                                            <div className=" px-3 py-3 items-center gap-[10px] flex   border-b border-gray-200">
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
-                                                </div>
-                                                <h3 className="text-[15px] font-semibold text-gray-900">
+                                                <h3 className="text-[13px] font-[500] text-gray-900">
                                                     Top 5 Departments with Most Complaints
                                                 </h3>
                                             </div>
                                             <div className="w-full overflow-x-auto">
-                                                <table className="md34:!min-w-[1000px] md11:!min-w-[500px]">
+                                                <table className=" w-[100%] mx">
                                                     <thead className="bg-gray-50">
                                                         <tr>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Rank
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Department
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 No. of Complaints
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Avg Resolution
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 No. of Escalations
                                                             </th>
                                                         </tr>
@@ -1511,19 +1500,19 @@ export default function ComplaintManagementDashboard() {
                                                                 key={dept.rank}
                                                                 className={`${dept.rank % 2 === 1 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                             >
-                                                                <td className="px-6 py-2 text-sm font-[600] text-gray-900">
-                                                                    <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full">
+                                                                <td className="px-3 py-2 text-[12px] font-[600] text-gray-900">
+                                                                    <span className="inline-flex items-center text-[13px] justify-center w-[26px] h-[26px] bg-blue-100 text-blue-800 rounded-full">
                                                                         {dept.rank}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-6 py-2 text-sm font-medium text-gray-900">{dept.department || ""}</td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                <td className="px-3 py-2 text-[12px] font-medium text-gray-900">{dept.department || ""}</td>
+                                                                <td className="px-4 py-2 text-[12px] text-gray-900">
                                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-red-100 text-red-800">
                                                                         {dept.complaints}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">{dept.avgResolution || ""}</td>
-                                                                <td className="px-6 py-2 text-sm text-gray-900">
+                                                                <td className="px-4 py-2 text-[12px] text-gray-900">{dept.avgResolution || ""}</td>
+                                                                <td className="px-4 py-2 text-[12px] text-gray-900">
                                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[14px] font-[500] bg-orange-100 text-orange-800">
                                                                         {dept.escalations}
                                                                     </span>
@@ -1536,56 +1525,53 @@ export default function ComplaintManagementDashboard() {
 
                                         </div>
 
+                                    </div>
+                                    {/* Charts Row */}
+                                    <div className=" flex  md11:!flex-row md34:!flex-col mt-[-10px]  md11:!min-w-[600px]     gap-[15px] mb-3">
+                                        <div className="bg-white dashShadow  rounded-xl   w-[400px] md13:!w-[750px] h-fit p-[13px]">
+                                            <div className=" flex items-center  mb-[5px] gap-[10px]">
 
-                                        {/* Word Cloud */}
-                                        <div className="bg-white border    rounded-lg  mb-[20px] md11:!h-[230px] shadow-sm md11:!w-[400px]">
-                                            <div className="flex ml-[19px] py-3 items-center  gap-[10px]">
 
 
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
+                                                <div className=" w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className=" text-[#fff] text-[15px] fa-solid fa-star-sharp-half-stroke"></i>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">Frequent Complaint Keywords</h3>
+                                                <h3 className="text-[13px] font-[500] text-gray-900 ">Complaint Trend by Department</h3>
+                                            </div>
+                                            <div className="flex h-[235px]  justify-center">
+
+                                                <SimpleBarChart trendData={trendData} />
 
                                             </div>
-                                            {/* <div className="flex border-t flex-wrap gap-2 p-[20px] ">
-                                                {[
-                                                    "Food",
-                                                    // "Discharge",
-                                                    // "AC",
-                                                    // "Spicy",
-                                                    // "Fan",
-                                                    // "Mosquito",
-                                                    "Cleaning",
-                                                    "Staff",
-                                                    // "Waiting",
-                                                    // "Billing",
-                                                    // "Medicine",
-                                                    // "Nurse",
-                                                    // "Doctor",
-                                                    // "Room",
-                                                    "Service",
-                                                ].map((word, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className={`px-4 py-1 rounded-full text-[12px] font-medium transition-all duration-500 hover:scale-110 ${index % 6 === 0
-                                                            ? "bg-blue-100 border border-blue-800 text-blue-800"
-                                                            : index % 6 === 1
-                                                                ? "bg-red-100 border border-red-800 text-red-800"
-                                                                : index % 6 === 2
-                                                                    ? "bg-yellow-100 border border-yellow-800 text-yellow-800"
-                                                                    : index % 6 === 3
-                                                                        ? "bg-green-100 border border-green-800 text-green-800"
-                                                                        : index % 6 === 4
-                                                                            ? "bg-purple-100 border border-purple-800 text-purple-800"
-                                                                            : "bg-indigo-100 border border-indigo-800 text-indigo-800"
-                                                            }`}
-                                                    >
-                                                        {word}
-                                                    </span>
-                                                ))}
-                                            </div> */}
-                                            <div className="flex border-t flex-wrap gap-2 p-[20px] ">
+                                        </div>
+
+                                        <div className="bg-white h-[300px]  rounded-xl dashShadow  w-[300px]  p-[13px]">
+                                            <div className="flex items-center gap-[10px] mb-[10px]">
+
+
+                                                <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-regular fa-hospitals text-[#fff] text-[15px]"></i>
+                                                </div>
+                                                <h3 className="text-[13px] font-[500] text-gray-900 ">Floor-wise Complaints Distribution</h3>
+                                            </div>
+                                            <div className="flex justify-center  max-w-[400px]">
+                                                <AnimatedDonutChart data={departmentData} />
+
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white     rounded-xl dashShadow p-[13px]  h-[300px]   md11:!w-[400px]">
+                                            <div className=" flex  mb-[10px] items-center  gap-[10px]">
+
+
+                                                <div className="w-[35px] h-[35px]  bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-solid  text-[15px] text-[#fff] fa-keyboard-brightness"></i>
+                                                </div>
+                                                <h3 className="text-[13px] font-[500] text-gray-900  ">Frequent Complaint Keywords</h3>
+
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 ">
                                                 {frequentServices.map((service, index) => (
                                                     <span
                                                         key={index}
@@ -1610,21 +1596,22 @@ export default function ComplaintManagementDashboard() {
 
                                         </div>
                                     </div>
+
                                     {(isAdmin || allowedBlocks.includes("tat")) && (
 
-                                        <div className="bg-white border rounded-lg mb-[20px] shadow-sm overflow-hidden">
-                                            <div className="px-3 py-3 border-b flex justify-between items-center border-gray-200">
+                                        <div className=" rounded-lg mb-[16px] overflow-hidden">
+                                            <div className=" px-[13px] pb-[10px]   flex justify-between items-center border-gray-200">
                                                 <div className="flex items-center gap-[10px]">
-                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                        <i className="fa-regular fa-stopwatch text-[17px] text-[#fff]"></i>
+                                                    <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                        <i className="fa-regular fa-stopwatch text-[15px] text-[#fff]"></i>
                                                     </div>
-                                                    <h3 className="text-lg font-semibold text-gray-900">TAT</h3>
+                                                    <h3 className="text-[13px] font-[500] text-gray-900">TAT</h3>
                                                 </div>
 
                                                 <div className=" flex gap-[10px]">
-                                                    {/* ✅ Export to Excel first */}
+
                                                     <button
-                                                        className=" md34:!hidden md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                        className=" md34:!hidden md11:!flex items-center flex-shrink-0 px-3 py-[3px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                                         onClick={() => exportToExcel(tatComplaints)}
                                                     >
                                                         <i className="fa-regular fa-file-excel text-[16px] text-white"></i>
@@ -1633,11 +1620,11 @@ export default function ComplaintManagementDashboard() {
 
                                                     {/* 👁️ View All second */}
                                                     <button
-                                                        className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                        className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-[10px] py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                                         onClick={handleTATPageNavigate}
                                                     >
-                                                        <Eye className="w-5 h-5" />
-                                                        View All
+                                                        <Eye className="w-4 h-4" />
+
                                                     </button>
                                                     <button
 
@@ -1660,38 +1647,36 @@ export default function ComplaintManagementDashboard() {
                                             </div>
 
 
-                                            <div className="overflow-x-auto">
+                                            <div className="overflow-x-auto border  rounded-[10px] w-[100%]">
                                                 <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                                    <thead className="bg-gray-50">
+                                                    <thead className="bg-gray-100 w-[100%]">
                                                         <tr>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Sr.no
+
+                                                            <th className="px-3 py-2 text-left  border-r  text-xs font-medium text-gray-500 flex-shrink-0  uppercase tracking-wider">
+                                                                Comp. ID
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Complaint ID
-                                                            </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left   border-r  text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Patient Name
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left  border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Bed no
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left  border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Department
                                                             </th>
-                                                            {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            {/* <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Compalin details
                                                             </th>
                                                             <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Resolution details
                                                             </th> */}
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Stamp In
                                                             </th>
-                                                            <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-6 min-w-[200px] border-r flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Stamp Out
                                                             </th>
-                                                            <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 TAT Time
                                                             </th>
                                                             {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1713,39 +1698,41 @@ export default function ComplaintManagementDashboard() {
                                                                         onClick={() => openModal(complaint)}
                                                                         className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                     >
-                                                                        <td className="px-6 py-2 text-sm text-center font-medium text-blue-600">{index + 1}</td>
-                                                                        <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+
+                                                                        <td className="px-3 py-2 text-sm  min-w-[95px]  border-r font-medium !w-[200px] text-blue-600">{complaint.complaintId}</td>
 
 
-                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <td className="px-2 py-2 border-r text-[13px] min-w-[200px] text-gray-900">
                                                                             <div className="flex items-center">
-                                                                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                                <User className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
                                                                                 {complaint.patientName}
                                                                             </div>
                                                                         </td>
-                                                                        <td className="px-6 py-2 text-sm text-gray-900">
-                                                                            098
+                                                                        <td className="px-3 py-2  border-r  min-w-[85px] text-sm text-gray-900">
+                                                                            <div className="flex items-center">
+                                                                                <Bed className="w-4 h-4 text-gray-400 mr-2" />  098
+                                                                            </div>
                                                                         </td>
-                                                                        <td className="px-6 py-2 text-sm min-w-[350px] text-gray-900">
+                                                                        <td className="px-3 py-2 border-r text-[13px] min-w-[300px] text-gray-900">
                                                                             {getAllowedDepartments(complaint.departments, allowedBlocks).length > 0
                                                                                 ? getAllowedDepartments(complaint.departments, allowedBlocks)
                                                                                     .map((d) => d.department)
                                                                                     .join(", ")
                                                                                 : "-"}
                                                                         </td>
-                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {/* <td className="px-3 py-2 text-sm text-gray-900">
                                                                             <div className="flex min-w-[200px] items-center">
 
                                                                     {}
                                                                             </div>
                                                                         </td> */}
-                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {/* <td className="px-3 py-2 text-sm text-gray-900">
                                                                             <div className="flex min-w-[200px] items-center">
 
                                                                     what you do , please tell me a one things grafizen 
                                                                             </div>
                                                                         </td> */}
-                                                                        <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        <td className="px-3 py-2 border-r min-w-[170px] text-[13px] text-gray-900">
                                                                             <div className="flex items-center">
 
                                                                                 {formatDateTime(complaint.stampIn)}
@@ -1753,15 +1740,15 @@ export default function ComplaintManagementDashboard() {
                                                                         </td>
 
 
-                                                                        <td className="px-3 min-w-[200px] flex-shrink-0 py-2 text-sm">
+                                                                        <td className="px-3  border-r min-w-[100px] flex-shrink-0 py-2 text-[13px]">
                                                                             <span
-                                                                                className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+                                                                                className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] `}
 
                                                                             >
                                                                                 {formatDateTime(complaint.stampOut)}
                                                                             </span>
                                                                         </td>
-                                                                        <td className="px-3 py-2 text-sm">
+                                                                        <td className="px-3 py-2 border-r text-sm">
                                                                             <span
                                                                                 className={`flex items-center min-w-[130px]  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
 
@@ -1770,7 +1757,7 @@ export default function ComplaintManagementDashboard() {
 
                                                                             </span>
                                                                         </td>
-                                                                        {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                                                        {/* <td className="px-3 py-2 text-sm text-gray-900">
 
                                                                     </td> */}
                                                                     </tr>
@@ -1778,7 +1765,7 @@ export default function ComplaintManagementDashboard() {
                                                             })}
                                                         {filteredComplaints.length === 0 && (
                                                             <tr>
-                                                                <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                                                                <td colSpan={8} className="px-3 py-6 text-center text-gray-500">
                                                                     No complaints found for the selected range.
                                                                 </td>
                                                             </tr>
@@ -1789,55 +1776,53 @@ export default function ComplaintManagementDashboard() {
                                         </div>
                                     )}
 
-                                    <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                                        <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
+                                    <div className=" overflow-hidden">
+                                        <div className="px-[13px] pb-[10px]  flex  gap-[10px] items-center border-gray-200">
                                             <div className=" w-[100%]  flex  items-center gap-[10px] ">
 
 
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                                                <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-regular fa-users-medical text-[15px] text-[#fff] "></i>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
+                                                <h3 className="text-[13px] font-[500] text-gray-900">Complaint Details</h3>
                                             </div>
                                             <button
 
-                                                className="flex items-center flex-shrink-0  px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                className="flex items-center flex-shrink-0   px-[10px] py-[4px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                                 onClick={handleAllPageNavigate}
                                             >
                                                 <Eye className="w-5 h-5 " />
-                                                View All
+                                                {/* View All */}
                                             </button>
 
                                         </div>
 
-                                        <div className="overflow-x-auto">
+                                        <div className="overflow-x-auto rounded-[10px] border">
                                             <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                                <thead className="bg-gray-50">
+                                                <thead className="bg-gray-100 overflow-y-scroll">
                                                     <tr>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Complaint ID
+                                                        <th className="px-3 py-2 border-r min-w-[140px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Comp. ID
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-4 py-2 border-r text-left min-w-[160px] text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Date & Time
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r text-left text-xs min-w-[180px] font-medium text-gray-500 uppercase tracking-wider">
                                                             Patient Name
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r min-w-[209px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Doctor Name
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r min-w-[90px]  text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Bed No.
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r min-w-[249px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Department
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-4 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Details
-                                                        </th>
+
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
@@ -1852,31 +1837,45 @@ export default function ComplaintManagementDashboard() {
                                                                     key={complaint.id}
                                                                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                                 >
-                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-3 py-2 border-r text-sm font-medium text-blue-600">
+                                                                        <div className=" flex  cursor-pointer"   onClick={() => handlenavigate(complaint, fullDoc)} >
+
+
+                                                                            <button
+                                                                              
+                                                                                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                            >
+                                                                                <Eye className="w-4 h-4 mr-1" />
+
+                                                                            </button> {complaint.complaintId}
+
+                                                                        </div>
+                                                                    </td>
+
+                                                                    <td className="px-4 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
 
                                                                             {complaint.date}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-3 py-2 border-r text-sm font- text-gray-900">{complaint.patient}</td>
+                                                                    <td className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
                                                                             <User className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.doctor}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <div className="flex items-center">
+                                                                    <td className="px-3 py-2 border-r text-sm text-gray-900">
+                                                                        <div className="flex  items-center">
                                                                             <Bed className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.bedNo}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-3 py-2 border-r text-[12px] text-gray-900">
                                                                         {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
                                                                     </td>
 
-                                                                    <td className="px-3 py-2 text-sm">
+                                                                    <td className="px-3 py-2  border-r  text-sm">
                                                                         <div className="flex items-center space-x-2">
                                                                             <span
                                                                                 className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
@@ -1919,15 +1918,7 @@ export default function ComplaintManagementDashboard() {
                                                                     </td>
 
 
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        <button
-                                                                            onClick={() => handlenavigate(complaint, fullDoc)}
-                                                                            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                                                                        >
-                                                                            <Eye className="w-4 h-4 mr-1" />
-                                                                            View
-                                                                        </button>
-                                                                    </td>
+
                                                                 </tr>
                                                             )
                                                         })}
@@ -1946,13 +1937,13 @@ export default function ComplaintManagementDashboard() {
 
 
 
-                                    <div className="bg-white border rounded-lg mb-[20px] mt-[20px] shadow-sm overflow-hidden">
-                                        <div className="px-3 py-3 border-b flex justify-between items-center border-gray-200">
+                                    <div className=" rounded-lg mb-[20px] mt-[4px]  overflow-hidden">
+                                        <div className="p-[13px]  flex justify-between items-center border-gray-200">
                                             <div className="flex items-center gap-[10px]">
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-solid fa-list text-[17px] text-[#fff]"></i>
+                                                <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                                    <i className="fa-solid fa-list text-[15px] text-[#fff]"></i>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900">Internal Complaints</h3>
+                                                <h3 className="text-[13px] font-[500] text-gray-900">Internal Compalints</h3>
                                             </div>
 
                                             <div className=" flex gap-[10px]">
@@ -1960,47 +1951,47 @@ export default function ComplaintManagementDashboard() {
 
                                                 {/* 👁️ View All second */}
                                                 <button
-                                                    className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-[10px] py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                                     onClick={handleInternalNavigate}
                                                 >
                                                     <Eye className="w-5 h-5" />
-                                                    View All
+                                                    {/* View All */}
                                                 </button>
+
                                             </div>
+
+
                                         </div>
 
-                                        <div className="overflow-x-auto">
+
+                                        <div className="overflow-x-auto rounded-[10px] border">
                                             <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                                <thead className="bg-gray-50">
+                                                <thead className="bg-gray-100">
                                                     <tr>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Complaint ID
+
+                                                        <th className="px-3 py-2  border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Comp. ID
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Date & Time
+                                                        <th className="px-6 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Name
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Employee Name
-                                                        </th>
-                                                        <th className="px-6 py-2 text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-6 py-2 border-r text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Contact No
                                                         </th>
-                                                        <th className="px-6 py-2 text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-6 py-2  border-r text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Employee Id
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-6 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Floor No
                                                         </th>
 
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-6 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Department
                                                         </th>
-                                                        <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-6 min-w-[200px] border-r flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
                                                         </th>
-                                                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Action
-                                                        </th>
+
                                                         {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                                     Status
                                                                                                 </th> */}
@@ -2012,41 +2003,52 @@ export default function ComplaintManagementDashboard() {
                                                         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                                                         .slice(0, 5)
                                                         .map((complaint, index) => {
+
                                                             const fullDoc = rawConcerns.find(d => d._id === complaint.id);
                                                             return (
 
                                                                 <tr
                                                                     key={complaint.id}
-                                                                    // onClick={() => openModal(complaint)}
+                                                                    onClick={() => openModal(complaint)}
                                                                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                 >
 
-                                                                    <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                                                     <td className="px-6 py-2 text-sm text-gray-900">
-                                                                        {formatDateTime(complaint?.createdAt)}
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-3 py-2 border-r text-sm font-medium text-blue-600">
+                                                                        <div className=" flex cursor-pointer "                                                                                 onClick={() => handleInternaldetailsNavigate(complaint, fullDoc)}>
+
+                                                                            <button
+
+                                                                                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                                                                            >
+                                                                                <Eye className="w-4 h-4 mr-1" />
+
+                                                                            </button>{complaint.complaintId}
+
+                                                                        </div> </td>
+
+
+                                                                    <td className="px-6 py-2  border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
                                                                             <User className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.employeeName}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-6 py-2 text-sm border-r text-gray-900">
                                                                         {complaint.contactNo}
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm text-gray-900">
+                                                                    <td className="px-6 py-2 text-sm border-r  text-gray-900">
                                                                         {complaint.employeeId}
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm min-w-[150px] text-gray-900">
+                                                                    <td className="px-6 py-2 text-sm border-r min-w-[150px] text-gray-900">
                                                                         {complaint.floorNo}
                                                                     </td>
-                                                                    <td className="px-6 py-2 text-sm min-w-[150px] text-gray-900">
-                                                                            {getActiveDepartments(complaint, allowedBlocks)}
+                                                                    <td className="px-6 py-2 text-sm. border-r  min-w-[150px] text-gray-900">
+                                                                        {getActiveDepartments(complaint, allowedBlocks)}
                                                                     </td>
-                                                                    <td className="px-3 py-2 text-sm">
+                                                                    <td className="px-3 py-2 border-r  text-sm">
                                                                         <div className="flex items-center space-x-2">
                                                                             <span
-                                                                                className={`flex items-center px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
+                                                                                className={`flex items-center border-r px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
                                                                                     mapStatusUI(complaint.status)
                                                                                 )}`}
                                                                             >
@@ -2057,21 +2059,22 @@ export default function ComplaintManagementDashboard() {
                                                                                         onClick={async () => {
                                                                                             try {
                                                                                                 // show modal first
-                                                                                                setIsPartialInternalModalOpen(true);
-                                                                                                setSelectedInternalComplaint(null);
+                                                                                                setIsPartialModalOpen(true);
+                                                                                                setSelectedComplaint(null);
 
                                                                                                 const res = await ApiGet(
-                                                                                                    `/admin/internal/partial-resolve/${complaint._id}`
+                                                                                                    `/admin/partial-resolve/${complaint.id}`
                                                                                                 );
                                                                                                 console.log("res", res);
+
                                                                                                 if (res.data) {
-                                                                                                    setSelectedInternalComplaint(res.data);
+                                                                                                    setSelectedComplaint(res.data);
                                                                                                 } else {
-                                                                                                    setSelectedInternalComplaint({ error: true });
+                                                                                                    setSelectedComplaint({ error: true });
                                                                                                 }
                                                                                             } catch (err) {
                                                                                                 console.error("Error fetching partial-resolve details:", err);
-                                                                                                setSelectedInternalComplaint({ error: true });
+                                                                                                setSelectedComplaint({ error: true });
                                                                                             }
                                                                                         }}
                                                                                         className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
@@ -2083,17 +2086,10 @@ export default function ComplaintManagementDashboard() {
                                                                         </div>
 
                                                                     </td>
-                                                                    <td className="px-3 py-2 text-sm">
-                                                                        <button
-                                                                            onClick={() => handleInternaldetailsNavigate(complaint, fullDoc)}
-                                                                            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                                                                        >
-                                                                            <Eye className="w-4 h-4 mr-1" />
-                                                                            View
-                                                                        </button>
-
-                                                                    </td>
-
+               
+                                                                    {/* <td className="px-6 py-2 text-sm text-gray-900">
+                                        
+                                                                                                            </td> */}
                                                                 </tr>
                                                             )
                                                         })}
@@ -2125,7 +2121,7 @@ export default function ComplaintManagementDashboard() {
                                                     exit={{ scale: 0.95, y: 20 }}
                                                     transition={{ duration: 0.25 }}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="bg-white rounded-2xl shadow-xl p-6 w-[500px] max-w-full"
+                                                    className="bg-white rounded-2xl shadow-xl p-6 w-[500px] h-[90vh] max-w-full"
                                                 >
                                                     {/* Header */}
                                                     <div className="flex justify-between items-center mb-6 border-b pb-3">
@@ -2141,7 +2137,7 @@ export default function ComplaintManagementDashboard() {
                                                     </div>
 
                                                     {/* Department Complaint Status */}
-                                                    <div className="flex flex-col overflow-y-auto gap-3">
+                                                    <div className="flex flex-col  max-h-[90%] overflow-y-auto gap-3">
                                                         {!selectedComplaint ? (
                                                             <p className="text-center text-gray-500 text-sm py-6">
                                                                 Loading department details...
@@ -2272,198 +2268,7 @@ export default function ComplaintManagementDashboard() {
                                                     </div>
 
 
-                                                    {/* Footer */}
-                                                    <div className="mt-6 flex justify-end">
-                                                        <button
-                                                            onClick={closePartialModal}
-                                                            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
-                                                        >
-                                                            Close
-                                                        </button>
-                                                    </div>
-                                                </motion.div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-
-                                    <AnimatePresence>
-                                        {isPartialInternalModalOpen && selectedInternalComplaint && (
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
-                                                onClick={closePartialModal}
-                                            >
-                                                <motion.div
-                                                    initial={{ scale: 0.95, y: 20 }}
-                                                    animate={{ scale: 1, y: 0 }}
-                                                    exit={{ scale: 0.95, y: 20 }}
-                                                    transition={{ duration: 0.25 }}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="bg-white rounded-2xl shadow-xl p-6 w-[500px] max-w-full"
-                                                >
-                                                    {/* Header */}
-                                                    <div className="flex justify-between items-center mb-6 border-b pb-3">
-                                                        <h3 className="text-xl font-bold text-gray-900">
-                                                            Department Complaint Status
-                                                        </h3>
-                                                        <button
-                                                            onClick={closeInternalPartialModal}
-                                                            className="text-gray-400 hover:text-gray-600 transition"
-                                                        >
-                                                            <X className="w-6 h-6" />
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Department Complaint Status */}
-                                                    <div className="flex flex-col overflow-y-auto gap-3">
-                                                        {!selectedInternalComplaint ? (
-                                                            <p className="text-center text-gray-500 text-sm py-6">
-                                                                Loading department details...
-                                                            </p>
-                                                        ) : selectedInternalComplaint.error ? (
-                                                            <p className="text-center text-gray-500 text-sm py-6">
-                                                                ⚠️ Failed to load department complaint data.
-                                                            </p>
-                                                        ) : (
-                                                            (() => {
-                                                                const filteredDepartments = Object.entries(selectedInternalComplaint)
-                                                                    .filter(([key]) =>
-                                                                        [
-                                                                            "doctorServices",
-                                                                            "billingServices",
-                                                                            "housekeeping",
-                                                                            "maintenance",
-                                                                            "diagnosticServices",
-                                                                            "dietitianServices",
-                                                                            "security",
-                                                                            "nursing",
-                                                                            "pharmacy",
-                                                                            "itDepartment",
-                                                                            "bioMedical",
-                                                                            "hr",
-                                                                            "icn",
-                                                                            "mrd",
-                                                                            "accounts",
-                                                                            "medicalAdmin",
-                                                                        ].includes(key)
-                                                                    )
-                                                                    // ✅ include only departments with non-empty text or attachments
-                                                                    .filter(([_, value]) => {
-                                                                        const hasText = value?.text && value.text.trim() !== "";
-                                                                        const hasAttachments =
-                                                                            Array.isArray(value?.attachments) && value.attachments.length > 0;
-                                                                        return hasText || hasAttachments;
-                                                                    });
-
-                                                                if (filteredDepartments.length === 0) {
-                                                                    return (
-                                                                        <p className="text-center text-gray-500 text-sm py-6">
-                                                                            ⚠️ No department complaints contain text or attachments for this patient.
-                                                                        </p>
-                                                                    );
-                                                                }
-
-                                                                return filteredDepartments.map(([key, value], i) => (
-                                                                    <motion.div
-                                                                        key={key}
-                                                                        initial={{ opacity: 0, y: 10 }}
-                                                                        animate={{ opacity: 1, y: 0 }}
-                                                                        transition={{ delay: i * 0.05 }}
-                                                                        className="border rounded-lg p-4 flex flex-col bg-gray-50 hover:bg-gray-100 transition"
-                                                                    >
-                                                                        {/* Department Header */}
-                                                                        <div className="flex justify-between items-center mb-1">
-                                                                            <span className="font-semibold text-gray-900">
-                                                                                {key
-                                                                                    .replace("Services", "")
-                                                                                    .replace(/([A-Z])/g, " $1")
-                                                                                    .trim()
-                                                                                    .replace(/^./, (c) => c.toUpperCase())}
-                                                                            </span>
-                                                                            <StatusBadge status={value?.status || "Pending"} />
-                                                                        </div>
-
-                                                                        {/* Mode */}
-                                                                        {value?.mode && (
-                                                                            <p className="text-xs text-gray-500 mb-1">
-                                                                                <strong>Mode:</strong> {value.mode}
-                                                                            </p>
-                                                                        )}
-
-                                                                        {/* Text */}
-                                                                        {value?.text && value.text.trim() !== "" && (
-                                                                            <p className="text-sm text-gray-700 mb-1">📝 {value.text}</p>
-                                                                        )}
-
-                                                                        {/* Attachments */}
-                                                                        {Array.isArray(value?.attachments) && value.attachments.length > 0 && (
-                                                                            <div className="flex flex-wrap gap-2 mt-1">
-                                                                                {value.attachments.map((url, idx) => (
-                                                                                    <a
-                                                                                        key={idx}
-                                                                                        href={url}
-                                                                                        target="_blank"
-                                                                                        rel="noopener noreferrer"
-                                                                                        className="text-xs text-blue-600 underline"
-                                                                                    >
-                                                                                        Attachment {idx + 1}
-                                                                                    </a>
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Resolution Note & Proof */}
-                                                                        {value?.resolution && (
-                                                                            <div className="mt-2 text-sm text-gray-600">
-                                                                                {value.resolution.note && (
-                                                                                    <p>
-                                                                                        <strong>Resolution Note:</strong> {value.resolution.note}
-                                                                                    </p>
-                                                                                )}
-                                                                                {Array.isArray(value.resolution.proof) &&
-                                                                                    value.resolution.proof.length > 0 && (
-                                                                                        <div className="flex flex-wrap gap-2 mt-1">
-                                                                                            {value.resolution.proof.map((p, i) => (
-                                                                                                <a
-                                                                                                    key={i}
-                                                                                                    href={p}
-                                                                                                    target="_blank"
-                                                                                                    rel="noopener noreferrer"
-                                                                                                    className="text-xs text-green-600 underline"
-                                                                                                >
-                                                                                                    Proof {i + 1}
-                                                                                                </a>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    )}
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Timestamp */}
-                                                                        <p className="text-xs text-gray-500 mt-2">
-                                                                            Updated:{" "}
-                                                                            {value?.resolution?.resolvedAt
-                                                                                ? new Date(value.resolution.resolvedAt).toLocaleString()
-                                                                                : new Date(selectedInternalComplaint.updatedAt).toLocaleString()}
-                                                                        </p>
-                                                                    </motion.div>
-                                                                ));
-                                                            })()
-                                                        )}
-                                                    </div>
-
-
-                                                    {/* Footer */}
-                                                    <div className="mt-6 flex justify-end">
-                                                        <button
-                                                            onClick={closeInternalPartialModal}
-                                                            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
-                                                        >
-                                                            Close
-                                                        </button>
-                                                    </div>
+                              
                                                 </motion.div>
                                             </motion.div>
                                         )}

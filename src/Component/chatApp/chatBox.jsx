@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { sendMessage, listenForMessages } from "../helper/cometService";
-import CometChat from "../config/comet.config";
+import { sendMessage, listenForMessages } from "../../helper/cometService";
+import CometChat from "../../config/comet.config";
 
 export default function ChatBox({ activeUser, currentUser }) {
   const [chat, setChat] = useState([]);

@@ -7,18 +7,21 @@ import DropdownCommon from '../../Common/Dropdown';
 
 const LightCardBox = ({ data }) => {
   return (
-    <div className='light-card flex-shrink-0 balance-card widget-hover md34:!mt-[16px]'>
-      <div className='svg-box'>
+    <div className=' bg-[#e0e0e066] w-fit items-center  py-[3px] !px-[6px] flex-shrink-0 balance-card widget-hover '>
+         <div
+        className=" w-[26px] h-[26px] rounded-[5px] flex items-center justify-center"
+        style={{
+          backgroundColor: data.bgColor , // fallback color
+        }}
+      >
         {data.icon}
       </div>
-      <div>
-        <span className='f-light'>{data.title}</span>
-        <H6 attrH6={{ className: 'mt-1 mb-0' }}>{data.price}</H6>
+
+      <div className=''>
+        <span className=' font-[400] text-[12px] '>{data.title}</span>
+        <p  className="text-[13px] font-[600] mt-[-6px] " style={{ className: ' ' }}>{data.price}</p>
       </div>
-      <div className='ms-auto text-end'>
-        {/* <DropdownCommon dropdownMain={{ className: 'icon-dropdown', direction: 'start' }} options={DailyDropdown} iconName='icon-more-alt' btn={{ tag: 'span' }} /> */}
-        {/* {data.gros && <span className={`d-inline-block mt-1 font-${data.color}`}>{data.gros}</span>} */}
-      </div>
+ 
     </div>
   );
 };

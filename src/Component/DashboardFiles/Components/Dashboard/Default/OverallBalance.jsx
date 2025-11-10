@@ -1,48 +1,85 @@
-import React from 'react';
-import { Card, CardBody, CardHeader, Col, Row } from 'reactstrap';
-import { H5, UL, LI } from '../../../../../AbstractElements';
-import { Earning, Expense, OverallBalanceTitle } from '../../../Constant';
-import LightCard from './LitghtCard';
-import ReactApexChart from 'react-apexcharts';
-import { CurrencyChartData } from '../../../Data/DefaultDashboard/Chart';
-import { LightCardData } from '../../../Data/DefaultDashboard';
-const OverallBalance = ({ kpis, opdSummary }) => {
+import React from "react";
+import { Card, CardBody, CardHeader, Col, Row } from "reactstrap";
+import { H4, UL, LI } from "../../../../../AbstractElements";
+import ReactApexChart from "react-apexcharts";
+import { CurrencyChartData } from "../../../Data/DefaultDashboard/Chart";
+import LightCard from "./LitghtCard";
+import { LightCardData } from "../../../Data/DefaultDashboard";
+
+const OverallBalance = ({ kpis, opdSummary, dateRange }) => {
   const totalAll = Number(kpis?.totalFeedback?.value ?? kpis?.totalFeedback ?? 0);
   const totalOPD = Number(opdSummary?.responses ?? 0);
   const totalIPD = Math.max(0, totalAll - totalOPD);
+
+  // 🧮 Format filter label
+  const filterLabel =
+    dateRange?.from && dateRange?.to
+      ? `${new Date(dateRange.from).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })} → ${new Date(dateRange.to).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })}`
+      : "Last 7 Days";
+
   return (
-    <Col className='box-col-12'>
-      <Card>
-        <CardHeader className='card-no-border  items-center  gap-[10px] !flex'>
-          <div className=' flex  profile-box1 rounded-md justify-center items-center w-10 h-10 '>
-            <i className="fa-regular text-[17px] fa-chart-waterfall"></i>
-
+    <Col className=" w-[100%] ">
+      <Card className=" md11:!w-[500px] md13:!w-[630px] 2xl:!w-[800px]">
+        <div className=" flex    px-[15px] w-[100%] pt-[15px] justify-between gap-3">
+          <div className="flex  gap-[10px]">
+            <div className="profile-box1 rounded-md flex justify-center items-center w-[35px] h-[35px]">
+              <i className="fa-regular text-[15px] fa-chart-waterfall"></i>
+            </div>
+            <div>
+              <H4>Overall Ratings</H4>
+              <p className="text-[10px] text-gray-500 mt-[-2px]">
+                Showing results for <span className="font-semibold">{filterLabel}</span>
+              </p>
+            </div>
           </div>
-          <H5>Overall Ratings</H5>
-        </CardHeader>
-        <CardBody className='pt-0'>
 
+                                   <LightCard
+              LightCardData={LightCardData}
+              totals={{ ipd: totalIPD, opd: totalOPD }}
+            />
+        </div>
 
-          {/* <Row className='m-0 overall-card w-[100%]'> */}
+        <div className="pt-0 px-[4px]">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Chart */}
+            {/* Chart Section */}
             <Col className="p-0 flex flex-1">
               <div className="chart-right w-full">
                 <Row>
-                  <Col xl="12">
-                    <CardBody className="p-0">
-                      <UL attrUL={{ horizontal: true, className: "d-flex balance-data " }}>
+                  <Col >
+                    <div className="w-[100%]">
+                      {/* Legend */}
+                      {/* <UL
+                        attrUL={{
+                          horizontal: true,
+                          className: "d-flex balance-data mb-2",
+                        }}
+                      >
                         <LI>
-                          <span className="circle md34:!hidden md77:!flex bg-[#aaafcb]"></span>
-                          <span className="f-light md34:!hidden md77:!flex ms-1">OPD</span>
+                          <span className="circle bg-[#aaafcb]"></span>
+                          <span className="f-light ms-1">OPD</span>
                         </LI>
                         <LI>
-                          <span className="circle md34:!hidden md77:!flex  bg-primary"></span>
-                          <span className="f-light  md34:!hidden md77:!flex ms-1">IPD</span>
+                          <span className="circle bg-primary"></span>
+                          <span className="f-light ms-1">IPD</span>
                         </LI>
-                      </UL>
+                      </UL> */}
 
-                      {/* ✅ Responsive full-width chart */}
+  
+
+
+
+
+
+
+                      {/* Chart */}
                       <div className="w-full">
                         <ReactApexChart
                           type="bar"
@@ -52,13 +89,27 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                             ...CurrencyChartData.options,
                             xaxis: {
                               ...CurrencyChartData.options.xaxis,
-                              categories: (kpis?.earning?.labels?.length
-                                ? kpis.earning.labels
-                                : CurrencyChartData.options.xaxis.categories),
+                              categories:
+                                kpis?.earning?.labels?.length
+                                  ? kpis.earning.labels
+                                  : CurrencyChartData.options.xaxis.categories,
+                              title: {
+                                text:
+                                  dateRange?.from && dateRange?.to
+                                    ? "Filtered Range"
+                                    : "Last 7 Days",
+                              },
+                            },
+                            colors: ["#2563eb", "#a78bfa"],
+                            tooltip: {
+                              theme: "light",
+                              y: {
+                                formatter: (val) => `${val}`,
+                              },
                             },
                             responsive: [
                               {
-                                breakpoint: 1024, // tablets
+                                breakpoint: 1024,
                                 options: {
                                   chart: { height: 250 },
                                   plotOptions: { bar: { columnWidth: "40%" } },
@@ -66,7 +117,7 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                                 },
                               },
                               {
-                                breakpoint: 768, // small tablets
+                                breakpoint: 768,
                                 options: {
                                   chart: { height: 220 },
                                   plotOptions: { bar: { columnWidth: "50%" } },
@@ -78,28 +129,29 @@ const OverallBalance = ({ kpis, opdSummary }) => {
                           series={[
                             {
                               name: "IPD",
-                              data: Array.isArray(kpis?.earning?.series) ? kpis.earning.series : [],
+                              data: Array.isArray(kpis?.earning?.series)
+                                ? kpis.earning.series
+                                : [],
                             },
                             {
                               name: "OPD",
-                              data: Array.isArray(kpis?.expense?.series) ? kpis.expense.series : [],
+                              data: Array.isArray(kpis?.expense?.series)
+                                ? kpis.expense.series
+                                : [],
                             },
                           ]}
                         />
                       </div>
-                    </CardBody>
+                    </div>
                   </Col>
                 </Row>
               </div>
             </Col>
 
-
-            <LightCard LightCardData={LightCardData} totals={{ ipd: totalIPD, opd: totalOPD }} />
-
+            {/* Summary Side Card */}
+       
           </div>
-
-          {/* </Row> */}
-        </CardBody>
+        </div>
       </Card>
     </Col>
   );

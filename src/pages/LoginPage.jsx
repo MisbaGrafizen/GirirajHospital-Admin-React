@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import logo from "../../public/imges/GirirajFeedBackLogo.jpg";
 import { useNavigate } from "react-router-dom";
-import { requestNotificationPermission } from "../helper/notification";
 import { ApiPost } from "../helper/axios";
+import { requestFcmToken } from "../config/firebaseConfig"; // 🟢 Import Firebase helper
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,18 +16,21 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Restore "remember me"
+  /* 🟢 Restore remembered credentials */
   useEffect(() => {
-    const savedIdentifier = localStorage.getItem("savedIdentifier");
     const savedRemember = localStorage.getItem("rememberMe") === "true";
+    const savedIdentifier = localStorage.getItem("savedIdentifier");
+    const savedPassword = localStorage.getItem("savedPassword");
+
     if (savedRemember && savedIdentifier) {
       setIdentifier(savedIdentifier);
+      if (savedPassword) setPassword(savedPassword);
       setRememberMe(true);
     }
   }, []);
 
-  // ✅ Save login session
-  const saveAuthData = ({ user, tokens, token, permissions, loginType }) => {
+  /* ✅ Save login session + rememberMe state */
+  const saveAuthData = ({ user, tokens, token, permissions, loginType, cometToken }) => {
     const accessToken = tokens?.access?.token || token;
     const refreshToken = tokens?.refresh?.token || "";
 
@@ -39,34 +42,45 @@ export default function LoginPage() {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("loginType", loginType);
 
-    if (permissions)
-      localStorage.setItem("rights", JSON.stringify(permissions));
+    if (permissions) localStorage.setItem("rights", JSON.stringify(permissions));
+    if (cometToken) localStorage.setItem("cometToken", cometToken);
+    if (user?.cometUid) localStorage.setItem("cometUid", user.cometUid);
 
     if (rememberMe) {
       localStorage.setItem("savedIdentifier", identifier);
+      localStorage.setItem("savedPassword", password);
       localStorage.setItem("rememberMe", "true");
     } else {
       localStorage.removeItem("savedIdentifier");
+      localStorage.removeItem("savedPassword");
       localStorage.setItem("rememberMe", "false");
     }
   };
 
-  // 🚀 Handle Login
+  /* 🚀 Handle Login */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      // ✅ Try Admin Login
+      let cometToken = null;
+      let cometUid = null;
+
+      // ✅ Try Admin Login first
       try {
         const res = await ApiPost("/auth/admin/login", {
           email: identifier,
           password,
         });
 
-        const { user, tokens } = res.data?.user || res.data;
-        console.log("user", user);
+        const responseData = res.data?.user || res.data;
+        const user = responseData?.user || responseData;
+        const tokens = responseData?.tokens || res.data?.tokens;
+        cometToken = user?.cometToken || null;
+        cometUid = user?.cometUid || null;
+
+        if (!user || !tokens) throw new Error("Invalid response from server.");
 
         saveAuthData({
           user,
@@ -75,70 +89,88 @@ export default function LoginPage() {
             refresh: { token: tokens?.refresh?.token },
           },
           loginType: "admin",
+          cometToken,
         });
 
-        // ✅ Wait a bit for userId to be stored before saving FCM token
-        setTimeout(() => {
-          requestNotificationPermission();
-        }, 800);
+        // 🟢 Initialize FCM after successful login
+        try {
+          const fcmToken = await requestFcmToken();
+          if (fcmToken) {
+            localStorage.setItem("fcmToken", fcmToken);
+            await ApiPost("/auth/save-fcm-token", {
+              userId: user?._id,
+              token: fcmToken,
+            });
+          }
+        } catch (fcmErr) {
+          console.error("⚠️ FCM initialization failed:", fcmErr);
+        }
 
-        console.log("✅ Admin login success");
         navigate("/dashboards/super-dashboard", { replace: true });
         return;
       } catch (adminError) {
-        console.warn("Admin login failed, trying role-user...");
+        console.warn("⚠️ Admin login failed, trying role-user...");
       }
 
-      // ✅ Try Role-User Login
+      // ✅ Try Role User Login
+      const res = await ApiPost("/auth/role-user/login", {
+        identifier,
+        password,
+      });
+
+      const { user, token, cometToken: roleCometToken } = res.data;
+      cometToken = roleCometToken || null;
+      cometUid = user?.cometUid || null;
+      const permissions = user?.roleId || [];
+
+      saveAuthData({
+        user,
+        token,
+        permissions,
+        loginType: "roleUser",
+        cometToken,
+      });
+
+      // 🟢 Initialize FCM for role-user as well
       try {
-        const res = await ApiPost("/auth/role-user/login", {
-          identifier,
-          password,
-        });
-
-        const { user, token } = res.data;
-        const permissions = user?.roleId || [];
-        console.log("Role-user login response:", res);
-        saveAuthData({ user, token, permissions, loginType: "roleUser" });
-
-
-        // ✅ Wait a bit for userId to be stored before saving FCM token
-        setTimeout(() => {
-          requestNotificationPermission();
-        }, 800);
-
-        console.log("✅ Role-user login success");
-        navigate("/dashboards/super-dashboard", { replace: true });
-        return;
-      } catch (userError) {
-        throw new Error("Incorrect email/username or password");
+        const fcmToken = await requestFcmToken();
+        if (fcmToken) {
+          localStorage.setItem("fcmToken", fcmToken);
+          await ApiPost("/auth/save-fcm-token", {
+            userId: user?._id,
+            token: fcmToken,
+          });
+        }
+      } catch (fcmErr) {
+        console.error("⚠️ FCM initialization failed:", fcmErr);
       }
+
+      navigate("/dashboards/super-dashboard", { replace: true });
     } catch (err) {
       console.error("❌ Login error:", err);
-      setError(err.message || "Something went wrong");
+      setError(err.message || "Incorrect email/username or password");
     } finally {
       setIsLoading(false);
     }
   };
 
-
   return (
     <div className="min-h-screen bs-giri font-Poppins flex items-center justify-center p-4 relative">
+      {/* ✳️ Background Design */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)`,
+            backgroundImage:
+              "radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)",
             backgroundSize: "50px 50px",
           }}
         />
       </div>
 
-      {/* Floating Blobs */}
       <div className="absolute -top-4 -left-4 w-20 h-20 bg-pink-500 rounded-full opacity-20 blur-xl animate-pulse" />
       <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-cyan-500 rounded-full opacity-20 blur-xl animate-pulse delay-1000" />
 
-      {/* Login Card */}
       <div className="relative w-full max-w-md bg-white/20 backdrop-blur-[50px] rounded-3xl p-6 shadow-2xl border border-white/20 z-10">
         <div className="text-center mb-8">
           <img src={logo} alt="logo" className="mx-auto rounded-[8px] w-32" />
@@ -153,7 +185,7 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email */}
+          {/* Identifier */}
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -186,7 +218,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Remember me */}
+          {/* Remember Me */}
           <label className="flex items-center cursor-pointer text-sm text-gray-200">
             <input
               type="checkbox"
@@ -195,15 +227,12 @@ export default function LoginPage() {
               className="sr-only"
             />
             <span
-              className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${rememberMe ? "bg-white" : "border-gray-400"
-                }`}
+              className={`w-5 h-5 mr-3 border-2 rounded-md flex items-center justify-center ${
+                rememberMe ? "bg-white" : "border-gray-400"
+              }`}
             >
               {rememberMe && (
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-6 h-6 text-red-500"
-                >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-red-500">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import CometChat from "../config/comet.config";
+import CometChat from "../../config/comet.config";
 
 export default function UserList({ onSelectUser }) {
   const [users, setUsers] = useState([]);

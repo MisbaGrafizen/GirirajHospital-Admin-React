@@ -22,4 +22,10 @@ messaging.onBackgroundMessage((payload) => {
     body: body || "You have a new message",
     icon: "/images.png",
   });
+
+  self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.click_action || "/";
+  event.waitUntil(clients.openWindow(urlToOpen));
+});
 });

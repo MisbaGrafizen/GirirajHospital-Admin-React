@@ -293,7 +293,9 @@ color: #0f92e9; border:  2px solid #0f92e9 ;
 
 
 
-
+.dashShadow{
+      box-shadow: 0px 9px 20px rgba(46, 35, 94, 0.07);
+}
 
 #root {
   width: 100%;
@@ -1959,4 +1961,33 @@ border-color: #fff;
   color: white !important;
 
   border: none !important;
+}
+
+.recharts-legend-item legend-item-1 {
+
+  margin-right: 30px !important;
+}
+.recharts-default-legend {
+  display: flex !important;
+  gap:15px !important;
+position: relative !important;
+right: -15% !important;
+
+}
+
+@media only  screen and (min-width: 1468px) {
+   .recharts-default-legend {
+  display: flex !important;
+  gap:15px !important;
+position: relative !important;
+right: -25% !important;
+
+}
+}
+.recharts-default-legend {
+  display: flex !important;
+  gap:15px !important;
+position: relative !important;
+right: -15% !important;
+
 }

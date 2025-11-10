@@ -358,59 +358,41 @@ const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
 
   return (
     <>
-      <section className="flex w-[100%] h-[100%] select-none pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Executive Report" />
+          <Header
+  pageName="Exe Report"
+  onDateRangeChange={({ from, to }) => {
+    if (from) setFromDate(from)
+    if (to) setToDate(to)
+  }}
+/>
+
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col relative  w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col relative  w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
              <Preloader />
               <main>
                 {/* Filters */}
-                <section className="mb-3 border border-gray-200 rounded-md">
+                {/* <section className="mb-3 border border-gray-200 rounded-md">
                   <form onSubmit={handleFilter} className="p-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
-                      {/* From date */}
-                      <div className="relative md34:!mb-[17px] md77:!mb-0">
-                        {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
-                          From
-                        </label>
-                        <div className="relative">
-                          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="date"
-                            value={fromDate}
-                            max={toDate}
-                            onChange={(e) => setFromDate(e.target.value)}
-                            className="w-full bg-white pl-9 text-[14px] pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div> */}
 
+                      <div className="relative md34:!mb-[17px] md77:!mb-0">
+        
                           <ModernDatePicker />
                       </div>
-                      {/* To date */}
+
                       <div className="relative">
-                        {/* <label className="block text-[10px] font-medium top-[-8px] left-[10px] border-gray-300 bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">
-                          To
-                        </label>
-                        <div className="relative">
-                          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="date"
-                            value={toDate}
-                            min={fromDate}
-                            onChange={(e) => setToDate(e.target.value)}
-                            className="w-full bg-white pl-9 pr-3 py-2 text-[14px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div> */}
+                       
                         <ModernDatePicker />
                       </div>
                     </div>
                   </form>
-                </section>
+                </section> */}
 
                 {/* Table */}
-                <section aria-labelledby="metrics-table" className="border border-gray-200 rounded-md overflow-hidden">
+                {/* <section aria-labelledby="metrics-table" className="border border-gray-200 rounded-md overflow-hidden">
                   <h2 id="metrics-table" className="sr-only">Metric Summary Table</h2>
 
                   {loading && (
@@ -488,7 +470,115 @@ const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
                       </tfoot>
                     </table>
                   </div>
-                </section>
+
+                  
+                </section> */}
+
+                {/* Table */}
+<section
+  aria-labelledby="metrics-table"
+  className="rounded-2xl shadow-md overflow-hidden border border-gray-200 bg-white"
+>
+  <h2 id="metrics-table" className="sr-only">
+    Metric Summary Table
+  </h2>
+
+  {/* Gradient Header */}
+  <div className="bg-gradient-to-r from-[#5B7FFF] to-[#6C63FF] py-3 px-5 grid grid-cols-4 text-white text-[13px] font-semibold uppercase tracking-wide">
+    <div>Metric</div>
+    <div className="text-center">Value</div>
+    <div className="text-center">Trend</div>
+    <div className="text-left">Status</div>
+  </div>
+
+  {/* Data Rows */}
+  <div>
+    {metrics.map((row, idx) => {
+      const { Icon, iconClass } = statusStyles(row.status.type)
+      const TrendArrow =
+        row.trend.direction === "down" ? TrendingDown : TrendingUp
+      const trendColorClass =
+        row.trend.direction === "down"
+          ? "text-red-500"
+          : "text-emerald-600"
+
+      // 🎨 gradient backgrounds per metric (same as APK)
+      const iconGradients = {
+        "Overall OPD Feedback": "from-[#5B7FFF] to-[#306BFF]",
+        "Overall IPD Feedback": "from-[#A66CFF] to-[#7E5BFF]",
+        "NPS (OPD)": "from-[#0EA5E9] to-[#06B6D4]",
+        "NPS (IPD)": "from-[#FBBF24] to-[#F59E0B]",
+        "Complaints (Detractors)": "from-[#F87171] to-[#EF4444]",
+        "Avg Doctor Rating": "from-[#3B82F6] to-[#2563EB]",
+        "Cleanliness (Housekeeping) Score": "from-[#10B981] to-[#059669]",
+      }
+
+      const gradientClass =
+        iconGradients[row.metric] || "from-[#5B7FFF] to-[#3A46FF]"
+
+      return (
+        <div
+          key={row.metric}
+          className={`grid grid-cols-4 items-center py-[8px] px-3 text-sm ${
+            idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+          } hover:bg-gray-100 transition`}
+        >
+          {/* Metric name + gradient icon */}
+          <div className="flex items-center gap-3 font-[500] text-gray-800">
+            <div
+              className={`w-8 h-8 flex items-center justify-center rounded-md text-white bg-gradient-to-br ${gradientClass} shadow-sm`}
+            >
+              <Icon className="w-4 h-4" />
+            </div>
+            <span>{row.metric}</span>
+          </div>
+
+          {/* Value */}
+          <div className="text-center text-[15px] font-medium text-gray-900">
+            {row.value}
+          </div>
+
+          {/* Trend */}
+          <div
+            className={`flex items-center justify-center gap-1 font-semibold ${trendColorClass}`}
+          >
+            <TrendArrow className="w-4 h-4" />
+            {row.trend.value}
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center gap-2 text-gray-800">
+            <Icon className={`w-4 h-4 ${iconClass}`} />
+            <span
+              className={`font-medium ${
+                row.status.type === "attention"
+                  ? "text-red-600"
+                  : row.status.type === "improving"
+                  ? "text-blue-600"
+                  : "text-green-600"
+              }`}
+            >
+              {row.status.label}
+            </span>
+          </div>
+        </div>
+      )
+    })}
+
+    {/* Empty State */}
+    {!loading && !error && metrics.length === 0 && (
+      <div className="py-6 text-center text-gray-500 text-sm">
+        No data in the selected period.
+      </div>
+    )}
+  </div>
+
+  {/* Footer */}
+  <div className="bg-gray-100 text-gray-600 text-xs py-2 px-5 border-t border-gray-200 text-center rounded-b-2xl">
+    Report period: {fromDate} to {toDate}
+  </div>
+</section>
+
               </main>
             </div>
           </div>

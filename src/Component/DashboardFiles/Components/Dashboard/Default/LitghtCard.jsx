@@ -10,112 +10,54 @@ import {
   MessageSquareText,
   ClipboardCheck,
 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const LightCard = ({ LightCardData, totals = {} }) => {
+
+    const navigate = useNavigate();
+
   return (
-    <div  className='p-0 min-w-[200px] md11:!mt-0 md34:!mt-[30px]'>
-
-      <div className='  hidden'>
-
-
-        <Row className='g-sm-4 g-2'>
-          {typeof totals.ipd !== 'undefined' && (
-            <Col xl='12' md='4'>
-              <LightCardBox
-                data={{
-                  ...(LightCardData?.[0] || {}),
-                  // set multiple common keys so LightCardBox can pick what it uses
-                  title: 'Total IPD Feedback',
-                  name: 'Total IPD Feedback',
-                  label: 'Total IPD Feedback',
-                  price: Number(totals.ipd || 0),
-                  number: Number(totals.ipd || 0),
-                  count: Number(totals.ipd || 0),
-                  amount: Number(totals.ipd || 0),
-                  badgeClass: 'bg-[#fff]',
-                  icon: <i class="fa-regular text-[21px] fa-bed-pulse"></i>
-                }}
-              />
-            </Col>
-          )}
-          {typeof totals.opd !== 'undefined' && (
-            <Col xl='12' md='4'>
-              <LightCardBox
-                data={{
-                  ...(LightCardData?.[0] || {}),
-                  title: 'Total OPD Feedback',
-                  name: 'Total OPD Feedback',
-                  label: 'Total OPD Feedback',
-                  price: Number(totals.opd || 0),
-                  number: Number(totals.opd || 0),
-                  count: Number(totals.opd || 0),
-                  amount: Number(totals.opd || 0),
-                  badgeClass: 'bg-primary',
-                  icon: <i class="fa-light text-[21px]  fa-hospital-user"></i>
-                }}
-              />
-            </Col>
-          )}
-
-          {/* {LightCardData.map((data, i) => (
-          <Col key={i} xl='12' md='4'>
-            <LightCardBox data={data} />
-          </Col>
-        ))} */}
-        </Row>
-      </div>
+    <div  className='p-0  md11:!mt-0 md34:!mt-[30px]'>
 
 
 
-      <div className=' !flex md34:flex-col md77:!flex-row  w-[100%] md11:!flex-col  gap-[20px] '>
 
 
+  <div className="!flex md77:!flex-row gap-[10px] md11:!flex-row">
+      {/* 🔹 IPD Card */}
+      {typeof totals.ipd !== "undefined" && (
+        <div onClick={() => navigate("/dashboards/opd-all-list")} className="cursor-pointer">
+          <LightCardBox
+            data={{
+              ...(LightCardData?.[0] || {}),
+              title: "IPD",
+              price: Number(totals.ipd || 0),
+              bgColor: "#2863eb",
+              icon: (
+                <i className="fa-regular text-[14px] text-[#fff] fa-bed-pulse"></i>
+              ),
+            }}
+          />
+        </div>
+      )}
 
-        {typeof totals.ipd !== 'undefined' && (
-          <Col >
-            <LightCardBox
-              data={{
-                ...(LightCardData?.[0] || {}),
-                // set multiple common keys so LightCardBox can pick what it uses
-                title: ' IPD Feed.',
-                name: ' IPD ',
-                label: ' IPD ',
-                price: Number(totals.ipd || 0),
-                number: Number(totals.ipd || 0),
-                count: Number(totals.ipd || 0),
-                amount: Number(totals.ipd || 0),
-                badgeClass: 'bg-[#fff]',
-                icon: <i class="fa-regular text-[21px] fa-bed-pulse"></i>
-              }}
-            />
-          </Col>
-        )}
-        {typeof totals.opd !== 'undefined' && (
-          <Col >
-            <LightCardBox
-              data={{
-                ...(LightCardData?.[0] || {}),
-                title: 'OPD Feed. ',
-                name: ' OPD ',
-                label: ' OPD ',
-                price: Number(totals.opd || 0),
-                number: Number(totals.opd || 0),
-                count: Number(totals.opd || 0),
-                amount: Number(totals.opd || 0),
-                badgeClass: 'bg-primary',
-                icon: <i class="fa-light text-[21px]  fa-hospital-user"></i>
-              }}
-            />
-          </Col>
-        )}
-
-        {/* {LightCardData.map((data, i) => (
-          <Col key={i} xl='12' md='4'>
-            <LightCardBox data={data} />
-          </Col>
-        ))} */}
-
-      </div>
+      {/* 🔹 OPD Card */}
+      {typeof totals.opd !== "undefined" && (
+        <div onClick={() => navigate("/dashboards/opd-all-list")} className="cursor-pointer">
+          <LightCardBox
+            data={{
+              ...(LightCardData?.[0] || {}),
+              title: "OPD",
+              price: Number(totals.opd || 0),
+              bgColor: "#aaafcb",
+              icon: (
+                <i className="fa-light text-[14px] text-[#fff] fa-hospital-user"></i>
+              ),
+            }}
+          />
+        </div>
+      )}
+    </div>
     </div>
   );
 };

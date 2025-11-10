@@ -40,6 +40,21 @@ const CONCERN_SERVICES = [
   'Security',
 ];
 
+const IPD_SERVICES = [
+  "All Services",
+  "Doctor Services",
+  "Nursing",
+  "Dietitian",
+  "Housekeeping",
+  "Maintenance",
+  "Security",
+  "Pharmacy",
+  "Medical Admin",
+  "Bio-Medical",
+  "Front Desk",
+];
+
+
 function normalizeServiceLabel(label, variant = 'opd') {
   if (!label) return 'All Services';
   if (variant === 'opd') {
@@ -68,7 +83,7 @@ export default function OpdFilter({
   onChange,
   serviceVariant = 'opd',
   services,
-  doctors,
+  doctors  = [],
   isAdmin = false,
 }) {
   const [dateFrom, setDateFrom] = useState(parseToDate(value?.from));
@@ -81,10 +96,13 @@ export default function OpdFilter({
   );
 
   // ✅ Service options
-  const serviceOptions = useMemo(() => {
-    if (Array.isArray(services) && services.length) return services;
-    return serviceVariant === 'concern' ? CONCERN_SERVICES : OPD_SERVICES;
-  }, [services, serviceVariant]);
+ const serviceOptions = useMemo(() => {
+  if (Array.isArray(services) && services.length) return services;
+  if (serviceVariant === "concern") return CONCERN_SERVICES;
+  if (serviceVariant === "ipd") return IPD_SERVICES;  // ✅ Added line
+  return OPD_SERVICES;
+}, [services, serviceVariant]);
+
 
   // ✅ Doctor options (coming from parent)
   const doctorOptions = useMemo(() => {
@@ -119,7 +137,7 @@ export default function OpdFilter({
       from: fmtYYYYMMDD(dateFrom),
       to: fmtYYYYMMDD(dateTo),
       service: normalizeServiceLabel(selectedService, serviceVariant),
-      doctor: selectedDoctor === 'All Doctors' ? '' : (selectedDoctor || ''),
+      doctor: selectedDoctor === 'All Doctors' ? '' : selectedDoctor,
     });
   }, [dateFrom, dateTo, selectedService, selectedDoctor, onChange, serviceVariant]);
 
@@ -136,7 +154,7 @@ export default function OpdFilter({
 
   return (
     <div className="">
-      <div className="md34:!hidden md11:!grid grid-cols-2 md11:grid-cols-4 gap-x-[9px]">
+      <div className="md34:!hidden md11:!grid grid-cols-2 md11:grid-cols-4 gap-x-3">
         <ModernDatePicker label="From Date" selectedDate={dateFrom} setSelectedDate={setDateFrom} />
         <ModernDatePicker label="To Date" selectedDate={dateTo} setSelectedDate={setDateTo} />
         {shouldShowServiceDropdown && (
@@ -172,15 +190,15 @@ export default function OpdFilter({
             onChange={setSelectedService}
             options={serviceOptions}
           />
-          {doctorOptions.length > 1 && (
-            <AnimatedDropdown
-              label="Doctor"
-              icon={User}
-              selected={selectedDoctor}
-              onChange={setSelectedDoctor}
-              options={doctorOptions}
-            />
-          )}
+           {Array.isArray(doctors) && doctors.length > 0 && (
+   <AnimatedDropdown
+     label="Doctor"
+     icon={User}
+     selected={selectedDoctor}
+     onChange={setSelectedDoctor}
+     options={['All Doctors', ...doctors]}
+   />
+ )}
         </div>
       </div>
     </div>

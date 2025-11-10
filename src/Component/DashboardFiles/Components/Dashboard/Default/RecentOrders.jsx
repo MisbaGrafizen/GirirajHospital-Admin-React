@@ -27,7 +27,7 @@ const RecentOrders = ({ overallNps = 0 }) => {
   const baseOpts = RecentOrderChart?.options || {};
   const options = {
     ...baseOpts,
-    labels: [isPercent ? 'NPS %' : 'NPS'],
+    labels: [isPercent ? '' : ''],
     colors: [dialColor],
     plotOptions: {
       ...(baseOpts.plotOptions || {}),
@@ -47,19 +47,19 @@ const RecentOrders = ({ overallNps = 0 }) => {
   return (
     <Col className="w-[100%] md11:!pb-0">
       <Card className="">
-        <CardHeader className="card-no-border">
+        <div className=" px-[15px] pt-[15px]">
           <div className="flex items-center gap-[10px]">
-            <div className="flex profile-box1 rounded-md justify-center items-center w-10 h-10">
-              <i className="fa-regular text-[17px] fa-chart-user"></i>
+            <div className="flex profile-box1 rounded-md justify-center items-center w-[35px] h-[35px]">
+              <i className="fa-regular text-[15px] fa-chart-user"></i>
             </div>
             <H5>NPS Rating</H5>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardBody className="pt-0 pb-[5px]">
+        <div className="pt-0 pb-[18px]">
           <div className="recent-wrapper">
             {/* Chart */}
-            <div className="recent-chart md11:!w-[300px] mx-auto">
+            <div className=" w-fit  mx-auto">
               <ReactApexChart
                 type="radialBar"
               
@@ -69,14 +69,14 @@ const RecentOrders = ({ overallNps = 0 }) => {
             </div>
 
             {/* KPI Section */}
-            <div className="flex flex-col items-center ">
-              <H4 attrH4={{ className: `mb-1 ${textColorClass}` }}>
+            <div className="flex flex-col relative top-[-13px] items-center ">
+              {/* <H4 attrH4={{ className: `mb-1 ${textColorClass}` }}>
                 {displayText}
-              </H4>
+              </H4> */}
               <span className="text-gray-500 text-sm">Total NPS Score</span>
             </div>
           </div>
-        </CardBody>
+        </div>
       </Card>
     </Col>
   );

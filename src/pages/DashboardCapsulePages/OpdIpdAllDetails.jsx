@@ -136,7 +136,7 @@ const handleRowClick = useCallback(
     if (activeType === "IPD") {
       navigate("/ipd-feedback-details", { state: { id, feedback: fb, from: "ipd" } });
     } else {
-      navigate("/feedback-details", { state: { id, feedback: fb, from: "opd" } });
+      navigate("/opd-feedback-details", { state: { id, feedback: fb, from: "opd" } });
     }
   },
   [navigate, activeType]
@@ -147,14 +147,14 @@ const handleRowClick = useCallback(
         <Header pageName="IPD / OPD List" />
         <div className="flex w-full h-full">
           <CubaSidebar />
-          <div className="flex flex-col w-full bg-white relative max-h-[93%] overflow-y-auto gap-4 rounded-[10px]">
+          <div className="flex flex-col w-full bg-white  relative max-h-[93%]  gap-2 ">
             {loading && <Preloader />}
 
             {/* 🔘 Toggle + Search */}
-            <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
+            <div className="flex items-center justify-between px-3 pt-2  sticky top-0 z-10">
               <div className="relative flex items-center justify-center bg-gray-200 rounded-full w-[130px] h-[40px] p-[4px] cursor-pointer select-none">
                 <div
-                  className={`absolute top-[4px] left-[4px] h-[32px] w-[60px] bg-[#000dff] rounded-full transition-all duration-300 ${
+                  className={`absolute top-[4px] left-[4px] h-[32px] w-[60px] bg-[#0353ff] rounded-full transition-all duration-300 ${
                     activeType === "OPD" ? "translate-x-[62px]" : "translate-x-0"
                   }`}
                 ></div>
@@ -184,38 +184,38 @@ const handleRowClick = useCallback(
                   placeholder={`Search ${activeType} feedback...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-3 py-2 w-[220px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="pl-10 pr-3 py-[6px] w-[220px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             {/* 🩺 Feedback Table */}
-            <div className="bg-white rounded-xl border shadow-sm w-[90%] mx-auto overflow-y-auto">
-              <div className="w-[100%] overflow-x-auto">
+            <div className="bg-white rounded-xl border shadow-sm w-[98%] mx-[10px] overflow-y-auto">
+              <div className="w-[100%]">
                 <table className="w-[100%]">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-r">
+                      <th className="px-6 py-[7px] text-left border-r text-[13px] font-medium text-gray-500 w-[180px] uppercase border-r">
                         Date & Time
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-r">
+                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500  w-[200px] uppercase border-r">
                         Patient Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-r">
+                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 uppercase border-r">
                         Contact
                       </th>
                       {activeType === "IPD" && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-r">
+                        <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 w-[100px] uppercase border-r">
                           Bed No
                         </th>
                       )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-r">
+                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 w-[200px] uppercase border-r">
                         Doctor Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-r">
+                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 uppercase border-r">
                         Rating
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-[10px] text-left text-[13px] font-medium text-gray-500 uppercase">
                         Comment
                       </th>
                     </tr>
@@ -230,21 +230,21 @@ const handleRowClick = useCallback(
                           index % 2 === 0 ? "bg-white" : "bg-gray-50"
                         } hover:bg-blue-50 transition`}
                       >
-                        <td className="px-6 py-3 text-[15px] text-gray-700 border-r">
+                        <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-gray-400" />
                             {formatDate(fb.createdAt)}
                           </div>
                         </td>
 
-                        <td className="px-6 py-3 text-[15px] text-gray-700 border-r">
+                        <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-400" />
                             {fb.patientName}
                           </div>
                         </td>
 
-                        <td className="px-6 py-3 text-[15px] text-gray-700 border-r">
+                        <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-gray-400" />
                             {fb.contact}
@@ -252,7 +252,7 @@ const handleRowClick = useCallback(
                         </td>
 
                         {activeType === "IPD" && (
-                          <td className="px-6 py-3 text-[15px] text-gray-700 border-r">
+                          <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                             <div className="flex items-center gap-2">
                               <Bed className="w-4 h-4 text-gray-400" />
                               {fb.bedNo}
@@ -260,7 +260,7 @@ const handleRowClick = useCallback(
                           </td>
                         )}
 
-                        <td className="px-6 py-3 text-[15px] text-gray-700 border-r">
+                        <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-400" />
                             {typeof fb.consultantDoctorName === "object"
@@ -270,7 +270,7 @@ const handleRowClick = useCallback(
                         </td>
 
                         {/* ⭐ FontAwesome Rating */}
-                        <td className="px-6 py-3 text-[15px] text-gray-700 border-r">
+                        <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
                             {renderStars(getAverageRating(fb.ratings))}
                             <span className="text-gray-800 font-medium">
@@ -279,8 +279,13 @@ const handleRowClick = useCallback(
                           </div>
                         </td>
 
-                        <td className="px-6 py-3 text-[15px] text-gray-700">
-                          {fb.comments || "-"}
+                        <td className="px-3 py-2 text-[10px] text-gray-700">
+                         {fb.comments
+  ? fb.comments.length > 120
+    ? fb.comments.substring(0, 120) + "..."
+    : fb.comments
+  : "-"}
+
                         </td>
                       </tr>
                     ))}

@@ -34,6 +34,7 @@ const MODULE_TO_BLOCK = {
     security: "security",
     billing_service: "billingServices",
     housekeeping: "housekeeping",
+    nursing: "nursing",
 };
 
 function resolvePermissions() {
@@ -55,13 +56,7 @@ function resolvePermissions() {
     const permissionsByBlock = {};
     if (isAdmin) {
         Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
-            permissionsByBlock[block] = [
-                "view",
-                "forward",
-                "escalate",
-                "resolve",
-                "in_progress",
-            ];
+            permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
         });
     } else {
         permsArray.forEach((p) => {
@@ -74,9 +69,8 @@ function resolvePermissions() {
         });
     }
 
-    return { isAdmin, loginType, permissionsByBlock };
+    return { isAdmin, permissionsByBlock };
 }
-
 
 
 
@@ -101,21 +95,34 @@ function blockHasContent(block) {
     return hasText || hasAttachments;
 }
 
+function getUserModel() {
+  const loginType = localStorage.getItem("loginType");
+  return loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
+}
+
 
 function mapStatusUI(status) {
-    const s = String(status || "").toLowerCase().replace("-", "_");
+    const s = String(status || "")
+        .toLowerCase()
+        .replace("-", "_");
 
     if (s === "open") return "Open";
     if (s === "in_progress") return "In Progress";
     if (s === "resolved") return "Resolved";
-    if (s === "resolved_by_admin") return "Resolved by Admin";
     if (s === "escalated") return "Escalated";
     if (s === "forwarded") return "Forwarded";
-    if (s === "partial") return "Partial";
-
+    if (s === "partial") return "Partial"; // ✅ Add this
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 export default function ComplaintViewPage() {
     // Modal states
@@ -278,10 +285,33 @@ export default function ComplaintViewPage() {
 
     const { permissionsByBlock } = resolvePermissions();
 
+    // normalize department string to match keys
+    const deptKey = Object.keys(DEPT_LABEL).find(
+        (k) => DEPT_LABEL[k] === complaint.department
+    );
+
+    const currentPerms = permissionsByBlock[deptKey] || [];
+
+
     const forwardDepartments = Object.values(DEPT_LABEL);
 
     console.log('forwardDepartment', forwardDepartment)
 
+    async function forwardComplaint(complaintId, departmentKey, data) {
+        try {
+            const response = await ApiPost(`/admin/${complaintId}/forward`, {
+                department: departmentKey, // must match backend schema key (e.g., billingServices)
+                topic: data.topic || "Forwarded Complaint",
+                text: data.text || data.reason || "",
+                attachments: data.attachments || [],
+                note: data.note || data.text || "", // ✅ extra note field for ForwardSchema
+            });
+
+            return response;
+        } catch (error) {
+            throw new Error(error.message || "Failed to forward complaint");
+        }
+    }
 
     async function fetchComplaintDetails(id) {
         try {
@@ -378,11 +408,15 @@ export default function ComplaintViewPage() {
             const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
 
             const payload = {
-                level: escalationLevel,
-                note: escalationNote,
-                userId: currentUserId,
-                escalatedTo: targetUser?._id || null,
-            };
+  level: escalationLevel,
+  note: escalationNote,
+  userId: currentUserId,
+  userModel: getUserModel(), // ✅ added
+  escalatedTo: targetUser?._id || null,
+};
+
+
+            let response;
 
             if (selectedDepartment) {
                 const deptKey = Object.keys(DEPT_LABEL).find(
@@ -394,21 +428,19 @@ export default function ComplaintViewPage() {
                     return;
                 }
 
-                await escalateDepartmentComplaint(complaint.id, deptKey, payload);
-                alert(
-                    `Complaint for ${selectedDepartment} escalated to ${escalationLevel}`
-                );
+                response = await escalateDepartmentComplaint(complaint.id, deptKey, payload);
+                alert(`Complaint for ${selectedDepartment} escalated to ${escalationLevel}`);
             } else {
-                await escalateComplaint(complaint.id, payload);
+                response = await escalateComplaint(complaint.id, payload);
                 alert(`Complaint escalated to ${escalationLevel}`);
             }
 
-            // ✅ Re-fetch complaint & history to refresh UI
-            const updated = await fetchComplaintDetails(complaint.id);
-            if (updated) {
-                setStatus(updated.status || updated.data?.status);
-            }
+            // ✅ Determine and set status
+            const newStatus =
+                response?.data?.status || response?.data?.data?.status || "escalated";
+            setStatus(mapStatusUI(newStatus));
 
+            // ✅ Re-fetch history for timeline
             const newHistory = await fetchConcernHistory(complaint.id);
             setHistoryData(newHistory);
 
@@ -419,97 +451,119 @@ export default function ComplaintViewPage() {
         }
     };
 
-    function isFullResolution(allowedBlocks, presentBlocks) {
-        if (!Array.isArray(presentBlocks) || presentBlocks.length === 0) return true;
-        const allowedSet = new Set(allowedBlocks);
-        return presentBlocks.every((deptKey) => allowedSet.has(deptKey));
-    }
+
+    const handleInProgressSubmit = async () => {
+        if (!tempText.trim()) {
+            alert("Please enter progress update text.");
+            return;
+        }
+
+        try {
+            let response;
+
+            // ✅ If a department is selected, mark partial in-progress
+            if (selectedDepartment) {
+                const deptKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+
+                response = await updateDepartmentProgressAPI(
+                    complaint.id,
+                    deptKey,
+                    tempText,
+                    uploadedFile
+                );
+            } else {
+                // ✅ Otherwise mark full complaint in-progress
+                response = await updateProgressRemarkAPI(complaint.id, tempText);
+            }
+
+            // ✅ Detect returned status from backend or fallback
+            const newStatus =
+                response?.data?.status ||
+                response?.data?.data?.status ||
+                "in_progress";
+
+            // ✅ Immediately update UI
+            setStatus(mapStatusUI(newStatus));
+
+            alert("Progress updated successfully!");
+
+            // ✅ Refresh history for latest timeline
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+        } catch (error) {
+            console.error("Progress update failed:", error);
+            alert(error.message || "Failed to update complaint progress");
+        }
+    };
+
+
+
+
 
 
     const handleResolveSubmit = async () => {
-        if (!resolutionNote.trim()) {
+        if (!resolutionNote) {
             alert("Please provide a resolution note.");
             return;
         }
 
         try {
-            // ✅ Upload proof file if provided
+            // ✅ Upload proof if provided
             let proofUrl = "";
             if (uploadedFile) {
                 const uploadRes = await uploadToHPanel(uploadedFile);
                 proofUrl = uploadRes.url;
             }
 
-            const loginType = localStorage.getItem("loginType");
-            const concernId = complaint.id;
+            // ✅ Determine backend endpoint
+            let endpoint = `/admin/${complaint.id}/resolve`;
+           const payload = {
+  note: resolutionNote,
+  proof: proofUrl ? [proofUrl] : [],
+  userId: localStorage.getItem("userId") || "",
+  userModel: getUserModel(), // ✅ added
+};
 
-            // 🔹 Determine which departments the user can resolve
-            const allowedBlocks = Object.keys(permissionsByBlock).filter((block) =>
-                permissionsByBlock[block]?.includes("resolve")
-            );
 
-            // 🔹 Determine all departments involved in complaint
-            const presentBlocks = CONCERN_KEYS.filter((key) => blockHasContent(fullDoc[key]));
-
-            // 🔹 Decide whether this is full or partial resolution
-            const canResolveAll = isFullResolution(allowedBlocks, presentBlocks);
-            const isPartial = !canResolveAll;
-
-            // 🔹 Handle single department restriction
-            let departmentKey = undefined;
-            if (allowedBlocks.length === 1) {
-                departmentKey = allowedBlocks[0];
-            } else if (selectedDepartment) {
-                departmentKey = Object.keys(DEPT_LABEL).find(
+            // ✅ If department selected → call partial resolve
+            if (selectedDepartment) {
+                endpoint = `/admin/${complaint.id}/partial-resolve`;
+                const deptKey = Object.keys(DEPT_LABEL).find(
                     (k) => DEPT_LABEL[k] === selectedDepartment
                 );
+                if (deptKey) payload.department = deptKey;
             }
-
-            // ✅ Choose correct endpoint
-            let endpoint = "";
-            if (loginType === "admin") {
-                endpoint = isPartial
-                    ? `/admin/${concernId}/admin-partial-resolve`
-                    : `/admin/${concernId}/admin-resolve`;
-            } else {
-                endpoint = isPartial
-                    ? `/admin/${concernId}/partial-resolve`
-                    : `/admin/${concernId}/resolve`;
-            }
-
-            // ✅ Build payload
-            const payload = {
-                note: resolutionNote,
-                proof: proofUrl ? [proofUrl] : [],
-                isPartial,
-                department: departmentKey,
-                userId: localStorage.getItem("userId") || "",
-            };
 
             const res = await ApiPost(endpoint, payload);
+
+            // ✅ Detect and set new status
             const newStatus =
                 res?.data?.status || res?.data?.data?.status || "resolved";
-
             setStatus(mapStatusUI(newStatus));
 
-            if (isPartial) {
+            if (newStatus === "partial") {
                 alert("Complaint partially resolved.");
-            } else {
+            } else if (newStatus === "resolved") {
                 alert("✅ Complaint fully resolved.");
+            } else {
+                alert(res?.message || "Resolution submitted successfully.");
             }
 
-            // ✅ Refresh UI
-            const updated = await fetchComplaintDetails(complaint.id);
-            if (updated) setStatus(updated.status || updated.data?.status);
-
+            // ✅ Refresh history without full reload
             const newHistory = await fetchConcernHistory(complaint.id);
             setHistoryData(newHistory);
+
             closeAllModals();
         } catch (error) {
             console.error("Resolve Error:", error);
-            alert(error.message || "Failed to resolve complaint.");
+            alert(error.message || "Something went wrong while resolving complaint.");
         }
     };
+
 
 
 
@@ -539,17 +593,17 @@ export default function ComplaintViewPage() {
     async function updateProgressRemarkAPI(complaintId, note) {
         try {
             const response = await ApiPut(`/admin/update-progress/${complaintId}`, {
-                updateNote: note,
-            });
+  updateNote: note,
+  userId: localStorage.getItem("userId") || "",
+  userModel: getUserModel(), // ✅ added
+});
 
-            return {
-                message: response.message,
-                updatedConcern: response.data,
-            };
+            return response; // ✅ keep full response for status
         } catch (error) {
             throw new Error(error.message || "Failed to update in_progress remark");
         }
     }
+
 
     async function updateDepartmentProgressAPI(complaintId, department, note, proofFile) {
         try {
@@ -560,17 +614,20 @@ export default function ComplaintViewPage() {
             }
 
             const response = await ApiPost(`/admin/${complaintId}/partial-inprogress`, {
-                department,
-                note,
-                proof: proofUrl ? [proofUrl] : [],
-                userId: localStorage.getItem("userId") || "",
-            });
+  department,
+  note,
+  proof: proofUrl ? [proofUrl] : [],
+  userId: localStorage.getItem("userId") || "",
+  userModel: getUserModel(), // ✅ added
+});
+x
 
-            return response;
+            return response; // ✅ keep full response
         } catch (error) {
             throw new Error(error.message || "Failed to update department progress");
         }
     }
+
 
 
     const getStatusColor = (status) => {
@@ -582,7 +639,6 @@ export default function ComplaintViewPage() {
             case "forwarded":
                 return "bg-purple-100 text-purple-800 border-purple-200";
             case "resolved":
-            case "resolved_by_admin":
                 return "bg-green-100 text-green-800 border-green-200";
             case "escalated":
                 return "bg-red-100 text-red-800 border-red-200";
@@ -801,15 +857,21 @@ export default function ComplaintViewPage() {
         <>
             <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-                    <Header pageName="Complaint Details" />
+                    <Header pageName="Complaint Details" complaintInfo={{
+                        id: complaint.complaintId,
+                        status: complaint.status,
+                        patient: complaint.patient,
+                        department: complaint.department,
+                        bedNo: complaint.bedNo,
+                    }} />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
-                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px] pb-[30px] px-[10px] bg-[#fff] overflow-y-auto   gap-[10px] rounded-[10px]">
                             <Preloader />
                             <div className="">
                                 <div className="">
                                     {/* Header */}
-                                    <motion.div
+                                    {/* <motion.div
                                         initial={{ opacity: 0, y: -20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="bg-white shadow-sm  px-[20px] pb-[10px] pt-[10px] border  rounded-lg mb-2"
@@ -832,7 +894,7 @@ export default function ComplaintViewPage() {
                                                 </span>
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </motion.div> */}
 
                                     {/* Main Content */}
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -841,61 +903,78 @@ export default function ComplaintViewPage() {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.1 }}
-                                            className="lg:col-span-2 space-y-6"
+                                            className="lg:col-span-2 space-y-4"
                                         >
                                             {/* Patient Information */}
                                             <div className="bg-white  border rounded-xl shadow-sm p-3">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2>
-                                                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                                                    <div className="flex  shadow-sm border !border-[#eaeaea] p-3 bg-gray-50 rounded-lg">
+                                                {/* <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2> */}
+                                                <div className="grid grid-cols-3 gap-x-3">
+                                                    <div className="flex  shadow-sm mb-[10px] border !border-[#eaeaea] md11:!p-2 md13:!p-3 bg-gray-50 rounded-lg">
                                                         <User className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Patient Name</p>
                                                             <p className="font-medium text-gray-900">{complaint.patient}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
-                                                        <Bed className="w-5 h-5 text-gray-400 mr-3" />
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">Bed Number</p>
-                                                            <p className="font-medium text-gray-900">{complaint.bedNo}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex mb-[10px] md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Phone className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Contact</p>
                                                             <p className="font-medium text-gray-900">{complaint.contact}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
-                                                        <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg mb-[10px]  shadow-sm border !border-[#eaeaea] ">
+                                                        <Bed className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
-                                                            <p className="text-sm text-gray-600">Department</p>
-                                                            <p className="font-medium text-gray-900">{complaint.department}</p>
+                                                            <p className="text-sm text-gray-600">Bed Number</p>
+                                                            <p className="font-medium text-gray-900">{complaint.bedNo}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Doctor</p>
                                                             <p className="font-medium text-gray-900">{complaint.doctorName}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                        <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
+                                                        <div>
+                                                            <p className="text-sm text-gray-600">Department</p>
+                                                            <p className="font-medium text-gray-900">{complaint.department}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
-                                                            <p className="font-medium text-gray-900">{complaint.date}</p>
+<p className="font-medium text-gray-900">
+  {complaint.date && complaint.date !== "—"
+    ? new Date(complaint.date).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }) +
+      " - " +
+      new Date(complaint.date).toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "—"}
+</p>
+
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Complaint Details */}
-                                            <div className="bg-white rounded-xl shadow-sm border p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-3">Complaint Details</h2>
-                                                <div className="space-y-4">
+                                            <div className="bg-white rounded-xl shadow-sm h-[30%] md13:h-[70%] overflow-y-auto scrollbar-default 2xl:!h-[70%] border p-3">
+                                                <h2 className="text-[19px] font-semibold text-gray-900 mb-2">Complaint Details</h2>
+                                                <div className="space-y-3">
 
                                                     <div className="space-y-4">
                                                         {Object.keys(fullDoc).map((key) => {
@@ -905,8 +984,8 @@ export default function ComplaintViewPage() {
                                                             if (!blockHasContent(block)) return null;
 
                                                             return (
-                                                                <div key={key} className="bg-gray-50 border rounded-lg p-3 mb-3">
-                                                                    <h3 className="text-md font-semibold text-gray-900 mb-2 flex items-center justify-between">
+                                                                <div key={key} className="bg-gray-50 border rounded-lg p-2 md13:!p-3 mb-3">
+                                                                    <h3 className="text-md font-semibold text-gray-900 md13:!mb-2 flex items-center justify-between">
                                                                         <span>{DEPT_LABEL[key]}</span>
                                                                         {block?.status && (
                                                                             <span
@@ -920,7 +999,7 @@ export default function ComplaintViewPage() {
 
                                                                     {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
-                                                                            <span className="font-medium">Department:</span> {block.topic}
+                                                                            <span className="font-medium  text-[10px] ">Department:</span> {block.topic}
                                                                         </p>
                                                                     )}
                                                                     {block?.text && (
@@ -962,32 +1041,7 @@ export default function ComplaintViewPage() {
                                                             );
                                                         })}
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                    {/* 🔹 Latest Forward & Escalation (Horizontal layout) */}
-                                                                    {/* <div className="flex flex-wrap items-stretch gap-4 w-full mt-4">
-                                                                        {latestForward && (
-                                                                            <div className="flex-1 min-w-[250px] bg-blue-50 border border-blue-200 text-blue-900 rounded-lg shadow-sm p-4">
-                                                                                <p className="text-sm font-semibold text-blue-600 mb-1">{latestForward.title}</p>
-                                                                                <p className="font-medium mb-1">{latestForward.text}</p>
-                                                                                <p className="text-xs text-blue-500">{latestForward.date}</p>
-                                                                            </div>
-                                                                        )}
-
-                                                                        {latestEscalation && (
-                                                                            <div className="flex-1 min-w-[250px] bg-orange-50 border border-orange-200 text-orange-900 rounded-lg shadow-sm p-4">
-                                                                                <p className="text-sm font-semibold text-orange-600 mb-1">{latestEscalation.title}</p>
-                                                                                <p className="font-medium mb-1">{latestEscalation.text}</p>
-                                                                                <p className="text-xs text-orange-500">{latestEscalation.date}</p>
-                                                                            </div>
-                                                                        )}
-                                                                    </div> */}
-                                                                </div>
-
-                                                            </div>
-
-                                                        </div>
+                                                  
                                                         {complaint.escalationRemarks && (
                                                             <div className="p-4 bg-yellow-50 rounded-lg">
                                                                 <h3 className="font-medium text-yellow-900 mb-2">Escalation Remarks</h3>
@@ -1004,11 +1058,76 @@ export default function ComplaintViewPage() {
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.2 }}
-                                            className="space-y-6"
+                                            className="space-y-3"
                                         >
                                             {/* Action Buttons */}
-                                            <div className="bg-white border rounded-xl shadow-sm p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
+
+
+
+
+                                            {complaint.status !== "Resolved" && (
+                                                <div className="bg-white rounded-xl border h-[300px] md13:!h-[380px] 2xl:!h-[560px] overflow-y-auto scrollba shadow-sm p-3">
+                                                    <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
+                                                    <div className="space-y-4">
+                                                        {historyData.slice(-3).reverse().map((h, index) => (
+                                                            <div key={index} className="flex items-start space-x-3">
+                                                                <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
+                                                                <div className="flex-1">
+                                                                    {h.type === "forwarded" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-gray-900">
+                                                                                {h.label}
+                                                                            </p>
+                                                                            {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "in_progress" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+
+                                                                    {h.type === "escalated" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-red-700">
+                                                                                {h.label}
+                                                                            </p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "resolved" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "created" && (
+                                                                        <p className="text-sm text-gray-700">{h.label}</p>
+                                                                    )}
+
+                                                                    <p className="text-xs text-gray-500">
+                                                                        <p className="text-xs text-gray-500">
+  {formatDate(h.at || h.createdAt)}
+  {h.byName && ` • ${h.byName}`} {/* 👈 show user name if available */}
+</p>
+
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+
+
+                                            <div className="bg-white border rounded-xl shadow-sm p-3">
+                                                {/* <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2> */}
 
                                                 {complaint.status === "Resolved" ? (
                                                     // 🔹 Show ONLY history when Resolved
@@ -1135,95 +1254,21 @@ export default function ComplaintViewPage() {
                                                             Escalate to Higher Authority
                                                         </button>
 
-                                                        <button
+                                                        {/* <button
                                                             onClick={() => openModal("history")}
                                                             className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                                                         >
                                                             <Clock className="w-5 h-5 mr-2" />
                                                             View Full History
-                                                        </button>
+                                                        </button> */}
                                                     </div>
                                                 )}
                                             </div>
-
-
-                                            {/* Recent Activity */}
-                                            {/* <div className="bg-white rounded-xl border shadow-sm p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                                                <div className="space-y-4">
-                                                    {complaint.activityLog.slice(-3).map((activity, index) => (
-                                                        <div key={index} className="flex items-start space-x-3">
-                                                            <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
-                                                            <div className="flex-1">
-                                                                <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                                                                <p className="text-xs text-gray-600">by {activity.by}</p>
-                                                                <p className="text-xs text-gray-500">{activity.date}</p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div> */}
-                                            {/* Recent Activity — hide if Resolved */}
-                                            {complaint.status !== "Resolved" && (
-                                                <div className="bg-white rounded-xl border shadow-sm p-4">
-                                                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                                                    <div className="space-y-4">
-                                                        {historyData.slice(-3).reverse().map((h, index) => (
-                                                            <div key={index} className="flex items-start space-x-3">
-                                                                <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
-                                                                <div className="flex-1">
-                                                                    {h.type === "forwarded" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-gray-900">
-                                                                                {h.label}
-                                                                            </p>
-                                                                            {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
-                                                                        </>
-                                                                    )}
-
-                                                                    {h.type === "in_progress" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
-
-
-                                                                    {h.type === "escalated" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-red-700">
-                                                                                {h.label}
-                                                                            </p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
-
-                                                                    {h.type === "resolved" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
-
-                                                                    {h.type === "created" && (
-                                                                        <p className="text-sm text-gray-700">{h.label}</p>
-                                                                    )}
-
-                                                                    <p className="text-xs text-gray-500">
-                                                                        {new Date(h.at || h.createdAt).toLocaleString()}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-
                                         </motion.div>
                                     </div>
 
-                                    \                                    {/* Modal: Forward to Another Department */}
+                                    {/* Modal 1: Forward to Another Department */}
+                                    {/* Modal: Forward to Another Department */}
                                     <AnimatePresence>
                                         {isForwardModalOpen && (
                                             <motion.div
@@ -1310,6 +1355,7 @@ export default function ComplaintViewPage() {
                                         )}
                                     </AnimatePresence>
 
+
                                     {/* Modal 2: Resolve Complaint */}
                                     <AnimatePresence>
                                         {isResolveModalOpen && (
@@ -1331,106 +1377,23 @@ export default function ComplaintViewPage() {
                                                         <div className="bg-white px-6 pt-6 pb-4">
                                                             <div className="flex justify-between items-center mb-6">
                                                                 <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
-                                                                <button
-                                                                    onClick={closeAllModals}
-                                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                                                                >
+                                                                <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
                                                                     <X className="w-6 h-6" />
                                                                 </button>
                                                             </div>
 
                                                             <div className="space-y-6">
-                                                                {/* 🔹 Department Dropdown (multi-department users only) */}
-{(() => {
-  // 🔹 1. Find all departments with complaint content
-  const presentBlocks = CONCERN_KEYS.filter((key) => blockHasContent(fullDoc[key]));
 
-  // 🔹 2. Get allowed departments (those user can resolve)
-  const allowedBlocks = Object.keys(permissionsByBlock).filter((block) =>
-    permissionsByBlock[block]?.includes("resolve")
-  );
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={selectedDepartment || "Select Department"}
+                                                                    setSelected={setSelectedDepartment}
+                                                                    options={forwardDepartments}
+                                                                    placeholder="Select Department"
+                                                                    icon={MapPin}
+                                                                />
 
-  // 🔹 3. Only keep departments both in complaint and allowed
-  const allowedInComplaint = allowedBlocks.filter((b) => presentBlocks.includes(b));
-
-  // 🔹 4. Detect which complaint departments are already resolved
-  const unresolvedDepts = allowedInComplaint.filter(
-    (deptKey) =>
-      fullDoc[deptKey]?.status &&
-      fullDoc[deptKey].status.toLowerCase() !== "resolved" &&
-      fullDoc[deptKey].status.toLowerCase() !== "resolved_by_admin"
-  );
-
-  // 🔹 5. Labels for unresolved departments only
-  const unresolvedLabels = unresolvedDepts.map((b) => DEPT_LABEL[b]).filter(Boolean);
-
-  // 🧠 CASE A: Multiple unresolved departments left → show dropdown
-  if (unresolvedLabels.length > 1) {
-    return (
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Department <span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <button
-            onClick={() => setIsForwardDeptDropdownOpen(!isForwardDeptDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none transition-colors"
-          >
-            <div className="flex items-center">
-              <MapPin className="w-5 h-5 text-gray-400 mr-3" />
-              <span
-                className={
-                  selectedDepartment ? "text-gray-900" : "text-gray-500"
-                }
-              >
-                {selectedDepartment || "Select Department"}
-              </span>
-            </div>
-            <ChevronDown
-              className={`w-5 h-5 text-gray-400 transition-transform ${
-                isForwardDeptDropdownOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {isForwardDeptDropdownOpen && (
-            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-              {unresolvedLabels.map((label, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setSelectedDepartment(label);
-                    setIsForwardDeptDropdownOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-3 hover:bg-blue-50 focus:bg-blue-50 transition-colors first:rounded-t-lg last:rounded-b-lg"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // 🧠 CASE B: Only one unresolved department left → auto-select and hide dropdown
-  if (unresolvedLabels.length === 1 && !selectedDepartment) {
-    setSelectedDepartment(unresolvedLabels[0]);
-    return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center">
-        <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-        Auto-selected department: <b className="ml-1">{unresolvedLabels[0]}</b>
-      </div>
-    );
-  }
-
-  // 🧠 CASE C: No unresolved departments (should not happen but safe)
-  return null;
-})()}
-
-
-                                                                {/* 🔹 Resolution Note */}
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Resolution Note <span className="text-red-500">*</span>
@@ -1444,11 +1407,8 @@ export default function ComplaintViewPage() {
                                                                     />
                                                                 </div>
 
-                                                                {/* 🔹 Upload Proof */}
                                                                 <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                        Upload Proof (Optional)
-                                                                    </label>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Proof (Optional)</label>
                                                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
                                                                         <input
                                                                             type="file"
@@ -1462,22 +1422,15 @@ export default function ComplaintViewPage() {
                                                                             className="cursor-pointer flex flex-col items-center justify-center"
                                                                         >
                                                                             <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                                                                            <span className="text-sm text-gray-600 mb-1">
-                                                                                Click to upload file
-                                                                            </span>
-                                                                            <span className="text-xs text-gray-500">
-                                                                                PNG, JPG, PDF up to 10MB
-                                                                            </span>
+                                                                            <span className="text-sm text-gray-600 mb-1">Click to upload file</span>
+                                                                            <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
                                                                             {uploadedFile && (
-                                                                                <span className="text-sm text-green-600 mt-2 font-medium">
-                                                                                    File: {uploadedFile.name}
-                                                                                </span>
+                                                                                <span className="text-sm text-green-600 mt-2 font-medium">File: {uploadedFile.name}</span>
                                                                             )}
                                                                         </label>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* 🔹 Info Box */}
                                                                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                                                                     <div className="flex items-center">
                                                                         <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
@@ -1489,7 +1442,6 @@ export default function ComplaintViewPage() {
                                                             </div>
                                                         </div>
 
-                                                        {/* Footer */}
                                                         <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                                                             <button
                                                                 onClick={closeAllModals}
@@ -1511,8 +1463,6 @@ export default function ComplaintViewPage() {
                                         )}
                                     </AnimatePresence>
 
-
-
                                     {/* Modal 3: Escalate to Higher Authority */}
                                     <AnimatePresence>
                                         {isEscalateModalOpen && (
@@ -1533,50 +1483,22 @@ export default function ComplaintViewPage() {
                                                     >
                                                         <div className="bg-white px-6 pt-6 pb-4">
                                                             <div className="flex justify-between items-center mb-6">
-                                                                <h3 className="text-xl font-bold text-gray-900">
-                                                                    Escalate to Higher Authority
-                                                                </h3>
-                                                                <button
-                                                                    onClick={closeAllModals}
-                                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                                                                >
+                                                                <h3 className="text-xl font-bold text-gray-900">Escalate to Higher Authority</h3>
+                                                                <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
                                                                     <X className="w-6 h-6" />
                                                                 </button>
                                                             </div>
 
                                                             <div className="space-y-6">
-                                                                {/* 🔹 Department Dropdown (only if multiple allowed) */}
-                                                                {(() => {
-                                                                    const allowedBlocks = Object.keys(permissionsByBlock).filter(
-                                                                        (key) => permissionsByBlock[key]?.includes("escalate")
-                                                                    );
-
-                                                                    if (allowedBlocks.length > 1) {
-                                                                        const allowedDepartments = allowedBlocks
-                                                                            .map((block) => DEPT_LABEL[block])
-                                                                            .filter(Boolean);
-
-                                                                        return (
-                                                                            <div>
-                                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                                    Select Department <span className="text-red-500">*</span>
-                                                                                </label>
-                                                                                <AnimatedDropdown
-                                                                                    isOpen={isForwardDeptDropdownOpen}
-                                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                                    selected={selectedDepartment || "Select Department"}
-                                                                                    setSelected={setSelectedDepartment}
-                                                                                    options={allowedDepartments}
-                                                                                    placeholder="Select Department"
-                                                                                    icon={MapPin}
-                                                                                />
-                                                                            </div>
-                                                                        );
-                                                                    }
-                                                                    return null;
-                                                                })()}
-
-                                                                {/* 🔹 Escalation Level */}
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={selectedDepartment || "Select Department"}
+                                                                    setSelected={setSelectedDepartment}
+                                                                    options={forwardDepartments}
+                                                                    placeholder="Select Department"
+                                                                    icon={MapPin}
+                                                                />
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Select Escalation Level <span className="text-red-500">*</span>
@@ -1592,7 +1514,6 @@ export default function ComplaintViewPage() {
                                                                     />
                                                                 </div>
 
-                                                                {/* 🔹 Escalation Note */}
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Escalation Note <span className="text-red-500">*</span>
@@ -1606,20 +1527,17 @@ export default function ComplaintViewPage() {
                                                                     />
                                                                 </div>
 
-                                                                {/* 🔹 Info Message */}
                                                                 <div className="bg-red-50 p-4 rounded-lg border border-red-200">
                                                                     <div className="flex items-center">
                                                                         <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
                                                                         <span className="text-sm text-red-800">
-                                                                            Higher authority will be notified via email and system
-                                                                            notification.
+                                                                            Higher authority will be notified via email and system notification.
                                                                         </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        {/* 🔹 Modal Footer */}
                                                         <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                                                             <button
                                                                 onClick={closeAllModals}
@@ -1640,7 +1558,6 @@ export default function ComplaintViewPage() {
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
-
 
                                     {/* Modal 4: Full History */}
                                     <AnimatePresence>
@@ -1732,15 +1649,57 @@ export default function ComplaintViewPage() {
                                                                                 )}
                                                                                 {h.type === "escalated" && (
                                                                                     <>
-                                                                                        <p className="text-sm font-medium text-gray-900">
-                                                                                            Escalated to {h.level}
-                                                                                        </p>
-                                                                                        <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                        <p className="text-xs text-gray-500">
-                                                                                            {new Date(h.at).toLocaleString()}
-                                                                                        </p>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <TrendingUp className="w-4 h-4 text-red-600" />
+                                                                                            <p className="text-sm font-semibold text-red-700">
+                                                                                                {h.department
+                                                                                                    ? `${DEPT_LABEL[h.department] || h.department} Escalated`
+                                                                                                    : "Complaint Escalated"}
+                                                                                                {h.level && (
+                                                                                                    <span className="ml-1 text-gray-800 font-semibold">
+                                                                                                        → {h.level.toUpperCase()}
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </p>
+                                                                                        </div>
+
+                                                                                        {/* Escalation Note */}
+                                                                                        {h.note && (
+                                                                                            <p className="text-xs text-gray-700 mt-1">
+                                                                                                <span className="font-medium text-gray-800">Note:</span>{" "}
+                                                                                                {h.note}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Level name (explicit display below for better visibility) */}
+                                                                                        {h.level && (
+                                                                                            <p className="text-xs text-gray-700 mt-1">
+                                                                                                <span className="font-medium text-gray-800">Escalation Level:</span>{" "}
+                                                                                                {h.level}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Display escalated by user */}
+                                                                                        {h.by?.name && (
+                                                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                                                <span className="font-medium text-gray-700">By:</span>{" "}
+                                                                                                {h.by.name}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Display date/time */}
+                                                                                        {h.at && (
+                                                                                            <p className="text-xs text-gray-400 mt-1">
+                                                                                                {new Date(h.at).toLocaleString()}
+                                                                                            </p>
+                                                                                        )}
+
+                                                                                        {/* Divider */}
+                                                                                        <div className="border-b border-gray-200 mt-2"></div>
                                                                                     </>
                                                                                 )}
+
+
                                                                                 {h.type === "resolved" && (
                                                                                     <>
                                                                                         <p className="text-sm font-medium text-green-700">Resolved</p>
@@ -1860,41 +1819,15 @@ export default function ComplaintViewPage() {
 
                                                         {/* Content */}
                                                         <div className="px-6 py-4 mb-4 max-h-[calc(90vh-120px)] overflow-y-auto">
-                                                            {(() => {
-                                                                const allowedBlocks = Object.keys(permissionsByBlock)
-                                                                    .filter(
-                                                                        (block) =>
-                                                                            permissionsByBlock[block]?.includes("resolve") ||
-                                                                            permissionsByBlock[block]?.includes("partial")
-                                                                    )
-                                                                    .map((b) => DEPT_LABEL[b])
-                                                                    .filter(Boolean);
-
-                                                                if (allowedBlocks.length > 1) {
-                                                                    return (
-                                                                        <div>
-                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                                Select Department <span className="text-red-500">*</span>
-                                                                            </label>
-                                                                            <AnimatedDropdown
-                                                                                isOpen={isForwardDeptDropdownOpen}
-                                                                                setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                                selected={selectedDepartment || "Select Department"}
-                                                                                setSelected={setSelectedDepartment}
-                                                                                options={allowedBlocks}
-                                                                                placeholder="Select Department"
-                                                                                icon={MapPin}
-                                                                            />
-                                                                        </div>
-                                                                    );
-                                                                } else if (allowedBlocks.length === 1) {
-                                                                    // auto-select the single allowed department
-                                                                    if (!selectedDepartment)
-                                                                        setSelectedDepartment(allowedBlocks[0]);
-                                                                    return null; // hide dropdown
-                                                                }
-                                                                return null;
-                                                            })()}
+                                                            <AnimatedDropdown
+                                                                isOpen={isForwardDeptDropdownOpen}
+                                                                setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                selected={selectedDepartment || "Select Department"}
+                                                                setSelected={setSelectedDepartment}
+                                                                options={forwardDepartments}
+                                                                placeholder="Select Department"
+                                                                icon={MapPin}
+                                                            />
                                                             {/* Patient Info */}
                                                             <motion.div
                                                                 initial={{ opacity: 0, x: -20 }}
@@ -2013,37 +1946,47 @@ export default function ComplaintViewPage() {
                                                             <button
                                                                 onClick={async () => {
                                                                     try {
-                                                                        // If department is selected → call department in-progress API
+                                                                        let response;
+
                                                                         if (selectedDepartment) {
+                                                                            // 🔹 Partial In-Progress
                                                                             const deptKey = Object.keys(DEPT_LABEL).find(
                                                                                 (k) => DEPT_LABEL[k] === selectedDepartment
                                                                             );
 
-                                                                            const res = await updateDepartmentProgressAPI(
+                                                                            response = await updateDepartmentProgressAPI(
                                                                                 complaint.id,
                                                                                 deptKey,
                                                                                 tempText,
                                                                                 uploadedFile
                                                                             );
 
-                                                                            alert(res.message || `Department ${selectedDepartment} marked In-Progress.`);
-                                                                        } else {
-                                                                            // Otherwise → general progress remark update
-                                                                            const res = await updateProgressRemarkAPI(
-                                                                                complaint.complaintId,
-                                                                                tempText
+                                                                            alert(
+                                                                                response?.message ||
+                                                                                `Department ${selectedDepartment} marked In-Progress.`
                                                                             );
+                                                                        } else {
+                                                                            // 🔹 Full In-Progress
+                                                                            response = await updateProgressRemarkAPI(complaint.id, tempText);
 
-                                                                            if (res.updatedConcern?.note) {
-                                                                                setComplaintText(res.updatedConcern.note);
-                                                                            } else {
-                                                                                setComplaintText(tempText);
-                                                                            }
-
-                                                                            alert(res.message || "Progress remark updated successfully");
+                                                                            alert(response?.message || "Progress remark updated successfully");
                                                                         }
 
-                                                                        // ✅ Refresh timeline
+                                                                        // ✅ Update local text
+                                                                        if (response?.data?.note || response?.updatedConcern?.note) {
+                                                                            setComplaintText(response.data?.note || response.updatedConcern.note);
+                                                                        } else {
+                                                                            setComplaintText(tempText);
+                                                                        }
+
+                                                                        // ✅ Update complaint status immediately
+                                                                        const newStatus =
+                                                                            response?.data?.status ||
+                                                                            response?.data?.data?.status ||
+                                                                            "in_progress";
+                                                                        setStatus(mapStatusUI(newStatus));
+
+                                                                        // ✅ Refresh timeline for UI
                                                                         const newHistory = await fetchConcernHistory(complaint.id);
                                                                         setHistoryData(newHistory);
 
@@ -2054,6 +1997,7 @@ export default function ComplaintViewPage() {
                                                                         alert(error.message || "Failed to update progress");
                                                                     }
                                                                 }}
+
                                                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
                                                             >
                                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

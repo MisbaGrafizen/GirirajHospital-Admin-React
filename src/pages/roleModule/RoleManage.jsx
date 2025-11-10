@@ -91,23 +91,15 @@ const CORE_APPS = [
 
 // Departments from your note (we include CRUD + View to be flexible)
 const DEPARTMENT_MODULES = [
-  { id: "doctor_service", name: "Doctor Services", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "nursing", name: "Nursing", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "dietitian", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "maintenance", name: "Maintenance", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "security", name: "Security", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve", "In Progress"] },
+  { id: "doctor_service", name: "Doctor Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "nursing", name: "Nursing", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "dietitian", name: "Dietetics", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "maintenance", name: "Maintenance", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "security", name: "Security", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "tat", name: "TAT", permissions: ["View"] },
-  { id: "pharmacy", name: "Pharmacy", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "it_department", name: "IT Department", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "bio_medical", name: "Bio Medical", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "hr", name: "HR", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "icn", name: "ICN", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "mrd", name: "MRD", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "accounts", name: "Accounts", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
-  { id: "medical_admin", name: "Medical Admin", permissions: ["view", "Forward", "Escalate", "Resolve", "In Progress"] },
 ]
 
 // final ordered list shown in modal: core first, then departments
@@ -172,13 +164,19 @@ export default function RoleManage() {
       alert("Failed to delete role.")
     }
   }
+const handleCreateRole = () => {
+    setIsModalOpen(true)
+  }
+
+
+
 
   const closeDeleteModal = () => setModalOpen1(false)
     if (!canView) {
     return (
       <section className="flex font-Poppins w-full min-h-screen select-none overflow-hidden">
         <div className="flex w-full flex-col h-[96vh]">
-          <Header pageName="Role Management" />
+          <Header pageName="Role Management"  onCreateNewRole={handleCreateRole}/>
           <div className="flex w-full h-full">
             <SideBar />
             <div className="flex w-full bg-[#fff] p-10">
@@ -196,15 +194,17 @@ export default function RoleManage() {
     <>
       <section className="flex font-Poppins w-[100%] min-h-screen select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Role Management" />
+          <Header pageName="Role Management" onCreateNewRole={handleCreateRole} />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
- <div className="flex flex-col w-[100%] max-h-[90%]  relative  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+ <div className="flex flex-col w-[100%] max-h-[90%]  relative  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
               <Preloader />
               <div className="flex w-[100%] flex-col md34:!mb-[100px] md34!:mb-[0px] gap-[20px] py-[10px]">
                 <div className="w-[100%] mx-auto">
                    {canCreate && (
-                    <div className="mb-6 flex w-full justify-end">
+
+                    <>
+                    {/* <div className="mb-6 flex w-full justify-end">
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
@@ -212,7 +212,8 @@ export default function RoleManage() {
                         <Plus className="w-5 h-5" />
                         Create New Role
                       </button>
-                    </div>
+                    </div> */}
+                    </>
                   )}
 
                   {/* Roles grid */}

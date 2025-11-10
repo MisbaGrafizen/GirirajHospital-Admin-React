@@ -35,14 +35,6 @@ const MODULE_TO_BLOCK = {
     billing_service: "billingServices",
     housekeeping: "housekeeping",
     nursing: "nursing",
-    pharmacy: "pharmacy",
-    it_department: "itDepartment",
-    bio_medical: "bioMedical",
-    medical_admin: "medicalAdmin",
-    hr: "hr",
-    icn: "icn",
-    mrd: "mrd",
-    accounts: "accounts",
 };
 
 function resolvePermissions() {
@@ -61,27 +53,21 @@ function resolvePermissions() {
         permsArray = [];
     }
 
-      const permissionsByBlock = {};
-  if (isAdmin) {
-    Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
-      permissionsByBlock[block] = [
-        "view",
-        "forward",
-        "escalate",
-        "resolve",
-        "in_progress",
-      ];
-    });
-  } else {
-    permsArray.forEach((p) => {
-      const blockKey = MODULE_TO_BLOCK[p.module];
-      if (blockKey) {
-        permissionsByBlock[blockKey] = p.permissions.map((x) =>
-          x.toLowerCase()
-        );
-      }
-    });
-  }
+    const permissionsByBlock = {};
+    if (isAdmin) {
+        Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
+            permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
+        });
+    } else {
+        permsArray.forEach((p) => {
+            const blockKey = MODULE_TO_BLOCK[p.module];
+            if (blockKey) {
+                permissionsByBlock[blockKey] = p.permissions.map((x) =>
+                    x.toLowerCase()
+                );
+            }
+        });
+    }
 
     return { isAdmin, permissionsByBlock };
 }
@@ -89,21 +75,14 @@ function resolvePermissions() {
 
 
 const DEPT_LABEL = {
-    maintenance: "Maintenance",
-    itDepartment: "IT Department",
-    bioMedicalDepartment: "Bio-Medical",
-    nursing: "Nursing",
-    medicalAdmin: "Medical Admin",
-    frontDesk: "Front Desk",
+    doctorServices: "Doctor Services",
+    billingServices: "Billing Services",
     housekeeping: "Housekeeping",
-    dietitian: "Dietitian",
-    pharmacy: "Pharmacy",
+    maintenance: "Maintenance",
+    diagnosticServices: "Diagnostic Services",
+    dietitianServices: "Dietitian Services",
     security: "Security",
-    hr: "HR",
-    icn: "ICN",
-    mrd: "MRD",
-    accounts: "Accounts",
-    medical_admin: "Medical Admin"
+    nursing: "Nursing",
 };
 
 // a block is "present" if it has any content (topic/mode/text/attachments)
@@ -127,9 +106,13 @@ function mapStatusUI(status) {
     if (s === "resolved") return "Resolved";
     if (s === "escalated") return "Escalated";
     if (s === "forwarded") return "Forwarded";
-    if (s === "partial") return "Partial"; 
+    if (s === "partial") return "Partial"; // ✅ Add this
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
 }
+
+
+
+
 
 export default function InternalComplaintsDetails() {
     // Modal states
@@ -291,7 +274,7 @@ export default function InternalComplaintsDetails() {
         Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
     );
 
-    const { permissionsByBlock, isAdmin } = resolvePermissions();
+    const { permissionsByBlock } = resolvePermissions();
 
     // normalize department string to match keys
     const deptKey = Object.keys(DEPT_LABEL).find(
@@ -569,24 +552,37 @@ export default function InternalComplaintsDetails() {
 
 
     async function fetchConcernHistory(complaintId) {
-            try {
-                const response = await ApiGet(`/admin/internal/${complaintId}/history`);
-    
-                // ✅ Safely handle your current backend format
-                if (response?.history?.timeline) return response.history.timeline;
-    
-                // ✅ Also handle future-compatible structures
-                if (response?.timeline) return response.timeline;
-                if (response?.data?.timeline) return response.data.timeline;
-    
-                console.warn("⚠️ Unexpected history response format:", response);
-                return [];
-            } catch (error) {
-                console.error("❌ Failed to fetch complaint history:", error);
-                alert(error.message || "Failed to fetch complaint history");
-                return [];
-            }
-        }
+  try {
+    const response = await ApiGet(`/admin/internal/${complaintId}/history`);
+    console.log("response", response);
+
+    // ✅ Handle your current backend format
+    if (Array.isArray(response?.history)) {
+      return response.history;
+    }
+
+    // ✅ Handle possible wrapped response
+    if (Array.isArray(response?.data?.history)) {
+      return response.data.history;
+    }
+
+    // ✅ Fallback to other known formats
+    if (Array.isArray(response?.timeline)) {
+      return response.timeline;
+    }
+
+    if (Array.isArray(response?.data?.timeline)) {
+      return response.data.timeline;
+    }
+
+    console.warn("⚠️ Unexpected history response format:", response);
+    return [];
+  } catch (error) {
+    console.error("❌ Failed to fetch complaint history:", error);
+    alert(error.message || "Failed to fetch complaint history");
+    return [];
+  }
+}
 
 
 
@@ -855,7 +851,7 @@ export default function InternalComplaintsDetails() {
                     <Header pageName="Internal Complaints Details" />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
-                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px]  pb-[30px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
                             <Preloader />
                             <div className="">
                                 <div className="">
@@ -937,25 +933,8 @@ export default function InternalComplaintsDetails() {
                                                         <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
-                                                            <p className="font-medium text-gray-900">
-                                                                {complaint.date
-                                                                    ? (() => {
-                                                                        const formatted = new Date(complaint.date).toLocaleString("en-GB", {
-                                                                            day: "2-digit",
-                                                                            month: "2-digit",
-                                                                            year: "numeric",
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                            hour12: false,
-                                                                        });
-                                                                        // Replace comma with " - "
-                                                                        return formatted.replace(",", " -");
-                                                                    })()
-                                                                    : "-"}
-
-                                                            </p>
+                                                            <p className="font-medium text-gray-900">{complaint.date}</p>
                                                         </div>
-
                                                     </div>
                                                 </div>
                                             </div>
@@ -966,16 +945,11 @@ export default function InternalComplaintsDetails() {
                                                 <div className="space-y-4">
 
                                                     <div className="space-y-4">
-                                                        {Object.keys(DEPT_LABEL).map((key) => {
-    // 🧩 Get department data
-    const block = fullDoc[key] || row[key];
-
-    // 🧩 Skip if no data (no text or attachments)
-    if (!blockHasContent(block)) return null;
-
-    // 🧩 Skip if non-admin and department not permitted
-    if (!isAdmin && !permissionsByBlock[key]) return null;
-
+                                                        {Object.keys(fullDoc).map((key) => {
+                                                            if (!DEPT_LABEL[key]) return null;
+                                                            if (!permissionsByBlock[key]) return null;
+                                                            const block = fullDoc[key];
+                                                            if (!blockHasContent(block)) return null;
 
                                                             return (
                                                                 <div key={key} className="bg-gray-50 border rounded-lg p-3 mb-3">
@@ -991,11 +965,11 @@ export default function InternalComplaintsDetails() {
                                                                     </h3>
 
 
-                                                                    {/* {block?.topic && (
+                                                                    {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
                                                                             <span className="font-medium">Department:</span> {block.topic}
                                                                         </p>
-                                                                    )} */}
+                                                                    )}
                                                                     {block?.text && (
                                                                         <p className="text-sm text-gray-700">
                                                                             <span className="font-medium">Details:</span> {block.text}
@@ -1873,7 +1847,7 @@ export default function InternalComplaintsDetails() {
                                                                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                                                         />
                                                                     </svg>
-                                                                    <h3 className="font-semibold text-blue-900">Employee Information</h3>
+                                                                    <h3 className="font-semibold text-blue-900">Patient Information</h3>
                                                                 </div>
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                                                     <div>

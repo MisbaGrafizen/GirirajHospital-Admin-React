@@ -11,7 +11,7 @@ import {
   ThumbsUp,
   Award,
   Phone,
-
+  XCircle,
   Clock,
   Bed,
   Eye,
@@ -360,6 +360,9 @@ export default function IPDFeedbackDashboard() {
   const [rawIPD, setRawIPD] = useState([]);
 
   const [frequentRatings, setFrequentRatings] = useState([]);
+  const [service, setService] = useState("All Services");
+
+
 
   useEffect(() => {
     const fetchFrequentRatings = async () => {
@@ -688,86 +691,97 @@ export default function IPDFeedbackDashboard() {
   }, [fetchIPD])
 
   useEffect(() => {
-    // 1) Guard
-    if (!Array.isArray(rawIPD) || !rawIPD.length) {
-      setRows([]);
-      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
-      setChartData(buildDistribution([]));
-      setServiceSummary([]);
-      setLineData([]);
-      return;
+  if (!Array.isArray(rawIPD) || !rawIPD.length) {
+    setRows([]);
+    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+    setChartData(buildDistribution([]));
+    setServiceSummary([]);
+    setLineData([]);
+    return;
+  }
+
+  const start = dateFrom ? new Date(dateFrom) : null;
+  const end = dateTo ? new Date(dateTo) : null;
+  if (start) start.setHours(0, 0, 0, 0);
+  if (end) end.setHours(23, 59, 59, 999);
+
+  const doctorFilter = (doctor || "").trim().toLowerCase();
+  const roomFilter = (room || "").trim().toLowerCase();
+  const serviceFilter = (service || "").trim().toLowerCase().replace(/\s+/g, "");
+
+  // ✅ Filtering logic
+  const filteredDocs = rawIPD.filter((d) => {
+    // 🔹 Date filter
+    const dt = new Date(d.createdAt || d.date);
+    if (isNaN(dt)) return false;
+    if (start && dt < start) return false;
+    if (end && dt > end) return false;
+
+    // 🔹 Doctor filter
+    if (doctorFilter && doctorFilter !== "all doctors") {
+      const nm = (d.consultantDoctorName?.name || d.doctorName || "").trim().toLowerCase();
+      if (!nm.includes(doctorFilter)) return false;
     }
 
-    // 2) Build inclusive date range
-    const start = dateFrom ? new Date(dateFrom) : null;
-    const end = dateTo ? new Date(dateTo) : null;
-    if (start) start.setHours(0, 0, 0, 0);
-    if (end) end.setHours(23, 59, 59, 999);
+    // 🔹 Service filter
+    if (serviceFilter && serviceFilter !== "allservices") {
+      const ratings = d?.ratings || {};
+      const hasService = Object.keys(ratings).some((key) =>
+        key.toLowerCase().includes(serviceFilter)
+      );
+      if (!hasService) return false;
+    }
 
-    // 3) Normalize filters
-    const doctorFilter = (doctor || "").trim();
-    const roomFilter = (room || "").trim();
+    // 🔹 Room filter
+    if (roomFilter && roomFilter !== "all rooms") {
+      const b = String(d.bedNo ?? "").trim().toLowerCase();
+      if (b !== roomFilter) return false;
+    }
 
-    // 4) Filter raw docs
-    const filteredDocs = rawIPD.filter((d) => {
-      // date
-      const dt = new Date(d.createdAt || d.date);
-      if (isNaN(dt)) return false;
-      if (start && dt < start) return false;
-      if (end && dt > end) return false;
+    return true;
+  });
 
-      // doctor (matches consultantDoctorName/doctorName)
-      if (doctorFilter && doctorFilter !== "All Doctors") {
-        const nm = (d.consultantDoctorName?.name || d.doctorName || "").trim();
-        if (!nm || nm !== doctorFilter) return false;
-      }
+  // ✅ Build display rows
+  const list = filteredDocs.map((d) => {
+    const rating = calcRowAverage(d.ratings);
+    return {
+      id: String(d._id || d.id),
+      createdAt: d.createdAt || d.date,
+      patient: d.patientName || d.name || "-",
+      contact: d.contact || "-",
+      bedNo: d.bedNo || "-",
+      consultantDoctorName: d.consultantDoctorName?.name || "-",
+      rating,
+      overallRecommendation: d.overallRecommendation,
+      comments: d.comments,
+    };
+  });
 
-      // room (maps to bedNo)
-      if (roomFilter && roomFilter !== "All Rooms") {
-        const b = String(d.bedNo ?? "");
-        if (b !== roomFilter) return false;
-      }
+  // ✅ KPI & Charts
+  const avg = list.length
+    ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
+    : 0;
+  const nps = calcNpsPercent(filteredDocs);
+  const overallScore = getOverallScoreLabel(avg);
 
-      return true;
-    });
+  setRows(list);
+  setKpiData({
+    totalFeedback: list.length,
+    averageRating: avg,
+    npsRating: nps,
+    overallScore,
+  });
 
-    // 5) Map into your row shape
-    const list = filteredDocs.map((d) => {
-      const rating = calcRowAverage(d.ratings);
-      return {
-        id: String(d._id || d.id),
-        createdAt: d.createdAt || d.date,
-        patient: d.patientName || d.name || "-",
-        contact: d.contact || "-",
-        bedNo: d.bedNo || "-",
-        consultantDoctorName: d.consultantDoctorName?.name || "-",
-        rating,
-        overallRecommendation: d.overallRecommendation,
-        comments: d.comments
-      };
-    });
+  setChartData(buildDistribution(list));
+  setServiceSummary(buildServiceSummary(filteredDocs));
 
-    // 6) KPIs
-    const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
-    const nps = calcNpsPercent(filteredDocs);
-    const overallScore =
-      avg >= 4.5 ? "Excellent" :
-        avg >= 4.0 ? "Good" :
-          avg >= 3.0 ? "Average" :
-            avg >= 2.0 ? "Poor" : "Very Poor";
+  // ✅ Line chart trend
+  const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
+  setTrendBucket(bucket);
+  setLineData(trend);
+}, [rawIPD, dateFrom, dateTo, doctor, service, room]);
 
-    setRows(list);
-    setKpiData({ totalFeedback: list.length, averageRating: avg, npsRating: nps, overallScore });
 
-    // 7) Charts / summaries from filtered set
-    setChartData(buildDistribution(list));
-    setServiceSummary(buildServiceSummary(filteredDocs));
-
-    // 8) Trend uses the filtered rows + current date range
-    const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
-    setTrendBucket(bucket);
-    setLineData(trend);
-  }, [rawIPD, dateFrom, dateTo, doctor, room]);
 
   useEffect(() => {
     const { trend, bucket } = buildAutoTrend(rows, dateFrom, dateTo);
@@ -862,8 +876,8 @@ export default function IPDFeedbackDashboard() {
 
   // ---------------- Small components ----------------
   const DonutChart = ({ data }) => {
-    const size = 220
-    const strokeWidth = 45
+    const size = 160
+    const strokeWidth = 30
     const radius = (size - strokeWidth) / 2
     const circumference = 2 * Math.PI * radius
 
@@ -921,7 +935,7 @@ export default function IPDFeedbackDashboard() {
         </svg>
 
         {/* Legend */}
-        <div className="mt-6 w-full  flex-wrap flex sm:grid-cols-2 gap-x-3 gap-y-2 justify-center px-[10px]  text-sm">
+        <div className="mt-6 w-full  flex-wrap flex sm:grid-cols-2 gap-x-3 gap-y-1 justify-center px-[10px]  text-sm">
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             return (
@@ -932,10 +946,10 @@ export default function IPDFeedbackDashboard() {
                 onMouseLeave={() => setHoverIndex(null)}
               >
                 <div
-                  className="w-3 h-3 rounded-full mr-2"
+                  className="w-2 h-2 rounded-full mr-2"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-gray-800 text-[14px]">
+                <span className="text-gray-800 text-[12px]">
                   {item.label}: <strong className=" font-[500]">{item.count}</strong> ({item.percentage}%)
                 </span>
               </div>
@@ -957,151 +971,200 @@ export default function IPDFeedbackDashboard() {
     </div>
   )
 
+
+
+
+  const [showPopup, setShowPopup] = useState(null);
+
+  // 🎯 Handlers for each KPI
+  const handleWidgetClick = (type) => {
+    switch (type) {
+      case "totalFeedback":
+        navigate("/ipd-opd-list");
+        break;
+      case "npsRating":
+        navigate("/reports/nps-all-list");
+        break;
+      case "averageRating":
+        setShowPopup("averageRating");
+        break;
+      case "overallScore":
+        setShowPopup("overallScore");
+        break;
+      default:
+        break;
+    }
+  };
   // ---------------- Render ----------------
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Ipd Feedback" />
+<Header
+  pageName="IPD"
+  doctors={doctorOptions}
+  onDateRangeChange={({ from, to, doctor, service }) => {
+    setDateFrom(from);
+    setDateTo(to);
+    setDoctor(doctor || "All Doctors");
+    setService(service || "All Services");
+  }}
+/>
+
+
+
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
-              <div className="bg-white rounded-lg  shadow-sm border border-gray-100 p-[13px] ">
-                <div className="grid grid-cols-2  md:grid-cols-4 gap-x-2">
-                  {/* From date */}
-                  <div className=" relative ">
-                    {/* <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">From</label>
-                        <div className="relative">
-                          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="date"
-                            value={dateFrom}
-                            max={dateTo}
-                            onChange={(e) => setDateFrom(e.target.value)}
-                            className="w-full pl-9 min-h-[40px] text-[14px] pr-3 py-2 border border-gray-300 bg-transparent rounded-md focus:outline-none  focus:ring-sky-500"
-                          /> 
-                        </div>*/}
 
-                    <ModernDatePicker
-                      type="date"
-
-                      value={dateFrom}
-                      max={dateTo}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                    />
-                  </div>
-                  {/* To date */}
-                  <div className=" relative md34:!mb-[15px] md77:!mb-0">
-                    {/* <label className="block  text-[10px] font-medium top-[-8px] left-[10px] border-gray-300  bg-white border px-[10px] rounded-[10px] z-[3] absolute text-gray-700 mb-1">To</label>
-                        <div className="relative">
-                          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="date"
-                            value={dateTo}
-                            min={dateFrom}
-                            onChange={(e) => setDateTo(e.target.value)}
-                            className="w-full min-h-[40px] pl-9 pr-3 py-2 text-[14px] border bg-transparent border-gray-300 rounded-md focus:outline-none  focus:ring-sky-500"
-                          />
-                        </div> */}
-
-                    <ModernDatePicker
-                      value={dateTo}
-                      min={dateFrom}
-                      onChange={(e) => setDateTo(e.target.value)}
-                    />
-                  </div>
-                  {/* Doctor */}
-                  <AnimatedDropdown
-                    label="Doctor Name"
-                    options={doctorOptions}
-                    selected={doctor}
-                    onSelect={setDoctor}
-                    icon={User}
-                  />
-                  {/* Room */}
-                  <AnimatedDropdown
-                    label="Room No"
-                    options={roomOptions}
-                    selected={room}
-                    onSelect={setRoom}
-                    icon={Activity}
-                    disabled={roomOptions.length === 0}
-                  />
-                </div>
-              </div>
               <div className="mx-auto w-full">
                 {/* KPI Cards */}
-                <div className="  md34:!grid-cols-2 gap-x-[10px] md11:!grid-cols-4 grid w-[100%]">
-                  <Widgets1
-                    data={{
-                      title: "Total Feedback",
-                      gros: kpiData.totalFeedback,
-                      total: kpiData.totalFeedback,
-                      color: "primary",
-                      icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
-                    }}
-                  />
+                <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 gap-x-[10px] w-[100%]">
+                  {/* 📨 Total Feedback (Navigate) */}
+                  <div onClick={() => handleWidgetClick("totalFeedback")} className="cursor-pointer">
+                    <Widgets1
+                      data={{
+                        title: "Total Feedback",
+                        gros: kpiData.totalFeedback,
+                        total: kpiData.totalFeedback,
+                        color: "primary",
+                        icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
+                      }}
+                    />
+                  </div>
 
-                  <Widgets1
-                    data={{
-                      title: "Average Rating",
-                      gros: `${kpiData.averageRating} `,
-                      total: `${kpiData.averageRating} `,
-                      color: "warning",
-                      icon: <Star className="w-5 h-5 text-yellow-600" />,
-                    }}
-                  />
+                  {/* ⭐ Average Rating (Modal) */}
+                  <div onClick={() => handleWidgetClick("averageRating")} className="cursor-pointer">
+                    <Widgets1
+                      data={{
+                        title: "Average Rating",
+                        gros: `${kpiData.averageRating}`,
+                        total: `${kpiData.averageRating}`,
+                        color: "warning",
+                        icon: <Star className="w-5 h-5 text-yellow-600" />,
+                      }}
+                    />
+                  </div>
 
-                  <Widgets1
-                    data={{
-                      title: "NPS Rating",
-                      gros: `${kpiData.npsRating}%`,
-                      total: `${kpiData.npsRating}%`,
-                      color: "success",
-                      icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
-                    }}
-                  />
+                  {/* 👍 NPS Rating (Navigate) */}
+                  <div onClick={() => handleWidgetClick("npsRating")} className="cursor-pointer">
+                    <Widgets1
+                      data={{
+                        title: "NPS Rating",
+                        gros: `${kpiData.npsRating}%`,
+                        total: `${kpiData.npsRating}%`,
+                        color: "success",
+                        icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
+                      }}
+                    />
+                  </div>
 
-                  <Widgets1
-                    data={{
-                      title: "Overall Score",
-                      total: (
-                        <span
-                          className={`font-semibold ${kpiData.overallScore === "Excellent"
-                              ? "text-green-600"
-                              : kpiData.overallScore === "Good"
-                                ? "text-blue-600"
-                                : kpiData.overallScore === "Average"
-                                  ? "text-yellow-600"
-                                  : kpiData.overallScore === "Poor"
-                                    ? "text-orange-600"
-                                    : "text-red-600"
-                            }`}
-                        >
-                          {kpiData.overallScore}
-                        </span>
-                      ),
-                      gros: kpiData.overallScore,
-                      color: "purple",
-                      icon: <Award className="w-5 h-5 text-purple-600" />,
-                    }}
-                  />
-
+                  {/* 🏆 Overall Score (Modal) */}
+                  <div onClick={() => handleWidgetClick("overallScore")} className="cursor-pointer">
+                    <Widgets1
+                      data={{
+                        title: "Overall Score",
+                        total: (
+                          <span
+                            className={`font-semibold ${kpiData.overallScore === "Excellent"
+                                ? "text-green-600"
+                                : kpiData.overallScore === "Good"
+                                  ? "text-blue-600"
+                                  : kpiData.overallScore === "Average"
+                                    ? "text-yellow-600"
+                                    : kpiData.overallScore === "Poor"
+                                      ? "text-orange-600"
+                                      : "text-red-600"
+                              }`}
+                          >
+                            {kpiData.overallScore}
+                          </span>
+                        ),
+                        gros: kpiData.overallScore,
+                        color: "purple",
+                        icon: <Award className="w-5 h-5 text-purple-600" />,
+                      }}
+                    />
+                  </div>
                 </div>
 
+                {/* 🌟 Popups for Average Rating & Overall Score */}
+                <AnimatePresence>
+                  {showPopup && (
+                    <motion.div
+                      className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
+                      >
+                        {/* Close Button */}
+                        <button
+                          onClick={() => setShowPopup(null)}
+                          className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                        >
+                          <XCircle className="w-6 h-6" />
+                        </button>
+
+                        {/* Title */}
+                        <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                          {showPopup === "averageRating"
+                            ? "Average Rating Overview"
+                            : "Overall Score Summary"}
+                        </h2>
+
+                        {/* Description */}
+                        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                          {showPopup === "averageRating"
+                            ? "The Average Rating represents the mean satisfaction level across all feedback received. Aim for 4.5+ for exceptional service quality."
+                            : "Overall Score is a combined evaluation of patient satisfaction, response rate, and service quality. Higher scores reflect consistent excellence across departments."}
+                        </p>
+
+                        {/* Values */}
+                        <div className="mt-4 text-center">
+                          <p
+                            className={`text-4xl font-bold ${showPopup === "averageRating"
+                                ? "text-yellow-600"
+                                : kpiData.overallScore === "Excellent"
+                                  ? "text-green-600"
+                                  : kpiData.overallScore === "Good"
+                                    ? "text-blue-600"
+                                    : kpiData.overallScore === "Average"
+                                      ? "text-yellow-600"
+                                      : kpiData.overallScore === "Poor"
+                                        ? "text-orange-600"
+                                        : "text-red-600"
+                              }`}
+                          >
+                            {showPopup === "averageRating"
+                              ? kpiData.averageRating
+                              : kpiData.overallScore}
+                          </p>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Charts Row */}
-                <div className="flex  md11:!flex-row flex-col  justify-start  gap-[20px] mb-2  ">
+                <div className="flex  md11:!flex-row flex-col  justify-start  gap-[15px] mb-2  ">
                   {/* Rating Distribution Donut Chart */}
-                  <div className="bg-white rounded-lg   shadow-sm p-4">
+                  <div className="bg-white rounded-xl h-fit dashShadow w-[300px]  p-[13px]">
                     <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                        <i className=" text-[#fff] text-[17px] fa-solid fa-star-sharp-half-stroke"></i>
+                      <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className=" text-[#fff] text-[15px] fa-solid fa-star-sharp-half-stroke"></i>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Rating Distribution</h3>
+                      <h3 className="text-[13px] font-[500] text-gray-900">Rating Distribution</h3>
                     </div>
                     <div className="flex justify-center">
                       <DonutChart data={chartData} />
@@ -1109,24 +1172,24 @@ export default function IPDFeedbackDashboard() {
                   </div>
 
                   {/* Average Rating Trend Line Chart */}
-                  <div className="bg-white rounded-lg pb-[10px] md11:!w-[800px] shadow-sm  border-gray-100  md11:!p-4">
-                    <div className=' flex ml-[15px] mt-[13px]  mb-[17px] items-center gap-[10px]'>
+                  <div className="bg-white rounded-xl md11:!w-[440px]  md13:!w-[550px]   dashShadow  p-[13px] ">
+                    <div className=' flex   mb-[10px] items-center gap-[10px]'>
 
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                        <i className="fa-regular fa-chart-simple text-[#fff] text-[19px]"></i>
+                      <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-regular fa-chart-simple text-[#fff] text-[15px]"></i>
                       </div>
-                      <h3 className="text-lg font-semibold  mt-[10px] ml-[15px] text-gray-900 mb-3">
+                      <h3 className="text-[13px] font-[500] text-gray-900 ">
 
 
                         Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
                       </h3>
                     </div>
-                    <div className="h-72 pr-[10px]">
+                    <div className="h-[250px] pr-[10px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <RLineChart
                           data={lineData.length ? lineData : [{ date: "-", value: 0 }]}
-                          margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
-                        >
+                          margin={{ left: -40, right: 0, top: 20, bottom: 0 }}>
+
                           <CartesianGrid stroke="#f3f4f6" vertical={false} />
                           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                           <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
@@ -1146,116 +1209,84 @@ export default function IPDFeedbackDashboard() {
                         </RLineChart>
                       </ResponsiveContainer>
                     </div>
+
+
+                  </div>
+
+                  <div className="bg-white  dashShadow  w-[400px] rounded-xl p-[13px]  ">
+                    <div className=' flex  mb-[17px] items-center gap-[10px]'>
+
+                      <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-solid  text-[15px] text-[#fff] fa-keyboard-brightness"></i>
+                      </div>
+                      <h3 className="ext-[13px] font-[500] text-gray-900">Feedback Keywords</h3>
+                    </div>
+                   
+                    <div className="bg-white   ">
+                      <div className="flex flex-wrap gap-2">
+                        {frequentRatings.length ? (
+                          frequentRatings.map((word, index) => (
+                            <span
+                              key={index}
+                              className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
+                                ? "bg-blue-100 border-blue-800 text-blue-800"
+                                : index % 6 === 1
+                                  ? "bg-green-100 border-green-800 text-green-800"
+                                  : index % 6 === 2
+                                    ? "bg-yellow-100 border-yellow-800 text-yellow-800"
+                                    : index % 6 === 3
+                                      ? "bg-purple-100 border-purple-800 text-purple-800"
+                                      : index % 6 === 4
+                                        ? "bg-red-100 border-red-800 text-red-800"
+                                        : "bg-indigo-100 border-indigo-800 text-indigo-800"
+                                }`}
+                            >
+                              {word}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 text-sm">No frequent ratings yet</span>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
                 {/* Word Cloud */}
-                <div className="bg-white border rounded-[10px]  p-3 mt-[] mb-[13px]">
-                  <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                      <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Feedback Keywords</h3>
-                  </div>
-                  {/* <div className="flex flex-wrap gap-3">
-                        {[
-                          "Excellent",
-                          // "Nurse",
-                          // "Professional",
-                          "Clean",
-                          // "Comfortable",
-                          // "Doctor",
-                          // "Care",
-                          // "Staff",
-                          // "Treatment",
-                          "Service",
-                          // "Billing",
-                          "Food",
-                          // "Room",
-                          // "Pharmacy",
-                          "Housekeeping",
-                        ].map((word, index) => (
-                          <span
-                            key={index}
-                            className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
-                              ? "bg-blue-100 border-blue-800 text-blue-800"
-                              : index % 6 === 1
-                                ? "bg-green-100 border-green-800 text-green-800"
-                                : index % 6 === 2
-                                  ? "bg-yellow-100 border-yellow-800 text-yellow-800"
-                                  : index % 6 === 3
-                                    ? "bg-purple-100 border-purple-800 text-purple-800"
-                                    : index % 6 === 4
-                                      ? "bg-red-100 border-red-800 text-red-800"
-                                      : "bg-indigo-100 border-indigo-800 text-indigo-800"
-                              }`}
-                          >
-                            {word}
-                          </span>
-                        ))}
-                      </div> */}
-                  <div className="bg-white border rounded-[10px] p-3 mb-[13px]">
-                    <div className="flex flex-wrap gap-3">
-                      {frequentRatings.length ? (
-                        frequentRatings.map((word, index) => (
-                          <span
-                            key={index}
-                            className={`px-4 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0
-                              ? "bg-blue-100 border-blue-800 text-blue-800"
-                              : index % 6 === 1
-                                ? "bg-green-100 border-green-800 text-green-800"
-                                : index % 6 === 2
-                                  ? "bg-yellow-100 border-yellow-800 text-yellow-800"
-                                  : index % 6 === 3
-                                    ? "bg-purple-100 border-purple-800 text-purple-800"
-                                    : index % 6 === 4
-                                      ? "bg-red-100 border-red-800 text-red-800"
-                                      : "bg-indigo-100 border-indigo-800 text-indigo-800"
-                              }`}
-                          >
-                            {word}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-500 text-sm">No frequent ratings yet</span>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
 
                 {/* Service Summary + Extra Donut */}
                 <div className="flex w-[100%] mb-[15px] gap-[30px]">
                   {/* Service-Wise Summary Table */}
-                  <div className="bg-white rounded-xl border w-[100%] shadow-sm overflow-hidden">
-                    <div className="px-3 items-center py-[10px] border-b flex  mt-[5px] gap-[10px] border-gray-200">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                        <i className="fa-solid  text-[17px] text-[#fff] fa-user-md"></i>
+                  <div className=" rounded-xl  w-[100%]  overflow-hidden">
+                    <div className="px-2 items-center py-[8px] flex  mt-[5px] gap-[10px] border-gray-200">
+                      <div className="w-[35px] h-[35px]  bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-solid  text-[15px] text-[#fff] fa-user-md"></i>
 
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
+                      <h3 className="text-[13px] font-[500] text-gray-900 ">Service-Wise Summary</h3>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto border  rounded-[10px]">
                       <table className=" min-w-[800px] md11:!min-w-full">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-100">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Service
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Excellent %
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Good %
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Average %
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Poor %
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Very Poor %
                             </th>
                           </tr>
@@ -1304,25 +1335,25 @@ export default function IPDFeedbackDashboard() {
                 </div>
 
                 {/* Patient-Wise Feedback Table */}
-                <div className="bg-white rounded-xl e md34:!mb-[100px] md11:!mb-0  border shadow-sm overflow-hidden">
-                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
-                    <div className=' flex gap-[10px] items-center py-[10px]    justify-start '>
+                <div className= "rounded-xl e md34:!mb-[100px] md11:!mb-0    overflow-hidden">
+                  <div className="px-2  pt-[5px] pb-[13px]   border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
+                    <div className=' flex gap-[10px] items-center    justify-start '>
 
 
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                        <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                      <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                        <i className="fa-regular fa-users-medical text-[15px] text-[#fff] "></i>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
+                      <h3 className="text-[13px] font-[500] text-gray-900">Patient Feedback Details</h3>
                     </div>
-                    <div className="flex flex-row justify-between gap-2 md34:!mb-[10px] md11:!mb-0">
+                    <div className="flex flex-row justify-between gap-2   md11:!mb-0">
                       <div className="relative">
-                        <Search className="absolute left-3 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-[18px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder="Search feedback..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-[6px] py-[6px] w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="pl-10 pr-[6px] py-[6px]  border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
@@ -1358,7 +1389,7 @@ export default function IPDFeedbackDashboard() {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto border  rounded-[10px]">
                     <table className=" min-w-[1200px] md11:!min-w-full">
                       <thead className="bg-gray-50">
                         <tr>

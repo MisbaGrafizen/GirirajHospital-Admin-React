@@ -56,6 +56,10 @@ import { ApiGet } from "../../helper/axios";
 import dayjs from "dayjs";
 import ConcernSummaryDonutChart from "../../Component/MainInputFolder/ConcernSummaryDonutChart";
 import Preloader from "../../Component/loader/Preloader";
+import IpdList from "../../Component/MainDashboardComponent/IpdList";
+import OpdFeedBackDetails from "../../Component/MainDashboardComponent/OpdFeedBackDetails";
+import ComplaintsListDash from "../../Component/MainDashboardComponent/ComplaintsListDash";
+import FeedbackTable from "../../Component/DashboardFiles/Components/TestingDesign/FeedbackTable";
 // import CryptoAnnotations from "../../Component/DashboardFiles/Components/Widgets/Chart/CryptoAnnotations";
 
 // import 'react-clock/dist/Clock.css';
@@ -99,7 +103,16 @@ const CONCERN_COLORS = { Open: "#ef4444", "In Progress": "#f59e0b", Resolved: "#
 export default function DashBoard() {
 
   const [dashboardData, setDashboardData] = useState(null);
-  const [dateRange, setDateRange] = useState({ from: null, to: null });
+// ✅ Normalize date range to be inclusive of "7 full days" (same as Header dropdown)
+const today = dayjs().endOf("day");
+const [dateRange, setDateRange] = useState({
+  from: today.subtract(6, "day").format("YYYY-MM-DD"),
+  to: today.format("YYYY-MM-DD"),
+  range: "7 Days",
+  isDefault: true, // ✅ mark as default
+});
+
+
   const [ipdFeedbackTrend, setIpdFeedbackTrend] = useState([])
   const [opdFeedbackData, setOpdFeedbackData] = useState([])
   const [opdSummary, setOpdSummary] = useState({ avgRating: 0, positivePercent: 0, responses: 0 })
@@ -108,25 +121,25 @@ export default function DashBoard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [concernData, setConcernData] = useState([])
-// ✅ keep KPIs clean and separate from totals
-const [kpis, setKpis] = useState({
-  totalFeedback: 0,
-  averageRating: { value: 0 },
-  npsRating: { value: 0 },
-  openIssues: 0,
-  resolvedIssues: 0,
-  totalConcern: 0,
-  earning: { weeklyAverage: 0, series: [], labels: [] },
-  expense: { weeklyAverage: 0, series: [], labels: [] },
-});
+  // ✅ keep KPIs clean and separate from totals
+  const [kpis, setKpis] = useState({
+    totalFeedback: 0,
+    averageRating: { value: 0 },
+    npsRating: { value: 0 },
+    openIssues: 0,
+    resolvedIssues: 0,
+    totalConcern: 0,
+    earning: { weeklyAverage: 0, series: [], labels: [] },
+    expense: { weeklyAverage: 0, series: [], labels: [] },
+  });
 
-// ✅ separate totals
-const [totals, setTotals] = useState({
-  totalUsers: 0,
-  totalRoleUsers: 0,
-  totalAdmins: 0,
-  totalTAT: 0,
-});
+  // ✅ separate totals
+  const [totals, setTotals] = useState({
+    totalUsers: 0,
+    totalRoleUsers: 0,
+    totalAdmins: 0,
+    totalTAT: 0,
+  });
 
 
 
@@ -137,59 +150,89 @@ const [totals, setTotals] = useState({
 
 
   useEffect(() => {
-  let mounted = true;
-  (async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    let mounted = true
+      ; (async () => {
+        // ✅ Always fetch if default (7 days) or user applied filter
+if (!dateRange.from || !dateRange.to) {
+  // fallback to last 7 days if missing
+  const fallbackTo = dayjs().endOf("day");
+  const fallbackFrom = fallbackTo.subtract(6, "day");
+  setDateRange({
+    from: fallbackFrom.format("YYYY-MM-DD"),
+    to: fallbackTo.format("YYYY-MM-DD"),
+    range: "7 Days",
+    isDefault: true,
+  });
+  return;
+}
+        try {
+          setLoading(true)
+          setError(null)
 
-      let fromDate = dateRange.from;
-      let toDate = dateRange.to;
+          const query = [];
+          if (dateRange.from) query.push(`from=${dayjs(dateRange.from).format("YYYY-MM-DD")}`);
+          if (dateRange.to) query.push(`to=${dayjs(dateRange.to).format("YYYY-MM-DD")}`);
+          if (dateRange.range) query.push(`range=${encodeURIComponent(dateRange.range)}`);
 
-      // ✅ Step 1: Default last 7 days if no filter applied
-      if (!fromDate || !toDate) {
-        const today = dayjs();
-        const sevenDaysAgo = today.subtract(6, "day"); // includes today
 
-        fromDate = sevenDaysAgo.format("YYYY-MM-DD");
-        toDate = today.format("YYYY-MM-DD");
+          const rights = JSON.parse(localStorage.getItem("rights") || "{}");
+          const modules = (rights?.permissions || []).map(p => p.module);
+          const loginType = localStorage.getItem("loginType") || "user";
 
-        // 🔹 set the range in state so header shows correct dates
-        setDateRange({ from: fromDate, to: toDate });
-      }
+          if (modules.length) {
+            query.push(`modules=${modules.join(",")}`);
+          }
 
-      // ✅ Step 2: Build query string dynamically
-      const query = [`from=${fromDate}`, `to=${toDate}`];
+          query.push(`loginType=${loginType}`);
 
-      const rights = JSON.parse(localStorage.getItem("rights") || "{}");
-      const modules = (rights?.permissions || []).map((p) => p.module);
-      const loginType = localStorage.getItem("loginType") || "user";
+          const qs = query.length ? `?${query.join("&")}` : "";
 
-      if (modules.length) query.push(`modules=${modules.join(",")}`);
-      query.push(`loginType=${loginType}`);
+          console.log('qs', qs)
 
-      const qs = query.length ? `?${query.join("&")}` : "";
-      console.log("📅 Fetching dashboard data for:", fromDate, "→", toDate);
+          const res = await ApiGet(`/admin/dashboard${qs}`);
+          console.log('res', res)
+          const data = res?.data?.data || res?.data || {}
 
-      // ✅ Step 3: Fetch dashboard data
-      const res = await ApiGet(`/admin/dashboard${qs}`);
-      const data = res?.data?.data || res?.data || {};
+          if (!mounted) return
 
-      if (!mounted) return;
+          if (data.kpis || data.totals) {
+  const kpiData = data.kpis || {};
+  const totalsData = data.totals || {};
 
-      // ✅ Step 4: Update KPI, charts, and data as before
-      if (data.kpis || data.totals) {
-        const kpiData = data.kpis || {};
-        const totalsData = data.totals || {};
+  // ✅ Ensure series & labels always respect filtered range
+  const earning = {
+    weeklyAverage: kpiData.earning?.weeklyAverage ?? 0,
+    series: Array.isArray(kpiData.earning?.series)
+      ? kpiData.earning.series
+      : (data.filteredEarningSeries || []),
+    labels: Array.isArray(kpiData.earning?.labels)
+      ? kpiData.earning.labels
+      : (data.filteredEarningLabels || []),
+  };
 
-        setKpis(kpiData);
-        setTotals({
-          totalUsers: totalsData.totalUsers ?? 0,
-          totalRoleUsers: totalsData.totalRoleUsers ?? 0,
-          totalAdmins: totalsData.totalAdmins ?? 0,
-          totalTAT: totalsData.totalTAT ?? 0,
-        });
-      }
+  const expense = {
+    weeklyAverage: kpiData.expense?.weeklyAverage ?? 0,
+    series: Array.isArray(kpiData.expense?.series)
+      ? kpiData.expense.series
+      : (data.filteredExpenseSeries || []),
+    labels: Array.isArray(kpiData.expense?.labels)
+      ? kpiData.expense.labels
+      : (data.filteredExpenseLabels || []),
+  };
+
+  setKpis({
+    ...kpiData,
+    earning,
+    expense,
+  });
+
+  setTotals({
+    totalUsers: totalsData.totalUsers ?? 0,
+    totalRoleUsers: totalsData.totalRoleUsers ?? 0,
+    totalAdmins: totalsData.totalAdmins ?? 0,
+    totalTAT: totalsData.totalTAT ?? 0,
+  });
+}
 
           const series = Array.isArray(data?.ipdTrends?.series) ? data.ipdTrends.series : []
           const ipdTrendMapped = series.map((row) => {
@@ -354,12 +397,18 @@ const [totals, setTotals] = useState({
   return (
     <>
 
-      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Dashboard" onDateRangeChange={setDateRange} />
+
+          <Header
+  pageName="Dashboard"
+  onDateRangeChange={setDateRange}
+  selectedRange={dateRange.range} 
+/>
+
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[100px] m md11:!pb-[20px] py-[10px] 2xl:pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[100px] m md11:!pb-[40px] py-[10px]   overflow-y-auto gap-[10px] ">
               <Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -373,54 +422,52 @@ const [totals, setTotals] = useState({
                     </div>
 
 
-                    <div className=" flex md11:!flex-row flex-col  gap-[25px] w-[100%]">
+                    <div className=" flex md11:!flex-row flex-col mt-[3px]  gap-[18px] w-[100%]">
 
-                      <div className=" md11:!w-[850px] max-w-[900px] ">
+                      <div className=" w-fit">
 
 
-                        <OverallBalance kpis={kpis} opdSummary={opdSummary} />
+                        <OverallBalance
+                          kpis={kpis}
+                          opdSummary={opdSummary}
+                          dateRange={dateRange}
+                        />
+
                       </div>
-                      <div className=" md34:hidden md11:!flex w-[400px]">
+                      <div className=" w-[300px]">
                         <RecentOrders
                           overallNps={kpis?.npsRating?.value}
                         />
                       </div>
+                      <ConcernSummaryDonutChart data={concernData} />
+
                     </div>
 
 
                     <>
 
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
+                      <div className="flex  mt-[-11px]  gap-6 ">
 
-                        <div className=" flex md77:flex-row md34:flex-col md77:!gap-[20px] ">
 
-                          <div className=" md11:!hidden  ">
-                            <RecentOrders
-                              overallNps={kpis?.npsRating?.value}
-                            />
-                          </div>
-                          <ConcernSummaryDonutChart data={concernData} />
-
-                        </div>
                         {/* Department Analysis */}
                         <motion.div variants={itemVariants}>
-                          <motion.div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm p-3 border border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
-                            <div className="flex items-center justify-between mb-6">
+                          <motion.div className=" w-[500px] bg-white/90 backdrop-blur-sm rounded-xl  p-[15px] dashShadow border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
+                            <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                  <BarChart3 className="w-5 h-5 text-white" />
+                                <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                                  <BarChart3 className="w-4 h-4 text-white" />
                                 </div>
                                 <div>
-                                  <h3 className="text-xl font-bold text-gray-900">Department Analysis</h3>
-                                  <p className="text-sm text-gray-600">{departmentData.length} departments</p>
+                                  <h3 className="text-md font-[400] text-gray-900">Department Analysis</h3>
+                                  <p className="text-[10px] text-gray-600">{departmentData.length} departments</p>
                                 </div>
                               </div>
                             </div>
-                            <div className="md34:!h-[350px] md34:!ml-[-30px] md11:!ml-[0px] md11:!h-72">
-                              <ResponsiveContainer width="100%" height="100%">
+                            <div className="  md11:!ml-[0px] w-[100%]  h-[250px]">
+                              <ResponsiveContainer className=" " width="100%" height="100%">
                                 {/* keep your original 'concerns' key */}
-                                <BarChart data={departmentData} margin={{ top: 10, right: 20, left: 10, bottom: 60 }}>
+                                <BarChart data={departmentData} margin={{ top: 10, right: 0, left: -30, bottom: 30 }}>
                                   <defs>
                                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                                       <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9} />
@@ -428,7 +475,7 @@ const [totals, setTotals] = useState({
                                     </linearGradient>
                                   </defs>
                                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                  <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#6b7280" }} angle={-45} textAnchor="end" height={20} />
+                                  <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#6b7280" }} angle={-25} textAnchor="end" height={20} />
                                   <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
                                   <Tooltip />
                                   <Bar dataKey="concerns" fill="url(#barGradient)" radius={[6, 6, 0, 0]} animationDuration={800} />
@@ -441,182 +488,19 @@ const [totals, setTotals] = useState({
 
 
 
-                      <motion.div variants={itemVariants}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                              <Clock className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                              <h2 className="text-xl font-bold text-gray-900">Recent Feedbacks</h2>
-                              <p className="text-[10px] text-gray-600">Latest patient responses and ratings</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className=" md11:!flex md34:!hidden text-sm text-blue-600 font-semibold">{recentFeedbacks.length} recent entries</p>
-                          </div>
-                        </div>
-
-                        <motion.div className="bg-white/90. md34:!hidden md11:!block backdrop-blur-sm rounded-xl shadow-xl border border-white/50 overflow-hidden" whileHover={{ scale: 1.002 }} transition={{ duration: 0.3 }}>
-                          <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1000px]">
-                              <thead className=" bg-gray-100">
-                                <tr>
-                                  <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Patient Details</th>
-                                  <th className="px-6 py-3 text-left text-sm  flex-shrink-0 font-bold text-gray-900">Visit Info</th>
-                                  <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Medical Details</th>
-                                  <th className="px-6 py-3 text-left text-sm flex-shrink-0 font-bold text-gray-900">Rating</th>
-                                  <th className="px-6 py-3 text-left text-sm font-bold flex-shrink-0 text-gray-900">Feedback</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100">
-                                {recentFeedbacks.map((feedback, index) => (
-                                  <motion.tr
-                                    key={feedback.id}
-                                    className="hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-blue-50/50 transition-all duration-200"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                  >
-                                    <td className="px-6 py-2">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                          {String(feedback.name || "-").charAt(0)}
-                                        </div>
-                                        <div>
-                                          <div className="font-semibold text-gray-900">{feedback.name}</div>
-                                          {/* <div className="flex items-center gap-2 text-xs text-gray-500">
-                                            <User className="w-3 h-3" />
-                                            <span>Age: {feedback.age}</span>
-                                          </div> */}
-                                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                                            <Phone className="w-3 h-3" />
-                                            <span>{feedback.contact}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="px-6 py-2">
-                                      <div className="space-y-1">
-                                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${feedback.type === "IPD" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
-                                          {feedback.type}
-                                        </span>
-                                        {/* <div className="text-sm text-gray-600">{feedback.department}</div> */}
-                                        {/* <div className="flex items-center gap-2 text-xs text-gray-500">
-                                          <MapPin className="w-3 h-3" />
-                                          <span>{feedback.room}</span>
-                                        </div> */}
-                                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                                          <Timer className="w-3 h-3" />
-                                          <span>{feedback.time}</span>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="px-6 py-2">
-                                      <div className="space-y-1">
-                                        <div className="text-sm font-medium text-gray-900">{feedback.doctor}</div>
-                                        {/* <div className="text-sm text-gray-600">Complaint: {feedback.complaint}</div> */}
-                                        {/* <div className="text-xs text-gray-500">Duration: {feedback.duration}</div> */}
-                                      </div>
-                                    </td>
-                                    <td className="px-6 py-2">
-                                      <div className="flex flex-col items-left justify-center gap-2">
-                                        <StarRating rating={Math.round(feedback.rating || 0)} />
-                                        <span className="text-sm font-semibold text-gray-900">{Number(feedback.rating || 0).toFixed(1)}/5</span>
-                                      </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      <div className="max-w-xs">
-                                        <p className="text-sm text-gray-700 line-clamp-3">{feedback.feedback}</p>
-                                      </div>
-                                    </td>
-                                  </motion.tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
 
 
+                      {/* <FeedbackTable /> */}
+                      <div className=" mt-[10px]">
+                        <IpdList />
+                      </div>
 
-
-
-
-
-
-                          <div className="px-6 py-4 bg-gray-50/50 border-top border-gray-200">
-                            <div className="flex items-center justify-between text-sm text-gray-600">
-                              <span>Showing {recentFeedbacks.length} recent feedbacks</span>
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                  <span>IPD</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                  <span>OPD</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-
-
-
-
-                        <div className="   md11:!hidden md34:!flex flex-col pb-[70px] gap-[10px]">
-                          <div className=" grid grid-cols-2 mt-[10px] gap-[15px]">
-                            {recentFeedbacks.map((feedback, index) => (
-                              <>
-                                <div key={feedback.id} className="  bg-white overflow-hidden relative flex px-[10px] shadow-sm py-[10px] border-[1.3px]  rounded-[10px] border-[#dcdcdc] flex-col gap-[7px]">
-                                  <div className=" flex gap-[10px] items-start border-b-[1.8px] border-blue-200 border-dashed pb-[10px]">
-
-
-                                    {/* <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                      {String(feedback.name || "-").charAt(0)}
-                                    </div> */}
-                                    <div>
-                                      <div className="font-semibold text-gray-900">{feedback.name}</div>
-
-                                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <Phone className="w-3 h-3" />
-                                        <span>{feedback.contact}</span>
-                                      </div>
-
-                                      <span className={`inline-flex absolute top-[6px] right-[6px] px-3 py-1 rounded-full text-xs font-semibold ${feedback.type === "IPD" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
-                                        {feedback.type}
-                                      </span>
-
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-1 flex items-center justify-between">
-
-
-                                    <div className="space-y-1">
-                                      <div className="text-sm font-medium text-gray-900">{feedback.doctor}</div>
-                                    </div>
-
-                                  </div>
-
-
-                                  <div className="flex  items-center gap-2">
-                                    <StarRating rating={Math.round(feedback.rating || 0)} />
-                                    <span className="text-sm font-semibold text-gray-900">{Number(feedback.rating || 0).toFixed(1)}/5</span>
-                                  </div>
-                                  <div className="max-w-xs">
-                                    <p className="text-sm text-gray-700 line-clamp-3">{feedback.feedback}</p>
-                                  </div>
-
-                                </div>
-                              </>
-                            ))}
-                          </div>
-
-
-                        </div>
-
-                        {error && <div className="text-red-600 text-sm mt-3">{error}</div>}
-                      </motion.div>
+                      <div className=" mt-[10px]">
+                        <OpdFeedBackDetails />
+                      </div>
+                      <div className=" mt-[7px]">
+                        <ComplaintsListDash />
+                      </div>
 
 
                     </>

@@ -53,11 +53,11 @@ useEffect(() => {
           <Header pageName="User List" />
           <div className="flex w-full h-full">
             <CubaSidebar />
-            <div className="flex flex-col w-full relative max-h-[93%] md34:!pb-[120px] md11:!pb-[20px] py-[10px] pr-[10px] overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-full relative max-h-[93%] md34:!pb-[120px] md11:!pb-[20px] py-[10px] px-[10px] overflow-y-auto gap-[10px] ">
               <Preloader />
 
               {/* 🔍 Search bar */}
-              <div className="flex justify-end items-center px-6 pt-4 pb-2">
+              <div className="flex justify-end items-center px-2 ">
                 <div className="relative">
                   <input
                     type="text"
@@ -71,27 +71,27 @@ useEffect(() => {
               </div>
 
               {/* 📋 User Table */}
-              <div className="w-[95%] mx-auto border rounded-[10px] shadow-sm overflow-hidden">
+              <div className="w-[100%] mx-auto border rounded-[10px] shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-[1000px] w-full border-collapse">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Name
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Contact Number
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Employee ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Department
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Email
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Details
                         </th>
                       </tr>
@@ -105,37 +105,37 @@ useEffect(() => {
                             index % 2 === 0 ? "bg-white" : "bg-gray-50"
                           }`}
                         >
-                          <td className="px-6 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+                          <td className="px-6 py-[10px] text-sm font-medium border-r text-gray-900 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4 text-gray-400" />
                               {u.name}
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-sm text-gray-800 whitespace-nowrap">
+                          <td className="px-6 py-[10px] text-sm text-gray-800 border-r whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <Phone className="w-4 h-4 text-gray-400" />
                               {u.contactNumber}
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-sm text-gray-800 whitespace-nowrap">
+                          <td className="px-6 py-[10px] text-sm text-gray-800 border-r  whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <IdCard className="w-4 h-4 text-gray-400" />
                               {u.employeeId}
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-sm text-gray-800 whitespace-nowrap">
+                          <td className="px-6 py-[10px] text-sm text-gray-800  border-r whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <Building className="w-4 h-4 text-gray-400" />
                               {u.department}
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-sm text-gray-800 whitespace-nowrap">
+                          <td className="px-6 py-[10px] text-sm text-gray-800  border-r whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <Mail className="w-4 h-4 text-gray-400" />
                               {u.email}
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-sm whitespace-nowrap">
+                          <td className="px-6 py-[10px] text-sm border-r whitespace-nowrap">
                             <button
                               onClick={() => handleView(u)}
                               className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"

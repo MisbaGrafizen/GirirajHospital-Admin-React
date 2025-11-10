@@ -138,12 +138,12 @@ export default function FeedbackDetails() {
   if (!model) return null
 
   return (
-    <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+    <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
       <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
         <Header pageName="Feedback Details" />
         <div className="flex gap-[10px] w-[100%] h-[100%]">
           <SideBar />
-          <div className="flex flex-col w-[100%] md34:!mx-[10px] mt-[10px] md11:!mx-auto max-h-[99%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] rounded-[10px]">
+          <div className="flex flex-col w-[100%] md34:!mx-[10px] mt-[10px] md11:!mx-auto max-h-[99%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] ">
 
             <section className="bg-white  rounded-xl  md11:!mb-[0px] md34:!mb-[160px]   bg-white shadow-sm border border-red-600 ">
               {/* <div className="px-5 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-100">

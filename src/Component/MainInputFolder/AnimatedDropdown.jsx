@@ -21,15 +21,15 @@ export default function AnimatedDropdown({ label, icon: Icon, options = [], sele
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="block text-[8px] rounded-[10px] px-[5px] top-[-8px] left-[10px] border z-5 bg-white absolute font-medium text-gray-700 mb-1">
+      <label className="block text-[7px] rounded-[10px] px-[5px] top-[-7px] left-[10px]  border z-5 bg-white  ] absolute font-medium text-gray-700 mb-1">
         {label}
       </label>
       <div
-        className="flex items-center w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer relative"
+        className="flex items-center px-3 py-[4px] border border-gray-300 rounded-md bg-white cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {Icon && <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />}
-        <span className="text-[13px] text-gray-700">{selected}</span>
+        {Icon && <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />}
+        <span className="text-[12px] pl-[13px] text-gray-700">{selected}</span>
         <ChevronDown className="ml-auto w-4 h-4 text-gray-400" />
       </div>
 
@@ -48,7 +48,7 @@ export default function AnimatedDropdown({ label, icon: Icon, options = [], sele
                   onChange(opt);
                   setIsOpen(false);
                 }}
-                className="px-4 py-2 text-[13px] hover:bg-blue-50 cursor-pointer flex items-center gap-2"
+                className="px-2 py-1 text-[10px] hover:bg-blue-50 cursor-pointer flex items-center gap-2"
               >
                 {opt.icon && <opt.icon className="w-4 h-4 text-gray-500" />}
                 {opt.label || opt}

@@ -173,7 +173,7 @@ export default function OpdAllList() {
         JSON.stringify({ id, preview: fb })
       )
   
-      navigate('/feedback-details', {
+      navigate('/opd-feedback-details', {
         state: { id, feedback: fb }
       })
     }, [navigate])
@@ -183,28 +183,25 @@ export default function OpdAllList() {
 
 
 
-          <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+          <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Opd Feedback List"  />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
-          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+          <div className="flex flex-col w-[100%]  pl-[10px] relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
              <div>
 
 
                <div className="bg-white  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
-                      <div className="px-3  border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                      <div className="px-3 py-[8px] border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                         <div className=' flex gap-[10px]  items-center py-[13px] justify-start '>
 
 
 
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                            <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
+              
                         </div>
-                        <div className="flex flex-row items-center  md34:!mb-[10px] gap-3">
+                        <div className="flex flex-row items-center    gap-3">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input

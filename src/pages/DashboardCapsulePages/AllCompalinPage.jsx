@@ -163,11 +163,11 @@ export default function AllComplaintPage() {
         <div className="flex w-full h-full">
           <CubaSidebar />
 
-          <div className="flex flex-col w-full bg-white relative max-h-[93%] overflow-y-auto gap-4 rounded-[10px]">
+          <div className="flex flex-col w-full bg-white relative max-h-[92%] overflow-y-auto gap-1 ">
             {loading && <Preloader />}
 
             {/* 🔍 Search Bar */}
-            <div className="flex items-center justify-end px-5 py-2 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
+            <div className="flex items-center justify-end px-2 py-2   top-0 z-10">
               <div className="relative">
                 <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 <input
@@ -181,18 +181,18 @@ export default function AllComplaintPage() {
             </div>
 
             {/* 📋 Complaint Table */}
-            <div className="bg-white rounded-xl border shadow-sm w-[92%] mx-auto mt-2 overflow-y-auto">
+            <div className="bg-white mx-[10px] rounded-xl border shadow-sm w-[98.2%]  max-h-[88%] overflow-y-auto">
               <table className="w-full">
-                <thead className="bg-gray-100 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <thead className="bg-gray-100 !text-xs !font-[500] text-gray-600 uppercase tracking-wide">
                   <tr>
-                    <th className="px-4 py-2 text-left border-r">Complaint ID</th>
-                    <th className="px-4 py-2 text-left border-r">Date & Time</th>
-                    <th className="px-4 py-2 text-left border-r">Patient</th>
-                    <th className="px-4 py-2 text-left border-r">Doctor</th>
-                    <th className="px-4 py-2 text-left border-r">Bed No.</th>
-                    <th className="px-4 py-2 text-left border-r">Department</th>
-                    <th className="px-4 py-2 text-left border-r">Status</th>
-                    <th className="px-4 py-2 text-left">Details</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[120px]">Comp. ID</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[220px]">Date & Time</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r">Patient</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[220px]">Doctor</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r">Bed No.</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r">Department</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r">Status</th>
+                    <th className="px-3 py-[12px] text-left font-[500]">Details</th>
                   </tr>
                 </thead>
 
@@ -202,13 +202,16 @@ export default function AllComplaintPage() {
                       key={issue._id || `${issue.complaintId}-${idx}`}
                       className={`${
                         idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      } hover:bg-blue-50 transition`}
+                      } hover:bg-blue-50 transition text`}
                     >
-                      <td className="px-4 py-2 font-semibold text-blue-700 border-r cursor-pointer hover:underline">
+                      <td className="px-3 py-[12px] font-semibold text-blue-700 border-r cursor-pointer hover:underline">
                         {issue.complaintId || issue.id}
                       </td>
 
-                      <td className="px-4 py-2 border-r flex items-center gap-2 text-[13px]">
+                      <td className="px-3 py-[12px] border-r  text-[13px]">
+                      <div className=" flex items-center gap-2">
+
+
                         <Clock className="w-4 h-4 text-gray-400" />
                         {new Date(issue.createdAt).toLocaleString("en-IN", {
                           day: "2-digit",
@@ -217,22 +220,27 @@ export default function AllComplaintPage() {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                                              </div>
                       </td>
 
-                      <td className="px-4 py-2 border-r font-medium capitalize">
+                      <td className="px-3 py-[12px] border-r font-[400] capitalize">
                         {issue.patientName || "-"}
                       </td>
 
-                      <td className="px-4 py-2 border-r">
+                      <td className="px-3 py-[12px] border-r">
                         {issue.consultantDoctorName?.name || "-"}
                       </td>
 
-                      <td className="px-4 py-2 border-r flex items-center gap-2">
+                      <td className="px-3 py-[12px] border-r text-[13px]  gap-2">
+                      <div className=" flex items-center gap-[10px]">  
+
+
                         <Bed className="w-4 h-4 text-gray-400" />
                         {issue.bedNo || "-"}
+                                              </div>
                       </td>
 
-                      <td className="px-4 py-2 border-r">
+                      <td className="px-3 py-[12px] border-r">
                         {getAllowedAndActiveDepartments(
                           issue,
                           isAdmin
@@ -241,7 +249,7 @@ export default function AllComplaintPage() {
                         )}
                       </td>
 
-                      <td className="px-4 py-2 border-r">
+                      <td className="px-3 py-[12px] border-r">
                         <span
                           className={`px-3 py-[3px] rounded-full text-xs font-semibold ${
                             issue.status === "resolved"
@@ -265,7 +273,7 @@ export default function AllComplaintPage() {
                             state: { complaint: issue },
                           })
                         }
-                        className="px-4 py-2 text-blue-600 font-medium cursor-pointer flex items-center gap-1 hover:underline"
+                        className="px-3 py-[12px] text-blue-600 font-medium cursor-pointer flex items-center gap-1 hover:underline"
                       >
                         <Eye className="w-4 h-4" />
                         View

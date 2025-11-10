@@ -39,45 +39,45 @@ const RATING_KEYS = [
 
 
 export default function IpdAllList() {
-    const [searchTerm, setSearchTerm] = useState("")
-    const [rows, setRows] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
-    const [rawIPD, setRawIPD] = useState([]);
-    const navigate = useNavigate();
-    
-    
+  const [searchTerm, setSearchTerm] = useState("")
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [rawIPD, setRawIPD] = useState([]);
+  const navigate = useNavigate();
 
-    function formatDate(dateStr) {
-  const d = new Date(dateStr)
-  const day = String(d.getDate()).padStart(2, "0")
-  const month = String(d.getMonth() + 1).padStart(2, "0")
-  const year = d.getFullYear()
-  return `${day}/${month}/${year}`
-}
 
-function calcRowAverage(ratings = {}) {
-  const vals = []
-  for (const key of RATING_KEYS) {
-    const v = ratings?.[key]
-    if (typeof v === "number" && v >= 1 && v <= 5) vals.push(v)
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr)
+    const day = String(d.getDate()).padStart(2, "0")
+    const month = String(d.getMonth() + 1).padStart(2, "0")
+    const year = d.getFullYear()
+    return `${day}/${month}/${year}`
   }
-  if (!vals.length) return 0
-  return round1(vals.reduce((a, b) => a + b, 0) / vals.length)
-}
 
-function calcNpsPercent(items) {
-  const values = items
-    .map((it) => it.overallRecommendation)
-    .filter((v) => typeof v === "number")
-  if (!values.length) return 0
-  const promoters = values.filter((v) => v >= 9).length
-  const detractors = values.filter((v) => v <= 6).length
-  const n = values.length
-  return Math.round(((promoters - detractors) / n) * 100)
-}
+  function calcRowAverage(ratings = {}) {
+    const vals = []
+    for (const key of RATING_KEYS) {
+      const v = ratings?.[key]
+      if (typeof v === "number" && v >= 1 && v <= 5) vals.push(v)
+    }
+    if (!vals.length) return 0
+    return round1(vals.reduce((a, b) => a + b, 0) / vals.length)
+  }
 
- const getRatingStars = (rating) => {
+  function calcNpsPercent(items) {
+    const values = items
+      .map((it) => it.overallRecommendation)
+      .filter((v) => typeof v === "number")
+    if (!values.length) return 0
+    const promoters = values.filter((v) => v >= 9).length
+    const detractors = values.filter((v) => v <= 6).length
+    const n = values.length
+    return Math.round(((promoters - detractors) / n) * 100)
+  }
+
+  const getRatingStars = (rating) => {
     const filled = Math.round(rating)
     return Array.from({ length: 5 }, (_, i) => (
       <Star key={i} className={`w-4 h-4 ${i < filled ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
@@ -85,18 +85,18 @@ function calcNpsPercent(items) {
   }
 
 
-    const handleIpdFeedbackDetails = useCallback((row) => {
-      const id = row?.id || row?._id;
-      if (!id) {
-        console.error("No id on IPD row:", row);
-        alert("No id found for this feedback.");
-        return;
-      }
-      // ✅ pass id (and the shallow row) via navigation state; no id in URL
-      navigate("/ipd-feedback-details", {
-        state: { id, feedback: row, from: "ipd" },
-      });
-    }, [navigate]);
+  const handleIpdFeedbackDetails = useCallback((row) => {
+    const id = row?.id || row?._id;
+    if (!id) {
+      console.error("No id on IPD row:", row);
+      alert("No id found for this feedback.");
+      return;
+    }
+    // ✅ pass id (and the shallow row) via navigation state; no id in URL
+    navigate("/ipd-feedback-details", {
+      state: { id, feedback: row, from: "ipd" },
+    });
+  }, [navigate]);
 
 
   const fetchIPD = useCallback(async () => {
@@ -152,15 +152,15 @@ function calcNpsPercent(items) {
   }, [fetchIPD])
 
 
-const filteredFeedback = rows
-  .filter((f) =>
-    f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
-  )
-  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // latest first
+  const filteredFeedback = rows
+    .filter((f) =>
+      f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
+    )
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // latest first
 
 
 
- const exportToExcel = async () => {
+  const exportToExcel = async () => {
 
     const XLSX = await import("xlsx")
 
@@ -227,28 +227,25 @@ const filteredFeedback = rows
 
 
   return (
-<>
-      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+    <>
+      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Ipd Feedback List"  />
+          <Header pageName="Ipd Feedback List" />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
-          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
-             <div>
+              <div>
 
 
-                            <div className="bg-white rounded-xl e md34:!mb-[100px] md11:!mb-0  border shadow-sm overflow-hidden">
-                  <div className="px-3  border-b  border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
+                <div className="bg-white  w-[98%]   mx-auto rounded-xl e md34:!mb-[100px] md11:!mb-0  border shadow-sm overflow-hidden">
+                  <div className="p-[13px]  border-b  border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center">
                     <div className=' flex gap-[10px] items-center py-[10px]    justify-start '>
 
 
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                        <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
+
                     </div>
-                    <div className="flex flex-row justify-between gap-2 mb-[10px]">
+                    <div className="flex flex-row justify-between gap-2">
                       <div className="relative">
                         <Search className="absolute left-3 top-[19px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
@@ -256,14 +253,14 @@ const filteredFeedback = rows
                           placeholder="Search feedback..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-[6px] py-2 w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="pl-10 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
                       {/* Export only if permitted */}
                       <button
                         onClick={exportToExcel}
-                        className="flex items-center flex-shrink-0 px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel
@@ -354,13 +351,13 @@ const filteredFeedback = rows
                     </table>
                   </div>
                 </div>
-             </div>
+              </div>
             </div>
 
           </div>
         </div>
       </section>
 
-</>
+    </>
   )
 }

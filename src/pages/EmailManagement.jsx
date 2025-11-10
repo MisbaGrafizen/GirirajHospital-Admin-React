@@ -19,6 +19,7 @@ import Preloader from "../Component/loader/Preloader";
 import { motion, AnimatePresence } from "framer-motion"
 import socket from "../socket/index";
 
+
 export default function EmailManagement() {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +28,40 @@ export default function EmailManagement() {
   const [isMobileDetail, setIsMobileDetail] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([])
+  const [allowedFilters, setAllowedFilters] = useState(["OPD", "IPD", "Complain"]);
+
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        const loginType = localStorage.getItem("loginType");
+        const userModel = loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
+
+        if (!userId || !userModel) return;
+
+        const res = await ApiGet(
+          `/admin/notification-settings?userId=${userId}&userModel=${userModel}`
+        );
+        console.log('res', res)
+
+        const s = res?.data || {};
+        const temp = [];
+
+        if (s.opd) temp.push("OPD");
+        if (s.ipd) temp.push("IPD");
+        if (s.complaint) temp.push("Complain");
+
+        // fallback → show all if user turned all off
+        setAllowedFilters(temp.length > 0 ? temp : ["OPD", "IPD", "Complain"]);
+      } catch (err) {
+        console.error("❌ Failed to fetch notification settings:", err);
+        setAllowedFilters(["OPD", "IPD", "Complain"]);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
 
   const getSubjectColor = (subject) => {
@@ -46,80 +81,103 @@ export default function EmailManagement() {
     return "bg-gray-100 border-gray-200 text-gray-700" // default
   }
 
+  // ✅ Add this new function
+  const getStatusColor = (status) => {
+    if (!status) return "bg-gray-100 text-gray-600";
+    const s = status.toLowerCase();
 
-    const fetchEmails = async () => {
-      try {
-        setLoading(true);
-        const data = await ApiGet("/admin/notifications");
-        console.log('data', data)
-        const mapped = (data?.notifications || []).map((n) => ({
-          id: n._id,
-          sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
-          senderEmail: "",
-          subject: n.title,
+    if (s.includes("resolved"))
+      return "bg-green-100 text-green-700 border border-green-300";
+    if (s.includes("in progress"))
+      return "bg-yellow-100 text-yellow-800 border border-yellow-300";
+    if (s.includes("open"))
+      return "bg-blue-100 text-blue-700 border border-blue-300";
+    if (s.includes("partial"))
+      return "bg-orange-100 text-orange-700 border border-orange-300";
+    if (s.includes("escalated"))
+      return "bg-red-100 text-red-700 border border-red-300";
+    if (s.includes("forward"))
+      return "bg-purple-100 text-purple-700 border border-purple-300";
 
-          preview: n.body,
-          content: `
+    return "bg-gray-100 text-gray-600 border border-gray-300";
+  };
+
+  const fetchEmails = async () => {
+    try {
+      setLoading(true);
+      const data = await ApiGet("/admin/notifications");
+      console.log('data', data)
+      const mapped = (data?.notifications || []).map((n) => ({
+        id: n._id,
+        sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
+        senderEmail: "",
+        subject: n.title,
+
+        preview: n.body,
+        status: n.data?.status
+          ? n.data.status.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase())
+          : "Unknown",
+        content: `
     <div class="space-y-4">
       <p class="text-gray-800 text-base">${n.body}</p>
       ${n.data
-              ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+            ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
               <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
                 📋 Patient Details
               </h4>
               <div class="divide-y divide-gray-200">
     ${Object.entries(n.data)
-  .filter(([key]) => !["complaintid","_id", "__v"].includes(key.toLowerCase()))
-  .map(([key, value]) => {
-    // 👇 Rename 'complaint' or 'complaintid' → 'Complaint Id'
-    let label =
-      key.toLowerCase() === "complaint"
-        ? "ComplaintId"
-        : formatKey(key);
+              .filter(([key]) => !["complaintid", "_id", "__v"].includes(key.toLowerCase()))
+              .map(([key, value]) => {
+                // 👇 Rename 'complaint' or 'complaintid' → 'Complaint Id'
+                let label =
+                  key.toLowerCase() === "complaint"
+                    ? "ComplaintId"
+                    : formatKey(key);
 
-    return `
+                return `
       <div class="flex items-start py-2">
         <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
         <div class="flex-1 text-gray-700 break-words">${value}</div>
       </div>`;
-  })
-  .join("")}
+              })
+              .join("")}
 
 
               </div>
             </div>`
-              : ""
-            }
+            : ""
+          }
     </div>
   `,
-          timestamp: new Date(n.createdAt).toLocaleString(),
-          isRead: false,
-          isStarred: false,
-          isNew: true,
-          priority: "normal",
-          hasAttachment: false,
-        }));
+        timestamp: new Date(n.createdAt).toLocaleString(),
+        isRead: false,
+        isStarred: false,
+        isNew: true,
+        priority: "normal",
+        hasAttachment: false,
+      }));
 
-        // Helper function
-        function formatKey(key) {
-          return key
-            .replace(/([A-Z])/g, " $1")
-            .replace(/^./, (s) => s.toUpperCase());
-        }
-
-
-
-        setEmails(mapped);
-        if (mapped.length > 0) setSelectedEmail(mapped[0]);
-      } catch (error) {
-        console.error("❌ Error fetching emails:", error);
-      } finally {
-        setLoading(false);
+      // Helper function
+      function formatKey(key) {
+        return key
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (s) => s.toUpperCase());
       }
-    };
-       useEffect(() => {
+
+
+
+      setEmails(mapped);
+      if (mapped.length > 0) setSelectedEmail(mapped[0]);
+    } catch (error) {
+      console.error("❌ Error fetching emails:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchEmails();
-     socket.on("ipd:new", fetchEmails);
+    socket.on("ipd:new", fetchEmails);
     socket.on("opd:new", fetchEmails);
     socket.on("ipd:complaint", fetchEmails);
 
@@ -133,29 +191,29 @@ export default function EmailManagement() {
 
 
   const filteredEmails = useMemo(() => {
-  let list = emails;
+    let list = emails;
 
-  // 🔎 Apply search filter
-  if (searchQuery) {
-    list = list.filter(
-      (email) =>
-        email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.preview.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
+    // 🔎 Apply search filter
+    if (searchQuery) {
+      list = list.filter(
+        (email) =>
+          email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          email.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          email.preview.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
-  // ✅ Apply checkbox filter
-  if (selectedFilters.length > 0) {
-    list = list.filter((email) =>
-      selectedFilters.some((f) =>
-        email.subject?.toLowerCase().includes(f.toLowerCase())
-      )
-    );
-  }
+    // ✅ Apply checkbox filter
+    if (selectedFilters.length > 0) {
+      list = list.filter((email) =>
+        selectedFilters.some((f) =>
+          email.subject?.toLowerCase().includes(f.toLowerCase())
+        )
+      );
+    }
 
-  return list;
-}, [emails, searchQuery, selectedFilters]);
+    return list;
+  }, [emails, searchQuery, selectedFilters]);
 
 
   const handleEmailClick = (email) => {
@@ -216,7 +274,7 @@ export default function EmailManagement() {
     <>
 
 
-      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Notification Management" />
           <div className="flex  w-[100%] h-[100%]">
@@ -260,11 +318,11 @@ export default function EmailManagement() {
                             transition={{ duration: 0.15 }}
                             className="absolute right-0 mt-2 w-44 h-fit bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200 z-50 px-2 py-[5px]"
                           >
-                            {["OPD", "IPD", "Complain"].map((item, index, arr) => (
+                            {allowedFilters.map((item, index, arr) => (
                               <label
                                 key={item}
                                 className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
-              ${index !== arr.length - 1 ? "border-b-[0.2px] border-[#b6b4b4]" : ""}`}
+      ${index !== arr.length - 1 ? "border-b-[0.2px] border-[#b6b4b4]" : ""}`}
                               >
                                 <input
                                   type="checkbox"
@@ -275,6 +333,7 @@ export default function EmailManagement() {
                                 {item}
                               </label>
                             ))}
+
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -297,6 +356,15 @@ export default function EmailManagement() {
                 ${!email.isRead ? "bg-blue-25" : ""}
               `}
                       >
+                        {/* ✅ Complaint Status Badge */}
+                        {email.status && (
+                          <div
+                            className={`absolute top-[6px] right-[6px] px-2 py-[2px] text-[10px] font-medium rounded-full ${getStatusColor(email.status)}`}
+                          >
+                            {email.status}
+                          </div>
+                        )}
+
                         <div className="flex items-start justify-between mb-1">
                           <div className="flex items-center space-x-3 flex-1 min-w-0">
                             {email.isRead ? (
@@ -372,10 +440,19 @@ export default function EmailManagement() {
                       {/* Header */}
                       <div className="p-3 border-b border-gray-200 bg-gray-50">
                         <div className="flex items-start justify-between mb-2">
+                          {/* ✅ Complaint Status in Detail View */}
+                          {selectedEmail.status && (
+                            <span
+                              className={`px-3 py-[2px] rounded-full absolute  right-4 top-3 text-sm font-semibold ${getStatusColor(selectedEmail.status)}`}
+                            >
+                              {selectedEmail.status}
+                            </span>
+                          )}
+
                           <div className="flex-1">
-                            <h1 className="text-xl font-semibold text-gray-900 mb-3 leading-tight">
+                            {/* <h1 className="text-xl font-semibold text-gray-900 mb-3 leading-tight">
                               {selectedEmail.subject}
-                            </h1>
+                            </h1> */}
                             <div className="flex items-center space-x-4 text-sm text-gray-600">
                               <div className="flex items-center space-x-2">
                                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -399,7 +476,7 @@ export default function EmailManagement() {
                               Received on {selectedEmail.timestamp}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          {/* <div className="flex items-center space-x-2">
                             <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
                               <Reply className="w-5 h-5 text-gray-600" />
                             </button>
@@ -412,10 +489,10 @@ export default function EmailManagement() {
                             <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
                               <Trash2 className="w-5 h-5 text-gray-600" />
                             </button>
-                            {/* <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                     <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
                                                             <MoreHorizontal className="w-5 h-5 text-gray-600" />
-                                                        </button> */}
-                          </div>
+                                                        </button> 
+                          </div> */}
                         </div>
 
 

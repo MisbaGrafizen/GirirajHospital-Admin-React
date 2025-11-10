@@ -139,27 +139,22 @@ export default function TATAllList() {
         <Header pageName="TAT List " />
         <div className="flex w-full h-full">
           <CubaSidebar />
-          <div className="flex flex-col w-full relative max-h-[93%] py-3 px-2 overflow-y-auto gap-3 rounded-[10px]">
+          <div className="flex flex-col w-full relative max-h-[93%] py-3 px-2 overflow-y-auto gap-3 ">
             <Preloader />
             <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-              <div className="px-3 py-3 border-b flex gap-[10px] items-center border-gray-200">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                  <i className="fa-regular fa-users-medical text-[17px] text-[#fff]"></i>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">TAT (Turnaround Time)</h3>
-              </div>
+          
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto ">
                 <table className="min-w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Complaint ID</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Departments</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created At</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Resolved At</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">TAT</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 min-w-[140px] uppercase">Complaint ID</th>
+                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500  min-w-[100px] uppercase">Patient</th>
+                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 min-w-[140px]  uppercase">Departments</th>
+                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 min-w-[180px]  uppercase">Created At</th>
+                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 uppercase">Resolved At</th>
+                      <th className="px-3 py-2 text-left text-xs  border-r font-medium text-gray-500 uppercase">TAT</th>
+                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 uppercase">Details</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
@@ -168,12 +163,12 @@ export default function TATAllList() {
                         key={complaint.id}
                         className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                       >
-                        <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                        <td className="px-6 py-2 text-sm text-gray-900">{complaint.patient}</td>
-                        <td className="px-6 py-2 text-sm text-gray-900">
+                        <td className="px-3 py-2 border-r text-sm  font-medium text-blue-600">{complaint.complaintId}</td>
+                        <td className="px-3 py-2 text-[13px] border-r  text-gray-900">{complaint.patient}</td>
+                        <td className="px-3 py-2 text-[12px] border-r text-gray-900">
                           {complaint.departments || "-"}
                         </td>
-                        <td className="px-6 py-2 text-sm text-gray-900">
+                        <td className="px-4 py-2  min-w-[140px] border-r text-[13px] text-gray-900">
                           {complaint.stampIn
                             ? new Date(complaint.stampIn).toLocaleString("en-GB", {
                                 day: "2-digit",
@@ -184,7 +179,7 @@ export default function TATAllList() {
                               })
                             : "-"}
                         </td>
-                        <td className="px-6 py-2 text-sm text-gray-900">
+                        <td className="px-4 py-2  border-r   min-w-[160px] text-[13px] text-gray-900">
                           {complaint.stampOut
                             ? new Date(complaint.stampOut).toLocaleString("en-GB", {
                                 day: "2-digit",
@@ -195,10 +190,10 @@ export default function TATAllList() {
                               })
                             : "-"}
                         </td>
-                        <td className="px-6 py-2 text-sm text-gray-900">
+                        <td className="px-3 py-2 min-w-[100px]  border-r  text-[13px] text-gray-900">
                           {complaint.totalTimeTaken || "-"}
                         </td>
-                        <td className="px-6 py-2 text-sm text-gray-900">
+                        <td className="px-3 py-2 min-w-[100px]  text-[13px] text-gray-900">
                           <button
                             onClick={() => handlenavigate(complaint, rawConcerns.find((d) => d._id === complaint.id))}
                             className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
@@ -210,7 +205,7 @@ export default function TATAllList() {
                     ))}
                     {rows.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
+                        <td colSpan={8} className="px-3 py-6 text-center text-gray-500">
                           No resolved complaints found.
                         </td>
                       </tr>

@@ -6,7 +6,7 @@ import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Min
 import { useNavigate } from 'react-router-dom'
 import { FileText, Download, Star, ThumbsUp, BarChart3, Award, Phone, Clock } from "lucide-react"
 import { MessageSquare, } from "lucide-react";
-import { Users, Stethoscope, ShieldCheck, Microscope, Sparkles } from "lucide-react";
+import { Users, Stethoscope, ShieldCheck, Microscope, Sparkles, XCircle } from "lucide-react";
 
 const serviceIcons = {
   "Appointment": Calendar,
@@ -143,8 +143,21 @@ export default function OPDFeedbackDashboard() {
   const [serviceSummary, setServiceSummary] = useState([]);
   const [opdServiceChart, setOpdServiceChart] = useState([]);
   const [metric, setMetric] = useState("avg")
-  const [rawOPD, setRawOPD] = useState([])
-  const [doctorOptions, setDoctorOptions] = useState([]);
+  const [rawOPD, setRawOPD] = useState([]);
+
+// ✅ Build unique doctor list dynamically from feedback data
+const doctorOptions = React.useMemo(() => {
+  const unique = new Set();
+  (Array.isArray(rawOPD) ? rawOPD : []).forEach((d) => {
+    const name =
+      d?.consultantDoctorName?.name ||
+      d?.doctorName ||
+      d?.consultant;
+    if (name) unique.add(name);
+  });
+  return ["All Doctors", ...Array.from(unique).sort((a, b) => a.localeCompare(b))];
+}, [rawOPD]);
+
   const [keywords, setKeywords] = useState([]);
   const [kpiData, setKpiData] = useState({
     totalFeedback: 0,
@@ -462,31 +475,31 @@ export default function OPDFeedbackDashboard() {
   )
 
   useEffect(() => {
-  (async () => {
-    try {
-      // ✅ Fetch all doctors from your backend
-      const res = await ApiGet("/admin/doctor"); // <-- update this endpoint to your actual doctors API
+    (async () => {
+      try {
+        // ✅ Fetch all doctors from your backend
+        const res = await ApiGet("/admin/doctor"); // <-- update this endpoint to your actual doctors API
 
-      const allDoctors = Array.isArray(res?.data)
-        ? res.data.map(d => d.name || d.fullName || d.doctorName).filter(Boolean)
-        : [];
+        const allDoctors = Array.isArray(res?.data)
+          ? res.data.map(d => d.name || d.fullName || d.doctorName).filter(Boolean)
+          : [];
 
-      const uniqueDoctors = Array.from(new Set(allDoctors)).sort();
-      setDoctorOptions(["All Doctors", ...uniqueDoctors]);
-    } catch (err) {
-      console.error("Failed to fetch doctor list:", err);
-      // fallback to what’s available in feedback data
-      const fallback = Array.from(
-        new Set(
-          rawOPD
-            ?.map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
-            ?.filter(Boolean) || []
-        )
-      ).sort();
-      setDoctorOptions(["All Doctors", ...fallback]);
-    }
-  })();
-}, [rawOPD]);
+        const uniqueDoctors = Array.from(new Set(allDoctors)).sort();
+        setDoctorOptions(["All Doctors", ...uniqueDoctors]);
+      } catch (err) {
+        console.error("Failed to fetch doctor list:", err);
+        // fallback to what’s available in feedback data
+        const fallback = Array.from(
+          new Set(
+            rawOPD
+              ?.map(d => d.consultantDoctorName?.name || d.doctorName || d.consultant)
+              ?.filter(Boolean) || []
+          )
+        ).sort();
+        setDoctorOptions(["All Doctors", ...fallback]);
+      }
+    })();
+  }, [rawOPD]);
 
 
 
@@ -629,15 +642,15 @@ export default function OPDFeedbackDashboard() {
       JSON.stringify({ id, preview: fb })
     )
 
-    navigate('/feedback-details', {
+    navigate('/opd-feedback-details', {
       state: { id, feedback: fb }
     })
   }, [navigate])
 
   // -------- Small components --------
   const DonutChart = ({ data }) => {
-    const size = 220
-    const strokeWidth = 45
+    const size = 160
+    const strokeWidth = 30
     const radius = (size - strokeWidth) / 2
     const circumference = 2 * Math.PI * radius
     const [animated, setAnimated] = useState(false)
@@ -672,7 +685,7 @@ export default function OPDFeedbackDashboard() {
             )
           })}
         </svg>
-        <div className="mt-6 w-full  flex-wrap flex sm:grid-cols-2 gap-x-3 gap-y-2 justify-center px-[10px]  text-sm">
+        <div className="mt-6 w-full  flex-wrap flex sm:grid-cols-2 gap-x-3 gap-y-1 justify-center px-[10px]  text-sm">
           {data.map((item, index) => {
             const color = item.color || defaultColors[index % defaultColors.length]
             return (
@@ -684,10 +697,10 @@ export default function OPDFeedbackDashboard() {
                 onMouseLeave={() => setHoverIndex(null)}
               >
                 <div
-                  className="w-3 h-3 rounded-full mr-2"
+                  className="w-2 h-2 rounded-full mr-1"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-[13px] text-gray-800">
+                <span className="text-[12px] text-gray-800">
                   {item.label}:{" "}
                   <strong className="text-[13px] font-[500]">{item.count}</strong> (
                   {item.percentage}%)
@@ -712,25 +725,54 @@ export default function OPDFeedbackDashboard() {
     </div>
   )
 
+
+  const [showPopup, setShowPopup] = useState(null);
+
+  // 🎯 Handlers for each KPI
+  const handleWidgetClick = (type) => {
+    switch (type) {
+      case "totalFeedback":
+        navigate("/ipd-opd-list");
+        break;
+      case "npsRating":
+        navigate("/reports/nps-all-list");
+        break;
+      case "averageRating":
+        setShowPopup("averageRating");
+        break;
+      case "overallScore":
+        setShowPopup("overallScore");
+        break;
+      default:
+        break;
+    }
+  };
+
   // -------- Render --------
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none  min-h-screen overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="OPD Feedback" />
-          <div className="flex gap-[10px] w-[100%] h-[100%]">
+  <Header
+  pageName="OPD"
+  doctors={doctorOptions} // ✅ pass doctor list to header for dropdown
+  onDateRangeChange={(next) => {
+    // next will be { from, to, service, doctor }
+    setFilters((prev) => ({ ...prev, ...next }));
+  }}
+/>
+
+          <div className="flex w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[0px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%] relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[10px] py-[10px] pr-[10px] pl-[10px]   overflow-y-auto gap-[10px] ">
               <Preloader />
               <div className="mx-auto w-full">
-                <div className="bg-white rounded-lg shadow-sm p-[13px]  md34:!mx-[7px] md11:!mx-0   mb-[10px] border border-gray-100  ">
-                  <OpdFilter value={filters} onChange={handleFilterChange} doctors={doctorOptions} />
-                </div>
+
                 <div className="flex gap-6 mb-3">
 
 
-                  <div className="flex flex-col w-[97%] md11:mx-0 mx-auto md11:w-[100%] max-h-[90%] md34:!pb-[50px] md11:!pb-[10px]  overflow-y-auto gap-[20px] rounded-[10px]">
+                  <div className="flex flex-col w-[97%] md11:mx-0 mx-auto md11:w-[100%] max-h-[90%] md34:!pb-[50px] md11:!pb-[10px]  overflow-y-auto gap-[18px] rounded-[10px]">
                     <div className="mx-auto w-full">
 
                       <div className="pt-[5px] w-[100%] ">
@@ -738,74 +780,150 @@ export default function OPDFeedbackDashboard() {
 
 
 
-                        <div className="  md34:!grid-cols-2 gap-x-[10px] md11:!grid-cols-4 grid w-[100%]">
-                          <Widgets1
-                            data={{
-                              title: "Total Feedback",
-                              gros: kpiData.totalFeedback,
-                              total: kpiData.totalFeedback,
-                              color: "primary",
-                              icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
-                            }}
-                          />
+                        <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 gap-x-[10px] w-[100%]">
+                          {/* 📨 Total Feedback (Navigate) */}
+                          <div onClick={() => handleWidgetClick("totalFeedback")} className="cursor-pointer">
+                            <Widgets1
+                              data={{
+                                title: "Total Feedback",
+                                gros: kpiData.totalFeedback,
+                                total: kpiData.totalFeedback,
+                                color: "primary",
+                                icon: <MessageSquare className="w-5 h-5 text-[#7366ff]" />,
+                              }}
+                            />
+                          </div>
 
-                          <Widgets1
-                            data={{
-                              title: "Average Rating",
-                              gros: `${kpiData.averageRating} `,
-                              total: `${kpiData.averageRating} `,
-                              color: "warning",
-                              icon: <Star className="w-5 h-5 text-yellow-600" />,
-                            }}
-                          />
+                          {/* ⭐ Average Rating (Modal) */}
+                          <div onClick={() => handleWidgetClick("averageRating")} className="cursor-pointer">
+                            <Widgets1
+                              data={{
+                                title: "Average Rating",
+                                gros: `${kpiData.averageRating}`,
+                                total: `${kpiData.averageRating}`,
+                                color: "warning",
+                                icon: <Star className="w-5 h-5 text-yellow-600" />,
+                              }}
+                            />
+                          </div>
 
-                          <Widgets1
-                            data={{
-                              title: "NPS Rating",
-                              gros: `${kpiData.npsRating}%`,
-                              total: `${kpiData.npsRating}%`,
-                              color: "success",
-                              icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
-                            }}
-                          />
+                          {/* 👍 NPS Rating (Navigate) */}
+                          <div onClick={() => handleWidgetClick("npsRating")} className="cursor-pointer">
+                            <Widgets1
+                              data={{
+                                title: "NPS Rating",
+                                gros: `${kpiData.npsRating}%`,
+                                total: `${kpiData.npsRating}%`,
+                                color: "success",
+                                icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
+                              }}
+                            />
+                          </div>
 
-                          <Widgets1
-                            data={{
-                              title: "Overall Score",
-                              total: (
-                                <span
-                                  className={`font-semibold ${kpiData.overallScore === "Excellent"
-                                    ? "text-green-600"
-                                    : kpiData.overallScore === "Good"
-                                      ? "text-blue-600"
-                                      : kpiData.overallScore === "Average"
-                                        ? "text-yellow-600"
-                                        : kpiData.overallScore === "Poor"
-                                          ? "text-orange-600"
-                                          : "text-red-600"
-                                    }`}
-                                >
-                                  {kpiData.overallScore}
-                                </span>
-                              ),
-                              gros: kpiData.overallScore,
-                              color: "purple",
-                              icon: <Award className="w-5 h-5 text-purple-600" />,
-                            }}
-                          />
+                          {/* 🏆 Overall Score (Modal) */}
+                          <div onClick={() => handleWidgetClick("overallScore")} className="cursor-pointer">
+                            <Widgets1
+                              data={{
+                                title: "Overall Score",
+                                total: (
+                                  <span
+                                    className={`font-semibold ${kpiData.overallScore === "Excellent"
+                                        ? "text-green-600"
+                                        : kpiData.overallScore === "Good"
+                                          ? "text-blue-600"
+                                          : kpiData.overallScore === "Average"
+                                            ? "text-yellow-600"
+                                            : kpiData.overallScore === "Poor"
+                                              ? "text-orange-600"
+                                              : "text-red-600"
+                                      }`}
+                                  >
+                                    {kpiData.overallScore}
+                                  </span>
+                                ),
+                                gros: kpiData.overallScore,
+                                color: "purple",
+                                icon: <Award className="w-5 h-5 text-purple-600" />,
+                              }}
+                            />
+                          </div>
                         </div>
+
+                        {/* 🌟 Popups for Average Rating & Overall Score */}
+                        <AnimatePresence>
+                          {showPopup && (
+                            <motion.div
+                              className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                            >
+                              <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                transition={{ duration: 0.25 }}
+                                className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl relative"
+                              >
+                                {/* Close Button */}
+                                <button
+                                  onClick={() => setShowPopup(null)}
+                                  className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                                >
+                                  <XCircle className="w-6 h-6" />
+                                </button>
+
+                                {/* Title */}
+                                <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                                  {showPopup === "averageRating"
+                                    ? "Average Rating Overview"
+                                    : "Overall Score Summary"}
+                                </h2>
+
+                                {/* Description */}
+                                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                  {showPopup === "averageRating"
+                                    ? "The Average Rating represents the mean satisfaction level across all feedback received. Aim for 4.5+ for exceptional service quality."
+                                    : "Overall Score is a combined evaluation of patient satisfaction, response rate, and service quality. Higher scores reflect consistent excellence across departments."}
+                                </p>
+
+                                {/* Values */}
+                                <div className="mt-4 text-center">
+                                  <p
+                                    className={`text-4xl font-bold ${showPopup === "averageRating"
+                                        ? "text-yellow-600"
+                                        : kpiData.overallScore === "Excellent"
+                                          ? "text-green-600"
+                                          : kpiData.overallScore === "Good"
+                                            ? "text-blue-600"
+                                            : kpiData.overallScore === "Average"
+                                              ? "text-yellow-600"
+                                              : kpiData.overallScore === "Poor"
+                                                ? "text-orange-600"
+                                                : "text-red-600"
+                                      }`}
+                                  >
+                                    {showPopup === "averageRating"
+                                      ? kpiData.averageRating
+                                      : kpiData.overallScore}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Charts Row */}
-                      <div className=" flex md11:!flex-row flex-col justify-start gap-[15px] mb-2">
-                        <div className="bg-white border  rounded-lg shadow-md p-3">
+                      <div className=" flex md11:!flex-row flex-col justify-start gap-[15px] ">
+                        <div className="bg-white dashShadow  rounded-xl   w-[300px] h-fit p-[13px]">
                           <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                              <i className=" text-[#fff] text-[17px] fa-solid fa-star-sharp-half-stroke"></i>
+                            <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                              <i className=" text-[#fff] text-[15px] fa-solid fa-star-sharp-half-stroke"></i>
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Rating Distribution</h3>
+                            <h3 className="text-[13px] font-[500] text-gray-900 ">Rating Distribution</h3>
                           </div>
 
                           <div className="flex justify-center items-center mx-auto">
@@ -813,21 +931,21 @@ export default function OPDFeedbackDashboard() {
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-lg md11:!w-[800px] shadow-sm border border-gray-100 pb-[10px] md11:!p-4">
-                          <div className=' flex ml-[15px] mt-[13px]  mb-[17px] items-center gap-[10px]'>
+                        <div className="bg-white rounded-xl dashShadow md11:!w-[440px] md13:!w-[550px]  p-[13px]">
+                          <div className=' flex  items-center  gap-[10px]'>
 
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                              <i className="fa-regular fa-chart-simple text-[#fff] text-[19px]"></i>
+                            <div className="w-[35px] h-[35px]  bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                              <i className="fa-regular fa-chart-simple text-[#fff] text-[15px]"></i>
                             </div>
-                            <h3 className="text-lg font-semibold  mt-[10px] ml-[15px] text-gray-900 mb-3">
+                            <h3 className="text-[13px] font-[500] text-gray-900 ">
 
 
                               Feedback Trend <span className="ml-2 text-xs text-gray-500">({trendBucket})</span>
                             </h3>
                           </div>
-                          <div className="h-72">
+                          <div className="h-[260px]">
                             <ResponsiveContainer width="100%" height="100%">
-                              <RLineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                              <RLineChart data={lineData.length ? lineData : [{ date: "-", value: 0 }]} margin={{ left: -40, right: 0, top: 20, bottom: 0 }}>
                                 <CartesianGrid stroke="#f3f4f6" vertical={false} />
                                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                                 <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
@@ -848,89 +966,57 @@ export default function OPDFeedbackDashboard() {
                             </ResponsiveContainer>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Word Cloud */}
-                      <div className="bg-white border-[1.7px] shadow-sm  rounded-[10px] p-3 mt-[16px] ">
-                        <div className=' flex  mb-[17px] items-center gap-[10px]'>
+                        <div className="bg-white  dashShadow  w-[400px] rounded-xl p-[13px]  ">
+                          <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                            <i className="fa-solid  text-[17px] text-[#fff] fa-keyboard-brightness"></i>
+                            <div className="w-[35px] h-[35px]  bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                              <i className="fa-solid  text-[15px] text-[#fff] fa-keyboard-brightness"></i>
 
+                            </div>
+                            <h3 className="text-[13px] font-[500] text-gray-900 ">Feedback Keywords</h3>
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Feedback Keywords</h3>
-                        </div>
-                        {/* <div className="flex flex-wrap gap-3">
-                          {[
-                            "Excellent",
-                            // "Nurse", 
-                            // "Professional", 
-                            "Clean",
-                            // "Comfortable", 
-                            // "Doctor", 
-                            // "Care", 
-                            "Staff",
-                            // "Treatment", 
-                            "Service",
-                            // "Billing", 
-                            "Food",
-                            // "Room", 
-                            // "Pharmacy", 
-                            // "Housekeeping",
-                          ].map((word, index) => (
-                            <span
-                              key={index}
-                              className={`px-3 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
-                                index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
-                                  index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
-                                    index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
-                                      index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
-                                        "bg-indigo-100 border-indigo-800 text-indigo-800"
-                                }`}
-                            >
-                              {word}
-                            </span>
-                          ))}
-                        </div> */}
-                        <div className="flex flex-wrap gap-3">
-                          {keywords.length > 0 ? (
-                            keywords.map((word, index) => (
-                              <span
-                                key={index}
-                                className={`px-3 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
-                                  index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
-                                    index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
-                                      index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
-                                        index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
-                                          "bg-indigo-100 border-indigo-800 text-indigo-800"
-                                  }`}
-                              >
-                                {word}
-                              </span>
-                            ))
-                          ) : (
-                            <p className="text-sm text-gray-500">No keywords available</p>
-                          )}
-                        </div>
 
+                          <div className="flex flex-wrap gap-3">
+                            {keywords.length > 0 ? (
+                              keywords.map((word, index) => (
+                                <span
+                                  key={index}
+                                  className={`px-3 py-[3px] rounded-full border text-[13px] font-medium ${index % 6 === 0 ? "bg-blue-100 border-blue-800 text-blue-800" :
+                                    index % 6 === 1 ? "bg-green-100 border-green-800 text-green-800" :
+                                      index % 6 === 2 ? "bg-yellow-100 border-yellow-800 text-yellow-800" :
+                                        index % 6 === 3 ? "bg-purple-100 border-purple-800 text-purple-800" :
+                                          index % 6 === 4 ? "bg-red-100 border-red-800 text-red-800" :
+                                            "bg-indigo-100 border-indigo-800 text-indigo-800"
+                                    }`}
+                                >
+                                  {word}
+                                </span>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">No keywords available</p>
+                            )}
+                          </div>
+
+                        </div>
                       </div>
+
+ 
+
 
                     </div>
-                    {/* Service Summary + Extra Donut */}
-
-
-                    {/* Service Summary + Extra Donut */}
+                 
                     <div className="flex w-[100%] mb-[px] gap-[30px]">
-                      <div className="bg-white rounded-xl border w-[100%] shadow-md overflow-hidden">
-                        <div className="px-3 py-[13px]  flex  items-center gap-[10px] border-b border-gray-200">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                            <i className="fa-solid  text-[17px] text-[#fff] fa-user-md"></i>
+                      <div className=" rounded-xl  w-[100%] shadow-md overflow-hidden">
+                        <div className="px-[13px] pb-[13px]  flex  items-center gap-[10px]  border-gray-200">
+                          <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                            <i className="fa-solid  text-[15px] text-[#fff] fa-user-md"></i>
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900">Service-Wise Summary</h3>
+                          <h3 className="text-[13px] font-[500] text-gray-900 ">Service-Wise Summary</h3>
                         </div>
-                        <div className="overflow-x-auto">
-                          <table className="md11:!min-w-full min-w-[800px] ">
-                            <thead className="bg-gray-50">
+                        <div className="overflow-x-auto rounded-[10px] border overflow-hidden">
+                          <table className="md11:!min-w-full   min-w-[800px] ">
+                            <thead className="bg-gray-100">
                               <tr>
                                 <th className="px-3 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Service</th>
                                 <th className="px-3 py-[10px] text-center text-xs font-medium text-gray-500 uppercase  flex-shrink-0 tracking-wider border-r border-gray-200">Excellent %</th>
@@ -993,19 +1079,19 @@ export default function OPDFeedbackDashboard() {
 
 
 
-                    {/* Patient-Wise Feedback Table */}
-                    <div className="bg-white  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
-                      <div className="px-3  border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div className=' flex gap-[10px]  items-center py-[13px] justify-start '>
+             
+                    <div className="  md11:!mb-[0px] rounded-lg  shadow-sm overflow-hidden">
+                      <div className="px-[13px]  pb-[13px]  border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        <div className=' flex gap-[10px]  items-center justify-start '>
 
 
 
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                            <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
+                          <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
+                            <i className="fa-regular fa-users-medical text-[15px] text-[#fff] "></i>
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900 !text-left  sm:mb-0">Patient Feedback Details</h3>
+                          <h3 className="text-[13px] font-[500] text-gray-900 ">Patient Feedback Details</h3>
                         </div>
-                        <div className="flex flex-row items-center md34:!w-[100%]  md77:!w-fit justify-between  md34:!mb-[10px] gap-3">
+                        <div className="flex flex-row items-center md34:!w-[100%]  md77:!w-fit justify-between  gap-3">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
@@ -1013,7 +1099,7 @@ export default function OPDFeedbackDashboard() {
                               placeholder="Search feedback..."
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10 pr-3 py-[5px] border md34:!w-[190px] md11:!w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
+                              className="pl-10 pr-3 py-[5px] border  border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
                             />
                           </div>
                           <div className=' flex gap-[10px]'>
@@ -1048,9 +1134,9 @@ export default function OPDFeedbackDashboard() {
 
                       </div>
 
-                      <div className="overflow-x-auto">
-                        <table className=" md34:!min-w-[1200px] md11:!min-w-full">
-                          <thead className="bg-gray-50">
+                      <div className="  border rounded-[10px]  overflow-x-auto">
+                        <table className="md34:!min-w-[1200px] md11:!min-w-full">
+                          <thead className="bg-gray-100">
                             <tr>
                               <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
                               <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Patient Name</th>

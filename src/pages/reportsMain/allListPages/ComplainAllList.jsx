@@ -334,51 +334,42 @@ setRows(mapped);
 
     return (
         <>
-            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+            <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
                     <Header pageName="Complaint List" />
                     <div className="flex  w-[100%] h-[100%]">
                         <CubaSidebar />
-                        <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex flex-col w-[100%]   relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[40px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">
                             <Preloader />
                             <div>
-                                <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                                    <div className="px-3 py-3 border-b flex  gap-[10px] items-center border-gray-200">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                            <i className="fa-regular fa-users-medical text-[17px] text-[#fff] "></i>
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-gray-900">Complaint Details</h3>
-                                    </div>
-                                                  
-                                </div>
+                  
 
-
-                                <div className="overflow-x-auto">
+                                <div className=" w-[98%] mx-auto border   overflow-x-auto rounded-[10px]">
                                     <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                        <thead className="bg-gray-50">
+                                        <thead className="bg-gray-100">
                                             <tr>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 min-w-[125px] py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Complaint ID
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2 border-r min-w-[190px] text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Date & Time
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2  min-w-[210px] text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Patient Name
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2   min-w-[210px] text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Doctor Name
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2  min-w-[90px] text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Bed No.
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2  min-w-[320px] text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Department
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Status
                                                 </th>
-                                                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-3 py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Details
                                                 </th>
                                             </tr>
@@ -393,31 +384,31 @@ setRows(mapped);
                                                             // onClick={handlenavigate}
                                                             className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
                                                         >
-                                                            <td className="px-6 py-2 text-sm font-medium text-blue-600">{complaint.complaintId}</td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                            <td className="px-3 py-2 border-r text-sm font-medium text-blue-600">{complaint.complaintId}</td>
+                                                            <td className="px-3 py-2 border-r text-[13px] text-gray-900">
                                                                 <div className="flex items-center">
                                                                     <Clock className="w-4 h-4 text-gray-400 mr-2" />
                                                                     {complaint.date}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-2 text-sm font-medium text-gray-900">{complaint.patient}</td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                            <td className="px-3 py-2 border-r text-[13px] font-medium text-gray-900">{complaint.patient}</td>
+                                                            <td className="px-3 py-2 border-r text-[13px] text-gray-900">
                                                                 <div className="flex items-center">
                                                                     <User className="w-4 h-4 text-gray-400 mr-2" />
                                                                     {complaint.doctor}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                            <td className="px-3 py-2 border-r text-[13px] text-gray-900">
                                                                 <div className="flex items-center">
                                                                     <Bed className="w-4 h-4 text-gray-400 mr-2" />
                                                                     {complaint.bedNo}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                            <td className="px-3 py-2 border-r text-[13px] text-gray-900">
                                                                 {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
                                                             </td>
 
-                                                            <td className="px-3 py-2 text-sm">
+                                                            <td className="px-3 py-2 border-r text-sm">
                                                                 <span
                                                                     className={`flex items-center px-2 py-1   !flex-shrink-0 justify-center  w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
                                                                         complaint.status,
@@ -426,7 +417,7 @@ setRows(mapped);
                                                                     {formatStatus(complaint.status)}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-6 py-2 text-sm text-gray-900">
+                                                            <td className="px-3 py-2 border-r text-[13px] text-gray-900">
                                                                 <button
                                                                     onClick={() => handlenavigate(complaint, fullDoc)}
                                                                     className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"

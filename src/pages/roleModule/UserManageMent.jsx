@@ -428,27 +428,48 @@ export default function UserManageMent() {
   // };
 
 
+
+
+  const handleOpenDoctorModal = () => {
+    setEditingDoctor(null);
+    setDoctorName("");
+    setDoctorQualification("");
+    setDoctorGujaratiName("");
+    setDoctorHindiName("");
+    setIsDoctorModalOpen(true);
+  };
+
+  const handleOpenUserModal = () => {
+    setEditingUser(null);
+    resetForm();
+    setIsModalOpen(true);
+  };
+
   return (
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="  User Management" />
-          <div className="flex gap-[10px] w-[100%] h-[100%]">
+          <Header
+            pageName="User Management"
+            onCreateDoctor={handleOpenDoctorModal}
+            onCreateRoleUser={handleOpenUserModal}
+          />
+          <div className="flex   w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex  w-[100%] relative max-h-[90%] overflow-y-auto gap-[30px] rounded-[10px]">
+            <div className="flex w-[100%] relative max-h-[90%] overflow-y-auto gap-[30px]">
               <Preloader />
-              <div className=' flex w-[100%] flex-col gap-[20px] py-[10px]'>
+              <div className=' flex w-[100%] px-[13px] flex-col gap-[20px] py-[10px]'>
                 <div className=' flex gap-[5px]  w-[100%] flex-col'>
-                  <div className=" w-[100%]  p-2">
+                  <div className=" w-[100%]  ">
                     <div className="">
                       {/* Header */}
 
 
 
                       {/* Header */}
-                      <div className="flex justify-between items-center mb-6">
+                      <div className="flex justify-between items-center mb-2">
                         <h1 className="text-2xl font-semibold">Manage Doctors</h1>
-                        <button
+                        {/* <button
                           onClick={() => {
                             setEditingDoctor(null);
                             setDoctorName("");
@@ -459,7 +480,7 @@ export default function UserManageMent() {
                         >
                           <UserPlus className="w-5 h-5" />
                           Create
-                        </button>
+                        </button> */}
                       </div>
 
                       {/* Modal */}
@@ -563,446 +584,450 @@ export default function UserManageMent() {
                         </div>
                         {canCreate && (
                           <div className="flex justify-end mb-5">
-                            <button
+                            <>
+                              {/* <button
                               onClick={() => setIsModalOpen(true)}
                               className="flex items-center gap-2 bs-spj text-white px-4 py-2 rounded-lg"
                             >
                               <UserPlus className="w-5 h-5" />
                               Create Role User
                             </button>
+                          </div> */}
+
+                            </>
+                             </div>
+                        )}
+                          </div>
+
+                      {/* Loading users */}
+                        {isLoading && (
+                          <div className="w-full py-8 text-center text-gray-500">
+                            <div className="mx-auto w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mb-3" />
+                            Loading users...
+                          </div>
+                        )}
+
+                        {/* User Cards Grid */}
+                        {!isLoading && (
+                          <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-cente gap-[15px]">
+                            {users.map((user) => (
+                              <div
+                                key={user._id || user.id}
+                                className="group relative bg-white w-[350px] border !border-[#f10a0a50] rounded-xl overflow-hidden shadow-sm hover:shadow-xl h-[170px] transition-all duration-300"
+                              >
+                                <div className="absolute top-0 left-0 w-full h-[40px] bg-[#ff000026]" />
+                                <div className="relative pt-3 px-4">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className="px-2 py-[2px] rounded-full text-[#c80404] border !border-[#f10a0aba] mt-[-9px] font-[500] text-[13px] shadow-md">
+                                      {user.roleId?.roleName}
+                                    </div>
+                                    <div className="relative">
+                                      <button
+                                        onClick={() => toggleCardMenu(user._id)}
+                                        className="p-2 rounded-full mt-[-10px] hover:bg-gray-100 transition-colors"
+                                      >
+                                        <MoreVertical size={18} className="text-gray-500" />
+                                      </button>
+
+                                      {activeCard === user._id && (
+                                        <div ref={cardMenuRef} className="absolute right-0 mt- w-48 bg-white rounded-xl shadow-xl z-10 border border-gray-100 overflow-hidden">
+                                          <div className="py-[3px]">
+                                            <button
+                                              onClick={() => handleopenmodal(user)}
+                                              className="block w-full text-left px-4 py-1.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
+                                            >
+                                              View details
+                                            </button>
+                                            {canUpdate && (
+                                              <button
+                                                onClick={() => {
+                                                  setFormData({
+                                                    name: user.name,
+                                                    email: user.email,
+                                                    role: user.roleId?.roleName,
+                                                    password: "",
+                                                    loginEnabled: user.loginEnabled ?? true,
+                                                    avatar: user.avatar,
+                                                  });
+                                                  if (Array.isArray(user.companyId)) {
+                                                    const matched = companies.filter(c => user.companyId.includes(c._id));
+                                                    setSelectedCompanies(matched);
+                                                  } else {
+                                                    setSelectedCompanies([]);
+                                                  }
+                                                  setScreenshot(user.avatar || null);
+                                                  setEditingUser(user);
+                                                  setIsModalOpen(true);
+                                                }}
+                                                className="block w-full text-left px-4 py-1.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
+                                              >
+                                                Edit User
+                                              </button>
+                                            )}
+                                            {canDelete && (
+                                              <button
+                                                onClick={async () => {
+                                                  if (window.confirm("Are you sure you want to delete this user?")) {
+                                                    try {
+                                                      await ApiDelete(`/admin/role-user/${user._id}`);
+                                                      fetchUsers();
+                                                    } catch (err) {
+                                                      console.error("Delete error", err);
+                                                    }
+                                                  }
+                                                }}
+                                                className="block w-full text-left px-4 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                              >
+                                                Delete User
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* User Info */}
+                                  <div className="flex items-center gap-4">
+                                    <div className="!w-[54px] h-[54px] flex-shrink-0 rounded-2xl border-[1.5px] border-[#f10a0aba] overflow-hidden">
+                                      {user.avatar ? (
+                                        <img
+                                          src={user.avatar || "/placeholder.svg"}
+                                          alt={user.name}
+                                          className="w-full h-full object-cover rounded-xl"
+                                        />
+                                      ) : (
+                                        <div className="w-[54px] h-[54px] rounded-xl bg-white flex items-center justify-center">
+                                          <span className="text-3xl text-[#f10a0aba]">
+                                            {user.name?.charAt(0)?.toUpperCase() || "U"}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div>
+                                      <h3 className="font-semibold text-xl text-gray-800">{user.name}</h3>
+                                      <p className="text-gray-500 text-[13px] flex items-center gap-1.5">
+                                        <Mail size={14} className="text-[#f10a0aba]" />
+                                        {user.email}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
 
-                      {/* Loading users */}
-                      {isLoading && (
-                        <div className="w-full py-8 text-center text-gray-500">
-                          <div className="mx-auto w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mb-3" />
-                          Loading users...
-                        </div>
-                      )}
+                      {/* Create / Edit User Modal */}
+                      {isModalOpen && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+                          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn relative">
+                            {/* Optional blocker while saving */}
+                            {isSavingUser && (
+                              <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] rounded-3xl z-20" />
+                            )}
 
-                      {/* User Cards Grid */}
-                      {!isLoading && (
-                        <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-cente gap-[15px]">
-                          {users.map((user) => (
-                            <div
-                              key={user._id || user.id}
-                              className="group relative bg-white w-[350px] border !border-[#f10a0a50] rounded-xl overflow-hidden shadow-sm hover:shadow-xl h-[170px] transition-all duration-300"
-                            >
-                              <div className="absolute top-0 left-0 w-full h-[40px] bg-[#ff000026]" />
-                              <div className="relative pt-3 px-4">
-                                <div className="flex justify-between items-start mb-4">
-                                  <div className="px-2 py-[2px] rounded-full text-[#c80404] border !border-[#f10a0aba] mt-[-9px] font-[500] text-[13px] shadow-md">
-                                    {user.roleId?.roleName}
-                                  </div>
-                                  <div className="relative">
-                                    <button
-                                      onClick={() => toggleCardMenu(user._id)}
-                                      className="p-2 rounded-full mt-[-10px] hover:bg-gray-100 transition-colors"
-                                    >
-                                      <MoreVertical size={18} className="text-gray-500" />
-                                    </button>
+                            <div className="relative">
+                              {/* Modal Header */}
+                              <div className="h-[53px] bs-spj rounded-t-3xl flex items-end">
+                                <div className="absolute top-3 right-4">
+                                  <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                                    disabled={isSavingUser}
+                                  >
+                                    <X size={20} className="text-white" />
+                                  </button>
+                                </div>
+                                <div className="px-[20px] relative top-[-10px] pt-[-20px] pb-0">
+                                  <h2 className="text-2xl font-bold text-white">{editingUser ? "Edit User" : "Create User"}</h2>
+                                </div>
+                              </div>
 
-                                    {activeCard === user._id && (
-                                      <div ref={cardMenuRef} className="absolute right-0 mt- w-48 bg-white rounded-xl shadow-xl z-10 border border-gray-100 overflow-hidden">
-                                        <div className="py-[3px]">
-                                          <button
-                                            onClick={() => handleopenmodal(user)}
-                                            className="block w-full text-left px-4 py-1.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
-                                          >
-                                            View details
-                                          </button>
-                                          {canUpdate && (
-                                            <button
-                                              onClick={() => {
-                                                setFormData({
-                                                  name: user.name,
-                                                  email: user.email,
-                                                  role: user.roleId?.roleName,
-                                                  password: "",
-                                                  loginEnabled: user.loginEnabled ?? true,
-                                                  avatar: user.avatar,
-                                                });
-                                                if (Array.isArray(user.companyId)) {
-                                                  const matched = companies.filter(c => user.companyId.includes(c._id));
-                                                  setSelectedCompanies(matched);
-                                                } else {
-                                                  setSelectedCompanies([]);
-                                                }
-                                                setScreenshot(user.avatar || null);
-                                                setEditingUser(user);
-                                                setIsModalOpen(true);
-                                              }}
-                                              className="block w-full text-left px-4 py-1.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
-                                            >
-                                              Edit User
-                                            </button>
-                                          )}
-                                          {canDelete && (
-                                            <button
-                                              onClick={async () => {
-                                                if (window.confirm("Are you sure you want to delete this user?")) {
-                                                  try {
-                                                    await ApiDelete(`/admin/role-user/${user._id}`);
-                                                    fetchUsers();
-                                                  } catch (err) {
-                                                    console.error("Delete error", err);
-                                                  }
-                                                }
-                                              }}
-                                              className="block w-full text-left px-4 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                            >
-                                              Delete User
-                                            </button>
-                                          )}
+                              <form onSubmit={handleAddUser}>
+                                <div className="p-6">
+                                  {/* Name & Email */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                      <label className="block text-gray-700 font-medium">
+                                        Name<span className="text-rose-500">*</span>
+                                      </label>
+                                      <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                          <User size={18} className="text-gray-400" />
                                         </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* User Info */}
-                                <div className="flex items-center gap-4">
-                                  <div className="!w-[54px] h-[54px] flex-shrink-0 rounded-2xl border-[1.5px] border-[#f10a0aba] overflow-hidden">
-                                    {user.avatar ? (
-                                      <img
-                                        src={user.avatar || "/placeholder.svg"}
-                                        alt={user.name}
-                                        className="w-full h-full object-cover rounded-xl"
-                                      />
-                                    ) : (
-                                      <div className="w-[54px] h-[54px] rounded-xl bg-white flex items-center justify-center">
-                                        <span className="text-3xl text-[#f10a0aba]">
-                                          {user.name?.charAt(0)?.toUpperCase() || "U"}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div>
-                                    <h3 className="font-semibold text-xl text-gray-800">{user.name}</h3>
-                                    <p className="text-gray-500 text-[13px] flex items-center gap-1.5">
-                                      <Mail size={14} className="text-[#f10a0aba]" />
-                                      {user.email}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Create / Edit User Modal */}
-                    {isModalOpen && (
-                      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
-                        <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn relative">
-                          {/* Optional blocker while saving */}
-                          {isSavingUser && (
-                            <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] rounded-3xl z-20" />
-                          )}
-
-                          <div className="relative">
-                            {/* Modal Header */}
-                            <div className="h-[53px] bs-spj rounded-t-3xl flex items-end">
-                              <div className="absolute top-3 right-4">
-                                <button
-                                  onClick={() => setIsModalOpen(false)}
-                                  className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                                  disabled={isSavingUser}
-                                >
-                                  <X size={20} className="text-white" />
-                                </button>
-                              </div>
-                              <div className="px-[20px] relative top-[-10px] pt-[-20px] pb-0">
-                                <h2 className="text-2xl font-bold text-white">{editingUser ? "Edit User" : "Create User"}</h2>
-                              </div>
-                            </div>
-
-                            <form onSubmit={handleAddUser}>
-                              <div className="p-6">
-                                {/* Name & Email */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="space-y-2">
-                                    <label className="block text-gray-700 font-medium">
-                                      Name<span className="text-rose-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <User size={18} className="text-gray-400" />
-                                      </div>
-                                      <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        placeholder="Enter User Name"
-                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 outline-none"
-                                        required
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <label className="block text-gray-700 font-medium">
-                                      Email<span className="text-rose-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Mail size={18} className="text-gray-400" />
-                                      </div>
-                                      <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="Enter User Email"
-                                        className="w-full pl-10 pr-4 py-3 outline-none rounded-xl border border-gray-300"
-                                        required
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Role + Login toggle */}
-                                <div className="grid grid-cols-1 items-center md:grid-cols-2 gap-6">
-                                  <div className="space-y-1 relative">
-                                    <label className="block text-gray-700 font-medium">
-                                      User Role<span className="text-rose-500">*</span>
-                                    </label>
-                                    <div
-                                      className="relative w-full border border-gray-300 rounded-xl px-4 py-3 bg-white cursor-pointer flex justify-between items-center"
-                                      onClick={() => setDropdownOpen(!isDropdownOpen)}
-                                    >
-                                      <span>{formData.role || "Select Role"}</span>
-                                      <ChevronDown className="text-gray-500" size={18} />
-                                    </div>
-
-                                    <AnimatePresence>
-                                      {isDropdownOpen && (
-                                        <motion.ul
-                                          initial={{ opacity: 0, y: -10 }}
-                                          animate={{ opacity: 1, y: 0 }}
-                                          exit={{ opacity: 0, y: -10 }}
-                                          className="absolute z-50 bg-white border border-gray-300 rounded-xl mt-2 w-full shadow-md max-h-[200px] overflow-y-auto"
-                                        >
-                                          {roles.map((role) => (
-                                            <li
-                                              key={role._id}
-                                              onClick={() => handleRoleSelect(role.roleName)}
-                                              className="px-4 py-2 hover:bg-gray-100 transition-colors cursor-pointer"
-                                            >
-                                              {role.roleName}
-                                            </li>
-                                          ))}
-                                        </motion.ul>
-                                      )}
-                                    </AnimatePresence>
-                                  </div>
-
-                                  <div className="flex items-center mt-[30px] space-x-3">
-                                    <label className="text-gray-700 font-medium">Login is enabled</label>
-                                    <div
-                                      className={`w-14 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 ${formData.loginEnabled ? "bs-spj" : "bg-gray-300"}`}
-                                      onClick={() => setFormData({ ...formData, loginEnabled: !formData.loginEnabled })}
-                                    >
-                                      <div
-                                        className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${formData.loginEnabled ? "translate-x-7" : ""}`}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Password */}
-                                {formData.loginEnabled && (
-                                  <div className=" w-full md:w-1/2">
-                                    <label className="block text-gray-700 font-medium">
-                                      Password<span className="text-rose-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Lock size={18} className="text-gray-400" />
-                                      </div>
-                                      <input
-                                        type={showPassword ? "text" : "password"}
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        placeholder="Enter Company Password"
-                                        className="w-full pl-10 pr-10 py-3 outline-none rounded-xl border border-gray-300"
-                                        required
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={togglePasswordVisibility}
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#c30404]"
-                                      >
-                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Avatar */}
-                                <div className="mt-6">
-                                  <label className="block text-gray-700 font-medium mb-2">Profile Picture</label>
-                                  <div className="mt-2">
-                                    <input
-                                      type="file"
-                                      ref={fileInputRef}
-                                      onChange={handleFileChange}
-                                      accept="image/*"
-                                      className="hidden"
-                                    />
-
-                                    {screenshot ? (
-                                      <div className="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
-                                        <img
-                                          src={screenshot || "/placeholder.svg"}
-                                          alt="Screenshot"
-                                          className="w-full h-full object-cover"
+                                        <input
+                                          type="text"
+                                          name="name"
+                                          value={formData.name}
+                                          onChange={handleChange}
+                                          placeholder="Enter User Name"
+                                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 outline-none"
+                                          required
                                         />
+                                      </div>
+                                    </div>
 
-                                        {/* overlay spinner while uploading */}
-                                        {isUploadingAvatar && (
-                                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                          </div>
+                                    <div className="space-y-2">
+                                      <label className="block text-gray-700 font-medium">
+                                        Email<span className="text-rose-500">*</span>
+                                      </label>
+                                      <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                          <Mail size={18} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                          type="email"
+                                          name="email"
+                                          value={formData.email}
+                                          onChange={handleChange}
+                                          placeholder="Enter User Email"
+                                          className="w-full pl-10 pr-4 py-3 outline-none rounded-xl border border-gray-300"
+                                          required
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Role + Login toggle */}
+                                  <div className="grid grid-cols-1 items-center md:grid-cols-2 gap-6">
+                                    <div className="space-y-1 relative">
+                                      <label className="block text-gray-700 font-medium">
+                                        User Role<span className="text-rose-500">*</span>
+                                      </label>
+                                      <div
+                                        className="relative w-full border border-gray-300 rounded-xl px-4 py-3 bg-white cursor-pointer flex justify-between items-center"
+                                        onClick={() => setDropdownOpen(!isDropdownOpen)}
+                                      >
+                                        <span>{formData.role || "Select Role"}</span>
+                                        <ChevronDown className="text-gray-500" size={18} />
+                                      </div>
+
+                                      <AnimatePresence>
+                                        {isDropdownOpen && (
+                                          <motion.ul
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="absolute z-50 bg-white border border-gray-300 rounded-xl mt-2 w-full shadow-md max-h-[200px] overflow-y-auto"
+                                          >
+                                            {roles.map((role) => (
+                                              <li
+                                                key={role._id}
+                                                onClick={() => handleRoleSelect(role.roleName)}
+                                                className="px-4 py-2 hover:bg-gray-100 transition-colors cursor-pointer"
+                                              >
+                                                {role.roleName}
+                                              </li>
+                                            ))}
+                                          </motion.ul>
                                         )}
+                                      </AnimatePresence>
+                                    </div>
 
+                                    <div className="flex items-center mt-[30px] space-x-3">
+                                      <label className="text-gray-700 font-medium">Login is enabled</label>
+                                      <div
+                                        className={`w-14 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 ${formData.loginEnabled ? "bs-spj" : "bg-gray-300"}`}
+                                        onClick={() => setFormData({ ...formData, loginEnabled: !formData.loginEnabled })}
+                                      >
+                                        <div
+                                          className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${formData.loginEnabled ? "translate-x-7" : ""}`}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Password */}
+                                  {formData.loginEnabled && (
+                                    <div className=" w-full md:w-1/2">
+                                      <label className="block text-gray-700 font-medium">
+                                        Password<span className="text-rose-500">*</span>
+                                      </label>
+                                      <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                          <Lock size={18} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                          type={showPassword ? "text" : "password"}
+                                          name="password"
+                                          value={formData.password}
+                                          onChange={handleChange}
+                                          placeholder="Enter Company Password"
+                                          className="w-full pl-10 pr-10 py-3 outline-none rounded-xl border border-gray-300"
+                                          required
+                                        />
                                         <button
                                           type="button"
-                                          onClick={() => {
-                                            if (isUploadingAvatar) return;
-                                            setScreenshot(null);
-                                            setFormData({ ...formData, avatar: null });
-                                          }}
-                                          className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
-                                          disabled={isUploadingAvatar}
+                                          onClick={togglePasswordVisibility}
+                                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#c30404]"
                                         >
-                                          <X size={16} />
+                                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                         </button>
                                       </div>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={handleScreenshotCapture}
-                                        className={`w-full h-36 border-2 border-dashed rounded-md flex flex-col items-center justify-center transition-colors ${isUploadingAvatar ? "border-gray-200 cursor-not-allowed opacity-70" : "border-red-200 hover:border-red-300"
-                                          }`}
-                                        disabled={isUploadingAvatar}
-                                      >
-                                        <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
-                                          {isUploadingAvatar ? (
-                                            <span className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                                          ) : (
-                                            <Upload size={24} className="text-red-500" />
+                                    </div>
+                                  )}
+
+                                  {/* Avatar */}
+                                  <div className="mt-6">
+                                    <label className="block text-gray-700 font-medium mb-2">Profile Picture</label>
+                                    <div className="mt-2">
+                                      <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        accept="image/*"
+                                        className="hidden"
+                                      />
+
+                                      {screenshot ? (
+                                        <div className="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
+                                          <img
+                                            src={screenshot || "/placeholder.svg"}
+                                            alt="Screenshot"
+                                            className="w-full h-full object-cover"
+                                          />
+
+                                          {/* overlay spinner while uploading */}
+                                          {isUploadingAvatar && (
+                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            </div>
                                           )}
+
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (isUploadingAvatar) return;
+                                              setScreenshot(null);
+                                              setFormData({ ...formData, avatar: null });
+                                            }}
+                                            className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                                            disabled={isUploadingAvatar}
+                                          >
+                                            <X size={16} />
+                                          </button>
                                         </div>
-                                        <span className="text-gray-600 font-medium">
-                                          {isUploadingAvatar ? "Uploading image..." : "Click to upload image"}
-                                        </span>
-                                        <span className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</span>
-                                      </button>
-                                    )}
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={handleScreenshotCapture}
+                                          className={`w-full h-36 border-2 border-dashed rounded-md flex flex-col items-center justify-center transition-colors ${isUploadingAvatar ? "border-gray-200 cursor-not-allowed opacity-70" : "border-red-200 hover:border-red-300"
+                                            }`}
+                                          disabled={isUploadingAvatar}
+                                        >
+                                          <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                                            {isUploadingAvatar ? (
+                                              <span className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                              <Upload size={24} className="text-red-500" />
+                                            )}
+                                          </div>
+                                          <span className="text-gray-600 font-medium">
+                                            {isUploadingAvatar ? "Uploading image..." : "Click to upload image"}
+                                          </span>
+                                          <span className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</span>
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              {/* Form Buttons */}
-                              <div className="flex justify-end space-x-4 p-6 border-t border-gray-100">
-                                <button
-                                  type="button"
-                                  onClick={() => setIsModalOpen(false)}
-                                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                                  disabled={isSavingUser}
-                                >
-                                  Cancel
-                                </button>
+                                {/* Form Buttons */}
+                                <div className="flex justify-end space-x-4 p-6 border-t border-gray-100">
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                                    disabled={isSavingUser}
+                                  >
+                                    Cancel
+                                  </button>
 
-                                <button
-                                  type="submit"
-                                  className={`px-6 py-2 bs-spj text-white rounded-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 ${isSavingUser || isUploadingAvatar ? "opacity-80 cursor-not-allowed" : ""
-                                    }`}
-                                  disabled={isSavingUser || isUploadingAvatar}
-                                >
-                                  {isSavingUser && (
-                                    <span className="w-4 h-4 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
-                                  )}
-                                  {editingUser
-                                    ? (isSavingUser ? "Updating..." : "Update")
-                                    : (isSavingUser ? "Creating..." : "Create")}
-                                </button>
-                              </div>
-                            </form>
+                                  <button
+                                    type="submit"
+                                    className={`px-6 py-2 bs-spj text-white rounded-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 ${isSavingUser || isUploadingAvatar ? "opacity-80 cursor-not-allowed" : ""
+                                      }`}
+                                    disabled={isSavingUser || isUploadingAvatar}
+                                  >
+                                    {isSavingUser && (
+                                      <span className="w-4 h-4 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
+                                    )}
+                                    {editingUser
+                                      ? (isSavingUser ? "Updating..." : "Update")
+                                      : (isSavingUser ? "Creating..." : "Create")}
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    {/* /Modal */}
+                      )}
+                      {/* /Modal */}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* View Data Modal */}
-        <NextUIModal onClose={handleClosemodal} isOpen={viewdatamodal}>
-          <ModalContent className="md:max-w-[750px] max-w-[733px] relative rounded-2xl z-[700] items-start flex justify-center !py-0 mx-auto h-[430px]">
-            {(handleClosemodal) => (
-              <>
-                <div className="bg-white w-[100%] font-Poppins  overflow-y-auto animate-fadeIn">
-                  <div className="relative">
-                    <div className="h-[53px] bs-spj rounded-t- flex items-end">
-                      <div className="absolute top-3 right-4">
-                        <button
-                          onClick={handleClosemodal}
-                          className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                        >
-                          <X size={20} className="text-white" />
-                        </button>
+          {/* View Data Modal */}
+          <NextUIModal onClose={handleClosemodal} isOpen={viewdatamodal}>
+            <ModalContent className="md:max-w-[750px] max-w-[733px] relative rounded-2xl z-[700] items-start flex justify-center !py-0 mx-auto h-[430px]">
+              {(handleClosemodal) => (
+                <>
+                  <div className="bg-white w-[100%] font-Poppins  overflow-y-auto animate-fadeIn">
+                    <div className="relative">
+                      <div className="h-[53px] bs-spj rounded-t- flex items-end">
+                        <div className="absolute top-3 right-4">
+                          <button
+                            onClick={handleClosemodal}
+                            className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                          >
+                            <X size={20} className="text-white" />
+                          </button>
+                        </div>
+                        <div className="px-[20px] relative top-[-10px] pt-[-20px] pb-0">
+                          <h2 className="text-2xl font-bold text-white">User Details</h2>
+                        </div>
                       </div>
-                      <div className="px-[20px] relative top-[-10px] pt-[-20px] pb-0">
-                        <h2 className="text-2xl font-bold text-white">User Details</h2>
-                      </div>
-                    </div>
 
-                    <div className="p-6 space-y-6 overflow-y-auto">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-500">Name<span className="text-red-500">*</span></p>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-500" />
-                            <p className="font-medium">{selectedUserData?.name}</p>
+                      <div className="p-6 space-y-6 overflow-y-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-500">Name<span className="text-red-500">*</span></p>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-gray-500" />
+                              <p className="font-medium">{selectedUserData?.name}</p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-500">Email<span className="text-red-500">*</span></p>
-                          <div className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                              <rect width="20" height="16" x="2" y="4" rx="2" />
-                              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                            </svg>
-                            <p className="font-medium">{selectedUserData?.email}</p>
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-500">Email<span className="text-red-500">*</span></p>
+                            <div className="flex items-center gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                                <rect width="20" height="16" x="2" y="4" rx="2" />
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                              </svg>
+                              <p className="font-medium">{selectedUserData?.email}</p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-500">User Role<span className="text-red-500">*</span></p>
-                          <p className="font-medium">{selectedUserData?.roleId?.roleName}</p>
-                        </div>
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-500">User Role<span className="text-red-500">*</span></p>
+                            <p className="font-medium">{selectedUserData?.roleId?.roleName}</p>
+                          </div>
 
-                        {/* <div className="space-y-2">
+                          {/* <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-500">Selected Companies</p>
                           <p className="font-medium">
                             {Array.isArray(selectedUserData?.companyId) ? selectedUserData?.companyId?.length : 1} selected
                           </p>
                         </div> */}
 
-                        {/* <div className="flex flex-wrap gap-2">
+                          {/* <div className="flex flex-wrap gap-2">
                           {Array.isArray(selectedUserData?.companyId)
                             ? selectedUserData?.companyId.map((c, idx) => (
                               <div key={idx} className="flex items-center gap-1 px-3 py-2 bg-gray-100 rounded-md border">
@@ -1017,7 +1042,7 @@ export default function UserManageMent() {
                           }
                         </div> */}
 
-                        {/* <div className="space-y-2">
+                          {/* <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-500">Password<span className="text-red-500">*</span></p>
                           <div className="flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
@@ -1031,38 +1056,38 @@ export default function UserManageMent() {
                           </div>
                         </div> */}
 
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-500">Login Status</p>
-                          <div className="flex items-center gap-2">
-                            <div className={`h-4 w-4 rounded-full ${selectedUserData?.loginEnabled ? "bg-green-500" : "bg-red-500"}`} />
-                            <p className="font-medium">{selectedUserData?.loginEnabled ? "Enabled" : "Disabled"}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-gray-500">Login Status</p>
+                            <div className="flex items-center gap-2">
+                              <div className={`h-4 w-4 rounded-full ${selectedUserData?.loginEnabled ? "bg-green-500" : "bg-red-500"}`} />
+                              <p className="font-medium">{selectedUserData?.loginEnabled ? "Enabled" : "Disabled"}</p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-500">Profile Picture</p>
-                          <div className="border rounded-lg p-8 flex flex-col items-center justify-center bg-gray-50">
-                            {selectedUserData?.profilePicture ? (
-                              <img
-                                src={selectedUserData?.profilePicture || "/placeholder.svg"}
-                                alt="Profile"
-                                className="h-24 w-24 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
-                                <User className="h-12 w-12 text-gray-400" />
-                              </div>
-                            )}
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-500">Profile Picture</p>
+                            <div className="border rounded-lg p-8 flex flex-col items-center justify-center bg-gray-50">
+                              {selectedUserData?.profilePicture ? (
+                                <img
+                                  src={selectedUserData?.profilePicture || "/placeholder.svg"}
+                                  alt="Profile"
+                                  className="h-24 w-24 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <User className="h-12 w-12 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
-          </ModalContent>
-        </NextUIModal>
+                </>
+              )}
+            </ModalContent>
+          </NextUIModal>
       </section>
     </>
   )

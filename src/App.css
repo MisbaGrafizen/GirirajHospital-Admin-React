@@ -350,13 +350,22 @@ box-shadow: 1px 1px 3px #cfe9f6 ,-1px -1px 3px #eef7fb;
 
 
 
+.css-jxda4w-MuiChartsLegend-root {
+
+  gap: 10px !important;
+  display: none !important;
+}
 
 
 
+.css-g2sgfh-MuiChartsGrid-root {
 
+  margin-left: -20px !important;
+}
 
-
-
+.css-15bzvwd-MuiChartsSurface-root{
+    margin-left: -20px !important;
+}
 
 
 

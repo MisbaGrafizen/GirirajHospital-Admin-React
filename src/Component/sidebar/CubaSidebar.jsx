@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import {
   Gauge,
   Wallet,
@@ -10,6 +10,7 @@ import {
   Users,
   Menu,
   ChevronRight,
+
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion"
 import logofevicon from "../../../public/imges/fevicon.png"
@@ -54,7 +55,8 @@ function resolvePermissions() {
 
 
 const CubaSidebar = () => {
-  const [expandedMenu, setExpandedMenu] = useState("dashboards");
+const [expandedMenu, setExpandedMenu] = useState(["dashboards"]);
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,303 +80,311 @@ const CubaSidebar = () => {
     </svg>
   )
 
-  const WidgetsIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-    </svg>
-  )
-
-  const PageLayoutIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <line x1="9" y1="9" x2="15" y2="9" />
-      <line x1="9" y1="12" x2="15" y2="12" />
-      <line x1="9" y1="15" x2="15" y2="15" />
-    </svg>
-  )
-
-  const ProjectsIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
-    </svg>
-  )
-
-  const FileManagerIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-    </svg>
-  )
-
-  const KanbanIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12.89 1.45l8 4A2 2 0 0 1 22 7.24v9.53a2 2 0 0 1-1.11 1.79l-8 4a2 2 0 0 1-1.78 0l-8-4a2 2 0 0 1-1.11-1.79V7.24a2 2 0 0 1 1.11-1.79l8-4a2 2 0 0 1 1.78 0z" />
-    </svg>
-  )
-
-  const EcommerceIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 0 1-8 0" />
-    </svg>
-  )
-
-  const MailIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-      <polyline points="22,6 12,13 2,6" />
-    </svg>
-  )
-
-  const ChatIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  )
-
-  const UsersIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
-
   const ReportsIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14,2 14,8 20,8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10,9 9,9 8,9" />
-    </svg>
-  )
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M3 3h18v18H3z" /> {/* outer box */}
+    <path d="M7 8h10M7 12h6M7 16h8" /> {/* report lines */}
+  </svg>
+);
 
-  const BookmarksIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-    </svg>
-  )
+const ChevronRightIcon = () => ( <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"> <polyline points="9,18 15,12 9,6" /> </svg> )
 
-  const SupportIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
-  )
 
-  const CalendarIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  )
+  // const menuSections = [
+  //   {
+  //     title: roleName,
+  //     items: [
+  //       {
+  //         id: "dashboards",
+  //         label: "FeedBacks",
+  //         icon: React.createElement(HomeIcon),
+  //         // badge: "13",
+  //         hasSubmenu: true,
+  //         href: "/dashboards",
+  //         submenu: [
+  //           { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
+  //           { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
+  //           { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
+  //           { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
+  //           { id: "crypto", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faChartLine },
+  //           { id: "nft", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
+  //           ...(isAdmin
+  //             ? [
+  //               { id: "bed", label: "Bed Manage", href: "/settings/bed-manage", icon: faBed },
+  //                        { id: "pos", label: "TAT", href: "/dashboards/tat-view", icon: faStopwatch },
+  //               { id: "school-management", label: "Role Mana..", href: "/settings/role-manage", icon: faUserShield },
+  //               { id: "pos", label: "User Mana..", href: "/settings/user-manage", icon: faUsersCog },
+  //             ]
+  //             : []),
+  //         ]
 
-  const ChevronRightIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="9,18 15,12 9,6" />
-    </svg>
-  )
+  //       },
+  //       // {
+  //       //   id: "widgets",
+  //       //   label: "Widgets",
+  //       //   icon: React.createElement(WidgetsIcon),
+  //       //   hasSubmenu: true,
+  //       //   href: "/widgets",
+  //       //   submenu: [
+  //       //     { id: "chart-widgets", label: "Chart Widgets", href: "/widgets/charts" },
+  //       //     { id: "data-widgets", label: "Data Widgets", href: "/widgets/data" },
+  //       //     { id: "ui-widgets", label: "UI Widgets", href: "/widgets/ui" },
+  //       //   ],
+  //       // },
+  //       // {
+  //       //   id: "page-layout",
+  //       //   label: "Page Layout",
+  //       //   icon: React.createElement(PageLayoutIcon),
+  //       //   hasSubmenu: true,
+  //       //   href: "/page-layout",
+  //       //   submenu: [
+  //       //     { id: "boxed", label: "Boxed Layout", href: "/page-layout/boxed" },
+  //       //     { id: "full-width", label: "Full Width", href: "/page-layout/full-width" },
+  //       //     { id: "sidebar-layout", label: "Sidebar Layout", href: "/page-layout/sidebar" },
+  //       //   ],
+  //       // },
+  //     ],
+  //   },
+  //   // {
+  //   //   title: "APPLICATIONS",
+  //   //   items: [
+  //   //     {
+  //   //       id: "projects",
+  //   //       label: "Projects",
+  //   //       icon: React.createElement(ProjectsIcon),
+  //   //       hasSubmenu: true,
+  //   //       href: "/projects",
+  //   //       submenu: [
+  //   //         { id: "project-list", label: "Project List", href: "/projects/list" },
+  //   //         { id: "project-details", label: "Project Details", href: "/projects/details" },
+  //   //         { id: "create-project", label: "Create Project", href: "/projects/create" },
+  //   //       ],
+  //   //     },
+  //   //     {
+  //   //       id: "file-manager",
+  //   //       label: "File Manager",
+  //   //       icon: React.createElement(FileManagerIcon),
+  //   //       href: "/file-manager",
+  //   //     },
+  //   //     {
+  //   //       id: "kanban-board",
+  //   //       label: "Kanban Board",
+  //   //       icon: React.createElement(KanbanIcon),
+  //   //       href: "/kanban-board",
+  //   //     },
+  //   //     {
+  //   //       id: "ecommerce",
+  //   //       label: "Ecommerce",
+  //   //       icon: React.createElement(EcommerceIcon),
+  //   //       hasSubmenu: true,
+  //   //       href: "/ecommerce",
+  //   //       submenu: [
+  //   //         { id: "products", label: "Products", href: "/ecommerce/products" },
+  //   //         { id: "orders", label: "Orders", href: "/ecommerce/orders" },
+  //   //         { id: "customers", label: "Customers", href: "/ecommerce/customers" },
+  //   //       ],
+  //   //     },
+  //   //     {
+  //   //       id: "mail-box",
+  //   //       label: "Mail Box",
+  //   //       icon: React.createElement(MailIcon),
+  //   //       href: "/mail-box",
+  //   //     },
+  //   //     {
+  //   //       id: "chat",
+  //   //       label: "Chat",
+  //   //       icon: React.createElement(ChatIcon),
+  //   //       hasSubmenu: true,
+  //   //       href: "/chat",
+  //   //       submenu: [
+  //   //         { id: "private-chat", label: "Private Chat", href: "/chat/private" },
+  //   //         { id: "group-chat", label: "Group Chat", href: "/chat/group" },
+  //   //       ],
+  //   //     },
+  //   //     {
+  //   //       id: "users",
+  //   //       label: "Users",
+  //   //       icon: React.createElement(UsersIcon),
+  //   //       hasSubmenu: true,
+  //   //       href: "/users",
+  //   //       submenu: [
+  //   //         { id: "user-list", label: "User List", href: "/users/list" },
+  //   //         { id: "user-profile", label: "User Profile", href: "/users/profile" },
+  //   //         { id: "user-settings", label: "User Settings", href: "/users/settings" },
+  //   //       ],
+  //   //     },
+  //   //     {
+  //   //       id: "reports",
+  //   //       label: "Reports",
+  //   //       icon: React.createElement(ReportsIcon),
+  //   //       hasSubmenu: true,
+  //   //       isNew: true,
+  //   //       href: "/reports",
+  //   //       submenu: [
+  //   //         { id: "sales-report", label: "Sales Report", href: "/reports/sales" },
+  //   //         { id: "user-report", label: "User Report", href: "/reports/users" },
+  //   //         { id: "financial-report", label: "Financial Report", href: "/reports/financial" },
+  //   //       ],
+  //   //     },
+  //   //     {
+  //   //       id: "bookmarks",
+  //   //       label: "Bookmarks",
+  //   //       icon: React.createElement(BookmarksIcon),
+  //   //       href: "/bookmarks",
+  //   //     },
+  //   //     {
+  //   //       id: "support",
+  //   //       label: "Support",
+  //   //       icon: React.createElement(SupportIcon),
+  //   //       href: "/support",
+  //   //     },
+  //   //     {
+  //   //       id: "calendar",
+  //   //       label: "Calendar",
+  //   //       icon: React.createElement(CalendarIcon),
+  //   //       href: "/calendar",
+  //   //     },
+  //   //   ],
+  //   // },
+  // ]
 
-  const GridIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-    </svg>
-  )
 
-  const MenuIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  )
+
+
+  // Grouped route mappings for sidebar highlight
+const ROUTE_GROUPS = {
+  "/dashboards/ipd-feedback": [
+    "/dashboards/ipd-all-list",
+    "/ipd-feedback-details",
+    "/dashboards/ipd-list",
+    "/dashboards/ipd-edit",
+  ],
+  "/dashboards/opd-feedback": [
+    "/dashboards/opd-all-list",
+    "/dashboards/opd-list",
+    "/opd-feedback-details",
+  ],
+  "/dashboards/complaint-dashboard": [
+    "/complaint-details",
+    "/dashboards/complain-all-list",
+  ],
+  "/reports/nps-reports": [
+    "/reports/nps-all-list",
+  ],
+
+
+};
+
 
 
   const menuSections = [
-    {
-      title: roleName,
-      items: [
+  {
+    title: roleName,
+    items: [
+      {
+        id: "dashboards",
+        label: "FeedBacks",
+        icon: React.createElement(HomeIcon),
+        hasSubmenu: true,
+        href: "/dashboards",
+        submenu: [
+          { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
+          { id: "opd", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
+          { id: "ipd", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
+          { id: "complaints", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
+          { id: "complaintsintern", label: "Internal Comps. ", href: "/internal-complint-list", icon: faListAlt },
+        ],
+      },
+
         {
-          id: "dashboards",
-          label: "FeedBacks",
-          icon: React.createElement(HomeIcon),
-          // badge: "13",
-          hasSubmenu: true,
-          href: "/dashboards",
-          submenu: [
-            { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
-            { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
-            { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
-            { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
-            { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard", icon: faChartLine },
-            { id: "nft", label: "Executive Report", href: "/dashboards/executive-report", icon: faFileAlt },
-            ...(isAdmin
-              ? [
-                { id: "bed", label: "Bed Manage", href: "/dashboards/bed-manage", icon: faBed },
-                         { id: "pos", label: "TAT", href: "/dashboards/tat-view", icon: faStopwatch },
-                { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage", icon: faUserShield },
-                { id: "pos", label: "User Mana..", href: "/dashboards/user-manage", icon: faUsersCog },
-              ]
-              : []),
-          ]
+        id: "reports",
+        label: "Reports",
+        icon:  React.createElement(ReportsIcon),
+        hasSubmenu: true,
+        href: "/reports",
+        submenu: [
+          { id: "nps", label: "Nps Reports", href: "/reports/nps-reports", icon: faChartLine },
+          { id: "executive", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
 
-        },
-        // {
-        //   id: "widgets",
-        //   label: "Widgets",
-        //   icon: React.createElement(WidgetsIcon),
-        //   hasSubmenu: true,
-        //   href: "/widgets",
-        //   submenu: [
-        //     { id: "chart-widgets", label: "Chart Widgets", href: "/widgets/charts" },
-        //     { id: "data-widgets", label: "Data Widgets", href: "/widgets/data" },
-        //     { id: "ui-widgets", label: "UI Widgets", href: "/widgets/ui" },
-        //   ],
-        // },
-        // {
-        //   id: "page-layout",
-        //   label: "Page Layout",
-        //   icon: React.createElement(PageLayoutIcon),
-        //   hasSubmenu: true,
-        //   href: "/page-layout",
-        //   submenu: [
-        //     { id: "boxed", label: "Boxed Layout", href: "/page-layout/boxed" },
-        //     { id: "full-width", label: "Full Width", href: "/page-layout/full-width" },
-        //     { id: "sidebar-layout", label: "Sidebar Layout", href: "/page-layout/sidebar" },
-        //   ],
-        // },
-      ],
-    },
-    // {
-    //   title: "APPLICATIONS",
-    //   items: [
-    //     {
-    //       id: "projects",
-    //       label: "Projects",
-    //       icon: React.createElement(ProjectsIcon),
-    //       hasSubmenu: true,
-    //       href: "/projects",
-    //       submenu: [
-    //         { id: "project-list", label: "Project List", href: "/projects/list" },
-    //         { id: "project-details", label: "Project Details", href: "/projects/details" },
-    //         { id: "create-project", label: "Create Project", href: "/projects/create" },
-    //       ],
-    //     },
-    //     {
-    //       id: "file-manager",
-    //       label: "File Manager",
-    //       icon: React.createElement(FileManagerIcon),
-    //       href: "/file-manager",
-    //     },
-    //     {
-    //       id: "kanban-board",
-    //       label: "Kanban Board",
-    //       icon: React.createElement(KanbanIcon),
-    //       href: "/kanban-board",
-    //     },
-    //     {
-    //       id: "ecommerce",
-    //       label: "Ecommerce",
-    //       icon: React.createElement(EcommerceIcon),
-    //       hasSubmenu: true,
-    //       href: "/ecommerce",
-    //       submenu: [
-    //         { id: "products", label: "Products", href: "/ecommerce/products" },
-    //         { id: "orders", label: "Orders", href: "/ecommerce/orders" },
-    //         { id: "customers", label: "Customers", href: "/ecommerce/customers" },
-    //       ],
-    //     },
-    //     {
-    //       id: "mail-box",
-    //       label: "Mail Box",
-    //       icon: React.createElement(MailIcon),
-    //       href: "/mail-box",
-    //     },
-    //     {
-    //       id: "chat",
-    //       label: "Chat",
-    //       icon: React.createElement(ChatIcon),
-    //       hasSubmenu: true,
-    //       href: "/chat",
-    //       submenu: [
-    //         { id: "private-chat", label: "Private Chat", href: "/chat/private" },
-    //         { id: "group-chat", label: "Group Chat", href: "/chat/group" },
-    //       ],
-    //     },
-    //     {
-    //       id: "users",
-    //       label: "Users",
-    //       icon: React.createElement(UsersIcon),
-    //       hasSubmenu: true,
-    //       href: "/users",
-    //       submenu: [
-    //         { id: "user-list", label: "User List", href: "/users/list" },
-    //         { id: "user-profile", label: "User Profile", href: "/users/profile" },
-    //         { id: "user-settings", label: "User Settings", href: "/users/settings" },
-    //       ],
-    //     },
-    //     {
-    //       id: "reports",
-    //       label: "Reports",
-    //       icon: React.createElement(ReportsIcon),
-    //       hasSubmenu: true,
-    //       isNew: true,
-    //       href: "/reports",
-    //       submenu: [
-    //         { id: "sales-report", label: "Sales Report", href: "/reports/sales" },
-    //         { id: "user-report", label: "User Report", href: "/reports/users" },
-    //         { id: "financial-report", label: "Financial Report", href: "/reports/financial" },
-    //       ],
-    //     },
-    //     {
-    //       id: "bookmarks",
-    //       label: "Bookmarks",
-    //       icon: React.createElement(BookmarksIcon),
-    //       href: "/bookmarks",
-    //     },
-    //     {
-    //       id: "support",
-    //       label: "Support",
-    //       icon: React.createElement(SupportIcon),
-    //       href: "/support",
-    //     },
-    //     {
-    //       id: "calendar",
-    //       label: "Calendar",
-    //       icon: React.createElement(CalendarIcon),
-    //       href: "/calendar",
-    //     },
-    //   ],
-    // },
-  ]
+        ],
+      },
+      {
+        id: "settings",
+        label: "Settings",
+        icon:  React.createElement(Settings),
+        hasSubmenu: true,
+        href: "/settings",
+        submenu: [
+          { id: "bed-manage", label: "Bed Manager", href: "/settings/bed-manage", icon: faBed },
+          { id: "user-manage", label: "User Management", href: "/settings/user-manage", icon: faUsersCog },
+          { id: "role-manage", label: "Role Management", href: "/settings/role-manage", icon: faUserShield },
+        ],
+      },
+    ],
+  },
+];
 
-  const handleMenuClick = (item) => {
-    if (item.hasSubmenu) {
-      setExpandedMenu(item.id); // always switch, never null
+const handleMenuClick = (item) => {
+  if (!item.hasSubmenu) {
+    navigate(item.href);
+    return;
+  }
+
+  setExpandedMenu((prev) => {
+    if (prev.includes(item.id)) {
+      // collapse if already open
+      return prev.filter((id) => id !== item.id);
     } else {
-      navigate(item.href);
-      setExpandedMenu("dashboards"); // fallback stays expanded
+      // open new one while keeping others open
+      return [...prev, item.id];
     }
-  };
+  });
+};
 
 
-  const handleSubmenuClick = (href) => {
-    navigate(href)
+
+const handleSubmenuClick = (href, parentId) => {
+  navigate(href);
+  setExpandedMenu(parentId); // ✅ keep only that section open
+};
+
+const isActive = (href) => {
+  const path = location.pathname;
+
+  // ✅ Check direct or nested route
+  if (path === href || path.startsWith(href + "/")) return true;
+
+  // ✅ Check custom route groups
+  if (ROUTE_GROUPS[href]) {
+    return ROUTE_GROUPS[href].some((subPath) =>
+      path.startsWith(subPath)
+    );
   }
 
-  const isActive = (href) => {
-    return location.pathname === href || location.pathname.startsWith(href + "/");
-  }
+  return false;
+};
+
+
+
+
+
+
+
+useEffect(() => {
+  const currentPath = location.pathname;
+  let openMenus = ["dashboards"];
+  if (currentPath.startsWith("/reports")) openMenus = ["reports"];
+  else if (currentPath.startsWith("/settings")) openMenus = ["settings"];
+  else if (currentPath.startsWith("/dashboards")) openMenus = ["dashboards"];
+  setExpandedMenu(openMenus);
+}, [location.pathname]);
 
   const isSubmenuActive = (submenu) => {
     return submenu.some((item) => isActive(item.href))
@@ -385,6 +395,25 @@ const CubaSidebar = () => {
     if (item.submenu && isSubmenuActive(item.submenu)) return true
     return false
   }
+useEffect(() => {
+  const currentPath = location.pathname;
+
+  // start with feedbacks always open
+  let openMenus = ["dashboards"];
+
+  if (currentPath.startsWith("/reports")) {
+    openMenus = ["reports"]; // only reports open
+  } 
+  else if (currentPath.startsWith("/settings")) {
+    openMenus = ["settings"]; // only settings open
+  } 
+  else if (currentPath.startsWith("/dashboards") || currentPath.startsWith("/feedbacks")) {
+    openMenus = ["dashboards"]; // keep feedbacks open
+  }
+
+  setExpandedMenu(openMenus);
+}, [location.pathname]);
+
 
   const toggleSidebar = () => {
     setIsCollapsed((prev) => !prev);
@@ -460,20 +489,30 @@ const CubaSidebar = () => {
     // { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
     // { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
     // { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
-    // { id: "crypto", label: "Nps Dashboard", href: "/dashboards/nps-dashboard", icon: faChartLine },
-    { id: "nft", label: "Executive Report", href: "/dashboards/executive-report", icon: faFileAlt },
-    { id: "school-management", label: "Role Mana..", href: "/dashboards/role-manage", icon: faUserShield },
-    { id: "pos", label: "User Mana..", href: "/dashboards/user-manage", icon: faUsersCog },
+    // { id: "crypto", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faChartLine },
+    { id: "nft", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
+    { id: "school-management", label: "Role Mana..", href: "/settings/role-manage", icon: faUserShield },
+    { id: "pos", label: "User Mana..", href: "/settings/user-manage", icon: faUsersCog },
   ]
 
-   const handleLogout = () => {
-    // 🔥 Clear everything from localStorage and sessionStorage
-    localStorage.clear();
-    sessionStorage.clear();
+const handleLogout = () => {
+  const savedIdentifier = localStorage.getItem("savedIdentifier");
+  const savedPassword = localStorage.getItem("savedPassword");
+  const rememberMe = localStorage.getItem("rememberMe");
 
-    // Redirect to login
-    navigate("/");
-  };
+  localStorage.clear();
+  sessionStorage.clear();
+
+  if (rememberMe === "true" && savedIdentifier) {
+    localStorage.setItem("savedIdentifier", savedIdentifier);
+    if (savedPassword) localStorage.setItem("savedPassword", savedPassword);
+    localStorage.setItem("rememberMe", "true");
+  }
+
+  navigate("/");
+};
+
+
 
   return (
     <>
@@ -481,7 +520,7 @@ const CubaSidebar = () => {
       <div className="   md34:!hidden md11:!flex relative  h-screen bg-gray-50">
         {/* Sidebar */}
         <motion.div
-          className="bg-white shadow-sm flex flex-col border-r  min-w-[220px]   border-gray-200 relative"
+          className="bg-white shadow-sm flex flex-col border-r  min-w-[190px]   border-gray-200 relative"
           // variants={sidebarVariants}
           animate={isCollapsed ? "collapsed" : "expanded"}
           initial={false}
@@ -496,33 +535,33 @@ const CubaSidebar = () => {
                     <motion.span
                       className="text-xl font-bold text-gray-800 tracking-tight"
                       variants={contentVariants}
-                    // initial="collapsed"
-                    // animate="expanded"
-                    // exit="collapsed"
+                 
                     >
-                      <img className=" w-[160px] mx-auto !ml-[20px] h-[60px] object-contain" src={textlogo} />
+                      <img className=" w-[160px] mx-auto !ml-[7px] h-[60px] object-contain" src={textlogo} />
                     </motion.span>
                   )}
                 </AnimatePresence>
               </div>
-              {/* <button onClick={toggleSidebar} className="p-1.5 rounded-md  hover:bg-gray-100 transition-colors">
-                {isCollapsed ? React.createElement(MenuIcon) : React.createElement(GridIcon)}
-              </button> */}
+           
             </div>
           </div>
 
+      <button
+  onClick={() => window.open("https://internal.grafizen.com", "_blank")} // ✅ opens in new tab
+  className="w-[80%] mx-auto gap-[10px] flex justify-center items-center font-[500] mt-[6px] py-[7px] bg-red-600 text-white rounded-lg text-sm hover:opacity-90 transition"
+>
+  <i className="fa-solid fa-plus"></i> Complaint
+</button>
+
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto py-4">
+          <div className="flex-1 overflow-y-auto max-h-[75vh] pb-4 pt-[10px]">
             {menuSections.map((section, sectionIndex) => (
               <div key={section.title} className={sectionIndex > 0 ? "mt-8" : ""}>
                 <AnimatePresence>
                   {!isCollapsed && (
                     <motion.div
                       className="px-6 mb-2"
-                    // variants={contentVariants}
-                    // initial="collapsed"
-                    // animate="expanded"
-                    // exit="collapsed"
+           
                     >
                       <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{section.title}</h3>
                     </motion.div>
@@ -532,7 +571,7 @@ const CubaSidebar = () => {
                 <nav className="space-y-1 px-2">
                   {section.items.map((item) => {
                     const mainActive = isMainMenuActive(item)
-                    const expanded = expandedMenu === item.id
+        const expanded = expandedMenu.includes(item.id);
 
                     return (
                       <div key={item.id} className="relative">
@@ -600,14 +639,14 @@ const CubaSidebar = () => {
                               // exit="collapsed"
                               className="overflow-hidden"
                             >
-                              <div className="ml-6 mt-1 border-l border-gray-200 pl-4 space-y-1">
+                              <div className="ml-7px] mt-1 border-l border-gray-200 pl-4 space-y-1">
                                 {item.submenu?.map((subItem, index) => (
                                   <div key={subItem.id} className="relative">
                                     {/* Connecting line */}
                                     <div className="absolute -left-4 top-3 w-3 h-px bg-gray-200"></div>
 
                                     <motion.button
-                                      onClick={() => handleSubmenuClick(subItem.href)}
+                        onClick={() => handleSubmenuClick(subItem.href, item.id)}
                                       className={`w-full flex items-center pl-[10px] gap-[8px] py-2 text-sm rounded-md transition-colors ${isActive(subItem.href)
                                         ? "bg-blue-50 text-blue-700 font-medium"
                                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -622,7 +661,7 @@ const CubaSidebar = () => {
                                         : "!text-gray-200"
                                         }`} />
                                       )}
-                                      <span className="flex-1 flex-shrink-0 text-left">{subItem.label}</span>
+                                      <span className="flex-1 flex-shrink-0 text-[13px] text-left">{subItem.label}</span>
                                       {subItem.isNew && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 ml-2">
                                           New
@@ -646,10 +685,10 @@ const CubaSidebar = () => {
         </motion.div>
 
 
-        <div className="bg-gradient-to-br left-0 right-0 mx-auto  absolute md11:!bottom-[10%] cursor-pointer   w-[130px] font-[600] items-center gap-[10px] text-[16px] rounded-[8px]   h-[35px] flex  justify-center  from-purple-400 to-blue-500  text-[#fff]  "
+        {/* <div className="bg-gradient-to-br left-0 right-0 mx-auto  absolute md11:!bottom-[15%] cursor-pointer   w-[130px] font-[600] items-center gap-[10px] text-[16px] rounded-[8px]   h-[35px] flex  justify-center  from-purple-400 to-blue-500  text-[#fff]  "
           onClick={handleLogout}>
           <i className="fa-solid fa-left-from-bracket"></i> Log Out
-        </div>
+        </div> */}
       </div>
 
 

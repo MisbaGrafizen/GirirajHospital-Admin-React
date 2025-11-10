@@ -16,8 +16,8 @@ const DEPT_COLORS = {
 
 
 const chartSetting = {
-  yAxis: [{ label: "Complaints", width: 25 }],
-  height: 300,
+  yAxis: [{ label: "Complaints", width:20 }],
+  height: 260,
 };
 
 export default function SimpleBarChart({ trendData }) {

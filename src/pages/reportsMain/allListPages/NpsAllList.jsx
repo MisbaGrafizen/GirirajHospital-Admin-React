@@ -3,6 +3,7 @@ import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import { ApiGet } from '../../../helper/axios'
+import { User, Bed, Stethoscope, Smile, Meh, Frown } from "lucide-react"
 
 const pick = (...vals) => vals.find((v) => v != null && v !== "") ?? "-"
 
@@ -41,25 +42,25 @@ function categoryFromRating(r) {
 
 export default function NpsAllList() {
 
-      const [department, setDepartment] = useState("Both")
-      const [doctor, setDoctor] = useState("All Doctors")
-      const [room, setRoom] = useState("All Rooms")
-       const [rawOpd, setRawOpd] = useState([])
+  const [department, setDepartment] = useState("Both")
+  const [doctor, setDoctor] = useState("All Doctors")
+  const [room, setRoom] = useState("All Rooms")
+  const [rawOpd, setRawOpd] = useState([])
   const [rawIpd, setRawIpd] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-    const [query, setQuery] = useState("")
+  const [query, setQuery] = useState("")
   const [showDetractors, setShowDetractors] = useState(true)
   const [showPassives, setShowPassives] = useState(true)
   const [showPromoters, setShowPromoters] = useState(true)
-    const [dateFrom, setDateFrom] = useState(() => {
-      const d = new Date()
-      d.setDate(d.getDate() - 14)
-      return d.toISOString().slice(0, 10)
-    })
-    const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10))
-    
- useEffect(() => {
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 14)
+    return d.toISOString().slice(0, 10)
+  })
+  const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10))
+
+  useEffect(() => {
     ; (async () => {
       try {
         setLoading(true)
@@ -78,12 +79,12 @@ export default function NpsAllList() {
     })()
   }, [])
 
-      const baseRecords = useMemo(() => {
-        const wantOPD = department === "OPD" || department === "Both"
-        const wantIPD = department === "IPD" || department === "Both"
-        const doctorFilter = doctor !== "All Doctors" ? doctor.toLowerCase() : null
-    
-        const project = (list, dept) => {
+  const baseRecords = useMemo(() => {
+    const wantOPD = department === "OPD" || department === "Both"
+    const wantIPD = department === "IPD" || department === "Both"
+    const doctorFilter = doctor !== "All Doctors" ? doctor.toLowerCase() : null
+
+    const project = (list, dept) => {
       if (!Array.isArray(list)) return []
       return list
         .map((d) => {
@@ -107,111 +108,164 @@ export default function NpsAllList() {
         })
         .filter(Boolean)
     }
-    
-        let recs = []
-        if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"))
-        if (wantIPD) recs = recs.concat(project(rawIpd, "IPD"))
-        // stable chronology for table
-        return recs.sort((a, b) => a.date.localeCompare(b.date) || a.datetime.localeCompare(b.datetime))
-      }, [rawOpd, rawIpd, department, doctor, dateFrom, dateTo])
 
-      const filteredRecords = useMemo(() => {
-        return baseRecords.filter((r) => {
-          if (room !== "All Rooms" && r.room !== room) return false
-          if (query) {
-            const q = query.toLowerCase()
-            const match =
-              r.patient.toLowerCase().includes(q) ||
-              r.room.toLowerCase().includes(q) ||
-              r.doctor.toLowerCase().includes(q) ||
-              r.comment.toLowerCase().includes(q)
-            if (!match) return false
-          }
-          if (r.category === "Detractor" && !showDetractors) return false
-          if (r.category === "Passive" && !showPassives) return false
-          if (r.category === "Promoter" && !showPromoters) return false
-          return true
-        })
-      }, [baseRecords, room, query, showDetractors, showPassives, showPromoters])
+    let recs = []
+    if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"))
+    if (wantIPD) recs = recs.concat(project(rawIpd, "IPD"))
+    // stable chronology for table
+    return recs.sort((a, b) => a.date.localeCompare(b.date) || a.datetime.localeCompare(b.datetime))
+  }, [rawOpd, rawIpd, department, doctor, dateFrom, dateTo])
+
+  const filteredRecords = useMemo(() => {
+    return baseRecords.filter((r) => {
+      if (room !== "All Rooms" && r.room !== room) return false
+      if (query) {
+        const q = query.toLowerCase()
+        const match =
+          r.patient.toLowerCase().includes(q) ||
+          r.room.toLowerCase().includes(q) ||
+          r.doctor.toLowerCase().includes(q) ||
+          r.comment.toLowerCase().includes(q)
+        if (!match) return false
+      }
+      if (r.category === "Detractor" && !showDetractors) return false
+      if (r.category === "Passive" && !showPassives) return false
+      if (r.category === "Promoter" && !showPromoters) return false
+      return true
+    })
+  }, [baseRecords, room, query, showDetractors, showPassives, showPromoters])
 
   return (
- <>
+    <>
 
 
 
 
 
-          <section className="flex w-[100%] h-[100%] select-none   md11:pr-[15px] overflow-hidden">
+      <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Nps All Record"  />
+          <Header pageName="Nps All Record" />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
-          <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px]  py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
-             <div>
+              <div>
+             <div className="flex items-center justify-end px-3  pb-[10px]  top-0 z-10">
+                <div className="relative">
+                  <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="text"
+                    placeholder="Search Nps ... "
+                    // value={searchTerm}
+                    // onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-3 py-2 w-[230px] border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+        
 
-       <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-100">
-                            {filteredRecords
-                              .map((rec, idx) => (
-                                <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                                  <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
-                                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
-                                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
-                                  <td className="px-4 py-3 text-sm">
-                                    <span
-                                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
-                                        ? "bg-emerald-100 text-emerald-800"
-                                        : rec.category === "Passive"
-                                          ? "bg-amber-100 text-amber-800"
-                                          : "bg-red-100 text-red-800"
-                                        }`}
-                                    >
-                                      {rec.category}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
-                                </tr>
-                              ))}
-                            {filteredRecords.length === 0 && (
-                              <tr>
-                                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                                  No records match your filters.
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
-                        <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
-                        {/* <span className="text-gray-500">Colors: Promoter (green), Passive (yellow), Detractor (red)</span> */}
-                      </div>
-                    </div>
-     
-             </div>
+<div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[100%] mx-auto md11:!mb-[0px] border-gray-100 overflow-hidden">
+  <div className="overflow-x-auto">
+    <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[80px]">SR No</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[190px]">Date & Time</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[250px]">Patient Name</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">Room No</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[230px]">Doctor Name</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">NPS Rating</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
+          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
+        </tr>
+      </thead>
+
+      <tbody className="bg-white divide-y divide-gray-100">
+        {filteredRecords.map((rec, idx) => (
+          <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
+            <td className="px-3 py-[12px] text-[13px] border-r text-gray-700">{idx + 1}</td>
+            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">{rec.datetime}</td>
+
+            {/* 👤 Patient Name with icon */}
+            <td className="px-3 py-[12px] text-[13px] border-r font-[400] text-gray-900">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-gray-400" />
+                <span>{rec.patient || "-"}</span>
+              </div>
+            </td>
+
+            {/* 🛏️ Room / Bed No with icon */}
+            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
+              <div className="flex items-center gap-2">
+                <Bed className="w-4 h-4 text-gray-400" />
+                <span>{rec.room || "-"}</span>
+              </div>
+            </td>
+
+            {/* 🩺 Doctor Name with icon */}
+            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
+              <div className="flex items-center gap-2">
+                <Stethoscope className="w-4 h-4 text-gray-400" />
+                <span>{rec.doctor || "-"}</span>
+              </div>
+            </td>
+
+            {/* 😄😐😞 NPS Rating with icon */}
+            <td className="px-3 py-[12px] text-[13px] border-r font-semibold text-gray-900">
+              <div className="flex items-center gap-2">
+                {rec.category === "Promoter" && <Smile className="w-5 h-5 text-emerald-600" />}
+                {rec.category === "Passive" && <Meh className="w-5 h-5 text-amber-500" />}
+                {rec.category === "Detractor" && <Frown className="w-5 h-5 text-rose-600" />}
+                <span>{rec.rating || "-"}</span>
+              </div>
+            </td>
+
+            {/* 🟢🟡🔴 Category Badge */}
+            <td className="px-3 py-[12px] text-[13px] border-r">
+              <span
+                className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                  rec.category === "Promoter"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : rec.category === "Passive"
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {rec.category}
+              </span>
+            </td>
+
+            {/* 💬 Comment with truncation */}
+            <td className="px-3 py-[12px] text-[10px] border-r text-gray-700  ">
+              {rec.comment ? rec.comment.split(" ").slice(0, 15).join(" ") + "" : ""}
+            </td>
+          </tr>
+        ))}
+
+        {filteredRecords.length === 0 && (
+          <tr>
+            <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
+              No records match your filters.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+
+  <div className="px-4 py-[12px] bg-gray-50 border-t border-gray-100 text-[13px] text-gray-600 flex items-center justify-between">
+    <span>
+      Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records
+    </span>
+  </div>
+</div>
+
+              </div>
             </div>
 
           </div>
         </div>
       </section>
- </>
+    </>
   )
 }
