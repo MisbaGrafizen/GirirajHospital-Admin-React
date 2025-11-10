@@ -164,7 +164,7 @@ function App() {
                  <Route path="/internal-complint-list" element={<PrivateRoute><InternalComplaintsList /></PrivateRoute>} />
                  <Route path="/internal-complaint-details" element={<PrivateRoute><InternalComplaintsDetails /></PrivateRoute>} />
 
-          <Route path="/chat" element={<PrivateRoute><InternalChat/></PrivateRoute>}/>
+          {/* <Route path="/chat" element={<PrivateRoute><InternalChat/></PrivateRoute>}/> */}
           <Route path="/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
           <Route path="/log-details" element={<PrivateRoute><LogDetails /></PrivateRoute>} />
 
