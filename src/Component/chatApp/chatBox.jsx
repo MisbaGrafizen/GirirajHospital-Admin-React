@@ -11,7 +11,7 @@ export default function ChatBox({ activeUser, currentUser }) {
     setChat([]); // reset on user switch
 
     // Load past messages
-    const limit = 50;
+    const limit = 50;x
     const messagesReq = new CometChat.MessagesRequestBuilder()
       .setLimit(limit)
       .setUID(activeUser.uid)
