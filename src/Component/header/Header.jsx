@@ -555,7 +555,7 @@ navigate("/log-details")
                   </button>
                   <hr className=" border-gray-200" />
                   <button
-                    // onClick={onLogout}
+                    onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition font-medium"
                   >
                     <LogOut size={16} /> Logout

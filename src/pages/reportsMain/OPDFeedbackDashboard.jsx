@@ -394,68 +394,71 @@ const doctorOptions = React.useMemo(() => {
   }
 
   // -------- Data Fetch (permission-gated) --------
-  const fetchOPD = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+const fetchOPD = useCallback(async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    const res = await ApiGet(API_URL);
+    const data = Array.isArray(res) ? res : (res.data || []);
+    setRawOPD(data);
+
+    // ✅ Fetch frequent keywords once
     try {
-      const res = await ApiGet(`${API_URL}`)
-      const data = Array.isArray(res) ? res : (res.data || [])
-      setRawOPD(data)
-
-      const resKeywords = await ApiGet("/admin/opd-frequent-ratings")
-      if (resKeywords?.keywords) {
-        setKeywords(resKeywords.keywords)
-      } else {
-        setKeywords([])
-      }
-
-      const list = data.map((d) => {
-        const id = normId(d._id ?? d.id);
-        const rating = calcRowAverage(d.ratings);
-        return {
-          id,
-          _id: id, // keep for safety
-          createdAt: normDate(d.createdAt ?? d.date),
-          patient: d.patientName || d.name || "-",
-          contact: d.contact || "-",
-          doctor: d.consultantDoctorName?.name || d.doctorName || d.consultant || "-",
-          rating,
-          comment: d.comments || d.comment || "",
-          overallRecommendation: d.overallRecommendation,
-        };
-      });
-
-
-      const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
-      const nps = calcNpsPercent(data);
-
-      let overallLabel = "Poor";
-      if (avg >= 4.5) overallLabel = "Excellent";
-      else if (avg >= 3.5) overallLabel = "Good";
-      else if (avg >= 2.5) overallLabel = "Average";
-
-      setRows(list);
-      setKpiData({
-        totalFeedback: list.length,
-        averageRating: avg,
-        npsRating: nps,
-        overallScore: overallLabel,
-      });
-
-      setServiceSummary(buildServiceSummary(data))
-      setOpdServiceChart(buildOPDServiceChart(data))
+      const resKeywords = await ApiGet("/admin/opd-frequent-ratings");
+      setKeywords(resKeywords?.keywords || []);
     } catch (e) {
-      console.error("Fetch OPD failed:", e)
-      setError("Failed to load OPD feedback")
-      setRows([])
-      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" })
-      setChartData(buildDistribution([]))
-    } finally {
-      setLoading(false)
+      console.warn("Keyword fetch skipped:", e.message);
+      setKeywords([]);
     }
-  }, [dateFrom, dateTo])
 
-  useEffect(() => { fetchOPD() }, [fetchOPD])
+    // ✅ Build core data
+    const list = data.map((d) => {
+      const id = normId(d._id ?? d.id);
+      const rating = calcRowAverage(d.ratings);
+      return {
+        id,
+        _id: id,
+        createdAt: normDate(d.createdAt ?? d.date),
+        patient: d.patientName || d.name || "-",
+        contact: d.contact || "-",
+        doctor: d.consultantDoctorName?.name || d.doctorName || d.consultant || "-",
+        rating,
+        comment: d.comments || d.comment || "",
+        overallRecommendation: d.overallRecommendation,
+      };
+    });
+
+    const avg = list.length ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length) : 0;
+    const nps = calcNpsPercent(data);
+    const overallLabel =
+      avg >= 4.5 ? "Excellent" :
+      avg >= 3.5 ? "Good" :
+      avg >= 2.5 ? "Average" : "Poor";
+
+    setRows(list);
+    setKpiData({
+      totalFeedback: list.length,
+      averageRating: avg,
+      npsRating: nps,
+      overallScore: overallLabel,
+    });
+
+    setServiceSummary(buildServiceSummary(data));
+    setOpdServiceChart(buildOPDServiceChart(data));
+  } catch (e) {
+    console.error("Fetch OPD failed:", e);
+    setError("Failed to load OPD feedback");
+    setRows([]);
+    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+  } finally {
+    setLoading(false);
+  }
+}, []); // ✅ NO dependencies — stays stable
+
+
+  useEffect(() => {
+  fetchOPD();
+}, []); // ✅ Run once on mount
 
   useEffect(() => {
     setChartData(buildServiceDistribution(rawOPD, selectedService))

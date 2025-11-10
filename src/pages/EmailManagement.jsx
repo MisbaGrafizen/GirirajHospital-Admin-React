@@ -403,7 +403,7 @@ export default function EmailManagement() {
                             : "font-medium text-gray-800"
                             }`}
                         >
-                          <h3
+                          {/* <h3
                             className={`text-sm mb-2 line-clamp-2 ${!email.isRead ? "font-semibold text-gray-900" : "font-medium text-gray-800"
                               }`}
                           >
@@ -415,7 +415,7 @@ export default function EmailManagement() {
                             >
                               {email.subject}
                             </div>
-                          </h3>
+                          </h3> */}
 
 
                           {email.data?.type && (
