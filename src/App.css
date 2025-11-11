@@ -44,7 +44,11 @@
   background: rgba(0, 0, 0, 0.6);
   /* Darker background */
 }
+.css-i0cmfv {
 
+  display: none !important;
+  
+}
 
 .customFont {
   font-family: 'Pavanam';
