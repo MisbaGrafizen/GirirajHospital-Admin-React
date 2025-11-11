@@ -79,6 +79,13 @@ const MODULE_NAME_BY_ID = {
   front_desk: "Front Desk",
   housekeeping: "Housekeeping",
   pgro: "PGRO",
+  it_department: "It Department",
+  bio_medical: "Bio Medical",
+  hr: "HR",
+  icn: "ICN",
+  mrd: "MRD",
+  accounts: "Accounts",
+
 }
 
 
@@ -99,6 +106,15 @@ const DEPARTMENT_MODULES = [
   { id: "billing_service", name: "Billing Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "housekeeping", name: "Housekeeping (Cleanliness)", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "it_department", name: "IT Department", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "bio_medical", name: "Bio Medical", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "medical_admin", name: "Medical Admin", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "pharmacy", name: "Pharmacy", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "hr", name: "HR", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "icn", name: "ICN", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "mrd", name: "MRD", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "accounts", name: "Accounts", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "tat", name: "TAT", permissions: ["View"] },
 ]
 

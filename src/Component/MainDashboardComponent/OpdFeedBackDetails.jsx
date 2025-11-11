@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Calendar,
   User,
@@ -13,6 +15,8 @@ import * as XLSX from "xlsx";
 import { ApiGet } from "../../helper/axios"; // ✅ adjust the import path if needed
 
 export default function OpdFeedBackDetails() {
+  const navigate = useNavigate();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
   const [feedbackData, setFeedbackData] = useState([]);
@@ -88,12 +92,15 @@ export default function OpdFeedBackDetails() {
     return parseFloat(avg.toFixed(1));
   };
 
-  // 👁️ View Details
-  const openFeedbackDetails = (feedback) => {
-    alert(
-      `Viewing feedback for ${feedback.patient}\nDoctor: ${feedback.doctor}\nRating: ${feedback.rating}/5`
-    );
-  };
+const openFeedbackDetails = (feedback) => {
+  // ✅ Save to sessionStorage for reload persistence
+  sessionStorage.setItem("opdFeedback:last", JSON.stringify({ id: feedback._id }));
+
+  // ✅ Navigate to the details route
+  navigate("/opd-feedback-details", { state: { id: feedback._id } });
+};
+
+
 
   // 📤 Export to Excel
   const exportToExcel = () => {
@@ -170,7 +177,7 @@ export default function OpdFeedBackDetails() {
       {/* 🔹 HEADER */}
       <thead>
         <tr className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">
-          <th className="px-3 py-[13px] text-left text-[11px] w-[130px] font-[600] text-white">
+          <th className="px-3 py-[13px] text-left text-[11px] w-[140px] font-[600] text-white">
             DATE & TIME
           </th>
           <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
@@ -207,16 +214,19 @@ export default function OpdFeedBackDetails() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => openFeedbackDetails(feedback)}
+  onClick={(e) => {
+    e.stopPropagation();
+    openFeedbackDetails(feedback);
+  }}
                 className={`border-b border-gray-200 hover:shadow-md transition-all ${
                   index % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } cursor-pointer`}
               >
                 {/* 🕒 DATE & TIME */}
-                <td className="px-4 py-2 text-sm text-gray-900">
+                <td className="px-2 py-2 text-sm text-gray-900">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-blue-500" />
-                    <span className="text-[12px] font-[500]">
+                    <span className="text-[11px]  leading-4 font-[500]">
                       {formatDate(feedback.createdAt)}
                     </span>
                   </div>
@@ -279,10 +289,10 @@ export default function OpdFeedBackDetails() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openFeedbackDetails(feedback);
-                      }}
+             onClick={(e) => {
+    e.stopPropagation();
+    openFeedbackDetails(feedback);
+  }}
                       className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
                     >
                       <Eye size={18} className="text-blue-500" />

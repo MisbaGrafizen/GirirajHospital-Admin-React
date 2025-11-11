@@ -1,11 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { Eye, User, Search } from "lucide-react";
+import { Eye, User } from "lucide-react";
 import * as XLSX from "xlsx";
 import Header from "../../Component/header/Header";
 import CubaSidebar from "../../Component/sidebar/CubaSidebar";
 import Preloader from "../../Component/loader/Preloader";
 import { useNavigate } from "react-router-dom";
-import { ApiGet } from "../../helper/axios"; // ✅ use your axios helper
+import { ApiGet } from "../../helper/axios"; // ✅ axios helper
+
+// ✅ Department Label Mapping
+const DEPT_LABEL = {
+  doctorServices: "Doctor Services",
+  billingServices: "Billing Services",
+  housekeeping: "Housekeeping",
+  maintenance: "Maintenance",
+  diagnosticServices: "Diagnostic Services",
+  dietitianServices: "Dietitian Services",
+  security: "Security",
+  nursing: "Nursing",
+  itDepartment: "IT Department",
+  bioMedical: "Bio Medical",
+  medicalAdmin: "Medical Admin",
+  hr: "HR",
+  pharmacy: "Pharmacy",
+  icn: "ICN",
+  mrd: "MRD",
+  accounts: "Accounts",
+};
 
 export default function InternalComplaintsList() {
   const [complaints, setComplaints] = useState([]);
@@ -14,18 +34,14 @@ export default function InternalComplaintsList() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // ✅ Fetch complaints from backend
+  // ✅ Fetch complaints
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
         setLoading(true);
         const res = await ApiGet("/admin/internal-complaints");
-        console.log('res', res)
-        if (res?.data) {
-          setComplaints(res.data);
-        } else {
-          setError("No complaints found.");
-        }
+        if (res?.data) setComplaints(res.data);
+        else setError("No complaints found.");
       } catch (err) {
         console.error("Error fetching complaints:", err);
         setError("Failed to load complaints.");
@@ -41,7 +57,9 @@ export default function InternalComplaintsList() {
     const departments = Object.keys(c).filter(
       (key) => typeof c[key] === "object" && c[key]?.text
     );
-    const deptList = departments.join(", ");
+    const deptList = departments
+      .map((key) => DEPT_LABEL[key] || key)
+      .join(", ");
 
     return (
       c.employeeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,6 +81,7 @@ export default function InternalComplaintsList() {
               typeof c[key] === "object" &&
               (c[key]?.text || c[key]?.attachments?.length > 0)
           )
+          .map((key) => DEPT_LABEL[key] || key)
           .join(", ");
         return {
           ComplaintID: c.complaintId,
@@ -85,7 +104,7 @@ export default function InternalComplaintsList() {
     }
   };
 
-  // 🎨 Badge
+  // 🎨 Status Badge
   const getStatusBadge = (status) => {
     const base =
       "px-3 py-[3px] rounded-full text-xs font-semibold inline-flex items-center justify-center";
@@ -101,152 +120,133 @@ export default function InternalComplaintsList() {
     }
   };
 
+  // 👁️ View button handler
   const handleView = (row) => {
-  navigate("/internal-complaint-details", {
-    state: { complaint: row }, // ✅ Pass only the selected complaint, not the ID
-  });
-};
-
-
+    navigate("/internal-complaint-details", {
+      state: { complaint: row },
+    });
+  };
 
   return (
-    <>
-      <section className="flex w-[100%] h-[100%] select-none overflow-hidden">
-        <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Internal Complaints List" />
-          <div className="flex w-[100%] h-[100%]">
-            <CubaSidebar />
-            <div className="flex flex-col w-[100%] relative max-h-[93%] py-[10px] overflow-y-auto gap-[10px] ">
-              {loading && <Preloader />}
-              <div className="bg-white w-[98%] mx-auto rounded-lg border shadow-sm overflow-hidden">
-                {/* ---------- Header ---------- */}
-                {/* <div className="px-4 py-2 border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-gray-50">
-                  <div className="flex justify-between w-[100%] items-center gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
-                        placeholder="Search complaints..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 pr-3 py-[6px] border w-[200px] border-gray-300 rounded-md text-sm focus:outline-none"
-                      />
-                    </div>
+    <section className="flex w-full h-full select-none overflow-hidden">
+      <div className="flex w-full flex-col h-screen">
+        <Header pageName="Internal Complaints List" />
+        <div className="flex w-full h-full">
+          <CubaSidebar />
+          <div className="flex flex-col w-full relative max-h-[93%] py-[10px] overflow-y-auto gap-[10px]">
+            {loading && <Preloader />}
 
-              
-                  </div>
-                </div> */}
+            <div className="bg-white w-[98%] mx-auto rounded-lg border shadow-sm overflow-hidden">
+              {/* ---------- Table ---------- */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-0">
+                  <thead>
+                    <tr className="bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
+                      {[
+                        "Complaint ID",
+                        "Employee Name",
+                        "Contact No",
+                        "Employee ID",
+                        "Floor No",
+                        "Departments",
+                        "Status",
+                        "Action",
+                      ].map((header, i) => (
+                        <th
+                          key={i}
+                          className="px-2 font-[500] text-[12px] border-r py-[10px] border-b border-gray-200 text-left whitespace-nowrap"
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
 
-                {/* ---------- Table ---------- */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-separate border-spacing-0">
-                    <thead>
-                      <tr className="bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
-                        {[
-                          "Complaint ID",
-                          "Employee Name",
-                          "Contact No",
-                          "Employee ID",
-                          "Floor No",
-                          "Departments",
-                          "Status",
-                          "Action",
-                        ].map((header, i) => (
-                          <th
-                            key={i}
-                            className="px-2  font-[500] text-[12px] border-r py-[10px] border-b border-gray-200 text-left whitespace-nowrap"
-                          >
-                            {header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
+                  <tbody>
+                    {filteredComplaints.map((row, index) => {
+                      const activeDepartments = Object.keys(row)
+                        .filter(
+                          (key) =>
+                            typeof row[key] === "object" &&
+                            (row[key]?.text ||
+                              (row[key]?.attachments &&
+                                row[key].attachments.length > 0))
+                        )
+                        .map((key) => DEPT_LABEL[key] || key)
+                        .join(", ");
 
-                    <tbody>
-                      {filteredComplaints.map((row, index) => {
-                        const activeDepartments = Object.keys(row)
-                          .filter(
-                            (key) =>
-                              typeof row[key] === "object" &&
-                              (row[key]?.text ||
-                                (row[key]?.attachments &&
-                                  row[key].attachments.length > 0))
-                          )
-                          .join(", ");
-
-                        return (
-                          <tr
-                            key={row._id}
-                            className={`${
-                              index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            } hover:bg-blue-50 transition`}
-                          >
-                            <td className="px-2 text-[12px] border-r py-[9px] border-b border-gray-100 font-medium text-blue-600">
-                              <button
-                                onClick={() => handleView(row)}
-                                className="hover:underline"
-                              >
-                                {row.complaintId}
-                              </button>
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100 font-medium text-gray-800 flex items-center gap-2">
-                              <User className="w-4 h-4 text-gray-400" />
-                              {row.employeeName}
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100 text-gray-800 text-sm">
-                              {row.contactNo}
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100 text-gray-800 text-sm">
-                              {row.employeeId}
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100 text-gray-800 text-sm">
-                              {row.floorNo}
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100 text-gray-800 text-sm">
-                              {activeDepartments || "-"}
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100">
-                              <span className={getStatusBadge(row.status)}>
-                                {row.status}
-                              </span>
-                            </td>
-                            <td className="px-2 text-[12px] border-r py-[9px]  border-gray-100 text-blue-600 text-sm font-medium flex items-center gap-1">
-                              <Eye className="w-4 h-4" />
-                              <button
-                                onClick={() => handleView(row)}
-                                className="hover:underline"
-                              >
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-
-                      {filteredComplaints.length === 0 && !loading && (
-                        <tr>
-                          <td
-                            colSpan="8"
-                            className="text-center py-5 text-gray-500 text-sm"
-                          >
-                            No complaints found.
+                      return (
+                        <tr
+                          key={row._id}
+                          className={`${
+                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          } hover:bg-blue-50 transition`}
+                        >
+                          <td className="px-2 text-[12px] border-r py-[9px] border-b border-gray-100 font-medium text-blue-600">
+                            <button
+                              onClick={() => handleView(row)}
+                              className="hover:underline"
+                            >
+                              {row.complaintId}
+                            </button>
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 font-medium text-gray-800 flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-400" />
+                            {row.employeeName}
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 text-gray-800 text-sm">
+                            {row.contactNo}
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 text-gray-800 text-sm">
+                            {row.employeeId}
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 text-gray-800 text-sm">
+                            {row.floorNo}
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 text-gray-800 text-sm">
+                            {activeDepartments || "-"}
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100">
+                            <span className={getStatusBadge(row.status)}>
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 text-blue-600 text-sm font-medium flex items-center gap-1">
+                            <Eye className="w-4 h-4" />
+                            <button
+                              onClick={() => handleView(row)}
+                              className="hover:underline"
+                            >
+                              View
+                            </button>
                           </td>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      );
+                    })}
 
-                {error && (
-                  <div className="text-red-600 text-sm mt-3 px-6 pb-3">
-                    {error}
-                  </div>
-                )}
+                    {!loading && filteredComplaints.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="8"
+                          className="text-center py-5 text-gray-500 text-sm"
+                        >
+                          No complaints found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
+
+              {error && (
+                <div className="text-red-600 text-sm mt-3 px-6 pb-3">
+                  {error}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

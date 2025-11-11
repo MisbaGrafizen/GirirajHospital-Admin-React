@@ -52,7 +52,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
         <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
           <i className=" text-[#fff] text-[15px] fa-regular fa-star-sharp-half-stroke"></i>
         </div>
-        <h3 className="text-[14px] font-[400] text-gray-900 ">Rating Distribution</h3>
+        <h3 className="text-[14px] font-[400] text-gray-900 ">Complaint Distribution</h3>
       </div>
       <div className="relative w-[280px]   !h-[180px] md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
         <ResponsiveContainer width="100%" height="100%">

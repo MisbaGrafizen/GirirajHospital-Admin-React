@@ -34,7 +34,14 @@ const MODULE_TO_BLOCK = {
     security: "security",
     billing_service: "billingServices",
     housekeeping: "housekeeping",
-    nursing: "nursing",
+    it_department: "itDepartment",
+    bio_medical: "bioMedical",
+    medical_admin: "medicalAdmin",
+    pharmacy: "pharmacy",
+    accounts: "accounts",
+    hr: "hr",
+    icn: "icn",
+    mrd: "mrd",
 };
 
 function resolvePermissions() {
@@ -83,6 +90,14 @@ const DEPT_LABEL = {
     dietitianServices: "Dietitian Services",
     security: "Security",
     nursing: "Nursing",
+    itDepartment: "IT Department",
+    bioMedical: "Bio Medical",
+    medicalAdmin: "Medical Admin",
+    hr: "HR",
+    pharmacy: "Pharmacy",
+    icn: "ICN",
+    mrd: "MRD",
+    accounts: "Accounts",
 };
 
 // a block is "present" if it has any content (topic/mode/text/attachments)
@@ -93,6 +108,11 @@ function blockHasContent(block) {
     const hasAttachments = Array.isArray(block.attachments) && block.attachments.length > 0;
 
     return hasText || hasAttachments;
+}
+
+function getUserModel() {
+  const loginType = localStorage.getItem("loginType");
+  return loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
 }
 
 
@@ -110,9 +130,14 @@ function mapStatusUI(status) {
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown";
 }
 
-
-
-
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 export default function InternalComplaintsDetails() {
     // Modal states
@@ -192,7 +217,6 @@ export default function InternalComplaintsDetails() {
     const { state } = useLocation();
     const row = state?.complaint || {};
     const fullDoc = state?.doc || row;
-    console.log('row', row)
 
 
     const CONCERN_KEYS = React.useMemo(() => {
@@ -223,6 +247,7 @@ export default function InternalComplaintsDetails() {
     }
 
 
+    console.log('CONCERN_KEYS', fullDoc)
 
     const presentLabels = collectPresentModuleLabels(fullDoc);
     const categoryText =
@@ -236,20 +261,19 @@ export default function InternalComplaintsDetails() {
             ? moduleAttachments
             : (Array.isArray(row.attachments) ? row.attachments : []);
 
-
     const complaint = {
         id: row.id || row._id || fullDoc?._id || "—",
         complaintId: row.complaintId || fullDoc?.complaintId || "—",
         date: row.date || row.createdAt || fullDoc?.createdAt || "—",
-        patient: row.patient || fullDoc?.employeeName || "—",
-        bedNo: row.bedNo || fullDoc?.floorNo || "—",
+        patient: row.employeeName || fullDoc?.employeeName || "—",
+        bedNo: row.floorNo || fullDoc?.bedNo || "—",
         department: row.department || categoryText || "—",
         status: mapStatusUI(row.status || fullDoc?.status),
         priority: row.priority || fullDoc?.priority || "Normal",
         category: categoryText,
         details: row.details || "",
-        contact: row.contactNo || fullDoc?.contactNo || "—",
-        doctorName: row.doctor || row.doctorName || fullDoc?.employeeId || "—",
+        contact: row.contactNo || fullDoc?.contact || "—",
+        doctorName: row.employeeId || row.doctorName || fullDoc?.consultantDoctorName?.name || "—",
         assignedTo: row.assignedTo || "—",
         expectedResolution: row.expectedResolution || "—",
         attachments,
@@ -281,8 +305,12 @@ export default function InternalComplaintsDetails() {
         (k) => DEPT_LABEL[k] === complaint.department
     );
 
+    const currentPerms = permissionsByBlock[deptKey] || [];
+
+
     const forwardDepartments = Object.values(DEPT_LABEL);
 
+    console.log('forwardDepartment', forwardDepartment)
 
     async function forwardComplaint(complaintId, departmentKey, data) {
         try {
@@ -395,11 +423,13 @@ export default function InternalComplaintsDetails() {
             const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
 
             const payload = {
-                level: escalationLevel,
-                note: escalationNote,
-                userId: currentUserId,
-                escalatedTo: targetUser?._id || null,
-            };
+  level: escalationLevel,
+  note: escalationNote,
+  userId: currentUserId,
+  userModel: getUserModel(), // ✅ added
+  escalatedTo: targetUser?._id || null,
+};
+
 
             let response;
 
@@ -506,11 +536,13 @@ export default function InternalComplaintsDetails() {
 
             // ✅ Determine backend endpoint
             let endpoint = `/admin/internal/${complaint.id}/resolve`;
-            const payload = {
-                note: resolutionNote,
-                proof: proofUrl ? [proofUrl] : [],
-                userId: localStorage.getItem("userId") || "",
-            };
+           const payload = {
+  note: resolutionNote,
+  proof: proofUrl ? [proofUrl] : [],
+  userId: localStorage.getItem("userId") || "",
+  userModel: getUserModel(), // ✅ added
+};
+
 
             // ✅ If department selected → call partial resolve
             if (selectedDepartment) {
@@ -547,51 +579,36 @@ export default function InternalComplaintsDetails() {
         }
     };
 
-
-
-
-
     async function fetchConcernHistory(complaintId) {
-  try {
-    const response = await ApiGet(`/admin/internal/${complaintId}/history`);
-    console.log("response", response);
+        try {
+            const response = await ApiGet(`/admin/internal/${complaintId}/history`);
 
-    // ✅ Handle your current backend format
-    if (Array.isArray(response?.history)) {
-      return response.history;
+            // ✅ Safely handle your current backend format
+            if (response?.history?.timeline) return response.history.timeline;
+
+            // ✅ Also handle future-compatible structures
+            if (response?.timeline) return response.timeline;
+            if (response?.data?.timeline) return response.data.timeline;
+
+            console.warn("Unexpected history response format:", response);
+            return [];
+        } catch (error) {
+            console.error("❌ Failed to fetch complaint history:", error);
+            alert(error.message || "Failed to fetch complaint history");
+            return [];
+        }
     }
-
-    // ✅ Handle possible wrapped response
-    if (Array.isArray(response?.data?.history)) {
-      return response.data.history;
-    }
-
-    // ✅ Fallback to other known formats
-    if (Array.isArray(response?.timeline)) {
-      return response.timeline;
-    }
-
-    if (Array.isArray(response?.data?.timeline)) {
-      return response.data.timeline;
-    }
-
-    console.warn("⚠️ Unexpected history response format:", response);
-    return [];
-  } catch (error) {
-    console.error("❌ Failed to fetch complaint history:", error);
-    alert(error.message || "Failed to fetch complaint history");
-    return [];
-  }
-}
-
 
 
 
     async function updateProgressRemarkAPI(complaintId, note) {
         try {
             const response = await ApiPut(`/admin/internal/update-progress/${complaintId}`, {
-                updateNote: note,
-            });
+  updateNote: note,
+  userId: localStorage.getItem("userId") || "",
+  userModel: getUserModel(), // ✅ added
+});
+
             return response; // ✅ keep full response for status
         } catch (error) {
             throw new Error(error.message || "Failed to update in_progress remark");
@@ -608,11 +625,13 @@ export default function InternalComplaintsDetails() {
             }
 
             const response = await ApiPost(`/admin/internal/${complaintId}/partial-inprogress`, {
-                department,
-                note,
-                proof: proofUrl ? [proofUrl] : [],
-                userId: localStorage.getItem("userId") || "",
-            });
+  department,
+  note,
+  proof: proofUrl ? [proofUrl] : [],
+  userId: localStorage.getItem("userId") || "",
+  userModel: getUserModel(), // ✅ added
+});
+
 
             return response; // ✅ keep full response
         } catch (error) {
@@ -690,6 +709,7 @@ export default function InternalComplaintsDetails() {
                 setLoadingHistory(true);
                 try {
                     const data = await fetchConcernHistory(complaint.id);
+                    console.log('data', data)
                     setHistoryData(data);
                 } catch (err) {
                     console.error("History Error:", err);
@@ -848,15 +868,21 @@ export default function InternalComplaintsDetails() {
         <>
             <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-                    <Header pageName="Internal Complaints Details" />
+                    <Header pageName="Complaint Details" complaintInfo={{
+                        id: complaint.complaintId,
+                        status: complaint.status,
+                        patient: complaint.patient,
+                        department: complaint.department,
+                        bedNo: complaint.bedNo,
+                    }} />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
-                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px]  pb-[30px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
+                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px] pb-[30px] px-[10px] bg-[#fff] overflow-y-auto   gap-[10px] rounded-[10px]">
                             <Preloader />
                             <div className="">
                                 <div className="">
                                     {/* Header */}
-                                    <motion.div
+                                    {/* <motion.div
                                         initial={{ opacity: 0, y: -20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="bg-white shadow-sm  px-[20px] pb-[10px] pt-[10px] border  rounded-lg mb-2"
@@ -879,7 +905,7 @@ export default function InternalComplaintsDetails() {
                                                 </span>
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </motion.div> */}
 
                                     {/* Main Content */}
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -888,61 +914,78 @@ export default function InternalComplaintsDetails() {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.1 }}
-                                            className="lg:col-span-2 space-y-6"
+                                            className="lg:col-span-2 space-y-4"
                                         >
                                             {/* Patient Information */}
                                             <div className="bg-white  border rounded-xl shadow-sm p-3">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2>
-                                                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                                                    <div className="flex  shadow-sm border !border-[#eaeaea] p-3 bg-gray-50 rounded-lg">
+                                                {/* <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2> */}
+                                                <div className="grid grid-cols-3 gap-x-3">
+                                                    <div className="flex  shadow-sm mb-[10px] border !border-[#eaeaea] md11:!p-2 md13:!p-3 bg-gray-50 rounded-lg">
                                                         <User className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Employee Name</p>
                                                             <p className="font-medium text-gray-900">{complaint.patient}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
-                                                        <Bed className="w-5 h-5 text-gray-400 mr-3" />
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">Floor Number</p>
-                                                            <p className="font-medium text-gray-900">{complaint.bedNo}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex mb-[10px] md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Phone className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Contact</p>
                                                             <p className="font-medium text-gray-900">{complaint.contact}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg mb-[10px]  shadow-sm border !border-[#eaeaea] ">
+                                                        <Bed className="w-5 h-5 text-gray-400 mr-3" />
+                                                        <div>
+                                                            <p className="text-sm text-gray-600">Floor Number</p>
+                                                            <p className="font-medium text-gray-900">{complaint.bedNo}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                        <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
+                                                        <div>
+                                                            <p className="text-sm text-gray-600">Employee Id</p>
+                                                            <p className="font-medium text-gray-900">{complaint.doctorName}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Department</p>
                                                             <p className="font-medium text-gray-900">{complaint.department}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
-                                                        <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">Employee ID</p>
-                                                            <p className="font-medium text-gray-900">{complaint.doctorName}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
-                                                            <p className="font-medium text-gray-900">{complaint.date}</p>
+<p className="font-medium text-gray-900">
+  {complaint.date && complaint.date !== "—"
+    ? new Date(complaint.date).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }) +
+      " - " +
+      new Date(complaint.date).toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "—"}
+</p>
+
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Complaint Details */}
-                                            <div className="bg-white rounded-xl shadow-sm border p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-3">Complaint Details</h2>
-                                                <div className="space-y-4">
+                                            <div className="bg-white rounded-xl shadow-sm h-[30%] md13:h-[70%] overflow-y-auto scrollbar-default 2xl:!h-[70%] border p-3">
+                                                <h2 className="text-[19px] font-semibold text-gray-900 mb-2">Complaint Details</h2>
+                                                <div className="space-y-3">
 
                                                     <div className="space-y-4">
                                                         {Object.keys(fullDoc).map((key) => {
@@ -952,8 +995,8 @@ export default function InternalComplaintsDetails() {
                                                             if (!blockHasContent(block)) return null;
 
                                                             return (
-                                                                <div key={key} className="bg-gray-50 border rounded-lg p-3 mb-3">
-                                                                    <h3 className="text-md font-semibold text-gray-900 mb-2 flex items-center justify-between">
+                                                                <div key={key} className="bg-gray-50 border rounded-lg p-2 md13:!p-3 mb-3">
+                                                                    <h3 className="text-md font-semibold text-gray-900 md13:!mb-2 flex items-center justify-between">
                                                                         <span>{DEPT_LABEL[key]}</span>
                                                                         {block?.status && (
                                                                             <span
@@ -967,7 +1010,7 @@ export default function InternalComplaintsDetails() {
 
                                                                     {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
-                                                                            <span className="font-medium">Department:</span> {block.topic}
+                                                                            <span className="font-medium  text-[10px] ">Department:</span> {block.topic}
                                                                         </p>
                                                                     )}
                                                                     {block?.text && (
@@ -1009,32 +1052,7 @@ export default function InternalComplaintsDetails() {
                                                             );
                                                         })}
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                    {/* 🔹 Latest Forward & Escalation (Horizontal layout) */}
-                                                                    {/* <div className="flex flex-wrap items-stretch gap-4 w-full mt-4">
-                                                                        {latestForward && (
-                                                                            <div className="flex-1 min-w-[250px] bg-blue-50 border border-blue-200 text-blue-900 rounded-lg shadow-sm p-4">
-                                                                                <p className="text-sm font-semibold text-blue-600 mb-1">{latestForward.title}</p>
-                                                                                <p className="font-medium mb-1">{latestForward.text}</p>
-                                                                                <p className="text-xs text-blue-500">{latestForward.date}</p>
-                                                                            </div>
-                                                                        )}
-
-                                                                        {latestEscalation && (
-                                                                            <div className="flex-1 min-w-[250px] bg-orange-50 border border-orange-200 text-orange-900 rounded-lg shadow-sm p-4">
-                                                                                <p className="text-sm font-semibold text-orange-600 mb-1">{latestEscalation.title}</p>
-                                                                                <p className="font-medium mb-1">{latestEscalation.text}</p>
-                                                                                <p className="text-xs text-orange-500">{latestEscalation.date}</p>
-                                                                            </div>
-                                                                        )}
-                                                                    </div> */}
-                                                                </div>
-
-                                                            </div>
-
-                                                        </div>
+                                                  
                                                         {complaint.escalationRemarks && (
                                                             <div className="p-4 bg-yellow-50 rounded-lg">
                                                                 <h3 className="font-medium text-yellow-900 mb-2">Escalation Remarks</h3>
@@ -1051,11 +1069,76 @@ export default function InternalComplaintsDetails() {
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.2 }}
-                                            className="space-y-6"
+                                            className="space-y-3"
                                         >
                                             {/* Action Buttons */}
-                                            <div className="bg-white border rounded-xl shadow-sm p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
+
+
+
+
+                                            {complaint.status !== "Resolved" && (
+                                                <div className="bg-white rounded-xl border h-[300px] md13:!h-[380px] 2xl:!h-[560px] overflow-y-auto scrollba shadow-sm p-3">
+                                                    <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
+                                                    <div className="space-y-4">
+                                                        {historyData.slice(-3).reverse().map((h, index) => (
+                                                            <div key={index} className="flex items-start space-x-3">
+                                                                <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
+                                                                <div className="flex-1">
+                                                                    {h.type === "forwarded" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-gray-900">
+                                                                                {h.label}
+                                                                            </p>
+                                                                            {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "in_progress" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+
+                                                                    {h.type === "escalated" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-red-700">
+                                                                                {h.label}
+                                                                            </p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "resolved" && (
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                                        </>
+                                                                    )}
+
+                                                                    {h.type === "created" && (
+                                                                        <p className="text-sm text-gray-700">{h.label}</p>
+                                                                    )}
+
+                                                                    <p className="text-xs text-gray-500">
+                                                                        <p className="text-xs text-gray-500">
+  {formatDate(h.at || h.createdAt)}
+  {h.byName && ` • ${h.byName}`} {/* 👈 show user name if available */}
+</p>
+
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+
+
+                                            <div className="bg-white border rounded-xl shadow-sm p-3">
+                                                {/* <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2> */}
 
                                                 {complaint.status === "Resolved" ? (
                                                     // 🔹 Show ONLY history when Resolved
@@ -1079,7 +1162,7 @@ export default function InternalComplaintsDetails() {
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">{h.label}</p>
                                                                                 <p className="text-xs text-gray-600">
-                                                                                    {h.details.patientName} ({h.details.complaintId})
+                                                                                    {h.details.employeeName} ({h.details.complaintId})
                                                                                 </p>
                                                                                 <p className="text-xs text-gray-500">
                                                                                     {new Date(h.createdAt).toLocaleString()}
@@ -1182,91 +1265,16 @@ export default function InternalComplaintsDetails() {
                                                             Escalate to Higher Authority
                                                         </button>
 
-                                                        <button
+                                                        {/* <button
                                                             onClick={() => openModal("history")}
                                                             className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                                                         >
                                                             <Clock className="w-5 h-5 mr-2" />
                                                             View Full History
-                                                        </button>
+                                                        </button> */}
                                                     </div>
                                                 )}
                                             </div>
-
-
-                                            {/* Recent Activity */}
-                                            {/* <div className="bg-white rounded-xl border shadow-sm p-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                                                <div className="space-y-4">
-                                                    {complaint.activityLog.slice(-3).map((activity, index) => (
-                                                        <div key={index} className="flex items-start space-x-3">
-                                                            <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
-                                                            <div className="flex-1">
-                                                                <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                                                                <p className="text-xs text-gray-600">by {activity.by}</p>
-                                                                <p className="text-xs text-gray-500">{activity.date}</p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div> */}
-                                            {/* Recent Activity — hide if Resolved */}
-                                            {complaint.status !== "Resolved" && (
-                                                <div className="bg-white rounded-xl border shadow-sm p-4">
-                                                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                                                    <div className="space-y-4">
-                                                        {historyData.slice(-3).reverse().map((h, index) => (
-                                                            <div key={index} className="flex items-start space-x-3">
-                                                                <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
-                                                                <div className="flex-1">
-                                                                    {h.type === "forwarded" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-gray-900">
-                                                                                {h.label}
-                                                                            </p>
-                                                                            {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
-                                                                        </>
-                                                                    )}
-
-                                                                    {h.type === "in_progress" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
-
-
-                                                                    {h.type === "escalated" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-red-700">
-                                                                                {h.label}
-                                                                            </p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
-
-                                                                    {h.type === "resolved" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
-
-                                                                    {h.type === "created" && (
-                                                                        <p className="text-sm text-gray-700">{h.label}</p>
-                                                                    )}
-
-                                                                    <p className="text-xs text-gray-500">
-                                                                        {new Date(h.at || h.createdAt).toLocaleString()}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-
                                         </motion.div>
                                     </div>
 
@@ -1633,7 +1641,7 @@ export default function InternalComplaintsDetails() {
                                                                                     <>
                                                                                         <p className="text-sm font-medium text-gray-900">Complaint Created</p>
                                                                                         <p className="text-xs text-gray-600">
-                                                                                            {h.details.patientName} ({h.details.complaintId})
+                                                                                            {h.details.employeeName} ({h.details.complaintId})
                                                                                         </p>
                                                                                         <p className="text-xs text-gray-500">
                                                                                             {new Date(h.at).toLocaleString()}

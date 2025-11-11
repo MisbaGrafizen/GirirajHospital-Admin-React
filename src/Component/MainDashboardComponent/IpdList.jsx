@@ -104,10 +104,16 @@ const navigate = useNavigate();
     );
   };
 
-  // 👁️ Row click
-  const handleIpdFeedbackDetails = (fb) => {
-    alert(`Viewing feedback for ${fb.patientName}\nAverage Rating: ${calculateAverageRating(fb.ratings)}`);
-  };
+
+  const handleIpdFeedbackDetails = (feedback) => {
+  // ✅ Save to sessionStorage for reload persistence
+  sessionStorage.setItem("opdFeedback:last", JSON.stringify({ id: feedback._id }));
+
+  // ✅ Navigate to the details route
+  navigate("/ipd-feedback-details", { state: { id: feedback._id } });
+};
+
+
 
   // 📤 Export
   const exportToExcel = () => {
@@ -118,7 +124,7 @@ const navigate = useNavigate();
   };
 
   const handlenavigate = () => {
-    
+    navigate("/dashboards/ipd-all-list")
   };
 
   return (

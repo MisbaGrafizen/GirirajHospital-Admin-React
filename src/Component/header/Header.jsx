@@ -5,6 +5,7 @@ import ModernDatePicker from "../MainInputFolder/ModernDatePicker";
 import dayjs from "dayjs";
 import AnimatedDropdown from "../MainInputFolder/AnimatedDropdown";
 import AnimatedDropdownNavigate from "../MainInputFolder/AnimatedDropdownNavigate";
+import comming from "../../../public/imges/comming.png"
 import { faTachometerAlt, faUserDoctor, faHospitalUser, faListCheck, faSmile } from "@fortawesome/free-solid-svg-icons";
 import {
   Gauge,
@@ -56,8 +57,8 @@ function Header({
   const [openNotif, setOpenNotif] = useState(false);
   const [openBug, setOpenBug] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState("All Doctors");
-const [selectedRoom, setSelectedRoom] = useState("All Rooms");
-const [selectedDepartment, setSelectedDepartment] = useState("Both");
+  const [selectedRoom, setSelectedRoom] = useState("All Rooms");
+  const [selectedDepartment, setSelectedDepartment] = useState("Both");
 
 
 
@@ -153,12 +154,12 @@ const [selectedDepartment, setSelectedDepartment] = useState("Both");
     navigate("/todolist");
   }
 
-  const handleProfile =()=>{
+  const handleProfile = () => {
     navigate("/profile")
   }
 
-  const handleLogDetails=()=>{
-navigate("/log-details")
+  const handleLogDetails = () => {
+    navigate("/log-details")
   }
   return (
     <>
@@ -210,173 +211,173 @@ navigate("/log-details")
                     }
                   }} />
 
-                    {/* ✅ Time Range Dropdown */}
-<AnimatedDropdown
-  label="Time Range"
-  icon={User}
-  options={["Today", "7 Days", "15 Days", "30 Days"]}
-  selected={activeRange} // ✅ show selected value
-  onChange={(selected) => {
-    setActiveRange(selected); // ✅ update display text
-    const today = dayjs().endOf("day");
-    let from = today;
+                {/* ✅ Time Range Dropdown */}
+                <AnimatedDropdown
+                  label="Time Range"
+                  icon={User}
+                  options={["Today", "7 Days", "15 Days", "30 Days"]}
+                  selected={activeRange} // ✅ show selected value
+                  onChange={(selected) => {
+                    setActiveRange(selected); // ✅ update display text
+                    const today = dayjs().endOf("day");
+                    let from = today;
 
-    // ✅ ensure correct date range inclusivity (7 full days)
-    if (selected === "Today") from = today.startOf("day");
-    else if (selected === "7 Days") from = today.subtract(6, "day");
-    else if (selected === "15 Days") from = today.subtract(14, "day");
-    else if (selected === "30 Days") from = today.subtract(29, "day");
+                    // ✅ ensure correct date range inclusivity (7 full days)
+                    if (selected === "Today") from = today.startOf("day");
+                    else if (selected === "7 Days") from = today.subtract(6, "day");
+                    else if (selected === "15 Days") from = today.subtract(14, "day");
+                    else if (selected === "30 Days") from = today.subtract(29, "day");
 
-    if (onDateRangeChange) {
-      onDateRangeChange({
-        from: from.format("YYYY-MM-DD"),
-        to: today.format("YYYY-MM-DD"),
-        range: selected,
-      });
-    }
+                    if (onDateRangeChange) {
+                      onDateRangeChange({
+                        from: from.format("YYYY-MM-DD"),
+                        to: today.format("YYYY-MM-DD"),
+                        range: selected,
+                      });
+                    }
 
-    // ✅ reflect in the local picker too
-    setDateFrom(from.toDate());
-    setDateTo(today.toDate());
-  }}
-/>
+                    // ✅ reflect in the local picker too
+                    setDateFrom(from.toDate());
+                    setDateTo(today.toDate());
+                  }}
+                />
 
               </div>
             )}
 
 
-           {/* ✅ OPD Feedback Dashboard */}
-{location.pathname === "/dashboards/opd-feedback" && (
-  <OpdFilter
-    serviceVariant="opd"
-    doctors={doctors || []} // ✅ dynamically received from parent (OPD)
-    onChange={(filters) => {
-      if (onDateRangeChange) onDateRangeChange(filters);
-    }}
-  />
-)}
+            {/* ✅ OPD Feedback Dashboard */}
+            {location.pathname === "/dashboards/opd-feedback" && (
+              <OpdFilter
+                serviceVariant="opd"
+                doctors={doctors || []} // ✅ dynamically received from parent (OPD)
+                onChange={(filters) => {
+                  if (onDateRangeChange) onDateRangeChange(filters);
+                }}
+              />
+            )}
 
-{/* ✅ IPD Feedback Dashboard */}
-{location.pathname === "/dashboards/ipd-feedback" && (
-  <OpdFilter
-    serviceVariant="ipd"
-    doctors={doctors || []} // ✅ dynamically received from parent (IPD)
-    onChange={(filters) => {
-      if (onDateRangeChange) onDateRangeChange(filters);
-    }}
-  />
-)}
+            {/* ✅ IPD Feedback Dashboard */}
+            {location.pathname === "/dashboards/ipd-feedback" && (
+              <OpdFilter
+                serviceVariant="ipd"
+                doctors={doctors || []} // ✅ dynamically received from parent (IPD)
+                onChange={(filters) => {
+                  if (onDateRangeChange) onDateRangeChange(filters);
+                }}
+              />
+            )}
 
 
             {location.pathname === "/dashboards/complaint-dashboard" && (
-  <OpdFilter
-    serviceVariant="concern"
-    doctors={doctors || []}
-    onChange={(filters) => {
-      if (onDateRangeChange) onDateRangeChange(filters);
-    }}
-  />
-)}
+              <OpdFilter
+                serviceVariant="concern"
+                doctors={doctors || []}
+                onChange={(filters) => {
+                  if (onDateRangeChange) onDateRangeChange(filters);
+                }}
+              />
+            )}
 
 
             {location.pathname === "/reports/nps-reports" && (
-  <>
-    <div className="grid grid-cols-2 md77:!grid-cols-3 md11:!grid-cols-5 h-fit gap-x-3">
-      {/* From Date */}
-      <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
-        <ModernDatePicker
-          label="From Date"
-          selectedDate={dateFrom}
-          setSelectedDate={(d) => {
-            setDateFrom(d);
-            if (onDateRangeChange)
-              onDateRangeChange({
-                from: d ? dayjs(d).format("YYYY-MM-DD") : null,
-                to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-              });
-          }}
-        />
-      </div>
+              <>
+                <div className="grid grid-cols-2 md77:!grid-cols-3 md11:!grid-cols-5 h-fit gap-x-3">
+                  {/* From Date */}
+                  <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
+                    <ModernDatePicker
+                      label="From Date"
+                      selectedDate={dateFrom}
+                      setSelectedDate={(d) => {
+                        setDateFrom(d);
+                        if (onDateRangeChange)
+                          onDateRangeChange({
+                            from: d ? dayjs(d).format("YYYY-MM-DD") : null,
+                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                          });
+                      }}
+                    />
+                  </div>
 
-      {/* To Date */}
-      <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
-        <ModernDatePicker
-          label="To Date"
-          selectedDate={dateTo}
-          setSelectedDate={(d) => {
-            setDateTo(d);
-            if (onDateRangeChange)
-              onDateRangeChange({
-                from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-                to: d ? dayjs(d).format("YYYY-MM-DD") : null,
-              });
-          }}
-        />
-      </div>
+                  {/* To Date */}
+                  <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
+                    <ModernDatePicker
+                      label="To Date"
+                      selectedDate={dateTo}
+                      setSelectedDate={(d) => {
+                        setDateTo(d);
+                        if (onDateRangeChange)
+                          onDateRangeChange({
+                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                            to: d ? dayjs(d).format("YYYY-MM-DD") : null,
+                          });
+                      }}
+                    />
+                  </div>
 
-      {/* Department */}
-      <div className="md11:!mb-[0px] md34:mb-[14px] w-[100%]">
-    <AnimatedDropdown
-  label="Department"
-  options={["OPD", "IPD", "Both"]}
-  selected={selectedDepartment} // ✅ display selected department
-  onChange={(dept) => {
-    setSelectedDepartment(dept); // ✅ store new selection
-    // Reset Doctor & Room when department changes (optional)
-    setSelectedDoctor("All Doctors");
-    setSelectedRoom("All Rooms");
+                  {/* Department */}
+                  <div className="md11:!mb-[0px] md34:mb-[14px] w-[100%]">
+                    <AnimatedDropdown
+                      label="Department"
+                      options={["OPD", "IPD", "Both"]}
+                      selected={selectedDepartment} // ✅ display selected department
+                      onChange={(dept) => {
+                        setSelectedDepartment(dept); // ✅ store new selection
+                        // Reset Doctor & Room when department changes (optional)
+                        setSelectedDoctor("All Doctors");
+                        setSelectedRoom("All Rooms");
 
-    if (onDateRangeChange)
-      onDateRangeChange({
-        from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-        to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-        department: dept,
-      });
-  }}
-  icon={Hospital}
-/>
-      </div>
+                        if (onDateRangeChange)
+                          onDateRangeChange({
+                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                            department: dept,
+                          });
+                      }}
+                      icon={Hospital}
+                    />
+                  </div>
 
-      {/* Doctor */}
-      <div className="md11:!mb-[0px] w-[100%]">
-<AnimatedDropdown
-  label="Doctor Name"
-  options={doctorOptions.length > 0 ? doctorOptions : ["All Doctors"]}
-  selected={selectedDoctor} // ✅ show selected
-  onChange={(doc) => {
-    setSelectedDoctor(doc); // ✅ store selection
-    if (onDateRangeChange)
-      onDateRangeChange({
-        from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-        to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-        doctor: doc,
-      });
-  }}
-  icon={User}
-/>
-      </div>
+                  {/* Doctor */}
+                  <div className="md11:!mb-[0px] w-[100%]">
+                    <AnimatedDropdown
+                      label="Doctor Name"
+                      options={doctorOptions.length > 0 ? doctorOptions : ["All Doctors"]}
+                      selected={selectedDoctor} // ✅ show selected
+                      onChange={(doc) => {
+                        setSelectedDoctor(doc); // ✅ store selection
+                        if (onDateRangeChange)
+                          onDateRangeChange({
+                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                            doctor: doc,
+                          });
+                      }}
+                      icon={User}
+                    />
+                  </div>
 
-      {/* Room */}
-      <div className="md:11!mb-[0px] w-[100%]">
-<AnimatedDropdown
-  label="Room No"
-  options={roomOptions.length > 0 ? roomOptions : ["All Rooms"]}
-  selected={selectedRoom} // ✅ show selected
-  onChange={(room) => {
-    setSelectedRoom(room); // ✅ store selection
-    if (onDateRangeChange)
-      onDateRangeChange({
-        from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-        to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-        room,
-      });
-  }}
-  icon={Activity}
-/>
-      </div>
-    </div>
-  </>
-)}
+                  {/* Room */}
+                  <div className="md:11!mb-[0px] w-[100%]">
+                    <AnimatedDropdown
+                      label="Room No"
+                      options={roomOptions.length > 0 ? roomOptions : ["All Rooms"]}
+                      selected={selectedRoom} // ✅ show selected
+                      onChange={(room) => {
+                        setSelectedRoom(room); // ✅ store selection
+                        if (onDateRangeChange)
+                          onDateRangeChange({
+                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                            room,
+                          });
+                      }}
+                      icon={Activity}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
 
 
@@ -544,14 +545,17 @@ navigate("/log-details")
                     <Bell size={16} /> Notification Settings
                   </button>
                   <button
-                    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition"  onClick={handleLogDetails}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={handleLogDetails}
                   >
                     <FileText size={16} /> Log Details
+
+                    <img className=" absolute w-[33px] object-contain h-[33px] right-7 rotate-[30deg]" src={comming} />
                   </button>
                   <button
-                    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={() => setOpenBug(true)}
+                    className="w-full flex items-center relative  gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={() => setOpenBug(true)}
                   >
                     <Bug size={16} /> Report a Bug
+                    <img className=" absolute w-[33px] object-contain h-[33px] right-7 rotate-[30deg]" src={comming} />
                   </button>
                   <hr className=" border-gray-200" />
                   <button

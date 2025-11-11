@@ -49,7 +49,7 @@ const LightCard = ({ LightCardData, totals = {} }) => {
               ...(LightCardData?.[0] || {}),
               title: "OPD",
               price: Number(totals.opd || 0),
-              bgColor: "#aaafcb",
+              bgColor: "#604e92",
               icon: (
                 <i className="fa-light text-[14px] text-[#fff] fa-hospital-user"></i>
               ),

@@ -564,10 +564,6 @@ export default function ComplaintViewPage() {
         }
     };
 
-
-
-
-
     async function fetchConcernHistory(complaintId) {
         try {
             const response = await ApiGet(`/admin/${complaintId}/history`);
@@ -579,7 +575,7 @@ export default function ComplaintViewPage() {
             if (response?.timeline) return response.timeline;
             if (response?.data?.timeline) return response.data.timeline;
 
-            console.warn("⚠️ Unexpected history response format:", response);
+            console.warn("Unexpected history response format:", response);
             return [];
         } catch (error) {
             console.error("❌ Failed to fetch complaint history:", error);
@@ -620,7 +616,7 @@ export default function ComplaintViewPage() {
   userId: localStorage.getItem("userId") || "",
   userModel: getUserModel(), // ✅ added
 });
-x
+
 
             return response; // ✅ keep full response
         } catch (error) {

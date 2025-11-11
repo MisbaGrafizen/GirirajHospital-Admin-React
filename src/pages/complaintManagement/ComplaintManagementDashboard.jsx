@@ -44,14 +44,21 @@ import Preloader from "../../Component/loader/Preloader";
 
 const MODULE_TO_BLOCK = {
     doctor_service: "doctorServices",
+    diagnostic_service: "diagnosticServices",
+    nursing: "nursing",
+    dietitian: "dietitianServices",
+    maintenance: "maintenance",
+    security: "security",
     billing_service: "billingServices",
     housekeeping: "housekeeping",
-    maintenance: "maintenance",
-    diagnostic_service: "diagnosticServices",
-    dietitian: "dietitianServices",
-    nursing: "nursing",
-    security: "security",
-    nursing: "nursing",
+    it_department: "itDepartment",
+    bio_medical: "bioMedical",
+    medical_admin: "medicalAdmin",
+    pharmacy: "pharmacy",
+    accounts: "accounts",
+    hr: "hr",
+    icn: "icn",
+    mrd: "mrd",
 };
 
 
@@ -241,8 +248,7 @@ function mapStatusUI(status) {
             return "Resolved";
         case "escalated":
             return "Escalated";
-        case "inprogress":
-        case "in-progress":
+        case "in_progress":
             return "In Progress";
         case "partial":
             return "Partial";
@@ -650,7 +656,7 @@ const doctorOptions = useMemo(() => {
         let color = "bg-gray-200 text-gray-800";
         let text = status;
 
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
             case "resolved":
                 color = "bg-green-100 text-green-700";
                 text = "Resolved ✅";
@@ -1835,7 +1841,7 @@ const doctorOptions = useMemo(() => {
                                                             return (
                                                                 <tr
                                                                     key={complaint.id}
-                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}
+                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`} onClick={() => handlenavigate(complaint, fullDoc)} 
                                                                 >
                                                                     <td className="px-3 py-2 border-r text-sm font-medium text-blue-600">
                                                                         <div className=" flex  cursor-pointer"   onClick={() => handlenavigate(complaint, fullDoc)} >
@@ -1943,7 +1949,7 @@ const doctorOptions = useMemo(() => {
                                                 <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                                                     <i className="fa-solid fa-list text-[15px] text-[#fff]"></i>
                                                 </div>
-                                                <h3 className="text-[13px] font-[500] text-gray-900">Internal Compalints</h3>
+                                                <h3 className="text-[13px] font-[500] text-gray-900">Internal Complaints</h3>
                                             </div>
 
                                             <div className=" flex gap-[10px]">
