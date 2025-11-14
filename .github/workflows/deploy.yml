@@ -50,7 +50,7 @@ jobs:
           password: ${{ secrets.FTP_PASS_GRA }}
           port: 21
           protocol: ftp
-          local-dir: ./dist/
+          local-dir: ./build/
           server-dir: /domains/grafizen.in/public_html/Shree_Giriraj/
           exclude: |
             **/.git*
