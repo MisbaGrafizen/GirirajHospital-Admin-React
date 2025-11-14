@@ -1,15 +1,15 @@
-name: Multi Domain Deployment (FTP)
+name: Multi Domain Deployment - ShreeGiriraj
 
 on:
   push:
     branches:
-      - main
+      - main    # runs on push to main
 
 jobs:
 
-  # -------------------------------
-  # 1) BUILD JOB
-  # -------------------------------
+  # ---------------------------------------------------------
+  # 1) BUILD JOB (runs once)
+  # ---------------------------------------------------------
   build:
     runs-on: ubuntu-latest
 
@@ -28,25 +28,25 @@ jobs:
           npm run build
 
       - name: Upload build folder
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build_output
-          path: dist/          # <-- Make sure Vite creates dist folder
+          path: dist/
 
 
-  # -------------------------------
-  # 2) DEPLOY FOR GRAFIZEN
-  # -------------------------------
-  deploy_shree_giriraj_grafizen:
+  # ---------------------------------------------------------
+  # 2) DEPLOY — shreegiriraj.grafizen.in (Grafizen hosting)
+  # ---------------------------------------------------------
+  deploy_grafizen:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
+      - name: Download built files
+        uses: actions/download-artifact@v4
         with:
           name: build_output
-          path: dist/          # <-- Dist will EXIST now
+          path: dist/
 
       - name: Deploy → shreegiriraj.grafizen.in
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -54,9 +54,9 @@ jobs:
           server: ${{ secrets.FTP_HOST_GRA }}
           username: ${{ secrets.FTP_USER_GRA }}
           password: ${{ secrets.FTP_PASS_GRA }}
-          port: 21
           protocol: ftp
-          local-dir: dist/      # <-- This now exists
+          port: 21
+          local-dir: dist/
           server-dir: /domains/grafizen.in/public_html/Shree_Giriraj/
           exclude: |
             **/.git*
@@ -64,37 +64,51 @@ jobs:
             **/node_modules/**
             **/.env
 
-  # # ================================================================
-  # #      DEPLOY 2 — shreegiriraj.darshit.global (darshit.global)
-  # # ================================================================
-  # deploy_shreegiriraj_darshit:
+
+  # ---------------------------------------------------------
+  # 3) DEPLOY — shreegiriraj.darshit.global (Darshit hosting)
+  # ---------------------------------------------------------
+  deploy_darshit:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download built files
+        uses: actions/download-artifact@v4
+        with:
+          name: build_output
+          path: dist/
+
+      - name: Deploy → shreegiriraj.darshit.global
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST_DAR }}
+          username: ${{ secrets.FTP_USER_DAR }}
+          password: ${{ secrets.FTP_PASS_DAR }}
+          protocol: ftp
+          port: 21
+          local-dir: dist/
+          server-dir: /domains/darshit.global/public_html/shreegiriraj/
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/**
+            **/.env
+
+
+  # # ---------------------------------------------------------
+  # # 4) DEPLOY — shreegiriraj.feedbacks.live (Feedbacks hosting)
+  # # ---------------------------------------------------------
+  # deploy_feedbacks:
   #   needs: build
   #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v3
 
-  #     - name: Deploy → shreegiriraj.darshit.global
-  #       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+  #   steps:
+  #     - name: Download built files
+  #       uses: actions/download-artifact@v4
   #       with:
-  #         server: ${{ secrets.FTP_HOST_DAR }}
-  #         username: ${{ secrets.FTP_USER_DAR }}
-  #         password: ${{ secrets.FTP_PASS_DAR }}
-  #         port: 21
-  #         protocol: ftp
-  #         local-dir: ./${{ needs.build.outputs.build-dir }}
-  #         server-dir: /domains/darshit.global/public_html/shreegiriraj/
-  #         dangerous-clean-slate: true
-
-  # # ================================================================
-  # #      DEPLOY 3 — shreegiriraj.feedbacks.live (feedbacks.live)
-  # # ================================================================
-  # deploy_shreegiriraj_feedbacks:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v3
+  #         name: build_output
+  #         path: dist/
 
   #     - name: Deploy → shreegiriraj.feedbacks.live
   #       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -102,8 +116,12 @@ jobs:
   #         server: ${{ secrets.FTP_HOST_FEED }}
   #         username: ${{ secrets.FTP_USER_FEED }}
   #         password: ${{ secrets.FTP_PASS_FEED }}
-  #         port: 21
   #         protocol: ftp
-  #         local-dir: ./${{ needs.build.outputs.build-dir }}
+  #         port: 21
+  #         local-dir: dist/
   #         server-dir: /domains/shreegiriraj.feedbacks.live/public_html/
-  #         dangerous-clean-slate: true
+  #         exclude: |
+  #           **/.git*
+  #           **/.github*
+  #           **/node_modules/**
+  #           **/.env
