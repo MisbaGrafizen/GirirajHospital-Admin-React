@@ -5,14 +5,13 @@ on:
     branches:
       - main
 
-env:
-  LOCAL_DIR: dist/    # You are using Vite → dist folder
-
 jobs:
+
+  # -------------------------------
+  # 1) BUILD JOB
+  # -------------------------------
   build:
     runs-on: ubuntu-latest
-    outputs:
-      build-dir: ${{ steps.export.outputs.BUILD_DIR }}
 
     steps:
       - name: Checkout Code
@@ -25,23 +24,29 @@ jobs:
 
       - name: Install & Build
         run: |
-          npm ci
+          npm install
           npm run build
 
-      - name: Export Build Dir
-        id: export
-        run: echo "BUILD_DIR=${{ env.LOCAL_DIR }}" >> $GITHUB_OUTPUT
+      - name: Upload build folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: build_output
+          path: dist/          # <-- Make sure Vite creates dist folder
 
 
-  # ================================================================
-  # DEPLOY 1 — Shree_Giriraj (grafizen.in)
-  # ================================================================
+  # -------------------------------
+  # 2) DEPLOY FOR GRAFIZEN
+  # -------------------------------
   deploy_shree_giriraj_grafizen:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build_output
+          path: dist/          # <-- Dist will EXIST now
 
       - name: Deploy → shreegiriraj.grafizen.in
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -51,7 +56,7 @@ jobs:
           password: ${{ secrets.FTP_PASS_GRA }}
           port: 21
           protocol: ftp
-          local-dir: ./dist/               # <-- FIXED
+          local-dir: dist/      # <-- This now exists
           server-dir: /domains/grafizen.in/public_html/Shree_Giriraj/
           exclude: |
             **/.git*
