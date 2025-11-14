@@ -1,23 +1,22 @@
-name: Multi Domain Deployment - ShreeGiriraj
+name: Multi Domain Deployment
 
 on:
   push:
     branches:
-      - main    # runs on push to main
+      - main
 
 jobs:
-
-  # ---------------------------------------------------------
-  # 1) BUILD JOB (runs once)
-  # ---------------------------------------------------------
+  # ---------------------------------------------------
+  # 1) BUILD JOB
+  # ---------------------------------------------------
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -27,73 +26,88 @@ jobs:
           npm install
           npm run build
 
-      - name: Upload build folder
+      - name: Upload dist folder
         uses: actions/upload-artifact@v4
         with:
           name: build_output
           path: dist/
 
-
-  # ---------------------------------------------------------
-  # 2) DEPLOY — shreegiriraj.grafizen.in (Grafizen hosting)
-  # ---------------------------------------------------------
+  # ---------------------------------------------------
+  # 2) DEPLOY — SSH → shreegiriraj.grafizen.in
+  # ---------------------------------------------------
   deploy_grafizen:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download built files
+      - name: Download build output
         uses: actions/download-artifact@v4
         with:
           name: build_output
           path: dist/
 
-      - name: Deploy → shreegiriraj.grafizen.in
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_HOST_GRA }}
-          username: ${{ secrets.FTP_USER_GRA }}
-          password: ${{ secrets.FTP_PASS_GRA }}
-          protocol: ftp
-          port: 21
-          local-dir: dist/
-          server-dir: /domains/grafizen.in/public_html/Shree_Giriraj/
-          exclude: |
-            **/.git*
-            **/.github*
-            **/node_modules/**
-            **/.env
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY_GRA }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT_GRA }} ${{ secrets.SSH_HOST_GRA }} >> ~/.ssh/known_hosts
 
+      - name: Deploy via SCP (Grafizen)
+        run: |
+          scp -P ${{ secrets.SSH_PORT_GRA }} -r dist/* \
+            ${{ secrets.SSH_USER_GRA }}@${{ secrets.SSH_HOST_GRA }}:/home/${{ secrets.SSH_USER_GRA }}/domains/grafizen.in/public_html/Shree_Giriraj/
 
-  # ---------------------------------------------------------
-  # 3) DEPLOY — shreegiriraj.darshit.global (Darshit hosting)
-  # ---------------------------------------------------------
+  # ---------------------------------------------------
+  # 3) DEPLOY — SSH → shreegiriraj.darshit.global
+  # ---------------------------------------------------
   deploy_darshit:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download built files
+      - name: Download build output
         uses: actions/download-artifact@v4
         with:
           name: build_output
           path: dist/
 
-      - name: Deploy → shreegiriraj.darshit.global
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_HOST_DAR }}
-          username: ${{ secrets.FTP_USER_DAR }}
-          password: ${{ secrets.FTP_PASS_DAR }}
-          protocol: ftp
-          port: 21
-          local-dir: dist/
-          server-dir: /domains/darshit.global/public_html/shreegiriraj/
-          exclude: |
-            **/.git*
-            **/.github*
-            **/node_modules/**
-            **/.env
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY_GRA }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT_GRA }} ${{ secrets.SSH_HOST_GRA }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via SCP (Darshit)
+        run: |
+          scp -P ${{ secrets.SSH_PORT_GRA }} -r dist/* \
+            ${{ secrets.SSH_USER_GRA }}@${{ secrets.SSH_HOST_GRA }}:/home/${{ secrets.SSH_USER_GRA }}/domains/darshit.global/public_html/shreegiriraj/
+
+  # # ---------------------------------------------------
+  # # 4) DEPLOY — FTP → shreegiriraj.feedbacks.live
+  # # ---------------------------------------------------
+  # deploy_feedbacks:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Download build output
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build_output
+  #         path: dist/
+
+  #     - name: Deploy via FTP (Feedbacks)
+  #       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+  #       with:
+  #         server: ${{ secrets.FTP_HOST_FEED }}
+  #         username: ${{ secrets.FTP_USER_FEED }}
+  #         password: ${{ secrets.FTP_PASS_FEED }}
+  #         protocol: ftp
+  #         port: 21
+  #         local-dir: dist/
+  #         server-dir: /domains/shreegiriraj.feedbacks.live/public_html/
 
 
   # # ---------------------------------------------------------
