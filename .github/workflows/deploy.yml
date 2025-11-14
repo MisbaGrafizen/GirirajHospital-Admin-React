@@ -82,7 +82,7 @@ jobs:
       - name: Deploy via SCP (Darshit)
         run: |
           scp -P ${{ secrets.SSH_PORT_GRA }} -r dist/* \
-            ${{ secrets.SSH_USER_GRA }}@${{ secrets.SSH_HOST_GRA }}:/home/${{ secrets.SSH_USER_GRA }}/domains/darshit.global/public_html/shreegiriraj/
+            ${{ secrets.SSH_USER_GRA }}@${{ secrets.SSH_HOST_GRA }}:/home/${{ secrets.SSH_USER_GRA }}/domains/darshit.global/public_html/shree_giriraj/
 
   # # ---------------------------------------------------
   # # 4) DEPLOY — FTP → shreegiriraj.feedbacks.live
