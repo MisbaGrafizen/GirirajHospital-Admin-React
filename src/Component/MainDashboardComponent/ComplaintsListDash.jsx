@@ -3,6 +3,7 @@ import { Eye, Calendar, User, Bed, Download, Search, Stethoscope } from "lucide-
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { ApiGet } from "../../helper/axios";
+import { useNavigate } from "react-router-dom";
 
 const MODULE_TO_BLOCK = {
   doctor_service: "doctorServices",
@@ -52,6 +53,7 @@ export default function ComplaintsListDash() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { allowedBlocks } = resolvePermissions();
+  const navigate = useNavigate();
 
   // 🔹 Fetch Complaints
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function ComplaintsListDash() {
         );
         setComplaints(sorted.slice(0, 5));
       } catch (err) {
-        console.error("❌ Failed to fetch complaints:", err);
+        console.error("Failed to fetch complaints:", err);
         setError("Failed to fetch complaints");
       } finally {
         setLoading(false);
@@ -108,10 +110,23 @@ export default function ComplaintsListDash() {
     }
   };
 
-  // 👁 View Handler
-  const handleView = (row) => {
-    alert(`Viewing complaint ${row.complaintId}\nStatus: ${row.status}`);
-  };
+  // 👁 Open Complaint Details (persistent + full doc)
+const openComplaintDetails = (complaint) => {
+  // ✅ Store last opened complaint in sessionStorage for reload persistence
+  sessionStorage.setItem(
+    "ipdComplaint:last",
+    JSON.stringify({ id: complaint._id })
+  );
+
+  // ✅ Navigate and pass both lightweight and full document
+  navigate("/complaint-details", {
+    state: {
+      complaint,     // minimal data (row)
+      doc: complaint // full document if already available
+    },
+  });
+};
+
 
 // 🎨 Status Badge Colors
 const getStatusBadge = (status) => {
@@ -249,7 +264,7 @@ const getStatusBadge = (status) => {
                   <div className="flex items-center gap-2 text-blue-600 font-[500]">
                     <i className="fa-regular fa-ticket text-[14px] text-blue-500"></i>
                     <button
-                      onClick={() => handleView(row)}
+                      onClick={() => openComplaintDetails(row)}
                       className="hover:underline text-[13px]"
                     >
                       {row.complaintId || "-"}
@@ -355,7 +370,7 @@ const getStatusBadge = (status) => {
                       whileTap={{ scale: 0.95 }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleView(row);
+                        openComplaintDetails(row)
                       }}
                       className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
                     >

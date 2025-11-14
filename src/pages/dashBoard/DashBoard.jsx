@@ -195,42 +195,49 @@ if (!dateRange.from || !dateRange.to) {
 
           if (!mounted) return
 
-          if (data.kpis || data.totals) {
+if (data.kpis || data.totals) {
   const kpiData = data.kpis || {};
   const totalsData = data.totals || {};
 
-  // ✅ Ensure series & labels always respect filtered range
+  // ✅ Earnings and Expense Safety
   const earning = {
     weeklyAverage: kpiData.earning?.weeklyAverage ?? 0,
-    series: Array.isArray(kpiData.earning?.series)
-      ? kpiData.earning.series
-      : (data.filteredEarningSeries || []),
-    labels: Array.isArray(kpiData.earning?.labels)
-      ? kpiData.earning.labels
-      : (data.filteredEarningLabels || []),
+    series: Array.isArray(kpiData.earning?.series) ? kpiData.earning.series : [],
+    labels: Array.isArray(kpiData.earning?.labels) ? kpiData.earning.labels : [],
   };
 
   const expense = {
     weeklyAverage: kpiData.expense?.weeklyAverage ?? 0,
-    series: Array.isArray(kpiData.expense?.series)
-      ? kpiData.expense.series
-      : (data.filteredExpenseSeries || []),
-    labels: Array.isArray(kpiData.expense?.labels)
-      ? kpiData.expense.labels
-      : (data.filteredExpenseLabels || []),
+    series: Array.isArray(kpiData.expense?.series) ? kpiData.expense.series : [],
+    labels: Array.isArray(kpiData.expense?.labels) ? kpiData.expense.labels : [],
   };
 
+  // ✅ Handle latest totalResolvedTAT object
+  const tatData = kpiData.totalResolvedTAT || {};
+  const totalResolvedTAT = {
+    hours: tatData.hours ?? 0,
+    display: tatData.display || `${tatData.hours ?? 0}h`,
+  };
+
+  // ✅ Final KPI Mapping
   setKpis({
-    ...kpiData,
+    totalFeedback: kpiData.totalFeedback ?? 0,
+    averageRating: { value: kpiData.averageRating?.value ?? 0 },
+    npsRating: { value: kpiData.npsRating?.value ?? 0 },
+    openIssues: kpiData.openIssues ?? 0,
+    resolvedIssues: kpiData.resolvedIssues ?? 0,
+    totalConcern: kpiData.totalConcern ?? 0,
+    totalResolvedTAT,
     earning,
     expense,
   });
 
+  // ✅ Totals Section (used for top widgets)
   setTotals({
     totalUsers: totalsData.totalUsers ?? 0,
     totalRoleUsers: totalsData.totalRoleUsers ?? 0,
     totalAdmins: totalsData.totalAdmins ?? 0,
-    totalTAT: totalsData.totalTAT ?? 0,
+    totalTAT: totalResolvedTAT.display ?? "—",
   });
 }
 

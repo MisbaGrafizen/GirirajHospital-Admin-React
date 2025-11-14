@@ -2694,7 +2694,7 @@ const getRatingStars = (rating = 0) => {
                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                               <div className="flex items-center">
                                 {getRatingStars(feedback.rating)}
-                                <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
+                                {/* <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span> */}
                               </div>
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900  border-gray-200">
@@ -2706,7 +2706,7 @@ const getRatingStars = (rating = 0) => {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        ))} 
                       </tbody>
                     </table>
                   </div>

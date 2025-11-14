@@ -96,8 +96,8 @@ function blockHasContent(block) {
 }
 
 function getUserModel() {
-  const loginType = localStorage.getItem("loginType");
-  return loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
+    const loginType = localStorage.getItem("loginType");
+    return loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
 }
 
 
@@ -116,12 +116,12 @@ function mapStatusUI(status) {
 }
 
 const formatDate = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 };
 
 export default function ComplaintViewPage() {
@@ -292,6 +292,8 @@ export default function ComplaintViewPage() {
 
     const currentPerms = permissionsByBlock[deptKey] || [];
 
+    console.log('complaint.date', complaint.date)
+
 
     const forwardDepartments = Object.values(DEPT_LABEL);
 
@@ -408,12 +410,12 @@ export default function ComplaintViewPage() {
             const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
 
             const payload = {
-  level: escalationLevel,
-  note: escalationNote,
-  userId: currentUserId,
-  userModel: getUserModel(), // ✅ added
-  escalatedTo: targetUser?._id || null,
-};
+                level: escalationLevel,
+                note: escalationNote,
+                userId: currentUserId,
+                userModel: getUserModel(), // ✅ added
+                escalatedTo: targetUser?._id || null,
+            };
 
 
             let response;
@@ -521,12 +523,12 @@ export default function ComplaintViewPage() {
 
             // ✅ Determine backend endpoint
             let endpoint = `/admin/${complaint.id}/resolve`;
-           const payload = {
-  note: resolutionNote,
-  proof: proofUrl ? [proofUrl] : [],
-  userId: localStorage.getItem("userId") || "",
-  userModel: getUserModel(), // ✅ added
-};
+            const payload = {
+                note: resolutionNote,
+                proof: proofUrl ? [proofUrl] : [],
+                userId: localStorage.getItem("userId") || "",
+                userModel: getUserModel(), // ✅ added
+            };
 
 
             // ✅ If department selected → call partial resolve
@@ -589,10 +591,10 @@ export default function ComplaintViewPage() {
     async function updateProgressRemarkAPI(complaintId, note) {
         try {
             const response = await ApiPut(`/admin/update-progress/${complaintId}`, {
-  updateNote: note,
-  userId: localStorage.getItem("userId") || "",
-  userModel: getUserModel(), // ✅ added
-});
+                updateNote: note,
+                userId: localStorage.getItem("userId") || "",
+                userModel: getUserModel(), // ✅ added
+            });
 
             return response; // ✅ keep full response for status
         } catch (error) {
@@ -610,12 +612,12 @@ export default function ComplaintViewPage() {
             }
 
             const response = await ApiPost(`/admin/${complaintId}/partial-inprogress`, {
-  department,
-  note,
-  proof: proofUrl ? [proofUrl] : [],
-  userId: localStorage.getItem("userId") || "",
-  userModel: getUserModel(), // ✅ added
-});
+                department,
+                note,
+                proof: proofUrl ? [proofUrl] : [],
+                userId: localStorage.getItem("userId") || "",
+                userModel: getUserModel(), // ✅ added
+            });
 
 
             return response; // ✅ keep full response
@@ -946,21 +948,9 @@ export default function ComplaintViewPage() {
                                                         <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
-<p className="font-medium text-gray-900">
-  {complaint.date && complaint.date !== "—"
-    ? new Date(complaint.date).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }) +
-      " - " +
-      new Date(complaint.date).toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "—"}
-</p>
+                                                            <p className="font-medium text-gray-900">
+                                                                {complaint.date}
+                                                            </p>
 
                                                         </div>
                                                     </div>
@@ -1037,7 +1027,7 @@ export default function ComplaintViewPage() {
                                                             );
                                                         })}
 
-                                                  
+
                                                         {complaint.escalationRemarks && (
                                                             <div className="p-4 bg-yellow-50 rounded-lg">
                                                                 <h3 className="font-medium text-yellow-900 mb-2">Escalation Remarks</h3>
@@ -1108,9 +1098,9 @@ export default function ComplaintViewPage() {
 
                                                                     <p className="text-xs text-gray-500">
                                                                         <p className="text-xs text-gray-500">
-  {formatDate(h.at || h.createdAt)}
-  {h.byName && ` • ${h.byName}`} {/* 👈 show user name if available */}
-</p>
+                                                                            {formatDate(h.at || h.createdAt)}
+                                                                            {h.byName && ` • ${h.byName}`} {/* 👈 show user name if available */}
+                                                                        </p>
 
                                                                     </p>
                                                                 </div>

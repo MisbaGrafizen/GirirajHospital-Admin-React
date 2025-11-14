@@ -1943,7 +1943,7 @@ const doctorOptions = useMemo(() => {
 
 
 
-                                    <div className=" rounded-lg mb-[20px] mt-[4px]  overflow-hidden">
+                                    {/* <div className=" rounded-lg mb-[20px] mt-[4px]  overflow-hidden">
                                         <div className="p-[13px]  flex justify-between items-center border-gray-200">
                                             <div className="flex items-center gap-[10px]">
                                                 <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1953,15 +1953,12 @@ const doctorOptions = useMemo(() => {
                                             </div>
 
                                             <div className=" flex gap-[10px]">
-                                                {/* ✅ Export to Excel first */}
 
-                                                {/* 👁️ View All second */}
                                                 <button
                                                     className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-[10px] py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                                     onClick={handleInternalNavigate}
                                                 >
                                                     <Eye className="w-5 h-5" />
-                                                    {/* View All */}
                                                 </button>
 
                                             </div>
@@ -1997,10 +1994,6 @@ const doctorOptions = useMemo(() => {
                                                         <th className="px-6 min-w-[200px] border-r flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
                                                         </th>
-
-                                                        {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                                                    Status
-                                                                                                </th> */}
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
@@ -2093,9 +2086,7 @@ const doctorOptions = useMemo(() => {
 
                                                                     </td>
                
-                                                                    {/* <td className="px-6 py-2 text-sm text-gray-900">
-                                        
-                                                                                                            </td> */}
+                
                                                                 </tr>
                                                             )
                                                         })}
@@ -2109,7 +2100,7 @@ const doctorOptions = useMemo(() => {
                                                 </tbody>
                                             </table>
                                         </div>
-                                    </div>
+                                    </div> */}
 
 
                                     <AnimatePresence>
