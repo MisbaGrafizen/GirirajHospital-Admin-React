@@ -50,9 +50,13 @@ jobs:
           password: ${{ secrets.FTP_PASS_GRA }}
           port: 21
           protocol: ftp
-          local-dir: ./${{ needs.build.outputs.build-dir }}
+          local-dir: ./dist/
           server-dir: /domains/grafizen.in/public_html/Shree_Giriraj/
-          dangerous-clean-slate: true
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/**
+            **/.env
 
   # # ================================================================
   # #      DEPLOY 2 — shreegiriraj.darshit.global (darshit.global)
