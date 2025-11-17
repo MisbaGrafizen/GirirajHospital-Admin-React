@@ -69,11 +69,17 @@ export default function BedCreate() {
         }
     }
 
-    // Edit
-    const handleEdit = (bed) => {
-        setForm({ name: bed.wardName, start: bed.start, end: bed.end })
-        setOpenModal(true)
-    }
+const handleEdit = (bed) => {
+  setForm({
+    id: bed._id,        // 🔥 IMPORTANT
+    name: bed.wardName,
+    start: bed.start,
+    end: bed.end,
+  });
+
+  setOpenModal(true);   // 🔥 opens modal
+};
+
 
       const handleCreateWardClick = () => {
     setOpenModal(true)
@@ -172,7 +178,7 @@ export default function BedCreate() {
       </div>
 
       {/* Hover Glow Accent */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-r from-[#e21e23] via-[#ff4d6d] to-[#ff8fa3] transition duration-500"></div>
+
     </div>
   ))}
 </div>
