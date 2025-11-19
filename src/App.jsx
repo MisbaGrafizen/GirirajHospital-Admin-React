@@ -42,6 +42,10 @@ import { messaging } from "./config/firebaseConfig.js";
 import LogDetails from "./pages/profile/LogDetails.jsx";
 import EmployeeFeedbackDashBoard from "./pages/NewModule/EmployeeFeedbackDashBoard.jsx";
 import ConsultantFeedBackDashBord from "./pages/NewModule/ConsultantFeedBackDashBord.jsx";
+import EmployeeAllList from "./pages/reportsMain/allListPages/EmployeeAllList.jsx";
+import ConsultantAllList from "./pages/reportsMain/allListPages/ConsultantAllList.jsx";
+import ConsultantFeedbackDetails from "./pages/NewModule/ConsultantFeedbackDetails.jsx";
+import EmployeeFeedbackDetails from "./pages/NewModule/EmployeeFeedbackDetails.jsx";
 
 
 function App() {
@@ -174,10 +178,11 @@ function App() {
 
           <Route path="/employee-feedback-dashboard" element={<PrivateRoute><EmployeeFeedbackDashBoard /></PrivateRoute>} />
           <Route path="/doctor-feedback-dashboard" element={<PrivateRoute><ConsultantFeedBackDashBord /></PrivateRoute>} />
-
-
-
-
+          <Route path="/employee-all-list" element={<PrivateRoute><EmployeeAllList/></PrivateRoute>} />
+          <Route path="/consultant-all-list" element={<PrivateRoute><ConsultantAllList/></PrivateRoute>} />
+          <Route path="/consultant-feedback-details" element={<PrivateRoute><ConsultantFeedbackDetails/></PrivateRoute>} />
+          <Route path="/employee-feedback-details" element={<PrivateRoute><EmployeeFeedbackDetails/></PrivateRoute>} />
+          
 
         </Routes>
       </div>

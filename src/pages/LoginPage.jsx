@@ -73,7 +73,7 @@ export default function LoginPage() {
           email: identifier,
           password,
         });
-
+        
         const responseData = res.data?.user || res.data;
         const user = responseData?.user || responseData;
         const tokens = responseData?.tokens || res.data?.tokens;

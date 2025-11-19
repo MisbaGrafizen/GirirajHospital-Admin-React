@@ -20,32 +20,23 @@ import {
     TestTube2,
 
     IndianRupee,
+    Pill,
+    HelpingHand,
+    AlertTriangle,
+    Lightbulb,
+    UserPlus,
+    GraduationCap,
 } from "lucide-react"
 import {
     Stethoscope,
     Building2,
     ShieldCheck,
-
     DollarSign,
-
     Wrench,
     Utensils,
 
 } from "lucide-react";
 
-const serviceIcons = {
-    "Overall Experience": Star,
-    "Consultant Doctor": User,
-    "Medical Admin Doctor": User,
-    "Billing Services": IndianRupee,
-    "Housekeeping": SprayCan,
-    "Maintenance": Wrench,
-    "Radiology": Building2,
-    "Pathology": TestTube2,
-    "Dietitian Services": Utensils,
-    "Security": ShieldCheck,
-    "Nursing": User,
-};
 import { ApiGet } from '../../helper/axios'
 import { Calendar, ChevronDown, Hospital, MessageSquare, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
 
@@ -67,7 +58,37 @@ import ModernDatePicker from '../../Component/MainInputFolder/ModernDatePicker'
 // ------------------------------------------------------------------
 // Helpers
 // ------------------------------------------------------------------
-const API_URL = "/admin/opd-patient"
+const API_URL = "/admin/consultant-feedback"
+
+const serviceIcons = {
+  "OPD Services – Overall performance": Star,       // ⭐
+  "Front Desk – Admission, discharge, billing": FileText, 
+  "ER Team – Coordination and response": Activity, 
+  "Medical Officers – Support and efficiency": User,
+  "CMO – Clinical coordination": Stethoscope,
+  "Patient Documentation – Accuracy and upkeep": FileText,
+  "Lab – Report speed and quality": TestTube2,
+  "Radiology – Timely and effective support": Building2,
+  "OT Team – Skill and coordination (Surgeons/Anaesthetists)": Stethoscope,
+  "Pharmacy – Availability of medicines": Pill,
+  "Dietary – Food quality and hygiene": Utensils,
+  "Security – Professionalism and vigilance": ShieldCheck,
+  "Nursing – Care, medication, coordination": HeartPulse,
+  "Maintenance/IT – Quick and reliable support": Wrench,
+  "Housekeeping – Cleanliness and standards": SprayCan,
+
+  // BD Ratings
+  "BD Team – Cooperation and support": User,
+  "BD – Any extra help needed": HelpingHand,
+
+  // Management Feedback
+  "Major challenges this month": AlertTriangle,
+  "Suggestions for process improvement": Lightbulb,
+  "Extra administrative support needed": UserPlus,
+  "Staff attitude and teamwork": UserPlus,
+  "Training needs for staff": GraduationCap,
+};
+
 
 const DOCTORS_BY_DEPT = {
     OPD: ["Dr. Sharma", "Dr. Mehta", "Dr. Patel", "Dr. Gupta"],
@@ -98,14 +119,29 @@ const RATING_KEYS = [
     "nursing",
 ]
 
-function calcRowAverage(ratings = {}) {
-    const vals = [];
-    for (const key of RATING_KEYS) {
-        const v = Number(ratings?.[key]);
-        if (v >= 1 && v <= 5) vals.push(v);
+function calcRowAverage(feedback = {}) {
+    const arr = [];
+
+    if (Array.isArray(feedback.serviceRatings)) {
+        feedback.serviceRatings.forEach((r) => {
+            if (r.rating >= 1 && r.rating <= 5) arr.push(Number(r.rating));
+        });
     }
-    if (!vals.length) return 0;
-    return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+
+    if (Array.isArray(feedback.bdRatings)) {
+        feedback.bdRatings.forEach((r) => {
+            if (r.rating >= 1 && r.rating <= 5) arr.push(Number(r.rating));
+        });
+    }
+
+    if (Array.isArray(feedback.managementFeedback)) {
+        feedback.managementFeedback.forEach((r) => {
+            if (r.rating >= 1 && r.rating <= 5) arr.push(Number(r.rating));
+        });
+    }
+
+    if (!arr.length) return 0;
+    return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10;
 }
 
 
@@ -354,7 +390,7 @@ export default function ConsultantFeedBackDashBord() {
     const [error, setError] = useState(null)
     const [rows, setRows] = useState([])
     const [lineData, setLineData] = useState([]);
-    const [trendBucket, setTrendBucket] = useState("day") 
+    const [trendBucket, setTrendBucket] = useState("day")
     const [serviceSummary, setServiceSummary] = useState([]);
     const [department, setDepartment] = useState("Both")
     const [doctor, setDoctor] = useState("All Doctors")
@@ -368,7 +404,8 @@ export default function ConsultantFeedBackDashBord() {
     useEffect(() => {
         const fetchFrequentRatings = async () => {
             try {
-                const res = await ApiGet("/admin/frequent-ratings"); // backend endpoint we made
+                const res = await ApiGet("/admin/frequent-consultant-keywords");
+                console.log('rexfdgss', res)
                 setFrequentRatings(res?.keywords || []);
             } catch (err) {
                 console.error("Failed to fetch frequent ratings:", err);
@@ -422,7 +459,7 @@ export default function ConsultantFeedBackDashBord() {
 
 
     const handlenavigate = () => {
-        navigate("/dashboards/opd-all-list")
+        navigate("/consultant-all-list")
     };
 
 
@@ -484,41 +521,37 @@ export default function ConsultantFeedBackDashBord() {
         return [];
     }
 
-    function buildServiceSummary(raw) {
-        const items = toArray(raw);
-        const rows = [];
+    function buildServiceSummary(list = []) {
+        const summary = [];
+        const allLabels = {};
 
-        for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
-            const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-            let total = 0;
-            const usedKeySet = new Set();
-
-            for (const item of items) {
-                const r = item?.ratings || {};
-                for (const k of keys) {
-                    const v = Number(r?.[k]);
-                    if (v >= 1 && v <= 5) {
-                        counts[Math.round(v)] += 1;
-                        total += 1;
-                        usedKeySet.add(k);
-                    }
+        list.forEach((fb) => {
+            fb.serviceRatings?.forEach((item) => {
+                if (!allLabels[item.label]) {
+                    allLabels[item.label] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
                 }
-            }
-
-            const denom = total || 1;
-            rows.push({
-                service,
-                usedFields: Array.from(usedKeySet).map(prettyKey),
-                excellent: Math.round((counts[5] / denom) * 100),
-                good: Math.round((counts[4] / denom) * 100),
-                average: Math.round((counts[3] / denom) * 100),
-                poor: Math.round((counts[2] / denom) * 100),
-                veryPoor: Math.round((counts[1] / denom) * 100),
+                if (item.rating >= 1 && item.rating <= 5) {
+                    allLabels[item.label][item.rating] += 1;
+                }
             });
-        }
+        });
 
-        return rows;
+        Object.entries(allLabels).forEach(([label, counts]) => {
+            const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+
+            summary.push({
+                service: label,
+                excellent: Math.round((counts[5] / total) * 100),
+                good: Math.round((counts[4] / total) * 100),
+                average: Math.round((counts[3] / total) * 100),
+                poor: Math.round((counts[2] / total) * 100),
+                veryPoor: Math.round((counts[1] / total) * 100),
+            });
+        });
+
+        return summary;
     }
+
 
     // ---------------- Trend helpers ----------------
     function pad2(n) { return String(n).padStart(2, "0"); }
@@ -689,24 +722,29 @@ export default function ConsultantFeedBackDashBord() {
         try {
             const res = await ApiGet(`${API_URL}`);
             console.log('res', res)
-            const data = Array.isArray(res?.data) ? res.data : [];
+            const data = Array.isArray(res?.data?.feedbacks) ? res.data?.feedbacks : [];
 
             setRawOPD(data);
 
             const list = data.map((d) => {
-                const rating = calcRowAverage(d.ratings);
+                const rating = calcRowAverage(d);
+
                 return {
-                    id: String(d._id || d.id),
-                    createdAt: d.createdAt || d.date,
-                    patient: d.patientName || d.name || "-",
-                    contact: d.contact || "-",
-                    bedNo: d.bedNo || "-",
-                    consultantDoctorName: d.consultantDoctorNamez?.name || "-",
+                    id: String(d._id),
+                    createdAt: d.createdAt,
+                    doctorName: d.doctorName || "-",
                     rating,
-                    overallRecommendation: d.overallRecommendation,
-                    comments: d.comments || "-",
+
+                    comments: d.finalComments || "-",
+
+                    majorChallenges: d.managementFeedback?.[0]?.comment || "-",
+                    processImprovement: d.managementFeedback?.[1]?.comment || "-",
+                    extraAdminSupport: d.managementFeedback?.[2]?.comment || "-",
+                    staffAttitude: d.managementFeedback?.[3]?.comment || "-",
+                    trainingNeeds: d.managementFeedback?.[4]?.comment || "-",
                 };
             });
+
 
             const avg = list.length
                 ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
@@ -789,17 +827,17 @@ export default function ConsultantFeedBackDashBord() {
 
         // ✅ Build display rows
         const list = filteredDocs.map((d) => {
-            const rating = calcRowAverage(d.ratings);
+            const rating = calcRowAverage(d);
             return {
                 id: String(d._id || d.id),
                 createdAt: d.createdAt || d.date,
                 patient: d.patientName || d.name || "-",
                 contact: d.contact || "-",
                 bedNo: d.bedNo || "-",
-                consultantDoctorName: d.consultantDoctorName?.name || "-",
+                doctorName: d.doctorName || "-",
                 rating,
                 overallRecommendation: d.overallRecommendation,
-                comments: d.comments,
+                comments: d.finalComments,
             };
         });
 
@@ -856,7 +894,7 @@ export default function ConsultantFeedBackDashBord() {
             ...(typeof f.overallRecommendation === "number"
                 ? { "Overall Recommendation (NPS)": f.overallRecommendation }
                 : {}),
-            comments: f.comments
+            comments: f.finalComments
         }))
 
         const feedbackHeaders = feedbackRows.length
@@ -914,7 +952,7 @@ export default function ConsultantFeedBackDashBord() {
             return;
         }
         // ✅ pass id (and the shallow row) via navigation state; no id in URL
-        navigate("/Opd-feedback-details", {
+        navigate("/consultant-feedback-details", {
             state: { id, feedback: row, from: "opd" },
         });
     }, [navigate]);
@@ -1424,32 +1462,30 @@ export default function ConsultantFeedBackDashBord() {
 
                                     <div className="overflow-x-auto border  rounded-[10px]">
                                         <table className=" min-w-[1200px] md11:!min-w-full">
-                                         <thead className="bg-gray-50">
-  <tr>
-    {/* Date & Time */}
-    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
-      Date & Time
-    </th>
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    {/* Date & Time */}
+                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                        Date & Time
+                                                    </th>
 
-    {/* Doctor Name */}
-    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
-      Doctor Name
-    </th>
+                                                    {/* Doctor Name */}
+                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                        Doctor Name
+                                                    </th>
 
+                                                    {/* Overall Rating */}
+                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                        Rating
+                                                    </th>
 
+                                                    {/* Comment */}
+                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                        Comment
+                                                    </th>
 
-    {/* Overall Rating */}
-    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
-      Rating
-    </th>
-
-    {/* Comment */}
-    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
-      Comment
-    </th>
-
-    {/* Q18–Q22 */}
-    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                    {/* Q18–Q22 */}
+                                                    {/* <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
       Major Challenges
     </th>
 
@@ -1467,78 +1503,77 @@ export default function ConsultantFeedBackDashBord() {
 
     <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase">
       Training Needs
-    </th>
-  </tr>
-</thead>
-<tbody className="bg-white">
-  {filteredFeedback.map((feedback, index) => (
-    <tr
-      key={feedback.id}
-      className={`${
-        index % 2 === 0 ? "bg-white" : "bg-gray-50"
-      } hover:bg-blue-50 cursor-pointer transition-colors`}
-      onClick={() => handleOpdFeedbackDetails(feedback)}
-    >
+    </th> */}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white">
+                                                {filteredFeedback.map((feedback, index) => (
+                                                    <tr
+                                                        key={feedback.id}
+                                                        className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                                            } hover:bg-blue-50 cursor-pointer transition-colors`}
+                                                        onClick={() => handleOpdFeedbackDetails(feedback)}
+                                                    >
 
-      {/* Date & Time */}
-      <td className="px-4 py-2 text-sm text-gray-900 border-r">
-        <div className="flex items-center">
-          <Clock className="w-4 h-4 text-gray-400 mr-2" />
-          {formatDate(feedback.createdAt)}
-        </div>
-      </td>
+                                                        {/* Date & Time */}
+                                                        <td className="px-4 py-2 text-sm text-gray-900 border-r">
+                                                            <div className="flex items-center">
+                                                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                                                {formatDate(feedback.createdAt)}
+                                                            </div>
+                                                        </td>
 
-      {/* Doctor Name */}
-      <td className="px-2 py-[10px] text-sm font-medium text-gray-900 border-r">
-        <div className="flex items-center">
-          <User className="w-2 h-4 text-gray-400 mr-2" />
-          {feedback.consultantDoctorName || "-"}
-        </div>
-      </td>
+                                                        {/* Doctor Name */}
+                                                        <td className="px-2 py-[10px] text-sm font-medium text-gray-900 border-r">
+                                                            <div className="flex items-center">
+                                                                <User className="w-2 h-4 text-gray-400 mr-2" />
+                                                                {feedback.doctorName || "-"}
+                                                            </div>
+                                                        </td>
 
 
-      {/* Rating */}
-      <td className="px-2 py-2 text-sm text-gray-900 border-r">
-        <div className="flex items-center">
-          {getRatingStars(feedback.rating)} 
-        </div>
-      </td>
+                                                        {/* Rating */}
+                                                        <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                            <div className="flex items-center">
+                                                                {getRatingStars(feedback.rating)}
+                                                            </div>
+                                                        </td>
 
-      {/* Comments */}
-      <td className="px-2 py-2 text-sm text-gray-900 border-r">
-        <div className="text-[12px]">
-          {feedback.comments || "-"}
-        </div>
-      </td>
+                                                        {/* Comments */}
+                                                        <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                            <div className="text-[12px]">
+                                                                {feedback.comments || "-"}
+                                                            </div>
+                                                        </td>
 
-      {/* Q18: Major Challenges */}
-      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                        {/* Q18: Major Challenges */}
+                                                        {/* <td className="px-2 py-2 text-sm text-gray-900 border-r">
         {feedback.majorChallenges || "-"}
-      </td>
+      </td> */}
 
-      {/* Q19: Process Improvement */}
-      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                        {/* Q19: Process Improvement */}
+                                                        {/* <td className="px-2 py-2 text-sm text-gray-900 border-r">
         {feedback.processImprovement || "-"}
-      </td>
+      </td> */}
 
-      {/* Q20: Extra Admin Support */}
-      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                        {/* Q20: Extra Admin Support */}
+                                                        {/* <td className="px-2 py-2 text-sm text-gray-900 border-r">
         {feedback.extraAdminSupport || "-"}
-      </td>
+      </td> */}
 
-      {/* Q21: Staff Attitude */}
-      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                        {/* Q21: Staff Attitude */}
+                                                        {/* <td className="px-2 py-2 text-sm text-gray-900 border-r">
         {feedback.staffAttitude || "-"}
-      </td>
+      </td> */}
 
-      {/* Q22: Training Needs */}
-      <td className="px-2 py-2 text-sm text-gray-900">
+                                                        {/* Q22: Training Needs */}
+                                                        {/* <td className="px-2 py-2 text-sm text-gray-900">
         {feedback.trainingNeeds || "-"}
-      </td>
+      </td> */}
 
-    </tr>
-  ))}
-</tbody>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
 
                                         </table>
                                     </div>
