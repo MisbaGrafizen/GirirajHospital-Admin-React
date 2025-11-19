@@ -147,6 +147,16 @@ export default function ComplaintViewPage() {
     const [status, setStatus] = useState("IN-PROGRESS")
     const [isEditing, setIsEditing] = useState(false)
     const [selectedDepartment, setSelectedDepartment] = useState("");
+    const [selectedType, setSelectedType] = useState("CA");
+    const [note, setNote] = useState("");
+
+    // Button styles
+    const getBtnStyles = (type) =>
+        `px-4 py-2 rounded-lg text-sm font-semibold border transition 
+  ${selectedType === type
+            ? "bg-green-600 text-white border-green-600"
+            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+        }`;
 
     const [isOpen, setIsOpen] = useState(false)
 
@@ -1368,7 +1378,7 @@ export default function ComplaintViewPage() {
                                                                 </button>
                                                             </div>
 
-                                                            <div className="space-y-6">
+                                                            <div className="space-y-5">
 
                                                                 <AnimatedDropdown
                                                                     isOpen={isForwardDeptDropdownOpen}
@@ -1380,17 +1390,55 @@ export default function ComplaintViewPage() {
                                                                     icon={MapPin}
                                                                 />
 
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                        Resolution Note <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <textarea
-                                                                        value={resolutionNote}
-                                                                        onChange={(e) => setResolutionNote(e.target.value)}
-                                                                        rows={4}
-                                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                                                                        placeholder="Please provide details about how the complaint was resolved..."
-                                                                    />
+                                                                <div className="">
+                                                                    {/* <label className="block text-sm font-medium text-gray-700 mb-2">
+    Action Type <span className="text-red-500">*</span>
+  </label> */}
+
+                                                                    {/* Buttons */}
+                                                                    <div className="flex gap-3 mb-2">
+                                                                        <button
+                                                                            className={getBtnStyles("RCA")}
+                                                                            onClick={() => setSelectedType("RCA")}
+                                                                            type="button"
+                                                                        >
+                                                                            RCA
+                                                                        </button>
+
+                                                                        <button
+                                                                            className={getBtnStyles("CA")}
+                                                                            onClick={() => setSelectedType("CA")}
+                                                                            type="button"
+                                                                        >
+                                                                            CA
+                                                                        </button>
+
+                                                                        <button
+                                                                            className={getBtnStyles("PA")}
+                                                                            onClick={() => setSelectedType("PA")}
+                                                                            type="button"
+                                                                        >
+                                                                            PA
+                                                                        </button>
+                                                                    </div>
+
+                                                                    {/* Textarea visible only when any button is selected */}
+                                                                    {selectedType && (
+                                                                        <div>
+                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                                {selectedType} Note <span className="text-red-500">*</span>
+                                                                            </label>
+
+                                                                            <textarea
+                                                                                value={note}
+                                                                                onChange={(e) => setNote(e.target.value)}
+                                                                                rows={4}
+                                                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                   focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                                                                placeholder={`Please provide details for ${selectedType} ...`}
+                                                                            />
+                                                                        </div>
+                                                                    )}
                                                                 </div>
 
                                                                 <div>
