@@ -40,6 +40,7 @@ import InternalComplaintsDetails from "./pages/complaintManagement/InternalCompl
 import { onMessage } from "firebase/messaging";
 import { messaging } from "./config/firebaseConfig.js";
 import LogDetails from "./pages/profile/LogDetails.jsx";
+import EmployeeFeedbackDashBoard from "./pages/NewModule/EmployeeFeedbackDashBoard.jsx";
 
 
 function App() {
@@ -167,6 +168,12 @@ function App() {
           {/* <Route path="/chat" element={<PrivateRoute><InternalChat/></PrivateRoute>}/> */}
           <Route path="/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
           <Route path="/log-details" element={<PrivateRoute><LogDetails /></PrivateRoute>} />
+
+          {/* NewModule  */}
+
+          <Route path="/employee-feedback-dashboard" element={<PrivateRoute><EmployeeFeedbackDashBoard /></PrivateRoute>} />
+
+
 
         </Routes>
       </div>

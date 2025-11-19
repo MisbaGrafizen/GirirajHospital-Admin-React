@@ -299,7 +299,11 @@ const ROUTE_GROUPS = {
           { id: "opd", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
           { id: "ipd", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
           { id: "complaints", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
-          { id: "complaintsintern", label: "Internal Comps. ", href: "/internal-complint-list", icon: faListAlt },
+          { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faListAlt },
+          { id: "employeeDashboard", label: "Employee Dash.. ", href: "/employee-feedback-dashboard", icon: faListAlt },
+          { id: "consultantDashboard", label: "Consultant Dash.. ", href: "/internal-complint-list", icon: faListAlt },
+
+
         ],
       },
 
@@ -330,6 +334,9 @@ const ROUTE_GROUPS = {
     ],
   },
 ];
+
+
+
 
 const handleMenuClick = (item) => {
   if (!item.hasSubmenu) {
