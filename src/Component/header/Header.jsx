@@ -190,7 +190,7 @@ function Header({
             </div>
 
             {/* ✅ Show only on dashboard */}
-            {location.pathname === "/dashboards/super-dashboard" && (
+            {location.pathname === "/dashboard" && (
               <div className=" md34:hidden md11:!grid grid-cols-1 md:grid-cols-4 gap-x-3">
                 <ModernDatePicker
                   label="From Date"
@@ -247,7 +247,7 @@ function Header({
 
 
             {/* ✅ OPD Feedback Dashboard */}
-            {location.pathname === "/dashboards/opd-feedback" && (
+            {location.pathname === "/opd-feedback" && (
               <OpdFilter
                 serviceVariant="opd"
                 doctors={doctors || []} // ✅ dynamically received from parent (OPD)
@@ -258,7 +258,7 @@ function Header({
             )}
 
             {/* ✅ IPD Feedback Dashboard */}
-            {location.pathname === "/dashboards/ipd-feedback" && (
+            {location.pathname === "/ipd-feedback" && (
               <OpdFilter
                 serviceVariant="ipd"
                 doctors={doctors || []} // ✅ dynamically received from parent (IPD)
@@ -269,7 +269,7 @@ function Header({
             )}
 
 
-            {location.pathname === "/dashboards/complaint-dashboard" && (
+            {location.pathname === "/complaint-dashboard" && (
               <OpdFilter
                 serviceVariant="concern"
                 doctors={doctors || []}
@@ -575,7 +575,7 @@ function Header({
           </div>
 
         </section>
-        {["/dashboards/super-dashboard", "/dashboards/opd-feedback", "/dashboards/ipd-feedback", "/dashboards/complaint-dashboard", "/reports/nps-reports"].includes(location.pathname) && (
+        {["/dashboard", "/opd-feedback", "/ipd-feedback", "/complaint-dashboard", "/reports/nps-reports"].includes(location.pathname) && (
           <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
 
             <div className="flex h-[50px] px-[10px]  items-center justify-center w-[100%]">
@@ -583,10 +583,10 @@ function Header({
                 label="Go to Page"
                 // icon={Menu}
                 options={[
-                  { id: "super-admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
-                  { id: "opd", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserDoctor },
-                  { id: "ipd", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
-                  { id: "complaints", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListCheck },
+                  { id: "super-admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+                  { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserDoctor },
+                  { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+                  { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListCheck },
                   { id: "nps", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faSmile },
                 ]}
               />

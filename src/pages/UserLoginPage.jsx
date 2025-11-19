@@ -66,7 +66,7 @@ export default function UserLoginPage() {
         localStorage.setItem("rememberMe", "false")
       }
 
-       navigate("/dashboards/super-dashboard")
+       navigate("/dashboard")
     } catch (err) {
       setError(err?.response?.data?.message || err.message || "Login failed")
     } finally {

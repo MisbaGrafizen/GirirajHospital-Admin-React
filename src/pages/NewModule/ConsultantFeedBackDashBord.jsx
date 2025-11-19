@@ -1034,7 +1034,7 @@ export default function ConsultantFeedBackDashBord() {
             <section className="flex font-Poppins w-[100%] h-[100%] select-none  overflow-hidden">
                 <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
                     <Header
-                        pageName="Employee "
+                        pageName="Doctor Consultant "
                         doctors={doctorOptions}
                         onDateRangeChange={({ from, to, doctor, service }) => {
                             setDateFrom(from);
@@ -1376,7 +1376,7 @@ export default function ConsultantFeedBackDashBord() {
                                             <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                                                 <i className="fa-regular fa-users-medical text-[15px] text-[#fff] "></i>
                                             </div>
-                                            <h3 className="text-[13px] font-[500] text-gray-900">Employee Feedbacks </h3>
+                                            <h3 className="text-[13px] font-[500] text-gray-900">Doctors Consultant Feedbacks </h3>
                                         </div>
                                         <div className="flex flex-row justify-between gap-2   md11:!mb-0">
                                             <div className="relative">
@@ -1424,84 +1424,122 @@ export default function ConsultantFeedBackDashBord() {
 
                                     <div className="overflow-x-auto border  rounded-[10px]">
                                         <table className=" min-w-[1200px] md11:!min-w-full">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                                        Date & Time
-                                                    </th>
-                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                                        Employee Name
-                                                    </th>
-                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                                        Employee Id
-                                                    </th>
-                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                                        Contact
-                                                    </th>
-                                                        <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                                Floor
-                                                    </th>
-                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                                        Rating
-                                                    </th>
-                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white">
-                                                {filteredFeedback.map((feedback, index) => (
-                                                    <tr
-                                                        key={feedback.id}
-                                                        className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50  cursor-pointer transition-colors`}
-                                                        onClick={() => handleOpdFeedbackDetails(feedback)}
-                                                    >
-                                                        <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                                            <div className="flex items-center">
-                                                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                                                                {formatDate(feedback.createdAt)}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">
-                                                            <div className="flex items-center">
-                                                                <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                {feedback.patient}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                                            <div className="flex items-center">
-                                                             #   {/* <Phone className="w-4 h-4 text-gray-400 mr-2" /> */}
-                                                                {feedback.contact}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                                            <div className="flex items-center">
-                                                                <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                                                                   {feedback.contact}
-                                                            </div>
-                                                        </td>
+                                         <thead className="bg-gray-50">
+  <tr>
+    {/* Date & Time */}
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Date & Time
+    </th>
 
-                                                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                                            <div className="flex items-center">
-                                                                <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                                                                Floor-2
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                                                            <div className="flex items-center">
-                                                                {getRatingStars(feedback.rating)}
-                                                                {/* <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span> */}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-900  border-gray-200">
-
-                                                            <div className="flex text-[12px] items-center">
-                                                                {feedback.comments || "-"}
+    {/* Doctor Name */}
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Doctor Name
+    </th>
 
 
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
+
+    {/* Overall Rating */}
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Rating
+    </th>
+
+    {/* Comment */}
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Comment
+    </th>
+
+    {/* Q18–Q22 */}
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Major Challenges
+    </th>
+
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Process Improvement
+    </th>
+
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Extra Admin Support
+    </th>
+
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+      Staff Attitude
+    </th>
+
+    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase">
+      Training Needs
+    </th>
+  </tr>
+</thead>
+<tbody className="bg-white">
+  {filteredFeedback.map((feedback, index) => (
+    <tr
+      key={feedback.id}
+      className={`${
+        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+      } hover:bg-blue-50 cursor-pointer transition-colors`}
+      onClick={() => handleOpdFeedbackDetails(feedback)}
+    >
+
+      {/* Date & Time */}
+      <td className="px-4 py-2 text-sm text-gray-900 border-r">
+        <div className="flex items-center">
+          <Clock className="w-4 h-4 text-gray-400 mr-2" />
+          {formatDate(feedback.createdAt)}
+        </div>
+      </td>
+
+      {/* Doctor Name */}
+      <td className="px-2 py-[10px] text-sm font-medium text-gray-900 border-r">
+        <div className="flex items-center">
+          <User className="w-2 h-4 text-gray-400 mr-2" />
+          {feedback.consultantDoctorName || "-"}
+        </div>
+      </td>
+
+
+      {/* Rating */}
+      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+        <div className="flex items-center">
+          {getRatingStars(feedback.rating)} 
+        </div>
+      </td>
+
+      {/* Comments */}
+      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+        <div className="text-[12px]">
+          {feedback.comments || "-"}
+        </div>
+      </td>
+
+      {/* Q18: Major Challenges */}
+      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+        {feedback.majorChallenges || "-"}
+      </td>
+
+      {/* Q19: Process Improvement */}
+      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+        {feedback.processImprovement || "-"}
+      </td>
+
+      {/* Q20: Extra Admin Support */}
+      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+        {feedback.extraAdminSupport || "-"}
+      </td>
+
+      {/* Q21: Staff Attitude */}
+      <td className="px-2 py-2 text-sm text-gray-900 border-r">
+        {feedback.staffAttitude || "-"}
+      </td>
+
+      {/* Q22: Training Needs */}
+      <td className="px-2 py-2 text-sm text-gray-900">
+        {feedback.trainingNeeds || "-"}
+      </td>
+
+    </tr>
+  ))}
+</tbody>
+
                                         </table>
                                     </div>
                                 </div>

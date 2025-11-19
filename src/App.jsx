@@ -41,6 +41,7 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from "./config/firebaseConfig.js";
 import LogDetails from "./pages/profile/LogDetails.jsx";
 import EmployeeFeedbackDashBoard from "./pages/NewModule/EmployeeFeedbackDashBoard.jsx";
+import ConsultantFeedBackDashBord from "./pages/NewModule/ConsultantFeedBackDashBord.jsx";
 
 
 function App() {
@@ -137,10 +138,10 @@ function App() {
           <Route path="/role-login" element={<UserLoginPage />} />
 
           {/* Private */}
-          <Route path="/dashboards/super-dashboard" element={<PrivateRoute><DashBoard /></PrivateRoute>} />
-          <Route path="/dashboards/opd-feedback" element={<PrivateRoute><OpdFeedBack /></PrivateRoute>} />
-          <Route path="/dashboards/ipd-feedback" element={<PrivateRoute><IPDFeedbackDashboard /></PrivateRoute>} />
-          <Route path="/dashboards/complaint-dashboard" element={<PrivateRoute><ComplaintManagementDashboard /></PrivateRoute>} />
+          <Route path="/dashboard" element={<PrivateRoute><DashBoard /></PrivateRoute>} />
+          <Route path="/opd-feedback" element={<PrivateRoute><OpdFeedBack /></PrivateRoute>} />
+          <Route path="/ipd-feedback" element={<PrivateRoute><IPDFeedbackDashboard /></PrivateRoute>} />
+          <Route path="/complaint-dashboard" element={<PrivateRoute><ComplaintManagementDashboard /></PrivateRoute>} />
           <Route path="/complaint-details" element={<PrivateRoute><ComplaintViewPage /></PrivateRoute>} />
           <Route path="/reports/nps-reports" element={<PrivateRoute><NpsDashboard /></PrivateRoute>} />
           <Route path="/reports/executive-report" element={<PrivateRoute><ExecutiveReport /></PrivateRoute>} />
@@ -172,6 +173,9 @@ function App() {
           {/* NewModule  */}
 
           <Route path="/employee-feedback-dashboard" element={<PrivateRoute><EmployeeFeedbackDashBoard /></PrivateRoute>} />
+          <Route path="/doctor-feedback-dashboard" element={<PrivateRoute><ConsultantFeedBackDashBord /></PrivateRoute>} />
+
+
 
 
 

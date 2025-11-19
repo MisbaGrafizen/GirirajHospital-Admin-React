@@ -106,7 +106,7 @@ export default function LoginPage() {
           console.error("⚠️ FCM initialization failed:", fcmErr);
         }
 
-        navigate("/dashboards/super-dashboard", { replace: true });
+        navigate("/dashboard", { replace: true });
         return;
       } catch (adminError) {
         console.warn("⚠️ Admin login failed, trying role-user...");
@@ -145,7 +145,7 @@ export default function LoginPage() {
         console.error("⚠️ FCM initialization failed:", fcmErr);
       }
 
-      navigate("/dashboards/super-dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("❌ Login error:", err);
       setError(err.message || "Incorrect email/username or password");

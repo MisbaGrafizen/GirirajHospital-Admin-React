@@ -28,7 +28,7 @@ import {
   faChartLine,
   faFileAlt,
   faUsersCog,
-  faUserShield,faBed,
+  faUserShield,faBed,faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons"
 
 import { useNavigate, useLocation } from "react-router-dom";
@@ -109,10 +109,10 @@ const ChevronRightIcon = () => ( <svg width="16" height="16" viewBox="0 0 24 24"
   //         hasSubmenu: true,
   //         href: "/dashboards",
   //         submenu: [
-  //           { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
-  //           { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
-  //           { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
-  //           { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
+  //           { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+  //           { id: "ecommerce", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
+  //           { id: "online-course", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+  //           { id: "social", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
   //           { id: "crypto", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faChartLine },
   //           { id: "nft", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
   //           ...(isAdmin
@@ -260,18 +260,18 @@ const ChevronRightIcon = () => ( <svg width="16" height="16" viewBox="0 0 24 24"
 
   // Grouped route mappings for sidebar highlight
 const ROUTE_GROUPS = {
-  "/dashboards/ipd-feedback": [
+  "/ipd-feedback": [
     "/dashboards/ipd-all-list",
     "/ipd-feedback-details",
     "/dashboards/ipd-list",
     "/dashboards/ipd-edit",
   ],
-  "/dashboards/opd-feedback": [
+  "/opd-feedback": [
     "/dashboards/opd-all-list",
     "/dashboards/opd-list",
     "/opd-feedback-details",
   ],
-  "/dashboards/complaint-dashboard": [
+  "/complaint-dashboard": [
     "/complaint-details",
     "/dashboards/complain-all-list",
   ],
@@ -295,13 +295,13 @@ const ROUTE_GROUPS = {
         hasSubmenu: true,
         href: "/dashboards",
         submenu: [
-          { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
-          { id: "opd", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
-          { id: "ipd", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
-          { id: "complaints", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
-          { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faListAlt },
-          { id: "employeeDashboard", label: "Employee Dash.. ", href: "/employee-feedback-dashboard", icon: faListAlt },
-          { id: "consultantDashboard", label: "Consultant Dash.. ", href: "/internal-complint-list", icon: faListAlt },
+          { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+          { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
+          { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+          { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
+          { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
+          { id: "employeeDashboard", label: "Employee Dash.. ", href: "/employee-feedback-dashboard", icon: faUsersCog },
+          { id: "consultantDashboard", label: "Consultant Dash.. ", href: "/doctor-feedback-dashboard", icon: faUserMd },
 
 
         ],
@@ -492,10 +492,10 @@ useEffect(() => {
 
 
   const navItems = [
-    { id: "Super Admin", label: "Dashboard", href: "/dashboards/super-dashboard", icon: faTachometerAlt },
-    // { id: "ecommerce", label: "Opd Feedback", href: "/dashboards/opd-feedback", icon: faUserMd },
-    // { id: "online-course", label: "Ipd Feedback", href: "/dashboards/ipd-feedback", icon: faHospitalUser },
-    // { id: "social", label: "Complaint List", href: "/dashboards/complaint-dashboard", icon: faListAlt },
+    { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+    // { id: "ecommerce", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
+    // { id: "online-course", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+    // { id: "social", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
     // { id: "crypto", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faChartLine },
     { id: "nft", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
     { id: "school-management", label: "Role Mana..", href: "/settings/role-manage", icon: faUserShield },
