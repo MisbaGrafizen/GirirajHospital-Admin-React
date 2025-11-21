@@ -162,19 +162,28 @@ export default function ConsultantFeedbackDetails() {
                                     <h3 className="text-base font-semibold text-gray-900 mb-4">Hospital Wise Ratings</h3>
                                     <div className="space-y-4">
                                         {model.serviceRatings.map((item, i) => (
-                                            <div key={i} className="flex flex-col sm:flex-row sm:justify-between">
-                                                <p className="font-medium">{item.label}</p>
-                                                <StarRating score={item.rating} />
-{item.comment &&
- item.comment.trim() !== "" &&
- item.comment.trim().toLowerCase() !== "nothing" && (
-    <p className="text-gray-700 text-sm mt-1 whitespace-pre-line">
-        {item.comment}
-    </p>
-)}
+                                            <>
+                                                <div key={i} className=' flex flex-col '>
 
 
-                                            </div>
+                                                    <div className="flex flex-col sm:flex-row sm:justify-between">
+                                                        <p className="font-medium">{item.label}</p>
+                                                        <StarRating score={item.rating} />
+
+
+
+
+                                                    </div>
+
+                                                    {item.comment &&
+                                                        item.comment.trim() !== "" &&
+                                                        item.comment.trim().toLowerCase() !== "nothing" && (
+                                                            <p className="text-gray-700 text-sm mt-1 whitespace-pre-line">
+                                                                {item.comment}
+                                                            </p>
+                                                        )}
+                                                </div>
+                                            </>
                                         ))}
                                     </div>
 
@@ -187,37 +196,56 @@ export default function ConsultantFeedbackDetails() {
                                         <div key={i} className="flex flex-col sm:flex-row sm:justify-between">
                                             <p className="font-medium">{item.label}</p>
                                             <StarRating score={item.rating} />
-{item.comment &&
- item.comment.trim() !== "" &&
- item.comment.trim().toLowerCase() !== "nothing" && (
-    <p className="text-gray-700 text-sm mt-1 whitespace-pre-line">
-        {item.comment}
-    </p>
-)}
+                                            {item.comment &&
+                                                item.comment.trim() !== "" &&
+                                                item.comment.trim().toLowerCase() !== "nothing" && (
+                                                    <p className="text-gray-700 text-sm mt-1 whitespace-pre-line">
+                                                        {item.comment}
+                                                    </p>
+                                                )}
 
 
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="my-6 h-px bg-gray-100" />
-
                                 <h3 className="text-base font-semibold text-gray-900 mb-3">Management Feedback</h3>
                                 <div className="space-y-4">
                                     {model.managementFeedback.map((item, i) => (
-                                        <div key={i} className="flex flex-col sm:flex-row sm:justify-between">
-                                            <p className="font-medium">{item.label}</p>
-                                            <StarRating score={item.rating} />
-{item.comment &&
- item.comment.trim() !== "" &&
- item.comment.trim().toLowerCase() !== "nothing" && (
-    <p className="text-gray-700 text-sm mt-1 whitespace-pre-line">
-        {item.comment}
-    </p>
-)}
+                                        <>
+                                            <div className=' flex flex-col'>
 
 
-                                        </div>
+                                                <div key={i} className="flex flex-col sm:flex-row sm:justify-between">
+                                                    <p className="font-medium">{item.label}</p>
+                                                    <StarRating score={item.rating} />
+
+
+                                                </div>
+                                                {item.comment &&
+                                                    item.comment.trim() !== "" &&
+                                                    item.comment.trim().toLowerCase() !== "nothing" && (
+                                                        <div className=' flex'>
+
+
+
+                                                            <div>
+
+
+
+                                                                <p className="text-gray-700 text-sm mt-1 flex whitespace-pre-line">
+                                                                    <p className=' text-blue-400 font-[500] tex-[14px] '>
+                                                                        Comments :-
+                                                                    </p>   {item.comment}
+                                                                </p>
+
+                                                            </div>
+
+                                                        </div>
+                                                    )}
+
+                                            </div>
+                                        </>
                                     ))}
                                 </div>
 
@@ -225,7 +253,7 @@ export default function ConsultantFeedbackDetails() {
 
                                 <div className="my-6 h-px bg-gray-100" />
 
-                                {/* Comments */}
+
                                 <div>
                                     <h3 className="text-base font-semibold text-gray-900 mb-2">Comments (if any)</h3>
                                     <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
