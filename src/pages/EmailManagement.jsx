@@ -80,6 +80,14 @@ export default function EmailManagement() {
 
     return "bg-gray-100 border-gray-200 text-gray-700" // default
   }
+  
+  function formatStatus(value) {
+  if (!value) return "";
+  return value
+    .replace(/_/g, " ")     // convert underscores → spaces
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
+}
+
 
   // ✅ Add this new function
   const getStatusColor = (status) => {
@@ -90,7 +98,7 @@ export default function EmailManagement() {
       return "bg-green-100 text-green-700 border border-green-300";
     if (s.includes("in progress"))
       return "bg-yellow-100 text-yellow-800 border border-yellow-300";
-    if (s.includes("open"))
+    if (s.includes("open")) 
       return "bg-blue-100 text-blue-700 border border-blue-300";
     if (s.includes("partial"))
       return "bg-orange-100 text-orange-700 border border-orange-300";
@@ -129,18 +137,24 @@ export default function EmailManagement() {
     ${Object.entries(n.data)
               .filter(([key]) => !["complaintid", "_id", "__v"].includes(key.toLowerCase()))
               .map(([key, value]) => {
-                // 👇 Rename 'complaint' or 'complaintid' → 'Complaint Id'
-                let label =
-                  key.toLowerCase() === "complaint"
-                    ? "ComplaintId"
-                    : formatKey(key);
 
-                return `
-      <div class="flex items-start py-2">
-        <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
-        <div class="flex-1 text-gray-700 break-words">${value}</div>
-      </div>`;
-              })
+  let label =
+    key.toLowerCase() === "complaint"
+      ? "Complaint Id"
+      : formatKey(key);
+
+  // 👇 Apply status formatting
+  if (key.toLowerCase() === "status") {
+    value = formatStatus(value);
+  }
+
+  return `
+    <div class="flex items-start py-2">
+      <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
+      <div class="flex-1 text-gray-700 break-words">${value}</div>
+    </div>`;
+})
+
               .join("")}
 
 
@@ -170,7 +184,7 @@ export default function EmailManagement() {
       setEmails(mapped);
       if (mapped.length > 0) setSelectedEmail(mapped[0]);
     } catch (error) {
-      console.error("❌ Error fetching emails:", error);
+      console.error("Error fetching emails:", error);
     } finally {
       setLoading(false);
     }

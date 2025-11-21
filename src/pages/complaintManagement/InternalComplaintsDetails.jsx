@@ -139,6 +139,20 @@ const formatDate = (dateString) => {
   return `${day}/${month}/${year}`;
 };
 
+const formatDepartment = (str = "") => {
+  // Convert camelCase → words with space
+  const spaced = str.replace(/([a-z])([A-Z])/g, "$1 $2");
+
+  // Capitalize every word
+  return spaced
+    .split(" ")
+    .map(word => word.toUpperCase().length <= 3 
+        ? word.toUpperCase()            // IT, HR, QA
+        : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+};
+
 export default function InternalComplaintsDetails() {
     // Modal states
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false)
@@ -1007,15 +1021,15 @@ export default function InternalComplaintsDetails() {
                                                                         )}
                                                                     </h3>
 
-
+{/* 
                                                                     {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
                                                                             <span className="font-medium  text-[10px] ">Department:</span> {block.topic}
                                                                         </p>
-                                                                    )}
+                                                                    )} */}
                                                                     {block?.text && (
                                                                         <p className="text-sm text-gray-700">
-                                                                            <span className="font-medium">Details:</span> {block.text}
+                                                                            <span className="font-medium"></span> {block.text}
                                                                         </p>
                                                                     )}
 
@@ -1087,7 +1101,7 @@ export default function InternalComplaintsDetails() {
                                                                     {h.type === "forwarded" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-gray-900">
-                                                                                {h.label}
+                                                                                {formatDepartment(h.label)}
                                                                             </p>
                                                                             {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
                                                                         </>
@@ -1095,7 +1109,7 @@ export default function InternalComplaintsDetails() {
 
                                                                     {h.type === "in_progress" && (
                                                                         <>
-                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
+                                                                            <p className="text-sm font-medium text-blue-700">{formatDepartment(h.label)}</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
                                                                     )}
@@ -1104,7 +1118,7 @@ export default function InternalComplaintsDetails() {
                                                                     {h.type === "escalated" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-red-700">
-                                                                                {h.label}
+                                                                                {formatDepartment(h.label)}
                                                                             </p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
@@ -1112,13 +1126,14 @@ export default function InternalComplaintsDetails() {
 
                                                                     {h.type === "resolved" && (
                                                                         <>
-                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                            <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
                                                                     )}
 
                                                                     {h.type === "created" && (
-                                                                        <p className="text-sm text-gray-700">{h.label}</p>
+                                                                        <p className="text-sm text-gray-700">{formatDepartment(h.label)}
+</p>
                                                                     )}
 
                                                                     <p className="text-xs text-gray-500">
@@ -1160,7 +1175,7 @@ export default function InternalComplaintsDetails() {
                                                                     <div className="flex-1">
                                                                         {h.type === "created" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-gray-900">{h.label}</p>
+                                                                                <p className="text-sm font-medium text-gray-900">{formatDepartment(h.label)}</p>
                                                                                 <p className="text-xs text-gray-600">
                                                                                     {h.details.employeeName} ({h.details.complaintId})
                                                                                 </p>
@@ -1172,7 +1187,7 @@ export default function InternalComplaintsDetails() {
                                                                         {h.type === "forwarded" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                                    {h.label}
+                                                                                    {formatDepartment(h.label)}
                                                                                 </p>
                                                                                 {h.details?.topic && (
                                                                                     <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
@@ -1185,7 +1200,7 @@ export default function InternalComplaintsDetails() {
                                                                         {h.type === "escalated" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                                    {h.label}
+                                                                                    {formatDepartment(h.label)}
                                                                                 </p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                                 <p className="text-xs text-gray-500">
@@ -1195,7 +1210,7 @@ export default function InternalComplaintsDetails() {
                                                                         )}
                                                                         {h.type === "resolved" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                                <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
 
                                                                                 {/* Only show "View Proof" if proof exists AND is an image */}
@@ -1218,7 +1233,7 @@ export default function InternalComplaintsDetails() {
 
                                                                         {h.type === "in_progress" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-blue-700">{h.label}</p>
+                                                                                <p className="text-sm font-medium text-blue-700">{formatDepartment(h.label)}</p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                                 <p className="text-xs text-gray-500">
                                                                                     {new Date(h.at).toLocaleString()}

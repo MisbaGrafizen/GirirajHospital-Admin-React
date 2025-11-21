@@ -94,6 +94,7 @@ export default function EmployeeFeedbackDetails() {
         try {
           setLoading(true); setError(null)
           const res = await ApiGet(`/admin/employee-feedback/${encodeURIComponent(id)}`)
+          console.log('res', res)
           setDoc(res?.data ?? res)
         } catch (e) {
           console.error('Fetch feedback by id failed:', e)
@@ -103,18 +104,21 @@ export default function EmployeeFeedbackDetails() {
         }
       })()
   }, [id])
-
 const model = useMemo(() => {
   if (!doc) return null;
+  console.log('doc', doc)
 
   const r = doc.ratings ?? {};
-  const c = doc.comments ?? {};
+
+  const c = {
+    trainingNeeded: doc.comments?.trainingNeeded || doc.trainingNeeded || "",
+    challengesSupportNeeded: doc.comments?.challengesSupportNeeded || doc.challengesSupportNeeded || "",
+    suggestions: doc.comments?.suggestions || doc.suggestions || "",
+  };
 
   return {
     id: String(normId(doc._id ?? doc.id) || ''),
-
     dateTime: normDate(doc.createdAt),
-
     employeeName: doc.employeeName ?? "-",
     employeeId: doc.employeeId ?? "-",
 
@@ -129,15 +133,12 @@ const model = useMemo(() => {
       suggestions: to05(r.suggestions),
     },
 
-    comments: {
-      trainingNeeded: c.trainingNeeded,
-      challengesSupportNeeded: c.challengesSupportNeeded,
-      suggestions: c.suggestions,
-    },
-
+    comments: c,
     overallRecommendation: doc.overallRecommendation ?? 0,
   };
 }, [doc]);
+
+console.log("model", model)
 
 function RatingRow({ label, score, comment }) {
   const hideComment =

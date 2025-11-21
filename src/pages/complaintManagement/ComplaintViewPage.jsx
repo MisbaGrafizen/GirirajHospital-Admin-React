@@ -124,6 +124,21 @@ const formatDate = (dateString) => {
     return `${day}/${month}/${year}`;
 };
 
+const formatDepartment = (str = "") => {
+  // Convert camelCase → words with space
+  const spaced = str.replace(/([a-z])([A-Z])/g, "$1 $2");
+
+  // Capitalize every word
+  return spaced
+    .split(" ")
+    .map(word => word.toUpperCase().length <= 3 
+        ? word.toUpperCase()            // IT, HR, QA
+        : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" "); 
+};
+
+
 export default function ComplaintViewPage() {
     // Modal states
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false)
@@ -464,117 +479,76 @@ export default function ComplaintViewPage() {
     };
 
 
-    const handleInProgressSubmit = async () => {
-        if (!tempText.trim()) {
-            alert("Please enter progress update text.");
-            return;
-        }
-
-        try {
-            let response;
-
-            // ✅ If a department is selected, mark partial in-progress
-            if (selectedDepartment) {
-                const deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
-
-                response = await updateDepartmentProgressAPI(
-                    complaint.id,
-                    deptKey,
-                    tempText,
-                    uploadedFile
-                );
-            } else {
-                // ✅ Otherwise mark full complaint in-progress
-                response = await updateProgressRemarkAPI(complaint.id, tempText);
-            }
-
-            // ✅ Detect returned status from backend or fallback
-            const newStatus =
-                response?.data?.status ||
-                response?.data?.data?.status ||
-                "in_progress";
-
-            // ✅ Immediately update UI
-            setStatus(mapStatusUI(newStatus));
-
-            alert("Progress updated successfully!");
-
-            // ✅ Refresh history for latest timeline
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Progress update failed:", error);
-            alert(error.message || "Failed to update complaint progress");
-        }
-    };
-
-
-
-
-
-
     const handleResolveSubmit = async () => {
-        if (!resolutionNote) {
-            alert("Please provide a resolution note.");
-            return;
+    if (!selectedType) {
+        alert("Please select RCA / CA / PA");
+        return;
+    }
+
+    if (!note.trim()) {
+        alert("Please enter a note.");
+        return;
+    }
+
+    try {
+        // Upload proof
+        let proofUrl = "";
+        if (uploadedFile) {
+            const uploadRes = await uploadToHPanel(uploadedFile);
+            proofUrl = uploadRes.url;
         }
 
-        try {
-            // ✅ Upload proof if provided
-            let proofUrl = "";
-            if (uploadedFile) {
-                const uploadRes = await uploadToHPanel(uploadedFile);
-                proofUrl = uploadRes.url;
+        // Build payload
+        const payload = {
+            actionType: selectedType,     // RCA | CA | PA
+            note,
+            proof: proofUrl ? [proofUrl] : [],
+            userId: localStorage.getItem("userId") || "",
+        };
+
+        // Determine endpoint
+        let endpoint = `/admin/${complaint.id}/resolve`;
+
+        if (selectedDepartment) {
+            endpoint = `/admin/${complaint.id}/partial-resolve`;
+
+            const deptKey = Object.keys(DEPT_LABEL).find(
+                (k) => DEPT_LABEL[k] === selectedDepartment
+            );
+
+            if (!deptKey) {
+                alert("Invalid department selected.");
+                return;
             }
 
-            // ✅ Determine backend endpoint
-            let endpoint = `/admin/${complaint.id}/resolve`;
-            const payload = {
-                note: resolutionNote,
-                proof: proofUrl ? [proofUrl] : [],
-                userId: localStorage.getItem("userId") || "",
-                userModel: getUserModel(), // ✅ added
-            };
-
-
-            // ✅ If department selected → call partial resolve
-            if (selectedDepartment) {
-                endpoint = `/admin/${complaint.id}/partial-resolve`;
-                const deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
-                if (deptKey) payload.department = deptKey;
-            }
-
-            const res = await ApiPost(endpoint, payload);
-
-            // ✅ Detect and set new status
-            const newStatus =
-                res?.data?.status || res?.data?.data?.status || "resolved";
-            setStatus(mapStatusUI(newStatus));
-
-            if (newStatus === "partial") {
-                alert("Complaint partially resolved.");
-            } else if (newStatus === "resolved") {
-                alert("✅ Complaint fully resolved.");
-            } else {
-                alert(res?.message || "Resolution submitted successfully.");
-            }
-
-            // ✅ Refresh history without full reload
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Resolve Error:", error);
-            alert(error.message || "Something went wrong while resolving complaint.");
+            payload.department = deptKey;
         }
-    };
+
+        // API Call
+        const res = await ApiPost(endpoint, payload);
+
+        const newStatus =
+            res?.data?.status || res?.data?.data?.status || "resolved";
+
+        setStatus(mapStatusUI(newStatus));
+
+        if (newStatus === "partial") {
+            alert("Complaint partially resolved.");
+        } else {
+            alert("Complaint fully resolved.");
+        }
+
+        // Refresh history
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+    } catch (err) {
+        console.error("Resolve Error:", err);
+        alert(err?.response?.data?.message || "Something went wrong.");
+    }
+};
+
 
     async function fetchConcernHistory(complaintId) {
         try {
@@ -993,11 +967,11 @@ export default function ComplaintViewPage() {
                                                                     </h3>
 
 
-                                                                    {block?.topic && (
+                                                                    {/* {block?.topic && (
                                                                         <p className="text-sm text-gray-700">
                                                                             <span className="font-medium  text-[10px] ">Department:</span> {block.topic}
                                                                         </p>
-                                                                    )}
+                                                                    )} */}
                                                                     {block?.text && (
                                                                         <p className="text-sm text-gray-700">
                                                                             <span className="font-medium">Details:</span> {block.text}
@@ -1072,7 +1046,7 @@ export default function ComplaintViewPage() {
                                                                     {h.type === "forwarded" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-gray-900">
-                                                                                {h.label}
+                                                                                {formatDepartment(h.label)}
                                                                             </p>
                                                                             {h.note && <p className="text-xs text-gray-600">Reason: {h.note}</p>}
                                                                         </>
@@ -1080,7 +1054,7 @@ export default function ComplaintViewPage() {
 
                                                                     {h.type === "in_progress" && (
                                                                         <>
-                                                                            <p className="text-sm font-medium text-blue-700">{h.label}</p>
+                                                                            <p className="text-sm font-medium text-blue-700">{formatDepartment(h.label)}</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
                                                                     )}
@@ -1089,7 +1063,7 @@ export default function ComplaintViewPage() {
                                                                     {h.type === "escalated" && (
                                                                         <>
                                                                             <p className="text-sm font-medium text-red-700">
-                                                                                {h.label}
+                                                                                {formatDepartment(h.label)}
                                                                             </p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
@@ -1097,13 +1071,13 @@ export default function ComplaintViewPage() {
 
                                                                     {h.type === "resolved" && (
                                                                         <>
-                                                                            <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                            <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
                                                                             <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                         </>
                                                                     )}
 
                                                                     {h.type === "created" && (
-                                                                        <p className="text-sm text-gray-700">{h.label}</p>
+                                                                        <p className="text-sm text-gray-700">{formatDepartment(h.label)}</p>
                                                                     )}
 
                                                                     <p className="text-xs text-gray-500">
@@ -1157,7 +1131,7 @@ export default function ComplaintViewPage() {
                                                                         {h.type === "forwarded" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                                    {h.label}
+                                                                                    {formatDepartment(h.label)}
                                                                                 </p>
                                                                                 {h.details?.topic && (
                                                                                     <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
@@ -1170,7 +1144,7 @@ export default function ComplaintViewPage() {
                                                                         {h.type === "escalated" && (
                                                                             <>
                                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                                    {h.label}
+                                                                                    {formatDepartment(h.label)}
                                                                                 </p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                                 <p className="text-xs text-gray-500">
@@ -1180,7 +1154,7 @@ export default function ComplaintViewPage() {
                                                                         )}
                                                                         {h.type === "resolved" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-green-700">{h.label}</p>
+                                                                                <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
 
                                                                                 {/* Only show "View Proof" if proof exists AND is an image */}
@@ -1203,7 +1177,7 @@ export default function ComplaintViewPage() {
 
                                                                         {h.type === "in_progress" && (
                                                                             <>
-                                                                                <p className="text-sm font-medium text-blue-700">{h.label}</p>
+                                                                                <p className="text-sm font-medium text-blue-700">{formatDepartment(h.label)}</p>
                                                                                 <p className="text-xs text-gray-600">Note: {h.note}</p>
                                                                                 <p className="text-xs text-gray-500">
                                                                                     {new Date(h.at).toLocaleString()}
@@ -1354,148 +1328,155 @@ export default function ComplaintViewPage() {
 
                                     {/* Modal 2: Resolve Complaint */}
                                     <AnimatePresence>
-                                        {isResolveModalOpen && (
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-                                                onClick={closeAllModals}
-                                            >
-                                                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                                                    <motion.div
-                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                                        className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <div className="bg-white px-6 pt-6 pb-4">
-                                                            <div className="flex justify-between items-center mb-6">
-                                                                <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
-                                                                <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                                                    <X className="w-6 h-6" />
-                                                                </button>
-                                                            </div>
+    {isResolveModalOpen && (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+            onClick={closeAllModals}
+        >
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="bg-white px-6 pt-6 pb-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                Resolve Complaint
+                            </h3>
+                            <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
 
-                                                            <div className="space-y-5">
+                        <div className="space-y-5">
 
-                                                                <AnimatedDropdown
-                                                                    isOpen={isForwardDeptDropdownOpen}
-                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                    selected={selectedDepartment || "Select Department"}
-                                                                    setSelected={setSelectedDepartment}
-                                                                    options={forwardDepartments}
-                                                                    placeholder="Select Department"
-                                                                    icon={MapPin}
-                                                                />
+                            {/* Department */}
+                            <AnimatedDropdown
+                                isOpen={isForwardDeptDropdownOpen}
+                                setIsOpen={setIsForwardDeptDropdownOpen}
+                                selected={selectedDepartment || "Select Department"}
+                                setSelected={setSelectedDepartment}
+                                options={forwardDepartments}
+                                placeholder="Select Department"
+                                icon={MapPin}
+                            />
 
-                                                                <div className="">
-                                                                    {/* <label className="block text-sm font-medium text-gray-700 mb-2">
-    Action Type <span className="text-red-500">*</span>
-  </label> */}
+                            {/* RCA / CA / PA */}
+                            <div>
+                                <div className="flex gap-3 mb-2">
+                                    <button
+                                        className={getBtnStyles("RCA")}
+                                        onClick={() => setSelectedType("RCA")}
+                                        type="button"
+                                    >
+                                        RCA
+                                    </button>
 
-                                                                    {/* Buttons */}
-                                                                    <div className="flex gap-3 mb-2">
-                                                                        <button
-                                                                            className={getBtnStyles("RCA")}
-                                                                            onClick={() => setSelectedType("RCA")}
-                                                                            type="button"
-                                                                        >
-                                                                            RCA
-                                                                        </button>
+                                    <button
+                                        className={getBtnStyles("CA")}
+                                        onClick={() => setSelectedType("CA")}
+                                        type="button"
+                                    >
+                                        CA
+                                    </button>
 
-                                                                        <button
-                                                                            className={getBtnStyles("CA")}
-                                                                            onClick={() => setSelectedType("CA")}
-                                                                            type="button"
-                                                                        >
-                                                                            CA
-                                                                        </button>
+                                    <button
+                                        className={getBtnStyles("PA")}
+                                        onClick={() => setSelectedType("PA")}
+                                        type="button"
+                                    >
+                                        PA
+                                    </button>
+                                </div>
 
-                                                                        <button
-                                                                            className={getBtnStyles("PA")}
-                                                                            onClick={() => setSelectedType("PA")}
-                                                                            type="button"
-                                                                        >
-                                                                            PA
-                                                                        </button>
-                                                                    </div>
+                                {selectedType && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {selectedType} Note <span className="text-red-500">*</span>
+                                        </label>
 
-                                                                    {/* Textarea visible only when any button is selected */}
-                                                                    {selectedType && (
-                                                                        <div>
-                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                                {selectedType} Note <span className="text-red-500">*</span>
-                                                                            </label>
+                                        <textarea
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            rows={4}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                                    focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                            placeholder={`Please provide details for ${selectedType} ...`}
+                                        />
+                                    </div>
+                                )}
+                            </div>
 
-                                                                            <textarea
-                                                                                value={note}
-                                                                                onChange={(e) => setNote(e.target.value)}
-                                                                                rows={4}
-                                                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                   focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                                                                                placeholder={`Please provide details for ${selectedType} ...`}
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                            {/* Upload Proof */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Upload Proof (Optional)
+                                </label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                                    <input
+                                        type="file"
+                                        onChange={handleFileUpload}
+                                        className="hidden"
+                                        id="file-upload"
+                                        accept="image/*,.pdf,.doc,.docx"
+                                    />
+                                    <label
+                                        htmlFor="file-upload"
+                                        className="cursor-pointer flex flex-col items-center justify-center"
+                                    >
+                                        <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                                        <span className="text-sm text-gray-600 mb-1">Click to upload file</span>
+                                        <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
 
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Proof (Optional)</label>
-                                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
-                                                                        <input
-                                                                            type="file"
-                                                                            onChange={handleFileUpload}
-                                                                            className="hidden"
-                                                                            id="file-upload"
-                                                                            accept="image/*,.pdf,.doc,.docx"
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="file-upload"
-                                                                            className="cursor-pointer flex flex-col items-center justify-center"
-                                                                        >
-                                                                            <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                                                                            <span className="text-sm text-gray-600 mb-1">Click to upload file</span>
-                                                                            <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
-                                                                            {uploadedFile && (
-                                                                                <span className="text-sm text-green-600 mt-2 font-medium">File: {uploadedFile.name}</span>
-                                                                            )}
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                                                    <div className="flex items-center">
-                                                                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                                                                        <span className="text-sm text-green-800">
-                                                                            Patient will receive an SMS notification about the resolution.
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                                                            <button
-                                                                onClick={closeAllModals}
-                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                            <button
-                                                                onClick={handleResolveSubmit}
-                                                                disabled={!resolutionNote}
-                                                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                            >
-                                                                Resolve Complaint
-                                                            </button>
-                                                        </div>
-                                                    </motion.div>
-                                                </div>
-                                            </motion.div>
+                                        {uploadedFile && (
+                                            <span className="text-sm text-green-600 mt-2 font-medium">
+                                                File: {uploadedFile.name}
+                                            </span>
                                         )}
-                                    </AnimatePresence>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <div className="flex items-center">
+                                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                                    <span className="text-sm text-green-800">
+                                        Employee will receive an SMS on resolution.
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                        <button
+                            onClick={closeAllModals}
+                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            onClick={handleResolveSubmit}
+                            disabled={!note || !selectedType}
+                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 
+                                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Resolve Complaint
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        </motion.div>
+    )}
+</AnimatePresence>
+
 
                                     {/* Modal 3: Escalate to Higher Authority */}
                                     <AnimatePresence>
