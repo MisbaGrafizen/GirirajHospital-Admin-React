@@ -98,7 +98,7 @@ config.env
 # ------------------------------------------------------
 # 🧩 Sensitive Keys / Credentials
 # ------------------------------------------------------
-serviceAccountKey.json
+src/config/serviceAccountKey.json
 firebase-key.json
 *.pem
 *.pub

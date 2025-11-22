@@ -429,7 +429,7 @@ if (data.kpis || data.totals) {
                     </div>
 
 
-                    <div className=" flex md11:!flex-row flex-col mt-[3px]  gap-[18px] w-[100%]">
+                    <div className=" flex md11:!flex-row flex-co  l mt-[3px]  gap-[18px] w-[100%]">
 
                       <div className=" w-fit">
 

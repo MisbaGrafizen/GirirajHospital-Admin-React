@@ -140,18 +140,29 @@ const formatDate = (dateString) => {
 };
 
 const formatDepartment = (str = "") => {
-  // Convert camelCase → words with space
+  if (!str) return "";
+
+  // If single word (no camelCase)
+  if (!/[A-Z]/.test(str)) {
+    if (str.length <= 3) return str.toUpperCase();   // IT, HR, MRD
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  // If camelCase → convert to spaced text
   const spaced = str.replace(/([a-z])([A-Z])/g, "$1 $2");
 
-  // Capitalize every word
   return spaced
     .split(" ")
-    .map(word => word.toUpperCase().length <= 3 
-        ? word.toUpperCase()            // IT, HR, QA
-        : word.charAt(0).toUpperCase() + word.slice(1)
+    .map(word =>
+      word.length <= 3
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     )
     .join(" ");
 };
+
+
+
 
 export default function InternalComplaintsDetails() {
     // Modal states
@@ -231,6 +242,8 @@ export default function InternalComplaintsDetails() {
     const { state } = useLocation();
     const row = state?.complaint || {};
     const fullDoc = state?.doc || row;
+        const { permissionsByBlock } = resolvePermissions();
+
 
 
     const CONCERN_KEYS = React.useMemo(() => {
@@ -240,6 +253,16 @@ export default function InternalComplaintsDetails() {
             return blockHasContent(block);
         });
     }, [fullDoc, row]);
+
+    const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
+    const hasContent = blockHasContent(fullDoc[deptKey]); // Complaint exists for this department
+    const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
+    return hasContent && canResolve;
+});
+
+// 🔹 Auto-select if only one
+const autoResolveDepartment =
+    resolveDepartments.length === 1 ? DEPT_LABEL[resolveDepartments[0]] : null;
 
     function collectPresentModuleLabels(src) {
         if (!src || typeof src !== "object") return [];
@@ -312,7 +335,6 @@ export default function InternalComplaintsDetails() {
         Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
     );
 
-    const { permissionsByBlock } = resolvePermissions();
 
     // normalize department string to match keys
     const deptKey = Object.keys(DEPT_LABEL).find(
@@ -531,65 +553,117 @@ export default function InternalComplaintsDetails() {
 
 
 
+const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
+    // Must have block content (text or attachments)
+    const hasContent = blockHasContent(fullDoc[deptKey]);
 
+    // Must be permitted for this user
+    const hasPermission = permissionsByBlock[deptKey]?.includes("resolve");
+
+    return hasContent && hasPermission;
+});
+
+// 🔹 Auto-select if only ONE permitted department
+const autoDepartment =
+    allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
 
 
     const handleResolveSubmit = async () => {
-        if (!resolutionNote) {
-            alert("Please provide a resolution note.");
+        // if (!selectedType) {
+        //     alert("Please select RCA / CA / PA");
+        //     return;
+        // }
+    
+        if (!resolutionNote.trim()) {
+            alert("Please enter a note.");
             return;
         }
-
+    
         try {
-            // ✅ Upload proof if provided
+            // -------------------------------
+            // 1️⃣ Upload Proof
+            // -------------------------------
             let proofUrl = "";
             if (uploadedFile) {
                 const uploadRes = await uploadToHPanel(uploadedFile);
                 proofUrl = uploadRes.url;
             }
-
-            // ✅ Determine backend endpoint
-            let endpoint = `/admin/internal/${complaint.id}/resolve`;
-           const payload = {
-  note: resolutionNote,
-  proof: proofUrl ? [proofUrl] : [],
-  userId: localStorage.getItem("userId") || "",
-  userModel: getUserModel(), // ✅ added
-};
-
-
-            // ✅ If department selected → call partial resolve
+    
+            // -------------------------------
+            // 2️⃣ Prepare payload
+            // -------------------------------
+            const payload = {
+                // actionType: selectedType,
+                note: resolutionNote,
+                proof: proofUrl ? [proofUrl] : [],
+                userId: localStorage.getItem("userId") || "",
+            };
+    
+            // -------------------------------
+            // 3️⃣ Resolve Department Logic
+            // -------------------------------
+            let deptKey = null;
+    
+            // If only ONE department is resolvable → auto assign
+            if (resolveDepartments.length === 1) {
+                deptKey = resolveDepartments[0];
+            }
+    
+            // If dropdown is visible → use selectedDepartment
             if (selectedDepartment) {
-                endpoint = `/admin/internal/${complaint.id}/partial-resolve`;
-                const deptKey = Object.keys(DEPT_LABEL).find(
+                deptKey = Object.keys(DEPT_LABEL).find(
                     (k) => DEPT_LABEL[k] === selectedDepartment
                 );
-                if (deptKey) payload.department = deptKey;
             }
-
-            const res = await ApiPost(endpoint, payload);
-
-            // ✅ Detect and set new status
-            const newStatus =
-                res?.data?.status || res?.data?.data?.status || "resolved";
-            setStatus(mapStatusUI(newStatus));
-
-            if (newStatus === "partial") {
-                alert("Complaint partially resolved.");
-            } else if (newStatus === "resolved") {
-                alert("✅ Complaint fully resolved.");
+    
+            if (!deptKey) {
+                alert("Please select a valid department.");
+                return;
+            }
+    
+            payload.department = deptKey;
+    
+            // -------------------------------
+            // 4️⃣ Choose correct API endpoint
+            // -------------------------------
+            let endpoint = "";
+    
+            if (resolveDepartments.length === 1) {
+                // Only one department → full resolve
+                endpoint = `/admin/internal/${complaint.id}/resolve`;
             } else {
-                alert(res?.message || "Resolution submitted successfully.");
+                // Multiple departments → partial resolve
+                endpoint = `/admin/internal/${complaint.id}/partial-resolve`;
             }
-
-            // ✅ Refresh history without full reload
+    
+            // -------------------------------
+            // 5️⃣ API Call
+            // -------------------------------
+            const res = await ApiPost(endpoint, payload);
+    
+            const newStatus =
+                res?.data?.status ||
+                res?.data?.data?.status ||
+                "resolved";
+    
+            setStatus(mapStatusUI(newStatus));
+    
+            alert(
+                newStatus === "partial"
+                    ? "Complaint partially resolved."
+                    : "Complaint fully resolved."
+            );
+    
+            // -------------------------------
+            // 6️⃣ Refresh history & close modal
+            // -------------------------------
             const newHistory = await fetchConcernHistory(complaint.id);
             setHistoryData(newHistory);
-
+    
             closeAllModals();
-        } catch (error) {
-            console.error("Resolve Error:", error);
-            alert(error.message || "Something went wrong while resolving complaint.");
+        } catch (err) {
+            console.error("Resolve Error:", err);
+            alert(err?.response?.data?.message || "Something went wrong.");
         }
     };
 
@@ -1410,16 +1484,27 @@ export default function InternalComplaintsDetails() {
 
                                                             <div className="space-y-6">
 
-                                                                <AnimatedDropdown
-                                                                    isOpen={isForwardDeptDropdownOpen}
-                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                    selected={selectedDepartment || "Select Department"}
-                                                                    setSelected={setSelectedDepartment}
-                                                                    options={forwardDepartments}
-                                                                    placeholder="Select Department"
-                                                                    icon={MapPin}
-                                                                />
-
+                                                           <div>
+                                                               <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                   Select Department <span className="text-red-500">*</span>
+                                                               </label>
+                                                           
+                                                               {resolveDepartments.length > 1 ? (
+                                                                   <AnimatedDropdown
+                                                                       isOpen={isForwardDeptDropdownOpen}
+                                                                       setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                       selected={selectedDepartment || "Select Department"}
+                                                                       setSelected={setSelectedDepartment}
+                                                                       options={resolveDepartments.map((k) => DEPT_LABEL[k])}
+                                                                       placeholder="Select Department"
+                                                                       icon={MapPin}
+                                                                   />
+                                                               ) : (
+                                                                   <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
+                                                                       {autoResolveDepartment}
+                                                                   </div>
+                                                               )}
+                                                           </div>
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Resolution Note <span className="text-red-500">*</span>

@@ -13,7 +13,7 @@ import {
     Upload,
     ChevronDown,
     Forward,
-    TrendingUp,
+    TrendingUp, 
     MapPin,
     Paperclip,
     Clock,
@@ -165,6 +165,9 @@ export default function ComplaintViewPage() {
     const [selectedType, setSelectedType] = useState("CA");
     const [note, setNote] = useState("");
 
+
+
+
     // Button styles
     const getBtnStyles = (type) =>
         `px-4 py-2 rounded-lg text-sm font-semibold border transition 
@@ -223,6 +226,7 @@ export default function ComplaintViewPage() {
         },
     };
 
+    const { permissionsByBlock } = resolvePermissions();
 
     const { state } = useLocation();
     const row = state?.complaint || {};
@@ -258,6 +262,16 @@ export default function ComplaintViewPage() {
 
 
     console.log('CONCERN_KEYS', fullDoc)
+        // 🔹 Departments allowed for resolve only
+const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
+    const hasContent = blockHasContent(fullDoc[deptKey]); // Complaint exists for this department
+    const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
+    return hasContent && canResolve;
+});
+
+// 🔹 Auto-select if only one
+const autoResolveDepartment =
+    resolveDepartments.length === 1 ? DEPT_LABEL[resolveDepartments[0]] : null;
 
     const presentLabels = collectPresentModuleLabels(fullDoc);
     const categoryText =
@@ -308,7 +322,6 @@ export default function ComplaintViewPage() {
         Object.entries(DEPT_LABEL).map(([k, v]) => [v, k])
     );
 
-    const { permissionsByBlock } = resolvePermissions();
 
     // normalize department string to match keys
     const deptKey = Object.keys(DEPT_LABEL).find(
@@ -478,8 +491,23 @@ export default function ComplaintViewPage() {
         }
     };
 
+    // 🔹 Allowed departments based on permissions & blocks with content
+const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
+    // Must have block content (text or attachments)
+    const hasContent = blockHasContent(fullDoc[deptKey]);
 
-    const handleResolveSubmit = async () => {
+    // Must be permitted for this user
+    const hasPermission = permissionsByBlock[deptKey]?.includes("resolve");
+
+    return hasContent && hasPermission;
+});
+
+// 🔹 Auto-select if only ONE permitted department
+const autoDepartment =
+    allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
+
+
+const handleResolveSubmit = async () => {
     if (!selectedType) {
         alert("Please select RCA / CA / PA");
         return;
@@ -491,54 +519,83 @@ export default function ComplaintViewPage() {
     }
 
     try {
-        // Upload proof
+        // -------------------------------
+        // 1️⃣ Upload Proof
+        // -------------------------------
         let proofUrl = "";
         if (uploadedFile) {
             const uploadRes = await uploadToHPanel(uploadedFile);
             proofUrl = uploadRes.url;
         }
 
-        // Build payload
+        // -------------------------------
+        // 2️⃣ Prepare payload
+        // -------------------------------
         const payload = {
-            actionType: selectedType,     // RCA | CA | PA
+            actionType: selectedType,
             note,
             proof: proofUrl ? [proofUrl] : [],
             userId: localStorage.getItem("userId") || "",
         };
 
-        // Determine endpoint
-        let endpoint = `/admin/${complaint.id}/resolve`;
+        // -------------------------------
+        // 3️⃣ Resolve Department Logic
+        // -------------------------------
+        let deptKey = null;
 
-        if (selectedDepartment) {
-            endpoint = `/admin/${complaint.id}/partial-resolve`;
-
-            const deptKey = Object.keys(DEPT_LABEL).find(
-                (k) => DEPT_LABEL[k] === selectedDepartment
-            );
-
-            if (!deptKey) {
-                alert("Invalid department selected.");
-                return;
-            }
-
-            payload.department = deptKey;
+        // If only ONE department is resolvable → auto assign
+        if (resolveDepartments.length === 1) {
+            deptKey = resolveDepartments[0];
         }
 
-        // API Call
+        // If dropdown is visible → use selectedDepartment
+        if (selectedDepartment) {
+            deptKey = Object.keys(DEPT_LABEL).find(
+                (k) => DEPT_LABEL[k] === selectedDepartment
+            );
+        }
+
+        if (!deptKey) {
+            alert("Please select a valid department.");
+            return;
+        }
+
+        payload.department = deptKey;
+
+        // -------------------------------
+        // 4️⃣ Choose correct API endpoint
+        // -------------------------------
+        let endpoint = "";
+
+        if (resolveDepartments.length === 1) {
+            // Only one department → full resolve
+            endpoint = `/admin/${complaint.id}/resolve`;
+        } else {
+            // Multiple departments → partial resolve
+            endpoint = `/admin/${complaint.id}/partial-resolve`;
+        }
+
+        // -------------------------------
+        // 5️⃣ API Call
+        // -------------------------------
         const res = await ApiPost(endpoint, payload);
 
         const newStatus =
-            res?.data?.status || res?.data?.data?.status || "resolved";
+            res?.data?.status ||
+            res?.data?.data?.status ||
+            "resolved";
 
         setStatus(mapStatusUI(newStatus));
 
-        if (newStatus === "partial") {
-            alert("Complaint partially resolved.");
-        } else {
-            alert("Complaint fully resolved.");
-        }
+        alert(
+            newStatus === "partial"
+                ? "Complaint partially resolved."
+                : "Complaint fully resolved."
+        );
 
-        // Refresh history
+        // -------------------------------
+        // 6️⃣ Refresh history & close modal
+        // -------------------------------
         const newHistory = await fetchConcernHistory(complaint.id);
         setHistoryData(newHistory);
 
@@ -548,6 +605,7 @@ export default function ComplaintViewPage() {
         alert(err?.response?.data?.message || "Something went wrong.");
     }
 };
+
 
 
     async function fetchConcernHistory(complaintId) {
@@ -670,8 +728,10 @@ export default function ComplaintViewPage() {
                 setIsForwardModalOpen(true);
                 break;
             case "resolve":
-                setIsResolveModalOpen(true);
-                break;
+    setIsResolveModalOpen(true);
+    setSelectedDepartment(autoResolveDepartment || "");
+    break;
+
             case "escalate":
                 setIsEscalateModalOpen(true);
                 break;
@@ -1357,15 +1417,29 @@ export default function ComplaintViewPage() {
                         <div className="space-y-5">
 
                             {/* Department */}
-                            <AnimatedDropdown
-                                isOpen={isForwardDeptDropdownOpen}
-                                setIsOpen={setIsForwardDeptDropdownOpen}
-                                selected={selectedDepartment || "Select Department"}
-                                setSelected={setSelectedDepartment}
-                                options={forwardDepartments}
-                                placeholder="Select Department"
-                                icon={MapPin}
-                            />
+                          {/* Department Dropdown (Resolve Only) */}
+<div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+        Select Department <span className="text-red-500">*</span>
+    </label>
+
+    {resolveDepartments.length > 1 ? (
+        <AnimatedDropdown
+            isOpen={isForwardDeptDropdownOpen}
+            setIsOpen={setIsForwardDeptDropdownOpen}
+            selected={selectedDepartment || "Select Department"}
+            setSelected={setSelectedDepartment}
+            options={resolveDepartments.map((k) => DEPT_LABEL[k])}
+            placeholder="Select Department"
+            icon={MapPin}
+        />
+    ) : (
+        <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
+            {autoResolveDepartment}
+        </div>
+    )}
+</div>
+
 
                             {/* RCA / CA / PA */}
                             <div>

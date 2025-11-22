@@ -8,7 +8,7 @@ const defaultHeaders = {
   isAuth: true,
   AdditionalParams: {}, 
   isJsonRequest: true,
-};
+};  
 
 export const ApiGet = (type) => { 
   return new Promise((resolve, reject) => {
@@ -142,7 +142,7 @@ export const ApiPostNoAuth = (type, userData) => {
         }
       })
       .catch((error) => {
-        reject({
+        reject({  
           code: error?.response?.status,
           error: error?.response?.data?.error,
           message: error?.response?.data?.message,
