@@ -22,6 +22,7 @@ import {
   Activity,
   Plus,
   UserPlus,
+  Search,
   User,
   Bell, Bug, LogOut
 } from "lucide-react";
@@ -35,14 +36,15 @@ import ReportBugModal from "../NotifiactionSetting/ReportBugModal";
 function Header({
   pageName = "",
   onDateRangeChange,
+  onFilterChange,       // ⭐ ADD THIS
   onCreateWard,
   onCreateDoctor,
   onCreateRoleUser,
   onCreateNewRole,
   complaintInfo,
   doctors = [],
-  doctorOptions = [],      // ✅ new
-  roomOptions = [],        // ✅ new
+  doctorOptions = [],
+  roomOptions = [],
   selectedRange = "7 Days",
 }) {
 
@@ -59,6 +61,10 @@ function Header({
   const [selectedDoctor, setSelectedDoctor] = useState("All Doctors");
   const [selectedRoom, setSelectedRoom] = useState("All Rooms");
   const [selectedDepartment, setSelectedDepartment] = useState("Both");
+  const [selectedDate, setSelectedDate] = useState(null);
+    const [filterSearch, setFilterSearch] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState(null);
+  const [filterDateTo, setFilterDateTo] = useState(null);
 
 
 
@@ -72,6 +78,17 @@ function Header({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+
+useEffect(() => {
+  if (onFilterChange) {
+    onFilterChange({
+      search: filterSearch,
+      from: filterDateFrom,
+      to: filterDateTo,
+    });
+  }
+}, [filterSearch, filterDateFrom, filterDateTo]);
 
   // useEffect(() => {
   //   const fetchCount = async () => {
@@ -397,6 +414,38 @@ function Header({
                 </div>
               </div>
             )}
+            {location.pathname === "/internal-complint-list" && (
+  <div className="grid  flex-shrink-0 grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+
+    {/* From Date */}
+    <ModernDatePicker
+      label="From Date"
+      selectedDate={filterDateFrom}
+      setSelectedDate={setFilterDateFrom}
+    />
+
+    {/* To Date */}
+    <ModernDatePicker
+      label="To Date"
+      selectedDate={filterDateTo}
+      setSelectedDate={setFilterDateTo}
+    />
+
+    {/* Search */}
+    <div className="relative">
+      <Search className="absolute left-3 top-[12px] -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <input
+        type="text"
+        placeholder="Search complaints..."
+        value={filterSearch}
+        onChange={(e) => setFilterSearch(e.target.value)}
+        className="pl-9 pr-3 py-[3px] text-[13px] outline-none border border-gray-300 rounded-md w-[200px]"
+      />
+    </div>
+
+  </div>
+)}
+
           </div>
 
 

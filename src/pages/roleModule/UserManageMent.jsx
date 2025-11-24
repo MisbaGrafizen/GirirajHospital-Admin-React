@@ -65,6 +65,8 @@ function PermissionDenied() {
 
 export default function UserManageMent() {
   const { canView, canCreate, canUpdate, canDelete } = resolvePermissions()
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+
 
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -136,25 +138,45 @@ export default function UserManageMent() {
     }
   };
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const res = await ApiGet("/admin/role-user");
-      if (res?.roleUser) setUsers(res.roleUser);
-    } catch (err) {
-      console.error("Error fetching users", err);
-    } finally {
-      setIsLoading(false);
+const fetchUsers = async () => {
+  setIsLoading(true);
+  try {
+    const res = await ApiGet("/admin/role-user");
+
+    // 🔥 AUTO LOGOUT IF ADMIN DISABLED LOGIN
+    if (res?.forceLogout) {
+      forceLogout();
+      return;
     }
-  };
+
+    if (res?.roleUser) setUsers(res.roleUser);
+  } catch (err) {
+    console.error("Error fetching users", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchUsers();
     fetchRoles();
   }, []);
 
+const forceLogout = (msg = "Your login has been disabled by admin.") => {
+  alert(msg);
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("loginType");
+  localStorage.removeItem("rights");
+  localStorage.removeItem("user");
+  sessionStorage.clear();
+
+  window.location.href = "/";
+};
+
   const handleAddUser = async (e) => {
     e.preventDefault();
+
 
     const selectedRole = roles.find((r) => r.roleName === formData.role);
     const roleId = selectedRole?._id;
@@ -181,12 +203,21 @@ export default function UserManageMent() {
         avatar: formData.avatar, // HPanel URL if uploaded
       };
 
-      if (editingUser) {
-        await ApiPut(`/admin/role-user/${editingUser._id}`, payload);
-      } else {
-        await ApiPost("/admin/role-user", payload);
-      }
+      let response;
 
+if (editingUser) {
+  response = await ApiPut(`/admin/role-user/${editingUser._id}`, payload);
+} else {
+  response = await ApiPost("/admin/role-user", payload);
+}
+
+// Logout only if the updated user is the currently logged-in user
+if (response?.forceLogout && editingUser?._id === currentUser?._id) {
+  forceLogout("Your login access has been disabled.");
+  return;
+}
+
+      
       await fetchUsers();
       setIsModalOpen(false);
       resetForm();
@@ -645,7 +676,7 @@ export default function UserManageMent() {
                                                     name: user.name,
                                                     email: user.email,
                                                     role: user.roleId?.roleName,
-                                                    password: "",
+                                                    password: user.passwordPlain,
                                                     loginEnabled: user.loginEnabled ?? true,
                                                     avatar: user.avatar,
                                                   });
@@ -1042,19 +1073,32 @@ export default function UserManageMent() {
                           }
                         </div> */}
 
-                          {/* <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-500">Password<span className="text-red-500">*</span></p>
-                          <div className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                            <p className="font-medium">{showPassword ? "password123" : selectedUserData?.password}</p>
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-500">
-                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                            </button>
-                          </div>
-                        </div> */}
+                          {/* 🔥 SHOW PLAIN PASSWORD IN VIEW DETAILS MODAL */}
+<div className="space-y-2">
+  <p className="text-sm font-medium text-gray-500">
+    Password <span className="text-red-500">*</span>
+  </p>
+
+  <div className="flex items-center gap-2">
+    <Lock className="h-4 w-4 text-gray-500" />
+
+    <p className="font-medium">
+      {showPassword
+        ? (selectedUserData?.passwordPlain || "Not Available")
+        : "••••••••"}
+    </p>
+
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="text-gray-500"
+    >
+      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+    </button>
+  </div>
+</div>
+
+                        
 
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-gray-500">Login Status</p>

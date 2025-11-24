@@ -146,13 +146,26 @@ export default function LoginPage() {
       }
 
       navigate("/dashboard", { replace: true });
-    } catch (err) {
-      console.error("❌ Login error:", err);
-      setError(err.message || "Incorrect email/username or password");
-    } finally {
-      setIsLoading(false);
-    }
+  } catch (err) {
+  console.error("❌ Login error:", err);
+
+  //If backend sent 403 (login disabled)
+  if (err?.response?.status === 403) {
+    const msg = err?.response?.data?.message || "Login disabled by admin.";
+    alert(msg);
+    setError(msg);
+    setIsLoading(false);
+    return;
+  }
+
+  //Wrong credentials or server error
+  const fallback = err?.response?.data?.message || "Incorrect email/username or password";
+  setError(fallback);
+} finally {
+  setIsLoading(false);
+}
   };
+
 
   return (
     <div className="min-h-screen bs-giri font-Poppins flex items-center justify-center p-4 relative">

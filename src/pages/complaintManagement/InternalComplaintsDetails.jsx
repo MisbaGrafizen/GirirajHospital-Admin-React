@@ -1165,7 +1165,7 @@ const autoDepartment =
 
 
                                             {complaint.status !== "Resolved" && (
-                                                <div className="bg-white rounded-xl border h-[300px] md13:!h-[380px] 2xl:!h-[560px] overflow-y-auto scrollba shadow-sm p-3">
+                                                <div className="bg-white rounded-xl border min-h-[300px]  overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
                                                         {historyData.slice(-3).reverse().map((h, index) => (

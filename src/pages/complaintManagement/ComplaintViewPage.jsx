@@ -519,71 +519,75 @@ const handleResolveSubmit = async () => {
     }
 
     try {
-        // -------------------------------
-        // 1️⃣ Upload Proof
-        // -------------------------------
+        // 1️⃣ Upload file
         let proofUrl = "";
         if (uploadedFile) {
             const uploadRes = await uploadToHPanel(uploadedFile);
             proofUrl = uploadRes.url;
         }
 
-        // -------------------------------
-        // 2️⃣ Prepare payload
-        // -------------------------------
-        const payload = {
-            actionType: selectedType,
-            note,
-            proof: proofUrl ? [proofUrl] : [],
-            userId: localStorage.getItem("userId") || "",
-        };
+        // 2️⃣ Get login type
+        const loginType = localStorage.getItem("loginType"); 
+        const isAdmin = loginType === "admin";
 
-        // -------------------------------
-        // 3️⃣ Resolve Department Logic
-        // -------------------------------
+        // 3️⃣ Find active departments (with content)
+        const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+            blockHasContent(fullDoc[deptKey])
+        );
+
+        // 4️⃣ Find allowed departments based on permissions
+        const userResolvable = activeDepartments.filter((deptKey) =>
+            permissionsByBlock[deptKey]?.includes("resolve")
+        );
+
+        // 5️⃣ Determine department
         let deptKey = null;
 
-        // If only ONE department is resolvable → auto assign
-        if (resolveDepartments.length === 1) {
-            deptKey = resolveDepartments[0];
-        }
-
-        // If dropdown is visible → use selectedDepartment
-        if (selectedDepartment) {
+        if (userResolvable.length === 1) {
+            deptKey = userResolvable[0];
+        } else {
             deptKey = Object.keys(DEPT_LABEL).find(
                 (k) => DEPT_LABEL[k] === selectedDepartment
             );
         }
 
         if (!deptKey) {
-            alert("Please select a valid department.");
+            alert("Please select department");
             return;
         }
 
-        payload.department = deptKey;
+        // 6️⃣ Build payload
+        const payload = {
+            actionType: selectedType,
+            note,
+            proof: proofUrl ? [proofUrl] : [],
+            department: deptKey,
+            userId: localStorage.getItem("userId"),
+        };
 
-        // -------------------------------
-        // 4️⃣ Choose correct API endpoint
-        // -------------------------------
+        // 7️⃣ Determine API based on user type + department count
         let endpoint = "";
 
-        if (resolveDepartments.length === 1) {
-            // Only one department → full resolve
-            endpoint = `/admin/${complaint.id}/resolve`;
+        if (isAdmin) {
+            // 🔹 ADMIN
+            endpoint =
+                activeDepartments.length === 1
+                    ? `/admin/${complaint.id}/admin-resolve` // full admin resolve
+                    : `/admin/${complaint.id}/admin-partial-resolve`; // partial admin resolve
         } else {
-            // Multiple departments → partial resolve
-            endpoint = `/admin/${complaint.id}/partial-resolve`;
+            // 🔹 STAFF / ROLE USER
+            endpoint =
+                activeDepartments.length === 1
+                    ? `/admin/${complaint.id}/resolve` // full staff resolve
+                    : `/admin/${complaint.id}/partial-resolve`; // partial staff resolve
         }
 
-        // -------------------------------
-        // 5️⃣ API Call
-        // -------------------------------
+        // 8️⃣ Call API
         const res = await ApiPost(endpoint, payload);
 
+        // 9️⃣ Extract updated status
         const newStatus =
-            res?.data?.status ||
-            res?.data?.data?.status ||
-            "resolved";
+            res?.data?.status || res?.data?.data?.status || "resolved";
 
         setStatus(mapStatusUI(newStatus));
 
@@ -593,9 +597,7 @@ const handleResolveSubmit = async () => {
                 : "Complaint fully resolved."
         );
 
-        // -------------------------------
-        // 6️⃣ Refresh history & close modal
-        // -------------------------------
+        // 10️⃣ Refresh history
         const newHistory = await fetchConcernHistory(complaint.id);
         setHistoryData(newHistory);
 
@@ -605,6 +607,7 @@ const handleResolveSubmit = async () => {
         alert(err?.response?.data?.message || "Something went wrong.");
     }
 };
+
 
 
 
@@ -1002,7 +1005,7 @@ const handleResolveSubmit = async () => {
                                             </div>
 
                                             {/* Complaint Details */}
-                                            <div className="bg-white rounded-xl shadow-sm h-[30%] md13:h-[70%] overflow-y-auto scrollbar-default 2xl:!h-[70%] border p-3">
+                                            <div className="bg-white rounded-xl shadow-sm  overflow-y-auto 2xl:!h-[70%] border p-3">
                                                 <h2 className="text-[19px] font-semibold text-gray-900 mb-2">Complaint Details</h2>
                                                 <div className="space-y-3">
 
@@ -1096,7 +1099,7 @@ const handleResolveSubmit = async () => {
 
 
                                             {complaint.status !== "Resolved" && (
-                                                <div className="bg-white rounded-xl border h-[300px] md13:!h-[380px] 2xl:!h-[560px] overflow-y-auto scrollba shadow-sm p-3">
+                                                <div className="bg-white rounded-xl border min-h-[300px]  overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
                                                         {historyData.slice(-3).reverse().map((h, index) => (
@@ -1142,7 +1145,7 @@ const handleResolveSubmit = async () => {
 
                                                                     <p className="text-xs text-gray-500">
                                                                         <p className="text-xs text-gray-500">
-                                                                            {formatDate(h.at || h.createdAt)}
+                                                                            {formatDate(h.at)}
                                                                             {h.byName && ` • ${h.byName}`} {/* 👈 show user name if available */}
                                                                         </p>
 

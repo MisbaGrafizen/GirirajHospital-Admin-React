@@ -539,15 +539,10 @@ async function getResolvedComplaints() {
     console.log("Resolved API response:", res);
 
     if (Array.isArray(res)) {
-        // keep only complaints that are resolved (have stampOut)
-        return res.filter(c => c.stampOut);
-    }
+  return res.filter(c => c.status === "resolved");
+}
+return [];
 
-    if (Array.isArray(res?.data)) {
-        return res.data.filter(c => c.stampOut);
-    }
-
-    return [];
 }
 
 async function getInternalComplaints() {
@@ -750,6 +745,7 @@ const doctorOptions = useMemo(() => {
         (async () => {
             try {
                 const data = await getResolvedComplaints();
+                console.log('datadsfsdf', data)
                 if (!alive) return;
                 setTatComplaints(data);
             } catch (e) {
@@ -944,6 +940,21 @@ const doctorOptions = useMemo(() => {
         return () => { alive = false; };
     }, []);
 
+    // 🔥 Auto-refresh complaints every 10 seconds
+useEffect(() => {
+  const interval = setInterval(async () => {
+    try {
+      const docs = await getConcerns();
+      setRawConcerns(Array.isArray(docs) ? docs : []);
+    } catch (err) {
+      console.error("Auto-refresh failed:", err);
+    }
+  }, 10000); // ← 10 seconds
+
+  return () => clearInterval(interval);
+}, []);
+
+
 
     useEffect(() => {
         if (!Array.isArray(rawConcerns) || !rawConcerns.length) {
@@ -1027,76 +1038,61 @@ const doctorOptions = useMemo(() => {
         document.body.style.overflow = ""
     }
 
-    const exportToExcel = (data) => {
-        if (!data || data.length === 0) {
-            alert("No data available to export.");
-            return;
-        }
+    const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleDateString("en-GB"); // DD/MM/YYYY
+};
 
-        // Transform API data into flat Excel structure
-        const exportData = [];
+const exportToExcel = (data) => {
+  if (!data || data.length === 0) {
+    alert("No data available to export.");
+    return;
+  }
 
-        data.forEach((item, index) => {
-            // if multiple departments per complaint, export each as a separate row
-            if (Array.isArray(item.departments) && item.departments.length > 0) {
-                item.departments.forEach((dept, deptIndex) => {
-                    exportData.push({
-                        "SR. NO": exportData.length + 1,
-                        "COMPLAIN ID": item.complaintId || "-",
-                        "PATIENT NAME": item.patientName || "-",
-                        "BED NO": item.bedNo || "-",
-                        "DEPARTMENT": dept.department || "-",
-                        "COMPLAIN DETAILS": dept.text || "-",
-                        "RESOLUTION DETAILS": item.resolution?.note || "-",
-                        "STAMP IN": formatDateTime(item.stampIn),
-                        "STAMP OUT": formatDateTime(item.stampOut),
-                        "TAT TIME": item.totalTimeTaken || "-",
-                    });
-                });
-            } else {
-                exportData.push({
-                    "SR. NO": index + 1,
-                    "COMPLAIN ID": item.complaintId || "-",
-                    "PATIENT NAME": item.patientName || "-",
-                    "BED NO": item.bedNo || "-",
-                    "DEPARTMENT": "-",
-                    "COMPLAIN DETAILS": "-",
-                    "RESOLUTION DETAILS": item.resolution?.note || "-",
-                    "STAMP IN": formatDateTime(item.stampIn),
-                    "STAMP OUT": formatDateTime(item.stampOut),
-                    "TAT TIME": item.totalTimeTaken || "-",
-                });
-            }
-        });
+  let exportData = [];
 
-        // Create and format worksheet
-        const worksheet = XLSX.utils.json_to_sheet(exportData, { origin: "A1" });
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "TAT_Report");
-
-        // Bold header row
-        const headerStyle = {
-            font: { bold: true },
-            fill: { fgColor: { rgb: "E0E0E0" } },
-        };
-        const headerRange = XLSX.utils.decode_range(worksheet["!ref"]);
-        for (let C = headerRange.s.c; C <= headerRange.e.c; C++) {
-            const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: C })];
-            if (cell) cell.s = headerStyle;
-        }
-
-        // Auto-fit columns
-        const maxWidths = Object.keys(exportData[0]).map((key) =>
-            Math.max(
-                key.length,
-                ...exportData.map((row) => (row[key] ? row[key].toString().length : 10))
-            )
-        );
-        worksheet["!cols"] = maxWidths.map((w) => ({ wch: w + 2 }));
-
-        // Download
-        XLSX.writeFile(workbook, "TAT_Report.xlsx");
+  data.forEach((item) => {
+    const baseRow = {
+      "Sr.No": exportData.length + 1,
+      "Date": formatDate(item.stampIn),
+      "Patient Name": item.patientName || "-",
+      "IP": "-", // As per new requirement: NOT NEEDED, REMOVE if not required
+      "Consultant": item.doctor || "-", // doctor name
+      "Bed No": item.bedNo || "-",
     };
+
+    // 🔥 If complaint has multiple departments
+    if (Array.isArray(item.departments) && item.departments.length > 0) {
+      item.departments.forEach((dept) => {
+        exportData.push({
+          ...baseRow,
+          "Complaints / Suggestions": dept.text || "-",
+          "Department": dept.department || "-",
+          "Root Cause Analysis (RCA)": dept.rca || "NA",
+          "Corrective Actions (CA)": dept.ca || "NA",
+          "Preventive Actions (PA)": dept.pa || "NA",
+        });
+      });
+    } else {
+      // No departments → empty row
+      exportData.push({
+        ...baseRow,
+        "Complaints / Suggestions": "-",
+        "Department": "-",
+        "Root Cause Analysis (RCA)": "NA",
+        "Corrective Actions (CA)": "NA",
+        "Preventive Actions (PA)": "NA",
+      });
+    }
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Department_Report");
+
+  XLSX.writeFile(workbook, "TAT_Report.xlsx");
+};
+
 
     // ===================== CHARTS (design preserved) =====================
     const AnimatedDonutChart = ({ data }) => {
@@ -1696,7 +1692,7 @@ const doctorOptions = useMemo(() => {
                                                             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                                                             .slice(0, 5)
                                                             .map((complaint, index) => {
-                                                                const fullDoc = rawConcerns.find(d => d._id === complaint.id);
+                                                                const fullDoc = rawConcerns.find(d => d._id === complaint._id);
                                                                 return (
 
                                                                     <tr
@@ -1751,7 +1747,8 @@ const doctorOptions = useMemo(() => {
                                                                                 className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] `}
 
                                                                             >
-                                                                                {formatDateTime(complaint.stampOut)}
+                                                                                {complaint.stampOut ? formatDateTime(complaint.stampOut) : "-"}
+
                                                                             </span>
                                                                         </td>
                                                                         <td className="px-3 py-2 border-r text-sm">
@@ -1841,13 +1838,14 @@ const doctorOptions = useMemo(() => {
                                                             return (
                                                                 <tr
                                                                     key={complaint.id}
-                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`} onClick={() => handlenavigate(complaint, fullDoc)} 
+                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`} 
                                                                 >
-                                                                    <td className="px-3 py-2 border-r text-sm font-medium text-blue-600">
-                                                                        <div className=" flex  cursor-pointer"   onClick={() => handlenavigate(complaint, fullDoc)} >
+                                                                    <td className="px-3  py-2 border-r text-sm font-medium text-blue-600">
+                                                                        <div className=" flex  cursor-pointer"   >
 
 
                                                                             <button
+                                                                             onClick={() => handlenavigate(complaint, fullDoc)}
                                                                               
                                                                                 className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                                                                             >
@@ -1858,26 +1856,26 @@ const doctorOptions = useMemo(() => {
                                                                         </div>
                                                                     </td>
 
-                                                                    <td className="px-4 py-2 border-r text-sm text-gray-900">
+                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-4 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
 
                                                                             {complaint.date}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-3 py-2 border-r text-sm font- text-gray-900">{complaint.patient}</td>
-                                                                    <td className="px-3 py-2 border-r text-sm text-gray-900">
+                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm font- text-gray-900">{complaint.patient}</td>
+                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
                                                                             <User className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.doctor}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-3 py-2 border-r text-sm text-gray-900">
+                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex  items-center">
                                                                             <Bed className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.bedNo}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-3 py-2 border-r text-[12px] text-gray-900">
+                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)}  className="px-3 py-2 border-r text-[12px] text-gray-900">
                                                                         {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
                                                                     </td>
 

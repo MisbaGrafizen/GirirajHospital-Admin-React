@@ -101,7 +101,14 @@ export default function InternalComplaintsList() {
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [allowedBlocks, setAllowedBlocks] = useState([]);
-  const [ready, setReady] = useState(false); // ✅ ensures order
+  const [ready, setReady] = useState(false); 
+const [filters, setFilters] = useState({
+  search: "",
+  from: null,
+  to: null,
+});
+
+
   const navigate = useNavigate();
 
   const fetchedRef = useRef(false); // ✅ prevent double-fetch
@@ -114,7 +121,51 @@ export default function InternalComplaintsList() {
     setReady(true);
   }, []);
 
-  // Step 2️⃣: Fetch complaints only when permissions ready
+
+useEffect(() => {
+  let list = complaints;
+
+  // 1️⃣ DATE FILTER
+  if (filters.from || filters.to) {
+    list = list.filter((c) => {
+      const created = new Date(c.createdAt);
+
+      if (filters.from && created < new Date(filters.from)) return false;
+      if (filters.to && created > new Date(filters.to)) return false;
+
+      return true;
+    });
+  }
+
+  // 2️⃣ SEARCH FILTER
+  if (filters.search) {
+    const s = filters.search.toLowerCase();
+
+    list = list.filter((c) => {
+      const departments = Object.keys(c).filter(
+        (key) => typeof c[key] === "object" && c[key]?.text
+      );
+
+      const deptList = departments
+        .map((key) => DEPT_LABEL[key] || key)
+        .join(", ")
+        .toLowerCase();
+
+      return (
+        c.employeeName?.toLowerCase().includes(s) ||
+        c.contactNo?.toLowerCase().includes(s) ||
+        c.employeeId?.toLowerCase().includes(s) ||
+        c.floorNo?.toLowerCase().includes(s) ||
+        deptList.includes(s) ||
+        c.complaintId?.toLowerCase().includes(s)
+      );
+    });
+  }
+
+  setFilteredComplaints(list);
+}, [filters, complaints]);
+
+
   useEffect(() => {
     if (!ready || fetchedRef.current) return; // wait until permissions loaded
     fetchedRef.current = true;
@@ -149,6 +200,37 @@ export default function InternalComplaintsList() {
 
     fetchComplaints();
   }, [ready, isAdmin, allowedBlocks]);
+
+  // 🔥 Auto-refresh Internal Complaints every 10 seconds
+useEffect(() => {
+  const interval = setInterval(async () => {
+    try {
+      const res = await ApiGet("/admin/internal-complaints");
+      let updated = res?.data || [];
+
+      // 🔒 Apply permission filter again
+      if (!isAdmin && allowedBlocks.length > 0) {
+        updated = updated.filter((complaint) =>
+          Object.keys(complaint).some(
+            (key) =>
+              allowedBlocks.includes(key) &&
+              typeof complaint[key] === "object" &&
+              (complaint[key]?.text || (complaint[key]?.attachments?.length > 0))
+          )
+        );
+      }
+
+      setComplaints(updated);
+      setFilteredComplaints(updated);
+
+    } catch (error) {
+      console.error("Auto refresh failed:", error);
+    }
+  }, 10000); // ← 10 seconds
+
+  return () => clearInterval(interval);
+}, [isAdmin, allowedBlocks]);
+
 
   // Step 3️⃣: Search handler
   useEffect(() => {
@@ -237,7 +319,10 @@ export default function InternalComplaintsList() {
   return (
     <section className="flex w-full h-full select-none overflow-hidden">
       <div className="flex w-full flex-col h-screen">
-        <Header pageName="Internal Complaints List" />
+<Header
+  pageName="Internal"
+  onFilterChange={(data) => setFilters(data)}
+/>
         <div className="flex w-full h-full">
           <CubaSidebar />
           <div className="flex flex-col w-full relative max-h-[93%] py-[10px] overflow-y-auto gap-[10px]">

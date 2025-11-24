@@ -19,6 +19,97 @@ import Preloader from "../Component/loader/Preloader";
 import { motion, AnimatePresence } from "framer-motion"
 import socket from "../socket/index";
 
+const MODULE_TO_BLOCK = {
+  doctor_service: "doctorServices",
+  diagnostic_service: "diagnosticServices",
+  nursing: "nursing",
+  dietitian: "dietitianServices",
+  maintenance: "maintenance",
+  security: "security",
+  billing_service: "billingServices",
+  housekeeping: "housekeeping",
+};
+
+const DEPT_NAME_MAP = {
+  // Doctor
+  "doctor service": "doctor_service",
+  "doctor services": "doctor_service",
+
+  // Diagnostic
+  "diagnostic service": "diagnostic_service",
+  "diagnostic services": "diagnostic_service",
+
+  // Dietitian
+  "dietitian service": "dietitian",
+  "dietitian services": "dietitian",
+
+  // Billing
+  "billing service": "billing_service",
+  "billing services": "billing_service",
+
+  // Housekeeping
+  "housekeeping": "housekeeping",
+
+  // Nursing
+  "nursing": "nursing",
+
+  // Security
+  "security": "security",
+
+  // Maintenance
+  "maintenance": "maintenance",
+};
+
+
+function resolvePermissions() {
+    const loginType = localStorage.getItem("loginType");
+    const isAdmin = loginType === "admin";
+
+    let permsArray = [];
+    try {
+        const parsed = JSON.parse(localStorage.getItem("rights"));
+        if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+            permsArray = parsed.permissions;
+        } else if (Array.isArray(parsed)) {
+            permsArray = parsed;
+        }
+    } catch {
+        permsArray = [];
+    }
+
+    const permissionsByBlock = {};
+    if (isAdmin) {
+        Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
+            permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
+        });
+    } else {
+        permsArray.forEach((p) => {
+            const blockKey = MODULE_TO_BLOCK[p.module];
+            if (blockKey) {
+                permissionsByBlock[blockKey] = p.permissions.map((x) =>
+                    x.toLowerCase()
+                );
+            }
+        });
+    }
+
+    return { isAdmin, permissionsByBlock };
+}
+
+
+// 🔥 Convert "Doctor Service" → "doctorService"
+function toCamelCaseDepartment(dept) {
+  if (!dept) return "";
+  return dept
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .split(" ")
+    .map((word, index) =>
+      index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join("");
+}
+
 
 export default function EmailManagement() {
   const [selectedEmail, setSelectedEmail] = useState(null);
@@ -29,39 +120,42 @@ export default function EmailManagement() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([])
   const [allowedFilters, setAllowedFilters] = useState(["OPD", "IPD", "Complain"]);
+  const [allowedDepartments, setAllowedDepartments] = useState([]);
 
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const userId = localStorage.getItem("userId");
-        const loginType = localStorage.getItem("loginType");
-        const userModel = loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
+  const fetchSettings = async () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      const loginType = localStorage.getItem("loginType");
+      const userModel = loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
 
-        if (!userId || !userModel) return;
+      if (!userId || !userModel) return;
 
-        const res = await ApiGet(
-          `/admin/notification-settings?userId=${userId}&userModel=${userModel}`
-        );
-        console.log('res', res)
+      const res = await ApiGet(
+        `/admin/notification-settings?userId=${userId}&userModel=${userModel}`
+      );
 
-        const s = res?.data || {};
-        const temp = [];
+      const s = res?.data || {};
 
-        if (s.opd) temp.push("OPD");
-        if (s.ipd) temp.push("IPD");
-        if (s.complaint) temp.push("Complain");
+const { permissionsByBlock } = resolvePermissions();
+setAllowedDepartments(Object.keys(permissionsByBlock));
 
-        // fallback → show all if user turned all off
-        setAllowedFilters(temp.length > 0 ? temp : ["OPD", "IPD", "Complain"]);
-      } catch (err) {
-        console.error("❌ Failed to fetch notification settings:", err);
-        setAllowedFilters(["OPD", "IPD", "Complain"]);
-      }
-    };
+      const temp = [];
+      if (s.opd) temp.push("OPD");
+      if (s.ipd) temp.push("IPD");
+      if (s.complaint) temp.push("Complain");
 
-    fetchSettings();
-  }, []);
+      setAllowedFilters(temp.length > 0 ? temp : ["OPD", "IPD", "Complain"]);
+    } catch (err) {
+      console.error("❌ Failed to fetch notification settings:", err);
+      setAllowedFilters(["OPD", "IPD", "Complain"]);
+    }
+  };
+
+  fetchSettings();
+}, []);
+
 
 
   const getSubjectColor = (subject) => {
@@ -87,6 +181,7 @@ export default function EmailManagement() {
     .replace(/_/g, " ")     // convert underscores → spaces
     .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
 }
+
 
 
   // ✅ Add this new function
@@ -116,61 +211,64 @@ export default function EmailManagement() {
       const data = await ApiGet("/admin/notifications");
       console.log('data', data)
       const mapped = (data?.notifications || []).map((n) => ({
-        id: n._id,
-        sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
-        senderEmail: "",
-        subject: n.title,
+  id: n._id,
 
-        preview: n.body,
-        status: n.data?.status
-          ? n.data.status.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase())
-          : "Unknown",
-        content: `
+  // 🔥 REQUIRED FIXES
+  data: n.data,                     // Store full backend data (needed for filtering)
+  department: n.department,         // Extra safety
+
+  sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
+  senderEmail: "",
+  subject: n.title,
+
+  preview: n.body,
+
+  status: n.data?.status
+    ? n.data.status.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase())
+    : "Unknown",
+
+  content: `
     <div class="space-y-4">
       <p class="text-gray-800 text-base">${n.body}</p>
-      ${n.data
-            ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+      ${
+        n.data
+          ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
               <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
                 📋 Patient Details
               </h4>
               <div class="divide-y divide-gray-200">
-    ${Object.entries(n.data)
-              .filter(([key]) => !["complaintid", "_id", "__v"].includes(key.toLowerCase()))
-              .map(([key, value]) => {
+                ${Object.entries(n.data)
+                  .filter(([key]) => !["complaintid", "_id", "__v"].includes(key.toLowerCase()))
+                  .map(([key, value]) => {
+                    let label = key.toLowerCase() === "complaint" ? "Complaint Id" : formatKey(key);
 
-  let label =
-    key.toLowerCase() === "complaint"
-      ? "Complaint Id"
-      : formatKey(key);
+                    if (key.toLowerCase() === "status") {
+                      value = formatStatus(value);
+                    }
 
-  // 👇 Apply status formatting
-  if (key.toLowerCase() === "status") {
-    value = formatStatus(value);
-  }
-
-  return `
-    <div class="flex items-start py-2">
-      <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
-      <div class="flex-1 text-gray-700 break-words">${value}</div>
-    </div>`;
-})
-
-              .join("")}
-
-
+                    return `
+                      <div class="flex items-start py-2">
+                        <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
+                        <div class="flex-1 text-gray-700 break-words">${value}</div>
+                      </div>
+                    `;
+                  })
+                  .join("")}
               </div>
             </div>`
-            : ""
-          }
+          : ""
+      }
     </div>
   `,
-        timestamp: new Date(n.createdAt).toLocaleString(),
-        isRead: false,
-        isStarred: false,
-        isNew: true,
-        priority: "normal",
-        hasAttachment: false,
-      }));
+
+  timestamp: new Date(n.createdAt).toLocaleString(),
+  isRead: false,
+  isStarred: false,
+  isNew: true,
+  priority: "normal",
+  hasAttachment: false,
+}));
+
 
       // Helper function
       function formatKey(key) {
@@ -189,6 +287,7 @@ export default function EmailManagement() {
       setLoading(false);
     }
   };
+  
   useEffect(() => {
     fetchEmails();
     socket.on("ipd:new", fetchEmails);
@@ -202,33 +301,69 @@ export default function EmailManagement() {
     };
   }, []);
 
+console.log('allowedDepartments', allowedDepartments)
 
+const filteredEmails = useMemo(() => {
+  let list = emails;
 
-  const filteredEmails = useMemo(() => {
-    let list = emails;
+  // 🔍 SEARCH FILTER
+  if (searchQuery) {
+    list = list.filter(
+      (email) =>
+        email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.preview?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
 
-    // 🔎 Apply search filter
-    if (searchQuery) {
-      list = list.filter(
-        (email) =>
-          email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          email.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          email.preview.toLowerCase().includes(searchQuery.toLowerCase())
+// ⭐ FINAL FIXED PERMISSION FILTER (handles plurals, dots, commas)
+if (allowedDepartments.length > 0) {
+  list = list.filter((email) => {
+    const backendDept =
+      email.data?.departments ||            // <-- FIX HERE
+      email.data?.department ||             // fallback
+      email.department ||                   // backend sometimes sends root-level
+      "";
+
+    if (!backendDept) return false;
+
+    const deptList = backendDept
+      .split(",")
+      .map((d) =>
+        d
+          .trim()
+          .toLowerCase()
+          .replace(/\./g, "") 
+          .replace(/[^a-zA-Z ]/g, "")
       );
-    }
 
-    // ✅ Apply checkbox filter
-    if (selectedFilters.length > 0) {
-      list = list.filter((email) =>
-        selectedFilters.some((f) =>
-          email.subject?.toLowerCase().includes(f.toLowerCase())
-        )
-      );
-    }
+    return deptList.some((deptName) => {
+      const moduleKey = DEPT_NAME_MAP[deptName];
+      if (!moduleKey) return false;
 
-    return list;
-  }, [emails, searchQuery, selectedFilters]);
+      const blockName = MODULE_TO_BLOCK[moduleKey];
+      if (!blockName) return false;
 
+      return allowedDepartments.includes(blockName);
+    });
+  });
+}
+
+
+
+  // ✔ OPD / IPD / Complaint FILTER
+  if (selectedFilters.length > 0) {
+    list = list.filter((email) =>
+      selectedFilters.some((item) =>
+        email.subject?.toLowerCase().includes(item.toLowerCase())
+      )
+    );
+  }
+
+  return list;
+}, [emails, searchQuery, selectedFilters, allowedDepartments]);
+
+console.log('filteredEmails', filteredEmails)
 
   const handleEmailClick = (email) => {
     setSelectedEmail(email);
