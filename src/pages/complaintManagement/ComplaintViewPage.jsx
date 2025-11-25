@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSidebar'
 import { motion, AnimatePresence } from "framer-motion"
@@ -54,24 +54,25 @@ function resolvePermissions() {
     }
 
     const permissionsByBlock = {};
+    let allowedBlocks = [];
+
     if (isAdmin) {
         Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
             permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
+            allowedBlocks.push(block);
         });
     } else {
         permsArray.forEach((p) => {
             const blockKey = MODULE_TO_BLOCK[p.module];
             if (blockKey) {
-                permissionsByBlock[blockKey] = p.permissions.map((x) =>
-                    x.toLowerCase()
-                );
+                permissionsByBlock[blockKey] = p.permissions.map((x) => x.toLowerCase());
+                allowedBlocks.push(blockKey);
             }
         });
     }
 
-    return { isAdmin, permissionsByBlock };
+    return { isAdmin, permissionsByBlock, allowedBlocks };
 }
-
 
 
 const DEPT_LABEL = {
@@ -226,7 +227,7 @@ export default function ComplaintViewPage() {
         },
     };
 
-    const { permissionsByBlock } = resolvePermissions();
+const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
 
     const { state } = useLocation();
     const row = state?.complaint || {};
@@ -335,23 +336,24 @@ const autoResolveDepartment =
 
     const forwardDepartments = Object.values(DEPT_LABEL);
 
-    console.log('forwardDepartment', forwardDepartment)
+    // ---------------- ACTIONABLE DEPARTMENT LOGIC ----------------
 
-    async function forwardComplaint(complaintId, departmentKey, data) {
-        try {
-            const response = await ApiPost(`/admin/${complaintId}/forward`, {
-                department: departmentKey, // must match backend schema key (e.g., billingServices)
-                topic: data.topic || "Forwarded Complaint",
-                text: data.text || data.reason || "",
-                attachments: data.attachments || [],
-                note: data.note || data.text || "", // ✅ extra note field for ForwardSchema
-            });
+// 1️⃣ Departments included in this complaint (have text/attachments)
+const complaintDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+    blockHasContent(fullDoc[deptKey])
+);
 
-            return response;
-        } catch (error) {
-            throw new Error(error.message || "Failed to forward complaint");
-        }
-    }
+// 2️⃣ User only has access to these departments
+const userDepartments = complaintDepartments.filter(
+    (deptKey) => permissionsByBlock[deptKey]
+);
+
+// 3️⃣ A department is actionable ONLY when it is NOT resolved
+const actionableDepartment = userDepartments.find((deptKey) => {
+    const block = fullDoc[deptKey];
+    return block?.status?.toLowerCase() !== "resolved";
+});
+
 
     async function fetchComplaintDetails(id) {
         try {
@@ -362,9 +364,6 @@ const autoResolveDepartment =
             return null;
         }
     }
-
-
-
     // in handleForwardSubmit
     const handleForwardSubmit = async () => {
         if (!forwardDepartment || !forwardReason) {
@@ -692,24 +691,6 @@ const handleResolveSubmit = async () => {
         }
     };
 
-
-
-
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case "Critical":
-                return "bg-red-100 text-red-800 border-red-200"
-            case "High":
-                return "bg-orange-100 text-orange-800 border-orange-200"
-            case "Medium":
-                return "bg-yellow-100 text-yellow-800 border-yellow-200"
-            case "Low":
-                return "bg-green-100 text-green-800 border-green-200"
-            default:
-                return "bg-gray-100 text-gray-800 border-gray-200"
-        }
-    }
-
     const closeAllModals = () => {
         setIsForwardModalOpen(false)
         setIsResolveModalOpen(false)
@@ -776,71 +757,37 @@ const handleResolveSubmit = async () => {
         })();
     }, [complaint.id]);
 
-    // 🟢 Latest Forward (handles partial + full forwards)
-    const latestForward = React.useMemo(() => {
-        if (!Array.isArray(historyData)) return null;
+// FILTER HISTORY BASED ON USER PERMISSIONS
+const filteredHistory = useMemo(() => {
+    if (!Array.isArray(historyData)) return [];
 
-        // find the last forwarded event (department-level or full)
-        const lastForward = [...historyData]
-            .filter(h => h?.type === "forwarded")
-            .sort((a, b) => new Date(b.at) - new Date(a.at))[0];
+    // Admin sees everything
+    if (isAdmin) return historyData;
 
-        if (!lastForward) return null;
+    return historyData.filter((h) => {
+        // ✔ Always show complaint created event
+        if (h.type === "created") return true;
 
-        // If it’s a department-level forward
-        if (lastForward.department) {
-            const deptLabel =
-                DEPT_LABEL[lastForward.department] || lastForward.department;
-            return {
-                title: "Department Forward",
-                text: `${deptLabel} Dept → Forwarded`,
-                date: new Date(lastForward.at).toLocaleString(),
-                color: "bg-blue-50 text-blue-900",
-            };
-        }
+        // Try to detect the department key from multiple formats
+        let deptKey = "";
 
-        // If it’s a full complaint forward
-        return {
-            title: "Complaint Forward",
-            text: lastForward.label || "Complaint Forwarded",
-            date: new Date(lastForward.at).toLocaleString(),
-            color: "bg-blue-50 text-blue-900",
-        };
-    }, [historyData]);
+        if (h.department) deptKey = h.department;
+        else if (h.label) deptKey = h.label;
+        else if (h.module) deptKey = h.module;
+        else if (h.details?.department) deptKey = h.details.department;
 
-    // 🔴 Latest Escalation (handles partial + full escalations)
-    const latestEscalation = React.useMemo(() => {
-        if (!Array.isArray(historyData)) return null;
+        deptKey = String(deptKey).toLowerCase();
 
-        // find the last escalation event
-        const lastEsc = [...historyData]
-            .filter(h => h?.type === "escalated")
-            .sort((a, b) => new Date(b.at) - new Date(a.at))[0];
+        // ✔ Show ONLY if dept matches user allowed department blocks
+        return allowedBlocks.some((allowed) =>
+            deptKey.includes(String(allowed).toLowerCase())
+        );
+    });
+}, [historyData, allowedBlocks, isAdmin]);
 
-        if (!lastEsc) return null;
 
-        // If it’s a department-level escalation
-        if (lastEsc.department) {
-            const deptLabel = DEPT_LABEL[lastEsc.department] || lastEsc.department;
-            const target = lastEsc.label || lastEsc.level || "Higher Authority";
-            return {
-                title: "Department Escalation",
-                text: `${deptLabel} Dept → ${target}`,
-                date: new Date(lastEsc.at).toLocaleString(),
-                color: "bg-orange-50 text-orange-900",
-            };
-        }
 
-        // If it’s a full complaint escalation
-        const target = lastEsc.level || lastEsc.label || "Higher Authority";
-        return {
-            title: "Complaint Escalation",
-            text: `Complaint Escalated to ${target}`,
-            date: new Date(lastEsc.at).toLocaleString(),
-            color: "bg-orange-50 text-orange-900",
-        };
-    }, [historyData]);
-
+console.log('filteredHistory', filteredHistory)
 
 
     const handleFileUpload = (event) => {
@@ -1102,7 +1049,7 @@ const handleResolveSubmit = async () => {
                                                 <div className="bg-white rounded-xl border min-h-[300px]  overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
-                                                        {historyData.slice(-3).reverse().map((h, index) => (
+                                                        {filteredHistory.slice(-3).reverse().map((h, index) => (
                                                             <div key={index} className="flex items-start space-x-3">
                                                                 <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
                                                                 <div className="flex-1">
@@ -1133,11 +1080,38 @@ const handleResolveSubmit = async () => {
                                                                     )}
 
                                                                     {h.type === "resolved" && (
-                                                                        <>
-                                                                            <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
-                                                                            <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                        </>
-                                                                    )}
+    <>
+        <p className="text-sm font-medium text-green-700">
+            {formatDepartment(h.department || h.label)}
+        </p>
+
+        <p className="text-xs text-gray-600">
+            Resolution Note: {h.note || "—"}
+        </p>
+
+        {/* Show proof if exists */}
+        {Array.isArray(h.proof) && h.proof.length > 0 && (
+            <div className="mt-1 space-y-1">
+                {h.proof.map((url, idx) => (
+                    <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 underline"
+                    >
+                        View Proof
+                    </a>
+                ))}
+            </div>
+        )}
+
+        <p className="text-xs text-gray-500">
+            {new Date(h.at).toLocaleString()}
+        </p>
+    </>
+)}
+
 
                                                                     {h.type === "created" && (
                                                                         <p className="text-sm text-gray-700">{formatDepartment(h.label)}</p>
@@ -1158,145 +1132,119 @@ const handleResolveSubmit = async () => {
                                             )}
 
 
+<div className="bg-white border rounded-xl shadow-sm p-3">
 
-                                            <div className="bg-white border rounded-xl shadow-sm p-3">
-                                                {/* <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2> */}
+    {/* CASE 1: Complaint fully resolved → show only history */}
+    {complaint.status === "Resolved" ? (
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+            {loadingHistory ? (
+                <p className="text-center text-gray-500">Loading history...</p>
+            ) : filteredHistory.length === 0 ? (
+                <p className="text-center text-gray-500">No history found.</p>
+            ) : (
+                Array.isArray(filteredHistory) &&
+                filteredHistory.map((h, index) => (
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
+                    >
+                        <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                            {h.type === "resolved" && (
+                                <>
+                                    <p className="text-sm font-medium text-green-700">
+                                        {formatDepartment(h.label)}
+                                    </p>
+                                    <p className="text-xs text-gray-600">Note: {h.note}</p>
 
-                                                {complaint.status === "Resolved" ? (
-                                                    // 🔹 Show ONLY history when Resolved
-                                                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                                                        {loadingHistory ? (
-                                                            <p className="text-center text-gray-500">Loading history...</p>
-                                                        ) : historyData.length === 0 ? (
-                                                            <p className="text-center text-gray-500">No history found.</p>
-                                                        ) : (
-                                                            Array.isArray(historyData) && historyData.map((h, index) => (
-                                                                <motion.div
-                                                                    key={index}
-                                                                    initial={{ opacity: 0, x: -20 }}
-                                                                    animate={{ opacity: 1, x: 0 }}
-                                                                    transition={{ delay: index * 0.05 }}
-                                                                    className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
-                                                                >
-                                                                    <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
-                                                                    <div className="flex-1">
-                                                                        {h.type === "created" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-gray-900">{h.label}</p>
-                                                                                <p className="text-xs text-gray-600">
-                                                                                    {h.details.patientName} ({h.details.complaintId})
-                                                                                </p>
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.createdAt).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
-                                                                        {h.type === "forwarded" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-gray-900">
-                                                                                    {formatDepartment(h.label)}
-                                                                                </p>
-                                                                                {h.details?.topic && (
-                                                                                    <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
-                                                                                )}
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
-                                                                        {h.type === "escalated" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-gray-900">
-                                                                                    {formatDepartment(h.label)}
-                                                                                </p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
-                                                                        {h.type === "resolved" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                    {h.proof &&
+                                        /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+                                            <a
+                                                href={h.proof}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-xs text-blue-600 underline"
+                                            >
+                                                View Proof
+                                            </a>
+                                        )}
 
-                                                                                {/* Only show "View Proof" if proof exists AND is an image */}
-                                                                                {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
-                                                                                    <a
-                                                                                        href={h.proof}
-                                                                                        target="_blank"
-                                                                                        rel="noreferrer"
-                                                                                        className="text-xs text-blue-600 underline"
-                                                                                    >
-                                                                                        View Proof
-                                                                                    </a>
-                                                                                )}
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(h.at).toLocaleString()}
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+                ))
+            )}
+        </div>
+    ) : (
 
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
+        /* CASE 2: User has NO actionable department → show ONLY full history + history button */
+        !actionableDepartment ? (
+            <div className="space-y-3">
+                <button
+                    onClick={() => openModal("history")}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                    <Clock className="w-5 h-5 mr-2" />
+                    View Full History
+                </button>
+            </div>
+        ) : (
 
-                                                                        {h.type === "in_progress" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-blue-700">{formatDepartment(h.label)}</p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
+            /* CASE 3: User CAN take action → show all action buttons */
+            <div className="space-y-3">
 
-                                                                    </div>
-                                                                </motion.div>
-                                                            ))
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-3">
-                                                        <button
-                                                            onClick={() => openModal("resolve")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                                        >
-                                                            <CheckCircle className="w-5 h-5 mr-2" />
-                                                            Mark as Resolved
-                                                        </button>
+                <button
+                    onClick={() => openModal("resolve")}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Mark as Resolved
+                </button>
 
-                                                        <button
-                                                            onClick={() => openModal("in_progress")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
-                                                        >
-                                                            <TrendingUp className="w-5 h-5 mr-2" />
-                                                            Progress Remark
-                                                        </button>
+                <button
+                    onClick={() => openModal("in_progress")}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
+                >
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Progress Remark
+                </button>
 
-                                                        <button
-                                                            onClick={() => openModal("forward")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                        >
-                                                            <Forward className="w-5 h-5 mr-2" />
-                                                            Forward to Another Department
-                                                        </button>
+                <button
+                    onClick={() => openModal("forward")}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    <Forward className="w-5 h-5 mr-2" />
+                    Forward to Another Department
+                </button>
 
-                                                        <button
-                                                            onClick={() => openModal("escalate")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                                        >
-                                                            <TrendingUp className="w-5 h-5 mr-2" />
-                                                            Escalate to Higher Authority
-                                                        </button>
+                <button
+                    onClick={() => openModal("escalate")}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Escalate to Higher Authority
+                </button>
 
-                                                        {/* <button
-                                                            onClick={() => openModal("history")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                                                        >
-                                                            <Clock className="w-5 h-5 mr-2" />
-                                                            View Full History
-                                                        </button> */}
-                                                    </div>
-                                                )}
-                                            </div>
+                {/* Always show history button */}
+                <button
+                    onClick={() => openModal("history")}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                    <Clock className="w-5 h-5 mr-2" />
+                    View Full History
+                </button>
+            </div>
+        )
+    )}
+</div>
+
                                         </motion.div>
                                     </div>
 
@@ -1705,10 +1653,10 @@ const handleResolveSubmit = async () => {
                                                             <div className="space-y-4 max-h-96 overflow-y-auto">
                                                                 {loadingHistory ? (
                                                                     <p className="text-center text-gray-500">Loading history...</p>
-                                                                ) : historyData.length === 0 ? (
+                                                                ) : filteredHistory.length === 0 ? (
                                                                     <p className="text-center text-gray-500">No history found.</p>
                                                                 ) : (
-                                                                    Array.isArray(historyData) && historyData.map((h, index) => (
+                                                                    Array.isArray(filteredHistory) && filteredHistory.map((h, index) => (
                                                                         <motion.div
                                                                             key={index}
                                                                             initial={{ opacity: 0, x: -20 }}

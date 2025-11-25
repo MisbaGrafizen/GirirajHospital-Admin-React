@@ -2143,27 +2143,32 @@ const exportToExcel = (data) => {
                                                             </p>
                                                         ) : (
                                                             (() => {
-                                                                const filteredDepartments = Object.entries(selectedComplaint)
-                                                                    // ✅ include only valid departments
-                                                                    .filter(([key]) =>
-                                                                        [
-                                                                            "doctorServices",
-                                                                            "billingServices",
-                                                                            "housekeeping",
-                                                                            "maintenance",
-                                                                            "diagnosticServices",
-                                                                            "dietitianServices",
-                                                                            "security",
-                                                                            "nursing",
-                                                                        ].includes(key)
-                                                                    )
-                                                                    // ✅ include only departments with non-empty text or attachments
-                                                                    .filter(([_, value]) => {
-                                                                        const hasText = value?.text && value.text.trim() !== "";
-                                                                        const hasAttachments =
-                                                                            Array.isArray(value?.attachments) && value.attachments.length > 0;
-                                                                        return hasText || hasAttachments;
-                                                                    });
+                                                                // NEW: Only display departments user has access to AND have content
+const USER_ALLOWED_KEYS = allowedBlocks || [];
+
+const filteredDepartments = Object.entries(selectedComplaint)
+    // allow only backend department keys
+    .filter(([key]) =>
+        [
+            "doctorServices",
+            "billingServices",
+            "housekeeping",
+            "maintenance",
+            "diagnosticServices",
+            "dietitianServices",
+            "security",
+            "nursing",
+        ].includes(key)
+    )
+    // allow only departments user has permission for
+    .filter(([key]) => USER_ALLOWED_KEYS.includes(key))
+    // only show if department has text or attachments
+    .filter(([_, value]) => {
+        const hasText = value?.text?.trim()?.length > 0;
+        const hasAttachments = Array.isArray(value?.attachments) && value.attachments.length > 0;
+        return hasText || hasAttachments;
+    });
+
 
                                                                 if (filteredDepartments.length === 0) {
                                                                     return (
