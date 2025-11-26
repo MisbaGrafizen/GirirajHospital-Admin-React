@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Header from '../../Component/header/Header'
 import SideBar from '../../Component/sidebar/CubaSidebar'
 import { motion, AnimatePresence } from "framer-motion"
@@ -61,22 +61,24 @@ function resolvePermissions() {
     }
 
     const permissionsByBlock = {};
+    const allowedBlocks = [];
+
     if (isAdmin) {
         Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
             permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
+            allowedBlocks.push(block);
         });
     } else {
         permsArray.forEach((p) => {
             const blockKey = MODULE_TO_BLOCK[p.module];
             if (blockKey) {
-                permissionsByBlock[blockKey] = p.permissions.map((x) =>
-                    x.toLowerCase()
-                );
+                permissionsByBlock[blockKey] = p.permissions.map(x => x.toLowerCase());
+                allowedBlocks.push(blockKey);
             }
         });
     }
 
-    return { isAdmin, permissionsByBlock };
+    return { isAdmin, permissionsByBlock, allowedBlocks };
 }
 
 
@@ -242,7 +244,7 @@ export default function InternalComplaintsDetails() {
     const { state } = useLocation();
     const row = state?.complaint || {};
     const fullDoc = state?.doc || row;
-        const { permissionsByBlock } = resolvePermissions();
+const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
 
 
 
@@ -346,23 +348,25 @@ const autoResolveDepartment =
 
     const forwardDepartments = Object.values(DEPT_LABEL);
 
+
+    const actionableDepartment = useMemo(() => {
+    // Admin can act anytime
+    if (isAdmin) return true;
+
+    // Allowed blocks from permissions
+    if (!allowedBlocks || allowedBlocks.length === 0) return false;
+
+    // Check if ANY allowed department is unresolved
+    return allowedBlocks.some((deptKey) => {
+        const block = fullDoc[deptKey];
+        if (!block) return false;
+        if (!blockHasContent(block)) return false;
+        return block.status?.toLowerCase() !== "resolved";
+    });
+}, [allowedBlocks, fullDoc]);
+
+
     console.log('forwardDepartment', forwardDepartment)
-
-    async function forwardComplaint(complaintId, departmentKey, data) {
-        try {
-            const response = await ApiPost(`/admin/internal/${complaintId}/forward`, {
-                department: departmentKey, // must match backend schema key (e.g., billingServices)
-                topic: data.topic || "Forwarded Complaint",
-                text: data.text || data.reason || "",
-                attachments: data.attachments || [],
-                note: data.note || data.text || "", // ✅ extra note field for ForwardSchema
-            });
-
-            return response;
-        } catch (error) {
-            throw new Error(error.message || "Failed to forward complaint");
-        }
-    }
 
     async function fetchComplaintDetails(id) {
         try {
@@ -502,55 +506,30 @@ const autoResolveDepartment =
         }
     };
 
+    const filteredHistory = useMemo(() => {
+    if (!Array.isArray(historyData)) return [];
 
-    const handleInProgressSubmit = async () => {
-        if (!tempText.trim()) {
-            alert("Please enter progress update text.");
-            return;
-        }
+    if (isAdmin) return historyData; // Admin sees all
 
-        try {
-            let response;
+    return historyData.filter((h) => {
+        // Always show complaint created
+        if (h.type === "created") return true;
 
-            // ✅ If a department is selected, mark partial in-progress
-            if (selectedDepartment) {
-                const deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
+        // Extract department from history entry
+        let deptKey = "";
+        if (h.department) deptKey = h.department;
+        else if (h.label) deptKey = h.label;
+        else if (h.module) deptKey = h.module;
+        else if (h.details?.department) deptKey = h.details.department;
 
-                response = await updateDepartmentProgressAPI(
-                    complaint.id,
-                    deptKey,
-                    tempText,
-                    uploadedFile
-                );
-            } else {
-                // ✅ Otherwise mark full complaint in-progress
-                response = await updateProgressRemarkAPI(complaint.id, tempText);
-            }
+        deptKey = String(deptKey).toLowerCase();
 
-            // ✅ Detect returned status from backend or fallback
-            const newStatus =
-                response?.data?.status ||
-                response?.data?.data?.status ||
-                "in_progress";
-
-            // ✅ Immediately update UI
-            setStatus(mapStatusUI(newStatus));
-
-            alert("Progress updated successfully!");
-
-            // ✅ Refresh history for latest timeline
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Progress update failed:", error);
-            alert(error.message || "Failed to update complaint progress");
-        }
-    };
-
+        // Only show if user has permission for this department
+        return allowedBlocks.some((allowed) =>
+            deptKey.includes(allowed.toLowerCase())
+        );
+    });
+}, [historyData, allowedBlocks, isAdmin]);
 
 
 const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
@@ -830,71 +809,6 @@ const autoDepartment =
         })();
     }, [complaint.id]);
 
-    // 🟢 Latest Forward (handles partial + full forwards)
-    const latestForward = React.useMemo(() => {
-        if (!Array.isArray(historyData)) return null;
-
-        // find the last forwarded event (department-level or full)
-        const lastForward = [...historyData]
-            .filter(h => h?.type === "forwarded")
-            .sort((a, b) => new Date(b.at) - new Date(a.at))[0];
-
-        if (!lastForward) return null;
-
-        // If it’s a department-level forward
-        if (lastForward.department) {
-            const deptLabel =
-                DEPT_LABEL[lastForward.department] || lastForward.department;
-            return {
-                title: "Department Forward",
-                text: `${deptLabel} Dept → Forwarded`,
-                date: new Date(lastForward.at).toLocaleString(),
-                color: "bg-blue-50 text-blue-900",
-            };
-        }
-
-        // If it’s a full complaint forward
-        return {
-            title: "Complaint Forward",
-            text: lastForward.label || "Complaint Forwarded",
-            date: new Date(lastForward.at).toLocaleString(),
-            color: "bg-blue-50 text-blue-900",
-        };
-    }, [historyData]);
-
-    // 🔴 Latest Escalation (handles partial + full escalations)
-    const latestEscalation = React.useMemo(() => {
-        if (!Array.isArray(historyData)) return null;
-
-        // find the last escalation event
-        const lastEsc = [...historyData]
-            .filter(h => h?.type === "escalated")
-            .sort((a, b) => new Date(b.at) - new Date(a.at))[0];
-
-        if (!lastEsc) return null;
-
-        // If it’s a department-level escalation
-        if (lastEsc.department) {
-            const deptLabel = DEPT_LABEL[lastEsc.department] || lastEsc.department;
-            const target = lastEsc.label || lastEsc.level || "Higher Authority";
-            return {
-                title: "Department Escalation",
-                text: `${deptLabel} Dept → ${target}`,
-                date: new Date(lastEsc.at).toLocaleString(),
-                color: "bg-orange-50 text-orange-900",
-            };
-        }
-
-        // If it’s a full complaint escalation
-        const target = lastEsc.level || lastEsc.label || "Higher Authority";
-        return {
-            title: "Complaint Escalation",
-            text: `Complaint Escalated to ${target}`,
-            date: new Date(lastEsc.at).toLocaleString(),
-            color: "bg-orange-50 text-orange-900",
-        };
-    }, [historyData]);
-
 
 
     const handleFileUpload = (event) => {
@@ -1168,7 +1082,7 @@ const autoDepartment =
                                                 <div className="bg-white rounded-xl border min-h-[300px]  overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
-                                                        {historyData.slice(-3).reverse().map((h, index) => (
+                                                        {filteredHistory.slice(-3).reverse().map((h, index) => (
                                                             <div key={index} className="flex items-start space-x-3">
                                                                 <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
                                                                 <div className="flex-1">
@@ -1227,143 +1141,163 @@ const autoDepartment =
 
 
                                             <div className="bg-white border rounded-xl shadow-sm p-3">
-                                                {/* <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2> */}
 
-                                                {complaint.status === "Resolved" ? (
-                                                    // 🔹 Show ONLY history when Resolved
-                                                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                                                        {loadingHistory ? (
-                                                            <p className="text-center text-gray-500">Loading history...</p>
-                                                        ) : historyData.length === 0 ? (
-                                                            <p className="text-center text-gray-500">No history found.</p>
-                                                        ) : (
-                                                            Array.isArray(historyData) && historyData.map((h, index) => (
-                                                                <motion.div
-                                                                    key={index}
-                                                                    initial={{ opacity: 0, x: -20 }}
-                                                                    animate={{ opacity: 1, x: 0 }}
-                                                                    transition={{ delay: index * 0.05 }}
-                                                                    className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
-                                                                >
-                                                                    <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
-                                                                    <div className="flex-1">
-                                                                        {h.type === "created" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-gray-900">{formatDepartment(h.label)}</p>
-                                                                                <p className="text-xs text-gray-600">
-                                                                                    {h.details.employeeName} ({h.details.complaintId})
-                                                                                </p>
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.createdAt).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
-                                                                        {h.type === "forwarded" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-gray-900">
-                                                                                    {formatDepartment(h.label)}
-                                                                                </p>
-                                                                                {h.details?.topic && (
-                                                                                    <p className="text-xs text-gray-600">Topic: {h.details.topic}</p>
-                                                                                )}
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
-                                                                        {h.type === "escalated" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-gray-900">
-                                                                                    {formatDepartment(h.label)}
-                                                                                </p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
-                                                                        {h.type === "resolved" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-green-700">{formatDepartment(h.label)}</p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
+    {/* 🟢 CASE 1 — Complaint fully resolved → only history */}
+    {complaint.status === "Resolved" ? (
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+            {loadingHistory ? (
+                <p className="text-center text-gray-500">Loading history...</p>
+            ) : filteredHistory.length === 0 ? (
+                <p className="text-center text-gray-500">No history found.</p>
+            ) : (
+                filteredHistory.map((h, index) => (
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
+                    >
+                        <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                            {h.type === "created" && (
+                                <>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {formatDepartment(h.label)}
+                                    </p>
+                                    <p className="text-xs text-gray-600">
+                                        {h.details.employeeName} ({h.details.complaintId})
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(h.createdAt).toLocaleString()}
+                                    </p>
+                                </>
+                            )}
 
-                                                                                {/* Only show "View Proof" if proof exists AND is an image */}
-                                                                                {h.proof && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
-                                                                                    <a
-                                                                                        href={h.proof}
-                                                                                        target="_blank"
-                                                                                        rel="noreferrer"
-                                                                                        className="text-xs text-blue-600 underline"
-                                                                                    >
-                                                                                        View Proof
-                                                                                    </a>
-                                                                                )}
+                            {h.type === "forwarded" && (
+                                <>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {formatDepartment(h.label)}
+                                    </p>
+                                    {h.details?.topic && (
+                                        <p className="text-xs text-gray-600">
+                                            Topic: {h.details.topic}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(h.at).toLocaleString()}
+                                    </p>
+                                </>
+                            )}
 
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
+                            {h.type === "escalated" && (
+                                <>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {formatDepartment(h.label)}
+                                    </p>
+                                    <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(h.at).toLocaleString()}
+                                    </p>
+                                </>
+                            )}
 
-                                                                        {h.type === "in_progress" && (
-                                                                            <>
-                                                                                <p className="text-sm font-medium text-blue-700">{formatDepartment(h.label)}</p>
-                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
-                                                                                <p className="text-xs text-gray-500">
-                                                                                    {new Date(h.at).toLocaleString()}
-                                                                                </p>
-                                                                            </>
-                                                                        )}
+                            {h.type === "resolved" && (
+                                <>
+                                    <p className="text-sm font-medium text-green-700">
+                                        {formatDepartment(h.label)}
+                                    </p>
+                                    <p className="text-xs text-gray-600">Note: {h.note}</p>
 
-                                                                    </div>
-                                                                </motion.div>
-                                                            ))
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-3">
-                                                        <button
-                                                            onClick={() => openModal("resolve")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                                        >
-                                                            <CheckCircle className="w-5 h-5 mr-2" />
-                                                            Mark as Resolved
-                                                        </button>
+                                    {h.proof &&
+                                        /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+                                            <a
+                                                href={h.proof}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-xs text-blue-600 underline"
+                                            >
+                                                View Proof
+                                            </a>
+                                        )}
 
-                                                        <button
-                                                            onClick={() => openModal("in_progress")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
-                                                        >
-                                                            <TrendingUp className="w-5 h-5 mr-2" />
-                                                            Progress Remark
-                                                        </button>
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(h.at).toLocaleString()}
+                                    </p>
+                                </>
+                            )}
 
-                                                        <button
-                                                            onClick={() => openModal("forward")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                        >
-                                                            <Forward className="w-5 h-5 mr-2" />
-                                                            Forward to Another Department
-                                                        </button>
+                            {h.type === "in_progress" && (
+                                <>
+                                    <p className="text-sm font-medium text-blue-700">
+                                        {formatDepartment(h.label)}
+                                    </p>
+                                    <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(h.at).toLocaleString()}
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+                ))
+            )}
+        </div>
+    ) : (
+        <>
+            {/* 🟠 CASE 2 — No actionable department (all resolved or no permission) */}
+            {!actionableDepartment ? (
+                <div className="space-y-3">
+                    <button
+                        onClick={() => openModal("history")}
+                        className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                        <Clock className="w-5 h-5 mr-2" />
+                        View Full History
+                    </button>
+                </div>
+            ) : (
+                <>
+                    {/* 🔵 CASE 3 — User can take action */}
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => openModal("resolve")}
+                            className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                            <CheckCircle className="w-5 h-5 mr-2" />
+                            Mark as Resolved
+                        </button>
 
-                                                        <button
-                                                            onClick={() => openModal("escalate")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                                        >
-                                                            <TrendingUp className="w-5 h-5 mr-2" />
-                                                            Escalate to Higher Authority
-                                                        </button>
+                        <button
+                            onClick={() => openModal("in_progress")}
+                            className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
+                        >
+                            <TrendingUp className="w-5 h-5 mr-2" />
+                            Progress Remark
+                        </button>
 
-                                                        {/* <button
-                                                            onClick={() => openModal("history")}
-                                                            className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                                                        >
-                                                            <Clock className="w-5 h-5 mr-2" />
-                                                            View Full History
-                                                        </button> */}
-                                                    </div>
-                                                )}
-                                            </div>
+                        <button
+                            onClick={() => openModal("forward")}
+                            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <Forward className="w-5 h-5 mr-2" />
+                            Forward to Another Department
+                        </button>
+
+                        <button
+                            onClick={() => openModal("escalate")}
+                            className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                            <TrendingUp className="w-5 h-5 mr-2" />
+                            Escalate to Higher Authority
+                        </button>
+                    </div>
+                </>
+            )}
+        </>
+    )}
+</div>
+
                                         </motion.div>
                                     </div>
 
@@ -1724,10 +1658,10 @@ const autoDepartment =
                                                             <div className="space-y-4 max-h-96 overflow-y-auto">
                                                                 {loadingHistory ? (
                                                                     <p className="text-center text-gray-500">Loading history...</p>
-                                                                ) : historyData.length === 0 ? (
+                                                                ) : filteredHistory.length === 0 ? (
                                                                     <p className="text-center text-gray-500">No history found.</p>
                                                                 ) : (
-                                                                    Array.isArray(historyData) && historyData.map((h, index) => (
+                                                                    Array.isArray(filteredHistory) && filteredHistory.map((h, index) => (
                                                                         <motion.div
                                                                             key={index}
                                                                             initial={{ opacity: 0, x: -20 }}

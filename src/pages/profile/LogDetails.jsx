@@ -109,7 +109,7 @@ export default function LogDetails() {
             {loading && <Preloader />}
 
             {/* Empty State */}
-            {!loading && logs.length === 0 && (
+            {!loading && logs?.length === 0 && (
               <div className="flex flex-col items-center justify-center text-gray-500 h-full">
                 <Activity className="w-10 h-10 mb-3 text-gray-400" />
                 <p className="text-sm">No activity logs found.</p>

@@ -319,7 +319,7 @@ const ROUTE_GROUPS = {
 
         ],
       },
-      {
+      isAdmin &&{
         id: "settings",
         label: "Settings",
         icon:  React.createElement(Settings),
