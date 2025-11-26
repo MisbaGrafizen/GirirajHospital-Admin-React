@@ -1020,7 +1020,7 @@ export default function IPDFeedbackDashboard() {
             <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
 
-              <div className="mx-auto w-full">
+              <div className="mx-auto w-full overflow-x-hidden">
                 {/* KPI Cards */}
                 <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 gap-x-[10px] w-[100%]">
                   {/* 📨 Total Feedback (Navigate) */}
@@ -1158,7 +1158,7 @@ export default function IPDFeedbackDashboard() {
                 {/* Charts Row */}
                 <div className="flex  md11:!flex-row flex-col  justify-start  gap-[15px] mb-2  ">
                   {/* Rating Distribution Donut Chart */}
-                  <div className="bg-white rounded-xl h-fit dashShadow w-[300px]  p-[13px]">
+                  <div className="bg-white rounded-xl h-fit dashShadow md:!w-[300px]  p-[13px]">
                     <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
@@ -1214,7 +1214,7 @@ export default function IPDFeedbackDashboard() {
 
                   </div>
 
-                  <div className="bg-white  dashShadow  w-[400px] rounded-xl p-[13px]  ">
+                  <div className="bg-white  dashShadow  md:!w-[400px] rounded-xl p-[13px]  ">
                     <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
                       <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">

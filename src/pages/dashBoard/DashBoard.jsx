@@ -429,7 +429,7 @@ if (data.kpis || data.totals) {
                     </div>
 
 
-                    <div className=" flex md11:!flex-row flex-co  l mt-[3px]  gap-[18px] w-[100%]">
+                    <div className=" flex md11:!flex-row flex-col mt-[3px]  md11:!gap-[18px] w-[100%]">
 
                       <div className=" w-fit">
 
@@ -441,7 +441,7 @@ if (data.kpis || data.totals) {
                         />
 
                       </div>
-                      <div className=" w-[300px]">
+                      <div className=" md11:!w-[300px]">
                         <RecentOrders
                           overallNps={kpis?.npsRating?.value}
                         />
@@ -454,12 +454,12 @@ if (data.kpis || data.totals) {
                     <>
 
 
-                      <div className="flex  mt-[-11px]  gap-6 ">
+                      <div className="flex  md11:!mt-[-11px] mt-[20px] w-[100%]  gap-6 ">
 
 
                         {/* Department Analysis */}
-                        <motion.div variants={itemVariants}>
-                          <motion.div className=" w-[500px] bg-white/90 backdrop-blur-sm rounded-xl  p-[15px] dashShadow border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
+                        <motion.div className=" w-[100%]" variants={itemVariants}>
+                          <motion.div className=" md11:!w-[500px] md34:!w-[100%] bg-white/90 backdrop-blur-sm rounded-xl  p-[15px] dashShadow border-white/50" whileHover={{ scale: 1.01 }} transition={{ duration: 0.3 }}>
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-3">
                                 <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">

@@ -43,7 +43,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
       // initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
       // animate={{ opacity: 1, scale: 1, rotate: 0 }3
       // transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
-      className="relative bg-white w-fit rounded-2xl flex flex-col  h-fit  dashShadow border-gray-100 p-[15px] "
+      className="relative bg-white md11:!w-fit rounded-2xl flex flex-col  h-fit  dashShadow border-gray-100 p-[15px] "
     >
 
       <div className=' flex  mb-[6px] items-center gap-[10px]'>
@@ -104,7 +104,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1, duration: 0.5 }}
-          className="absolute  z-[0] flex items-center justify-center"
+          className="absolute md11:top-auto  md34:!top-[60px] z-[0] flex items-center justify-center"
         >
           <div className="text-center">
             <div className="text-xl font-[600] text-gray-900">Total</div>

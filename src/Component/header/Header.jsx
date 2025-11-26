@@ -62,7 +62,7 @@ function Header({
   const [selectedRoom, setSelectedRoom] = useState("All Rooms");
   const [selectedDepartment, setSelectedDepartment] = useState("Both");
   const [selectedDate, setSelectedDate] = useState(null);
-    const [filterSearch, setFilterSearch] = useState("");
+  const [filterSearch, setFilterSearch] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState(null);
   const [filterDateTo, setFilterDateTo] = useState(null);
 
@@ -80,15 +80,15 @@ function Header({
   }, []);
 
 
-useEffect(() => {
-  if (onFilterChange) {
-    onFilterChange({
-      search: filterSearch,
-      from: filterDateFrom,
-      to: filterDateTo,
-    });
-  }
-}, [filterSearch, filterDateFrom, filterDateTo]);
+  useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange({
+        search: filterSearch,
+        from: filterDateFrom,
+        to: filterDateTo,
+      });
+    }
+  }, [filterSearch, filterDateFrom, filterDateTo]);
 
   // useEffect(() => {
   //   const fetchCount = async () => {
@@ -206,282 +206,284 @@ useEffect(() => {
               </h1>
             </div>
 
-            {/* ✅ Show only on dashboard */}
-            {location.pathname === "/dashboard" && (
-              <div className=" md34:hidden md11:!grid grid-cols-1 md:grid-cols-4 gap-x-3">
-                <ModernDatePicker
-                  label="From Date"
-                  selectedDate={dateFrom}
-                  setSelectedDate={(d) => {
-                    setDateFrom(d);
-                    if (d && dateTo && onDateRangeChange) {
-                      onDateRangeChange({ from: d, to: dateTo });
-                    }
-                  }} />
-                <ModernDatePicker
-                  label="To Date"
-                  selectedDate={dateTo}
-                  setSelectedDate={(d) => {
-                    setDateTo(d);
-                    if (dateFrom && d && onDateRangeChange) {
-                      onDateRangeChange({ from: dateFrom, to: d });
-                    }
-                  }} />
+            <div className=" md:!flex md34:!hidden">
 
-                {/* ✅ Time Range Dropdown */}
-                <AnimatedDropdown
-                  label="Time Range"
-                  icon={User}
-                  options={["Today", "7 Days", "15 Days", "30 Days"]}
-                  selected={activeRange} // ✅ show selected value
-                  onChange={(selected) => {
-                    setActiveRange(selected); // ✅ update display text
-                    const today = dayjs().endOf("day");
-                    let from = today;
 
-                    // ✅ ensure correct date range inclusivity (7 full days)
-                    if (selected === "Today") from = today.startOf("day");
-                    else if (selected === "7 Days") from = today.subtract(6, "day");
-                    else if (selected === "15 Days") from = today.subtract(14, "day");
-                    else if (selected === "30 Days") from = today.subtract(29, "day");
+              {location.pathname === "/dashboard" && (
+                <div className=" md34:hidden md11:!grid grid-cols-1 md:grid-cols-4 gap-x-3">
+                  <ModernDatePicker
+                    label="From Date"
+                    selectedDate={dateFrom}
+                    setSelectedDate={(d) => {
+                      setDateFrom(d);
+                      if (d && dateTo && onDateRangeChange) {
+                        onDateRangeChange({ from: d, to: dateTo });
+                      }
+                    }} />
+                  <ModernDatePicker
+                    label="To Date"
+                    selectedDate={dateTo}
+                    setSelectedDate={(d) => {
+                      setDateTo(d);
+                      if (dateFrom && d && onDateRangeChange) {
+                        onDateRangeChange({ from: dateFrom, to: d });
+                      }
+                    }} />
 
-                    if (onDateRangeChange) {
-                      onDateRangeChange({
-                        from: from.format("YYYY-MM-DD"),
-                        to: today.format("YYYY-MM-DD"),
-                        range: selected,
-                      });
-                    }
+                  {/* ✅ Time Range Dropdown */}
+                  <AnimatedDropdown
+                    label="Time Range"
+                    icon={User}
+                    options={["Today", "7 Days", "15 Days", "30 Days"]}
+                    selected={activeRange} // ✅ show selected value
+                    onChange={(selected) => {
+                      setActiveRange(selected); // ✅ update display text
+                      const today = dayjs().endOf("day");
+                      let from = today;
 
-                    // ✅ reflect in the local picker too
-                    setDateFrom(from.toDate());
-                    setDateTo(today.toDate());
+                      // ✅ ensure correct date range inclusivity (7 full days)
+                      if (selected === "Today") from = today.startOf("day");
+                      else if (selected === "7 Days") from = today.subtract(6, "day");
+                      else if (selected === "15 Days") from = today.subtract(14, "day");
+                      else if (selected === "30 Days") from = today.subtract(29, "day");
+
+                      if (onDateRangeChange) {
+                        onDateRangeChange({
+                          from: from.format("YYYY-MM-DD"),
+                          to: today.format("YYYY-MM-DD"),
+                          range: selected,
+                        });
+                      }
+
+                      // ✅ reflect in the local picker too
+                      setDateFrom(from.toDate());
+                      setDateTo(today.toDate());
+                    }}
+                  />
+
+                </div>
+              )}
+
+
+              {/* ✅ OPD Feedback Dashboard */}
+              {location.pathname === "/opd-feedback" && (
+                <OpdFilter
+                  serviceVariant="opd"
+                  doctors={doctors || []} // ✅ dynamically received from parent (OPD)
+                  onChange={(filters) => {
+                    if (onDateRangeChange) onDateRangeChange(filters);
                   }}
                 />
+              )}
 
-              </div>
-            )}
-
-
-            {/* ✅ OPD Feedback Dashboard */}
-            {location.pathname === "/opd-feedback" && (
-              <OpdFilter
-                serviceVariant="opd"
-                doctors={doctors || []} // ✅ dynamically received from parent (OPD)
-                onChange={(filters) => {
-                  if (onDateRangeChange) onDateRangeChange(filters);
-                }}
-              />
-            )}
-
-            {/* ✅ IPD Feedback Dashboard */}
-            {location.pathname === "/ipd-feedback" && (
-              <OpdFilter
-                serviceVariant="ipd"
-                doctors={doctors || []} // ✅ dynamically received from parent (IPD)
-                onChange={(filters) => {
-                  if (onDateRangeChange) onDateRangeChange(filters);
-                }}
-              />
-            )}
+              {/* ✅ IPD Feedback Dashboard */}
+              {location.pathname === "/ipd-feedback" && (
+                <OpdFilter
+                  serviceVariant="ipd"
+                  doctors={doctors || []} // ✅ dynamically received from parent (IPD)
+                  onChange={(filters) => {
+                    if (onDateRangeChange) onDateRangeChange(filters);
+                  }}
+                />
+              )}
 
 
-            {location.pathname === "/complaint-dashboard" && (
-              <OpdFilter
-                serviceVariant="concern"
-                doctors={doctors || []}
-                onChange={(filters) => {
-                  if (onDateRangeChange) onDateRangeChange(filters);
-                }}
-              />
-            )}
+              {location.pathname === "/complaint-dashboard" && (
+                <OpdFilter
+                  serviceVariant="concern"
+                  doctors={doctors || []}
+                  onChange={(filters) => {
+                    if (onDateRangeChange) onDateRangeChange(filters);
+                  }}
+                />
+              )}
 
 
-            {location.pathname === "/reports/nps-reports" && (
-              <>
-                <div className="grid grid-cols-2 md77:!grid-cols-3 md11:!grid-cols-5 h-fit gap-x-3">
-                  {/* From Date */}
-                  <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
-                    <ModernDatePicker
-                      label="From Date"
-                      selectedDate={dateFrom}
-                      setSelectedDate={(d) => {
-                        setDateFrom(d);
-                        if (onDateRangeChange)
-                          onDateRangeChange({
-                            from: d ? dayjs(d).format("YYYY-MM-DD") : null,
-                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-                          });
-                      }}
-                    />
+              {location.pathname === "/reports/nps-reports" && (
+                <>
+                  <div className="grid grid-cols-2 md77:!grid-cols-3 md11:!grid-cols-5 h-fit gap-x-3">
+                    {/* From Date */}
+                    <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
+                      <ModernDatePicker
+                        label="From Date"
+                        selectedDate={dateFrom}
+                        setSelectedDate={(d) => {
+                          setDateFrom(d);
+                          if (onDateRangeChange)
+                            onDateRangeChange({
+                              from: d ? dayjs(d).format("YYYY-MM-DD") : null,
+                              to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                            });
+                        }}
+                      />
+                    </div>
+
+                    {/* To Date */}
+                    <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
+                      <ModernDatePicker
+                        label="To Date"
+                        selectedDate={dateTo}
+                        setSelectedDate={(d) => {
+                          setDateTo(d);
+                          if (onDateRangeChange)
+                            onDateRangeChange({
+                              from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                              to: d ? dayjs(d).format("YYYY-MM-DD") : null,
+                            });
+                        }}
+                      />
+                    </div>
+
+                    {/* Department */}
+                    <div className="md11:!mb-[0px] md34:mb-[14px] w-[100%]">
+                      <AnimatedDropdown
+                        label="Department"
+                        options={["OPD", "IPD", "Both"]}
+                        selected={selectedDepartment} // ✅ display selected department
+                        onChange={(dept) => {
+                          setSelectedDepartment(dept); // ✅ store new selection
+                          // Reset Doctor & Room when department changes (optional)
+                          setSelectedDoctor("All Doctors");
+                          setSelectedRoom("All Rooms");
+
+                          if (onDateRangeChange)
+                            onDateRangeChange({
+                              from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                              to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                              department: dept,
+                            });
+                        }}
+                        icon={Hospital}
+                      />
+                    </div>
+
+                    {/* Doctor */}
+                    <div className="md11:!mb-[0px] w-[100%]">
+                      <AnimatedDropdown
+                        label="Doctor Name"
+                        options={doctorOptions.length > 0 ? doctorOptions : ["All Doctors"]}
+                        selected={selectedDoctor} // ✅ show selected
+                        onChange={(doc) => {
+                          setSelectedDoctor(doc); // ✅ store selection
+                          if (onDateRangeChange)
+                            onDateRangeChange({
+                              from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                              to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                              doctor: doc,
+                            });
+                        }}
+                        icon={User}
+                      />
+                    </div>
+
+                    {/* Room */}
+                    <div className="md:11!mb-[0px] w-[100%]">
+                      <AnimatedDropdown
+                        label="Room No"
+                        options={roomOptions.length > 0 ? roomOptions : ["All Rooms"]}
+                        selected={selectedRoom} // ✅ show selected
+                        onChange={(room) => {
+                          setSelectedRoom(room); // ✅ store selection
+                          if (onDateRangeChange)
+                            onDateRangeChange({
+                              from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
+                              to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
+                              room,
+                            });
+                        }}
+                        icon={Activity}
+                      />
+                    </div>
                   </div>
+                </>
+              )}
+
+
+
+
+              {location.pathname === "/reports/executive-report" && (
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
+
+                  <div className="relative md34:!mb-[17px] md77:!mb-0">
+
+                    <ModernDatePicker />
+                  </div>
+
+                  <div className="relative">
+
+                    <ModernDatePicker />
+                  </div>
+                </div>
+              )}
+              {location.pathname === "/internal-complint-list" && (
+                <div className="grid  flex-shrink-0 grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+
+                  {/* From Date */}
+                  <ModernDatePicker
+                    label="From Date"
+                    selectedDate={filterDateFrom}
+                    setSelectedDate={setFilterDateFrom}
+                  />
 
                   {/* To Date */}
-                  <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
-                    <ModernDatePicker
-                      label="To Date"
-                      selectedDate={dateTo}
-                      setSelectedDate={(d) => {
-                        setDateTo(d);
-                        if (onDateRangeChange)
-                          onDateRangeChange({
-                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-                            to: d ? dayjs(d).format("YYYY-MM-DD") : null,
-                          });
-                      }}
+                  <ModernDatePicker
+                    label="To Date"
+                    selectedDate={filterDateTo}
+                    setSelectedDate={setFilterDateTo}
+                  />
+
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-[12px] -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Search complaints..."
+                      value={filterSearch}
+                      onChange={(e) => setFilterSearch(e.target.value)}
+                      className="pl-9 pr-3 py-[3px] text-[13px] outline-none border border-gray-300 rounded-md w-[200px]"
                     />
                   </div>
 
-                  {/* Department */}
-                  <div className="md11:!mb-[0px] md34:mb-[14px] w-[100%]">
-                    <AnimatedDropdown
-                      label="Department"
-                      options={["OPD", "IPD", "Both"]}
-                      selected={selectedDepartment} // ✅ display selected department
-                      onChange={(dept) => {
-                        setSelectedDepartment(dept); // ✅ store new selection
-                        // Reset Doctor & Room when department changes (optional)
-                        setSelectedDoctor("All Doctors");
-                        setSelectedRoom("All Rooms");
+                </div>
+              )}
 
-                        if (onDateRangeChange)
-                          onDateRangeChange({
-                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-                            department: dept,
-                          });
-                      }}
-                      icon={Hospital}
-                    />
-                  </div>
+            </div>
 
-                  {/* Doctor */}
-                  <div className="md11:!mb-[0px] w-[100%]">
-                    <AnimatedDropdown
-                      label="Doctor Name"
-                      options={doctorOptions.length > 0 ? doctorOptions : ["All Doctors"]}
-                      selected={selectedDoctor} // ✅ show selected
-                      onChange={(doc) => {
-                        setSelectedDoctor(doc); // ✅ store selection
-                        if (onDateRangeChange)
-                          onDateRangeChange({
-                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-                            doctor: doc,
-                          });
-                      }}
-                      icon={User}
-                    />
-                  </div>
 
-                  {/* Room */}
-                  <div className="md:11!mb-[0px] w-[100%]">
-                    <AnimatedDropdown
-                      label="Room No"
-                      options={roomOptions.length > 0 ? roomOptions : ["All Rooms"]}
-                      selected={selectedRoom} // ✅ show selected
-                      onChange={(room) => {
-                        setSelectedRoom(room); // ✅ store selection
-                        if (onDateRangeChange)
-                          onDateRangeChange({
-                            from: dateFrom ? dayjs(dateFrom).format("YYYY-MM-DD") : null,
-                            to: dateTo ? dayjs(dateTo).format("YYYY-MM-DD") : null,
-                            room,
-                          });
-                      }}
-                      icon={Activity}
-                    />
+
+            {location.pathname === "/complaint-details" && (
+
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white md:!flex hidden   px-[20px] pt-[6px]  gap-[30px]   rounded-lg mb-2"
+              >
+                <div className="flex items-center  gap-[20px] justify-between ">
+
+
+                  <p className="text-gray-600  ml-">Complaint ID:<b> {complaintInfo?.id}</b></p>
+
+                  <div className="flex items-center space-x-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${(complaintInfo?.status || "").toLowerCase() === "resolved"
+                      ? "bg-green-100 text-green-700"
+                      : (complaintInfo?.status || "").toLowerCase() === "in progress"
+                        ? "bg-blue-100 text-blue-700"
+                        : (complaintInfo?.status || "").toLowerCase() === "partial"
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-green-100 text-gray-700"
+                      }`}>
+                      {complaintInfo?.status || "Unknown"}
+                    </span>
                   </div>
                 </div>
-              </>
+              </motion.div>
+
+
+
             )}
-
-
-
-
-            {location.pathname === "/reports/executive-report" && (
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
-
-                <div className="relative md34:!mb-[17px] md77:!mb-0">
-
-                  <ModernDatePicker />
-                </div>
-
-                <div className="relative">
-
-                  <ModernDatePicker />
-                </div>
-              </div>
-            )}
-            {location.pathname === "/internal-complint-list" && (
-  <div className="grid  flex-shrink-0 grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-
-    {/* From Date */}
-    <ModernDatePicker
-      label="From Date"
-      selectedDate={filterDateFrom}
-      setSelectedDate={setFilterDateFrom}
-    />
-
-    {/* To Date */}
-    <ModernDatePicker
-      label="To Date"
-      selectedDate={filterDateTo}
-      setSelectedDate={setFilterDateTo}
-    />
-
-    {/* Search */}
-    <div className="relative">
-      <Search className="absolute left-3 top-[12px] -translate-y-1/2 text-gray-400 w-4 h-4" />
-      <input
-        type="text"
-        placeholder="Search complaints..."
-        value={filterSearch}
-        onChange={(e) => setFilterSearch(e.target.value)}
-        className="pl-9 pr-3 py-[3px] text-[13px] outline-none border border-gray-300 rounded-md w-[200px]"
-      />
-    </div>
-
-  </div>
-)}
 
           </div>
-
-
-
-          {location.pathname === "/complaint-details" && (
-
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white   px-[20px] pt-[6px]  gap-[30px]   rounded-lg mb-2"
-            >
-              <div className="flex items-center  gap-[20px] justify-between ">
-
-
-                <p className="text-gray-600  ml-">Complaint ID:<b> {complaintInfo?.id}</b></p>
-
-                <div className="flex items-center space-x-3">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${(complaintInfo?.status || "").toLowerCase() === "resolved"
-                    ? "bg-green-100 text-green-700"
-                    : (complaintInfo?.status || "").toLowerCase() === "in progress"
-                      ? "bg-blue-100 text-blue-700"
-                      : (complaintInfo?.status || "").toLowerCase() === "partial"
-                        ? "bg-orange-100 text-orange-700"
-                        : "bg-green-100 text-gray-700"
-                    }`}>
-                    {complaintInfo?.status || "Unknown"}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-
-
-
-          )}
-
-
 
 
 

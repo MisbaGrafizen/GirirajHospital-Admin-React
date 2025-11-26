@@ -2268,7 +2268,7 @@ const getRatingStars = (rating = 0) => {
             <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
 
-              <div className="mx-auto w-full">
+              <div className="mx-auto  w-[100%] overflow-x-hidden">
                 {/* KPI Cards */}
                 <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 gap-x-[10px] w-[100%]">
                   {/* 📨 Total Feedback (Navigate) */}
@@ -2406,7 +2406,7 @@ const getRatingStars = (rating = 0) => {
                 {/* Charts Row */}
                 <div className="flex  md11:!flex-row flex-col  justify-start  gap-[15px] mb-2  ">
                   {/* Rating Distribution Donut Chart */}
-                  <div className="bg-white rounded-xl h-fit dashShadow w-[300px]  p-[13px]">
+                  <div className="bg-white rounded-xl h-fit dashShadow md34:!w-[100%] md:!w-[300px]  p-[13px]">
                     <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
@@ -2421,7 +2421,7 @@ const getRatingStars = (rating = 0) => {
                   </div>
 
                   {/* Average Rating Trend Line Chart */}
-                  <div className="bg-white rounded-xl md11:!w-[440px]  md13:!w-[550px]   dashShadow  p-[13px] ">
+                  <div className="bg-white rounded-xl md34:!w-[100%] md11:!w-[440px]  md13:!w-[550px]   dashShadow  p-[13px] ">
                     <div className=' flex   mb-[10px] items-center gap-[10px]'>
 
                       <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -2462,7 +2462,7 @@ const getRatingStars = (rating = 0) => {
 
                   </div>
 
-                  <div className="bg-white  dashShadow  w-[400px] rounded-xl p-[13px]  ">
+                  <div className="bg-white  dashShadow  md:!w-[400px] rounded-xl p-[13px]  ">
                     <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
                       <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -2594,7 +2594,7 @@ const getRatingStars = (rating = 0) => {
                       </div>
                       <h3 className="text-[13px] font-[500] text-gray-900">Patient Feedback Details</h3>
                     </div>
-                    <div className="flex flex-row justify-between gap-2   md11:!mb-0">
+                    <div className="flex flex-row justify-between gap-2   mt-[10px] md md11:!mb-0">
                       <div className="relative">
                         <Search className="absolute left-3 top-[18px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input

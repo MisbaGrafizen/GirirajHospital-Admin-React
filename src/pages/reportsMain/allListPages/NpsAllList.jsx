@@ -255,7 +255,7 @@ export default function NpsAllList() {
 
   <div className="px-4 py-[12px] bg-gray-50 border-t border-gray-100 text-[13px] text-gray-600 flex items-center justify-between">
     <span>
-      Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records
+
     </span>
   </div>
 </div>

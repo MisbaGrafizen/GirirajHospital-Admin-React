@@ -216,10 +216,10 @@ const getStatusBadge = (status) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className=" overflow-hidden   border-gray-200"
+        className=" overflow-hidden  mb-[40px] md:!mb-0  border-gray-200"
       >
         {/* ---------- Header ---------- */}
-        <div className=" px-2 py-[8px] border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div className=" px-2 py-[8px] border-gray-200 flex  sm:flex-row justify-between sm:items-center">
           <div className="flex gap-[10px]  items-center">
             <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-pink-500 rounded-md flex items-center justify-center">
               <i className="fa-regular fa-clipboard-list text-[15px] text-white"></i>
@@ -228,7 +228,7 @@ const getStatusBadge = (status) => {
           </div>
 
           <div className="flex flex-row items-center gap-3 mt-2 sm:mt-0">
-            <div className="relative">
+            <div className="relative md:!flex md34:!hidden">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"

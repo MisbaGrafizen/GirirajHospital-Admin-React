@@ -91,7 +91,7 @@ const Widgets1 = ({ data }) => {
                   to={Number(data.gros) || 0}
                   duration={6.6}
                   separator=","
-                  className="text-[20px] font-semibold text-gray-800"
+                  className="md11:!text-[20px] text-[16px] md11:!font-semibold text-gray-800"
                 />
               </div>
               <SvgIcon className="half-circle svg-fill" iconId="halfcircle" />

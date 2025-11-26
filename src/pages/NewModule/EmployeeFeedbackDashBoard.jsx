@@ -1021,7 +1021,7 @@ const SERVICE_GROUPS = {
         const handleWidgetClick = (type) => {
             switch (type) {
                 case "totalFeedback":
-                    navigate("/ipd-opd-list");
+                    navigate("/employee-all-list");
                     break;
                 case "npsRating":
                     navigate("/reports/nps-all-list");

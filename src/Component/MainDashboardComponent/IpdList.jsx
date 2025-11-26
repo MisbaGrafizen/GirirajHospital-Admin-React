@@ -131,7 +131,7 @@ const navigate = useNavigate();
     <>
       <div className=" rounded-xl   overflow-hidden">
         {/* ---------- Header ---------- */}
-        <div className=" px-2 border-gray-200 flex flex-col sm:flex-row justify-between items-center">
+        <div className=" px-2 border-gray-200 flex  sm:flex-row justify-between items-center">
           <div className="flex gap-[10px] items-center py-[10px] justify-start">
             <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-pink-500 rounded-md flex items-center justify-center">
               <i className="fa-regular fa-users-medical text-[15px] text-[#fff]" />
@@ -140,7 +140,7 @@ const navigate = useNavigate();
           </div>
 
           <div className="flex flex-row justify-between gap-2 ">
-            <div className="relative">
+            <div className="relative md:!flex  md34:!hidden">
               <Search className="absolute left-3 top-[50%] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"

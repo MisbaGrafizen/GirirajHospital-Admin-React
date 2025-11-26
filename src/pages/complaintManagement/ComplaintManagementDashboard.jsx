@@ -539,9 +539,9 @@ async function getResolvedComplaints() {
     console.log("Resolved API response:", res);
 
     if (Array.isArray(res)) {
-  return res.filter(c => c.status === "resolved");
-}
-return [];
+        return res.filter(c => c.status === "resolved");
+    }
+    return [];
 
 }
 
@@ -617,17 +617,17 @@ export default function ComplaintManagementDashboard() {
     const [rawConcerns, setRawConcerns] = useState([]);
     const [tatComplaints, setTatComplaints] = useState([]);
     const [internalComplaints, setInternalComplaints] = useState([]);
-const doctorOptions = useMemo(() => {
-  const unique = new Set();
-  (Array.isArray(rawConcerns) ? rawConcerns : []).forEach((d) => {
-    const name =
-      d?.consultantDoctorName?.name ||
-      d?.doctorName ||
-      d?.consultant;
-    if (name) unique.add(name);
-  });
-  return ["All Doctors", ...Array.from(unique).sort((a, b) => a.localeCompare(b))];
-}, [rawConcerns]);
+    const doctorOptions = useMemo(() => {
+        const unique = new Set();
+        (Array.isArray(rawConcerns) ? rawConcerns : []).forEach((d) => {
+            const name =
+                d?.consultantDoctorName?.name ||
+                d?.doctorName ||
+                d?.consultant;
+            if (name) unique.add(name);
+        });
+        return ["All Doctors", ...Array.from(unique).sort((a, b) => a.localeCompare(b))];
+    }, [rawConcerns]);
 
 
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
@@ -941,18 +941,18 @@ const doctorOptions = useMemo(() => {
     }, []);
 
     // 🔥 Auto-refresh complaints every 10 seconds
-useEffect(() => {
-  const interval = setInterval(async () => {
-    try {
-      const docs = await getConcerns();
-      setRawConcerns(Array.isArray(docs) ? docs : []);
-    } catch (err) {
-      console.error("Auto-refresh failed:", err);
-    }
-  }, 10000); // ← 10 seconds
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const docs = await getConcerns();
+                setRawConcerns(Array.isArray(docs) ? docs : []);
+            } catch (err) {
+                console.error("Auto-refresh failed:", err);
+            }
+        }, 10000); // ← 10 seconds
 
-  return () => clearInterval(interval);
-}, []);
+        return () => clearInterval(interval);
+    }, []);
 
 
 
@@ -1039,59 +1039,59 @@ useEffect(() => {
     }
 
     const formatDate = (dateStr) => {
-  if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleDateString("en-GB"); // DD/MM/YYYY
-};
-
-const exportToExcel = (data) => {
-  if (!data || data.length === 0) {
-    alert("No data available to export.");
-    return;
-  }
-
-  let exportData = [];
-
-  data.forEach((item) => {
-    const baseRow = {
-      "Sr.No": exportData.length + 1,
-      "Date": formatDate(item.stampIn),
-      "Patient Name": item.patientName || "-",
-      "IP": "-", // As per new requirement: NOT NEEDED, REMOVE if not required
-      "Consultant": item.doctor || "-", // doctor name
-      "Bed No": item.bedNo || "-",
+        if (!dateStr) return "-";
+        return new Date(dateStr).toLocaleDateString("en-GB"); // DD/MM/YYYY
     };
 
-    // 🔥 If complaint has multiple departments
-    if (Array.isArray(item.departments) && item.departments.length > 0) {
-      item.departments.forEach((dept) => {
-        exportData.push({
-          ...baseRow,
-          "Complaints / Suggestions": dept.text || "-",
-          "Department": dept.department || "-",
-          "Root Cause Analysis (RCA)": dept.rca || "NA",
-          "Corrective Actions (CA)": dept.ca || "NA",
-          "Preventive Actions (PA)": dept.pa || "NA",
+    const exportToExcel = (data) => {
+        if (!data || data.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+
+        let exportData = [];
+
+        data.forEach((item) => {
+            const baseRow = {
+                "Sr.No": exportData.length + 1,
+                "Date": formatDate(item.stampIn),
+                "Patient Name": item.patientName || "-",
+                "IP": "-", // As per new requirement: NOT NEEDED, REMOVE if not required
+                "Consultant": item.doctor || "-", // doctor name
+                "Bed No": item.bedNo || "-",
+            };
+
+            // 🔥 If complaint has multiple departments
+            if (Array.isArray(item.departments) && item.departments.length > 0) {
+                item.departments.forEach((dept) => {
+                    exportData.push({
+                        ...baseRow,
+                        "Complaints / Suggestions": dept.text || "-",
+                        "Department": dept.department || "-",
+                        "Root Cause Analysis (RCA)": dept.rca || "NA",
+                        "Corrective Actions (CA)": dept.ca || "NA",
+                        "Preventive Actions (PA)": dept.pa || "NA",
+                    });
+                });
+            } else {
+                // No departments → empty row
+                exportData.push({
+                    ...baseRow,
+                    "Complaints / Suggestions": "-",
+                    "Department": "-",
+                    "Root Cause Analysis (RCA)": "NA",
+                    "Corrective Actions (CA)": "NA",
+                    "Preventive Actions (PA)": "NA",
+                });
+            }
         });
-      });
-    } else {
-      // No departments → empty row
-      exportData.push({
-        ...baseRow,
-        "Complaints / Suggestions": "-",
-        "Department": "-",
-        "Root Cause Analysis (RCA)": "NA",
-        "Corrective Actions (CA)": "NA",
-        "Preventive Actions (PA)": "NA",
-      });
-    }
-  });
 
-  const worksheet = XLSX.utils.json_to_sheet(exportData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Department_Report");
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Department_Report");
 
-  XLSX.writeFile(workbook, "TAT_Report.xlsx");
-};
+        XLSX.writeFile(workbook, "TAT_Report.xlsx");
+    };
 
 
     // ===================== CHARTS (design preserved) =====================
@@ -1334,13 +1334,13 @@ const exportToExcel = (data) => {
             <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] overflow-hidden flex-col  h-[100vh]">
                     <Header
-  pageName="Complaints"
-  serviceVariant="concern"       // show concern-type services
-  doctors={doctorOptions}        // doctor dropdown data
-  onDateRangeChange={(next) => { // update filters when dropdown/date changes
-    setFilters((prev) => ({ ...prev, ...next }));
-  }}
-/>
+                        pageName="Complaints"
+                        serviceVariant="concern"       // show concern-type services
+                        doctors={doctorOptions}        // doctor dropdown data
+                        onDateRangeChange={(next) => { // update filters when dropdown/date changes
+                            setFilters((prev) => ({ ...prev, ...next }));
+                        }}
+                    />
 
                     <div className="flex overflow-hidden  w-[100%] h-[100%]">
                         <Sidebar />
@@ -1357,8 +1357,8 @@ const exportToExcel = (data) => {
                                             isAdmin={isAdmin}
                                         />
                                     </div> */}
-                                    <div className=" flex  gap-[15px]">
-                                        <div className="grid md34:!grid-cols-2 md11:!grid-cols-2 w-[600px] gap-2 ">
+                                    <div className=" flex md:!flex-row md34:!flex-col  gap-[15px]">
+                                        <div className="grid md34:!grid-cols-2 md11:!grid-cols-2 md:!w-[600px] gap-2 ">
                                             <div onClick={() => handleWidgetClick("total")} className="cursor-pointer">
                                                 <Widgets1
                                                     data={{
@@ -1466,7 +1466,7 @@ const exportToExcel = (data) => {
                                             )}
                                         </AnimatePresence>
 
-                                        <div className="bg-white  rounded-xl dashShadow w-[60%] overflow-hidden mb-4">
+                                        <div className="bg-white  rounded-xl dashShadow md:!w-[60%] overflow-hidden mb-4">
                                             <div className=" p-[13px] items-center gap-[10px] flex   border-b border-gray-200">
                                                 <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                                                     <i className="fa-solid  text-[15px] text-[#fff] fa-keyboard-brightness"></i>
@@ -1530,7 +1530,7 @@ const exportToExcel = (data) => {
                                     </div>
                                     {/* Charts Row */}
                                     <div className=" flex  md11:!flex-row md34:!flex-col mt-[-10px]  md11:!min-w-[600px]     gap-[15px] mb-3">
-                                        <div className="bg-white dashShadow  rounded-xl   w-[400px] md13:!w-[750px] h-fit p-[13px]">
+                                        <div className="bg-white dashShadow  rounded-xl   md:!w-[400px] md13:!w-[750px] h-fit p-[13px]">
                                             <div className=" flex items-center  mb-[5px] gap-[10px]">
 
 
@@ -1547,7 +1547,7 @@ const exportToExcel = (data) => {
                                             </div>
                                         </div>
 
-                                        <div className="bg-white h-[300px]  rounded-xl dashShadow  w-[300px]  p-[13px]">
+                                        <div className="bg-white h-[300px]  rounded-xl dashShadow  md:!w-[300px]  p-[13px]">
                                             <div className="flex items-center gap-[10px] mb-[10px]">
 
 
@@ -1562,7 +1562,7 @@ const exportToExcel = (data) => {
                                             </div>
                                         </div>
 
-                                        <div className="bg-white     rounded-xl dashShadow p-[13px]  h-[300px]   md11:!w-[400px]">
+                                        <div className="bg-white     rounded-xl dashShadow p-[13px]  md:!h-[300px]   md11:!w-[400px]">
                                             <div className=" flex  mb-[10px] items-center  gap-[10px]">
 
 
@@ -1838,15 +1838,15 @@ const exportToExcel = (data) => {
                                                             return (
                                                                 <tr
                                                                     key={complaint.id}
-                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`} 
+                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                 >
                                                                     <td className="px-3  py-2 border-r text-sm font-medium text-blue-600">
                                                                         <div className=" flex  cursor-pointer"   >
 
 
                                                                             <button
-                                                                             onClick={() => handlenavigate(complaint, fullDoc)}
-                                                                              
+                                                                                onClick={() => handlenavigate(complaint, fullDoc)}
+
                                                                                 className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                                                                             >
                                                                                 <Eye className="w-4 h-4 mr-1" />
@@ -1856,26 +1856,26 @@ const exportToExcel = (data) => {
                                                                         </div>
                                                                     </td>
 
-                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-4 py-2 border-r text-sm text-gray-900">
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-4 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
 
                                                                             {complaint.date}
                                                                         </div>
                                                                     </td>
-                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm font- text-gray-900">{complaint.patient}</td>
-                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm font- text-gray-900">{complaint.patient}</td>
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
                                                                             <User className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.doctor}
                                                                         </div>
                                                                     </td>
-                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex  items-center">
                                                                             <Bed className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.bedNo}
                                                                         </div>
                                                                     </td>
-                                                                    <td  onClick={() => handlenavigate(complaint, fullDoc)}  className="px-3 py-2 border-r text-[12px] text-gray-900">
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-[12px] text-gray-900">
                                                                         {fullDoc ? getDepartmentsString(fullDoc, allowedBlocks) : "-"}
                                                                     </td>
 
@@ -1941,166 +1941,6 @@ const exportToExcel = (data) => {
 
 
 
-                                    {/* <div className=" rounded-lg mb-[20px] mt-[4px]  overflow-hidden">
-                                        <div className="p-[13px]  flex justify-between items-center border-gray-200">
-                                            <div className="flex items-center gap-[10px]">
-                                                <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
-                                                    <i className="fa-solid fa-list text-[15px] text-[#fff]"></i>
-                                                </div>
-                                                <h3 className="text-[13px] font-[500] text-gray-900">Internal Complaints</h3>
-                                            </div>
-
-                                            <div className=" flex gap-[10px]">
-
-                                                <button
-                                                    className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-[10px] py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                    onClick={handleInternalNavigate}
-                                                >
-                                                    <Eye className="w-5 h-5" />
-                                                </button>
-
-                                            </div>
-
-
-                                        </div>
-
-
-                                        <div className="overflow-x-auto rounded-[10px] border">
-                                            <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
-                                                <thead className="bg-gray-100">
-                                                    <tr>
-
-                                                        <th className="px-3 py-2  border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Comp. ID
-                                                        </th>
-                                                        <th className="px-6 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Name
-                                                        </th>
-                                                        <th className="px-6 py-2 border-r text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Contact No
-                                                        </th>
-                                                        <th className="px-6 py-2  border-r text-left tracking-wide  flex-shrink-0 w-[190px] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Employee Id
-                                                        </th>
-                                                        <th className="px-6 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Floor No
-                                                        </th>
-
-                                                        <th className="px-6 py-2 border-r text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Department
-                                                        </th>
-                                                        <th className="px-6 min-w-[200px] border-r flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Status
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white">
-                                                    {internalComplaints
-                                                        .slice()
-                                                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                                                        .slice(0, 5)
-                                                        .map((complaint, index) => {
-
-                                                            const fullDoc = rawConcerns.find(d => d._id === complaint.id);
-                                                            return (
-
-                                                                <tr
-                                                                    key={complaint.id}
-                                                                    onClick={() => openModal(complaint)}
-                                                                    className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
-                                                                >
-
-                                                                    <td className="px-3 py-2 border-r text-sm font-medium text-blue-600">
-                                                                        <div className=" flex cursor-pointer "                                                                                 onClick={() => handleInternaldetailsNavigate(complaint, fullDoc)}>
-
-                                                                            <button
-
-                                                                                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                                                                            >
-                                                                                <Eye className="w-4 h-4 mr-1" />
-
-                                                                            </button>{complaint.complaintId}
-
-                                                                        </div> </td>
-
-
-                                                                    <td className="px-6 py-2  border-r text-sm text-gray-900">
-                                                                        <div className="flex items-center">
-                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
-                                                                            {complaint.employeeName}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm border-r text-gray-900">
-                                                                        {complaint.contactNo}
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm border-r  text-gray-900">
-                                                                        {complaint.employeeId}
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm border-r min-w-[150px] text-gray-900">
-                                                                        {complaint.floorNo}
-                                                                    </td>
-                                                                    <td className="px-6 py-2 text-sm. border-r  min-w-[150px] text-gray-900">
-                                                                        {getActiveDepartments(complaint, allowedBlocks)}
-                                                                    </td>
-                                                                    <td className="px-3 py-2 border-r  text-sm">
-                                                                        <div className="flex items-center space-x-2">
-                                                                            <span
-                                                                                className={`flex items-center border-r px-2 py-1 justify-center w-[90px] rounded-full text-[13px] font-[500] ${getStatusColor(
-                                                                                    mapStatusUI(complaint.status)
-                                                                                )}`}
-                                                                            >
-                                                                                {mapStatusUI(complaint.status)}
-
-                                                                                {complaint.status?.toLowerCase() === "partial" && (
-                                                                                    <button
-                                                                                        onClick={async () => {
-                                                                                            try {
-                                                                                                // show modal first
-                                                                                                setIsPartialModalOpen(true);
-                                                                                                setSelectedComplaint(null);
-
-                                                                                                const res = await ApiGet(
-                                                                                                    `/admin/partial-resolve/${complaint.id}`
-                                                                                                );
-                                                                                                console.log("res", res);
-
-                                                                                                if (res.data) {
-                                                                                                    setSelectedComplaint(res.data);
-                                                                                                } else {
-                                                                                                    setSelectedComplaint({ error: true });
-                                                                                                }
-                                                                                            } catch (err) {
-                                                                                                console.error("Error fetching partial-resolve details:", err);
-                                                                                                setSelectedComplaint({ error: true });
-                                                                                            }
-                                                                                        }}
-                                                                                        className="text-blue-600 pl-[10px] hover:text-blue-800 transition-colors"
-                                                                                    >
-                                                                                        <Eye className="w-4 h-4" />
-                                                                                    </button>
-                                                                                )}
-                                                                            </span>
-                                                                        </div>
-
-                                                                    </td>
-               
-                
-                                                                </tr>
-                                                            )
-                                                        })}
-                                                    {filteredComplaints.length === 0 && (
-                                                        <tr>
-                                                            <td colSpan={8} className="px-6 py-6 text-center text-gray-500">
-                                                                No complaints found for the selected range.
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div> */}
-
-
                                     <AnimatePresence>
                                         {isPartialModalOpen && selectedComplaint && (
                                             <motion.div
@@ -2144,30 +1984,30 @@ const exportToExcel = (data) => {
                                                         ) : (
                                                             (() => {
                                                                 // NEW: Only display departments user has access to AND have content
-const USER_ALLOWED_KEYS = allowedBlocks || [];
+                                                                const USER_ALLOWED_KEYS = allowedBlocks || [];
 
-const filteredDepartments = Object.entries(selectedComplaint)
-    // allow only backend department keys
-    .filter(([key]) =>
-        [
-            "doctorServices",
-            "billingServices",
-            "housekeeping",
-            "maintenance",
-            "diagnosticServices",
-            "dietitianServices",
-            "security",
-            "nursing",
-        ].includes(key)
-    )
-    // allow only departments user has permission for
-    .filter(([key]) => USER_ALLOWED_KEYS.includes(key))
-    // only show if department has text or attachments
-    .filter(([_, value]) => {
-        const hasText = value?.text?.trim()?.length > 0;
-        const hasAttachments = Array.isArray(value?.attachments) && value.attachments.length > 0;
-        return hasText || hasAttachments;
-    });
+                                                                const filteredDepartments = Object.entries(selectedComplaint)
+                                                                    // allow only backend department keys
+                                                                    .filter(([key]) =>
+                                                                        [
+                                                                            "doctorServices",
+                                                                            "billingServices",
+                                                                            "housekeeping",
+                                                                            "maintenance",
+                                                                            "diagnosticServices",
+                                                                            "dietitianServices",
+                                                                            "security",
+                                                                            "nursing",
+                                                                        ].includes(key)
+                                                                    )
+                                                                    // allow only departments user has permission for
+                                                                    .filter(([key]) => USER_ALLOWED_KEYS.includes(key))
+                                                                    // only show if department has text or attachments
+                                                                    .filter(([_, value]) => {
+                                                                        const hasText = value?.text?.trim()?.length > 0;
+                                                                        const hasAttachments = Array.isArray(value?.attachments) && value.attachments.length > 0;
+                                                                        return hasText || hasAttachments;
+                                                                    });
 
 
                                                                 if (filteredDepartments.length === 0) {
@@ -2268,7 +2108,7 @@ const filteredDepartments = Object.entries(selectedComplaint)
                                                     </div>
 
 
-                              
+
                                                 </motion.div>
                                             </motion.div>
                                         )}

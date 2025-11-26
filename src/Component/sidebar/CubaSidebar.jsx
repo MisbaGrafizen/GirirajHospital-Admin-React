@@ -1,4 +1,4 @@
-import React, { useState ,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import {
   Gauge,
   Wallet,
@@ -28,7 +28,7 @@ import {
   faChartLine,
   faFileAlt,
   faUsersCog,
-  faUserShield,faBed,faExclamationTriangle,
+  faUserShield, faBed, faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons"
 
 import { useNavigate, useLocation } from "react-router-dom";
@@ -55,7 +55,7 @@ function resolvePermissions() {
 
 
 const CubaSidebar = () => {
-const [expandedMenu, setExpandedMenu] = useState(["dashboards"]);
+  const [expandedMenu, setExpandedMenu] = useState(["dashboards"]);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
@@ -81,317 +81,154 @@ const [expandedMenu, setExpandedMenu] = useState(["dashboards"]);
   )
 
   const ReportsIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <path d="M3 3h18v18H3z" /> {/* outer box */}
-    <path d="M7 8h10M7 12h6M7 16h8" /> {/* report lines */}
-  </svg>
-);
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M3 3h18v18H3z" /> {/* outer box */}
+      <path d="M7 8h10M7 12h6M7 16h8" /> {/* report lines */}
+    </svg>
+  );
 
-const ChevronRightIcon = () => ( <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"> <polyline points="9,18 15,12 9,6" /> </svg> )
+  const ChevronRightIcon = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"> <polyline points="9,18 15,12 9,6" /> </svg>)
 
-
-  // const menuSections = [
-  //   {
-  //     title: roleName,
-  //     items: [
-  //       {
-  //         id: "dashboards",
-  //         label: "FeedBacks",
-  //         icon: React.createElement(HomeIcon),
-  //         // badge: "13",
-  //         hasSubmenu: true,
-  //         href: "/dashboards",
-  //         submenu: [
-  //           { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-  //           { id: "ecommerce", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
-  //           { id: "online-course", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-  //           { id: "social", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
-  //           { id: "crypto", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faChartLine },
-  //           { id: "nft", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
-  //           ...(isAdmin
-  //             ? [
-  //               { id: "bed", label: "Bed Manage", href: "/settings/bed-manage", icon: faBed },
-  //                        { id: "pos", label: "TAT", href: "/dashboards/tat-view", icon: faStopwatch },
-  //               { id: "school-management", label: "Role Mana..", href: "/settings/role-manage", icon: faUserShield },
-  //               { id: "pos", label: "User Mana..", href: "/settings/user-manage", icon: faUsersCog },
-  //             ]
-  //             : []),
-  //         ]
-
-  //       },
-  //       // {
-  //       //   id: "widgets",
-  //       //   label: "Widgets",
-  //       //   icon: React.createElement(WidgetsIcon),
-  //       //   hasSubmenu: true,
-  //       //   href: "/widgets",
-  //       //   submenu: [
-  //       //     { id: "chart-widgets", label: "Chart Widgets", href: "/widgets/charts" },
-  //       //     { id: "data-widgets", label: "Data Widgets", href: "/widgets/data" },
-  //       //     { id: "ui-widgets", label: "UI Widgets", href: "/widgets/ui" },
-  //       //   ],
-  //       // },
-  //       // {
-  //       //   id: "page-layout",
-  //       //   label: "Page Layout",
-  //       //   icon: React.createElement(PageLayoutIcon),
-  //       //   hasSubmenu: true,
-  //       //   href: "/page-layout",
-  //       //   submenu: [
-  //       //     { id: "boxed", label: "Boxed Layout", href: "/page-layout/boxed" },
-  //       //     { id: "full-width", label: "Full Width", href: "/page-layout/full-width" },
-  //       //     { id: "sidebar-layout", label: "Sidebar Layout", href: "/page-layout/sidebar" },
-  //       //   ],
-  //       // },
-  //     ],
-  //   },
-  //   // {
-  //   //   title: "APPLICATIONS",
-  //   //   items: [
-  //   //     {
-  //   //       id: "projects",
-  //   //       label: "Projects",
-  //   //       icon: React.createElement(ProjectsIcon),
-  //   //       hasSubmenu: true,
-  //   //       href: "/projects",
-  //   //       submenu: [
-  //   //         { id: "project-list", label: "Project List", href: "/projects/list" },
-  //   //         { id: "project-details", label: "Project Details", href: "/projects/details" },
-  //   //         { id: "create-project", label: "Create Project", href: "/projects/create" },
-  //   //       ],
-  //   //     },
-  //   //     {
-  //   //       id: "file-manager",
-  //   //       label: "File Manager",
-  //   //       icon: React.createElement(FileManagerIcon),
-  //   //       href: "/file-manager",
-  //   //     },
-  //   //     {
-  //   //       id: "kanban-board",
-  //   //       label: "Kanban Board",
-  //   //       icon: React.createElement(KanbanIcon),
-  //   //       href: "/kanban-board",
-  //   //     },
-  //   //     {
-  //   //       id: "ecommerce",
-  //   //       label: "Ecommerce",
-  //   //       icon: React.createElement(EcommerceIcon),
-  //   //       hasSubmenu: true,
-  //   //       href: "/ecommerce",
-  //   //       submenu: [
-  //   //         { id: "products", label: "Products", href: "/ecommerce/products" },
-  //   //         { id: "orders", label: "Orders", href: "/ecommerce/orders" },
-  //   //         { id: "customers", label: "Customers", href: "/ecommerce/customers" },
-  //   //       ],
-  //   //     },
-  //   //     {
-  //   //       id: "mail-box",
-  //   //       label: "Mail Box",
-  //   //       icon: React.createElement(MailIcon),
-  //   //       href: "/mail-box",
-  //   //     },
-  //   //     {
-  //   //       id: "chat",
-  //   //       label: "Chat",
-  //   //       icon: React.createElement(ChatIcon),
-  //   //       hasSubmenu: true,
-  //   //       href: "/chat",
-  //   //       submenu: [
-  //   //         { id: "private-chat", label: "Private Chat", href: "/chat/private" },
-  //   //         { id: "group-chat", label: "Group Chat", href: "/chat/group" },
-  //   //       ],
-  //   //     },
-  //   //     {
-  //   //       id: "users",
-  //   //       label: "Users",
-  //   //       icon: React.createElement(UsersIcon),
-  //   //       hasSubmenu: true,
-  //   //       href: "/users",
-  //   //       submenu: [
-  //   //         { id: "user-list", label: "User List", href: "/users/list" },
-  //   //         { id: "user-profile", label: "User Profile", href: "/users/profile" },
-  //   //         { id: "user-settings", label: "User Settings", href: "/users/settings" },
-  //   //       ],
-  //   //     },
-  //   //     {
-  //   //       id: "reports",
-  //   //       label: "Reports",
-  //   //       icon: React.createElement(ReportsIcon),
-  //   //       hasSubmenu: true,
-  //   //       isNew: true,
-  //   //       href: "/reports",
-  //   //       submenu: [
-  //   //         { id: "sales-report", label: "Sales Report", href: "/reports/sales" },
-  //   //         { id: "user-report", label: "User Report", href: "/reports/users" },
-  //   //         { id: "financial-report", label: "Financial Report", href: "/reports/financial" },
-  //   //       ],
-  //   //     },
-  //   //     {
-  //   //       id: "bookmarks",
-  //   //       label: "Bookmarks",
-  //   //       icon: React.createElement(BookmarksIcon),
-  //   //       href: "/bookmarks",
-  //   //     },
-  //   //     {
-  //   //       id: "support",
-  //   //       label: "Support",
-  //   //       icon: React.createElement(SupportIcon),
-  //   //       href: "/support",
-  //   //     },
-  //   //     {
-  //   //       id: "calendar",
-  //   //       label: "Calendar",
-  //   //       icon: React.createElement(CalendarIcon),
-  //   //       href: "/calendar",
-  //   //     },
-  //   //   ],
-  //   // },
-  // ]
+  const ROUTE_GROUPS = {
+    "/ipd-feedback": [
+      "/dashboards/ipd-all-list",
+      "/ipd-feedback-details",
+      "/dashboards/ipd-list",
+      "/dashboards/ipd-edit",
+    ],
+    "/opd-feedback": [
+      "/dashboards/opd-all-list",
+      "/dashboards/opd-list",
+      "/opd-feedback-details",
+    ],
+    "/complaint-dashboard": [
+      "/complaint-details",
+      "/dashboards/complain-all-list",
+    ],
+    "/reports/nps-reports": [
+      "/reports/nps-all-list",
+    ],
 
 
-
-
-  // Grouped route mappings for sidebar highlight
-const ROUTE_GROUPS = {
-  "/ipd-feedback": [
-    "/dashboards/ipd-all-list",
-    "/ipd-feedback-details",
-    "/dashboards/ipd-list",
-    "/dashboards/ipd-edit",
-  ],
-  "/opd-feedback": [
-    "/dashboards/opd-all-list",
-    "/dashboards/opd-list",
-    "/opd-feedback-details",
-  ],
-  "/complaint-dashboard": [
-    "/complaint-details",
-    "/dashboards/complain-all-list",
-  ],
-  "/reports/nps-reports": [
-    "/reports/nps-all-list",
-  ],
-
-
-};
+  };
 
 
 
   const menuSections = [
-  {
-    title: roleName,
-    items: [
-      {
-        id: "dashboards",
-        label: "FeedBacks",
-        icon: React.createElement(HomeIcon),
-        hasSubmenu: true,
-        href: "/dashboards",
-        submenu: [
-          { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-          { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
-          { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-          { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
-          { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
-          { id: "employeeDashboard", label: "Employee Dash.. ", href: "/employee-feedback-dashboard", icon: faUsersCog },
-          { id: "consultantDashboard", label: "Consultant Dash.. ", href: "/doctor-feedback-dashboard", icon: faUserMd },
+    {
+      title: roleName,
+      items: [
+        {
+          id: "dashboards",
+          label: "FeedBacks",
+          icon: React.createElement(HomeIcon),
+          hasSubmenu: true,
+          href: "/dashboards",
+          submenu: [
+            { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+            { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
+            { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+            { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
+            { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
+            { id: "employeeDashboard", label: "Employee Dash.. ", href: "/employee-feedback-dashboard", icon: faUsersCog },
+            { id: "consultantDashboard", label: "Consultant Dash.. ", href: "/doctor-feedback-dashboard", icon: faUserMd },
 
 
-        ],
-      },
+          ],
+        },
 
         {
-        id: "reports",
-        label: "Reports",
-        icon:  React.createElement(ReportsIcon),
-        hasSubmenu: true,
-        href: "/reports",
-        submenu: [
-          { id: "nps", label: "Nps Reports", href: "/reports/nps-reports", icon: faChartLine },
-          { id: "executive", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
+          id: "reports",
+          label: "Reports",
+          icon: React.createElement(ReportsIcon),
+          hasSubmenu: true,
+          href: "/reports",
+          submenu: [
+            { id: "nps", label: "Nps Reports", href: "/reports/nps-reports", icon: faChartLine },
+            { id: "executive", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
 
-        ],
-      },
-      isAdmin &&{
-        id: "settings",
-        label: "Settings",
-        icon:  React.createElement(Settings),
-        hasSubmenu: true,
-        href: "/settings",
-        submenu: [
-          { id: "bed-manage", label: "Bed Manager", href: "/settings/bed-manage", icon: faBed },
-          { id: "user-manage", label: "User Management", href: "/settings/user-manage", icon: faUsersCog },
-          { id: "role-manage", label: "Role Management", href: "/settings/role-manage", icon: faUserShield },
-        ],
-      },
-    ],
-  },
-];
-
-
+          ],
+        },
+        isAdmin && {
+          id: "settings",
+          label: "Settings",
+          icon: React.createElement(Settings),
+          hasSubmenu: true,
+          href: "/settings",
+          submenu: [
+            { id: "bed-manage", label: "Bed Manager", href: "/settings/bed-manage", icon: faBed },
+            { id: "user-manage", label: "User Management", href: "/settings/user-manage", icon: faUsersCog },
+            { id: "role-manage", label: "Role Management", href: "/settings/role-manage", icon: faUserShield },
+          ],
+        },
+      ],
+    },
+  ];
 
 
-const handleMenuClick = (item) => {
-  if (!item.hasSubmenu) {
-    navigate(item.href);
-    return;
-  }
 
-  setExpandedMenu((prev) => {
-    if (prev.includes(item.id)) {
-      // collapse if already open
-      return prev.filter((id) => id !== item.id);
-    } else {
-      // open new one while keeping others open
-      return [...prev, item.id];
+
+  const handleMenuClick = (item) => {
+    if (!item.hasSubmenu) {
+      navigate(item.href);
+      return;
     }
-  });
-};
+
+    setExpandedMenu((prev) => {
+      if (prev.includes(item.id)) {
+        // collapse if already open
+        return prev.filter((id) => id !== item.id);
+      } else {
+        // open new one while keeping others open
+        return [...prev, item.id];
+      }
+    });
+  };
 
 
 
-const handleSubmenuClick = (href, parentId) => {
-  navigate(href);
-  setExpandedMenu(parentId); // ✅ keep only that section open
-};
+  const handleSubmenuClick = (href, parentId) => {
+    navigate(href);
+    setExpandedMenu(parentId); // ✅ keep only that section open
+  };
 
-const isActive = (href) => {
-  const path = location.pathname;
+  const isActive = (href) => {
+    const path = location.pathname;
 
-  // ✅ Check direct or nested route
-  if (path === href || path.startsWith(href + "/")) return true;
+    // ✅ Check direct or nested route
+    if (path === href || path.startsWith(href + "/")) return true;
 
-  // ✅ Check custom route groups
-  if (ROUTE_GROUPS[href]) {
-    return ROUTE_GROUPS[href].some((subPath) =>
-      path.startsWith(subPath)
-    );
-  }
+    // ✅ Check custom route groups
+    if (ROUTE_GROUPS[href]) {
+      return ROUTE_GROUPS[href].some((subPath) =>
+        path.startsWith(subPath)
+      );
+    }
 
-  return false;
-};
-
-
+    return false;
+  };
 
 
 
 
 
-useEffect(() => {
-  const currentPath = location.pathname;
-  let openMenus = ["dashboards"];
-  if (currentPath.startsWith("/reports")) openMenus = ["reports"];
-  else if (currentPath.startsWith("/settings")) openMenus = ["settings"];
-  else if (currentPath.startsWith("/dashboards")) openMenus = ["dashboards"];
-  setExpandedMenu(openMenus);
-}, [location.pathname]);
+
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    let openMenus = ["dashboards"];
+    if (currentPath.startsWith("/reports")) openMenus = ["reports"];
+    else if (currentPath.startsWith("/settings")) openMenus = ["settings"];
+    else if (currentPath.startsWith("/dashboards")) openMenus = ["dashboards"];
+    setExpandedMenu(openMenus);
+  }, [location.pathname]);
 
   const isSubmenuActive = (submenu) => {
     return submenu.some((item) => isActive(item.href))
@@ -402,24 +239,24 @@ useEffect(() => {
     if (item.submenu && isSubmenuActive(item.submenu)) return true
     return false
   }
-useEffect(() => {
-  const currentPath = location.pathname;
+  useEffect(() => {
+    const currentPath = location.pathname;
 
-  // start with feedbacks always open
-  let openMenus = ["dashboards"];
+    // start with feedbacks always open
+    let openMenus = ["dashboards"];
 
-  if (currentPath.startsWith("/reports")) {
-    openMenus = ["reports"]; // only reports open
-  } 
-  else if (currentPath.startsWith("/settings")) {
-    openMenus = ["settings"]; // only settings open
-  } 
-  else if (currentPath.startsWith("/dashboards") || currentPath.startsWith("/feedbacks")) {
-    openMenus = ["dashboards"]; // keep feedbacks open
-  }
+    if (currentPath.startsWith("/reports")) {
+      openMenus = ["reports"]; // only reports open
+    }
+    else if (currentPath.startsWith("/settings")) {
+      openMenus = ["settings"]; // only settings open
+    }
+    else if (currentPath.startsWith("/dashboards") || currentPath.startsWith("/feedbacks")) {
+      openMenus = ["dashboards"]; // keep feedbacks open
+    }
 
-  setExpandedMenu(openMenus);
-}, [location.pathname]);
+    setExpandedMenu(openMenus);
+  }, [location.pathname]);
 
 
   const toggleSidebar = () => {
@@ -502,22 +339,22 @@ useEffect(() => {
     { id: "pos", label: "User Mana..", href: "/settings/user-manage", icon: faUsersCog },
   ]
 
-const handleLogout = () => {
-  const savedIdentifier = localStorage.getItem("savedIdentifier");
-  const savedPassword = localStorage.getItem("savedPassword");
-  const rememberMe = localStorage.getItem("rememberMe");
+  const handleLogout = () => {
+    const savedIdentifier = localStorage.getItem("savedIdentifier");
+    const savedPassword = localStorage.getItem("savedPassword");
+    const rememberMe = localStorage.getItem("rememberMe");
 
-  localStorage.clear();
-  sessionStorage.clear();
+    localStorage.clear();
+    sessionStorage.clear();
 
-  if (rememberMe === "true" && savedIdentifier) {
-    localStorage.setItem("savedIdentifier", savedIdentifier);
-    if (savedPassword) localStorage.setItem("savedPassword", savedPassword);
-    localStorage.setItem("rememberMe", "true");
-  }
+    if (rememberMe === "true" && savedIdentifier) {
+      localStorage.setItem("savedIdentifier", savedIdentifier);
+      if (savedPassword) localStorage.setItem("savedPassword", savedPassword);
+      localStorage.setItem("rememberMe", "true");
+    }
 
-  navigate("/");
-};
+    navigate("/");
+  };
 
 
 
@@ -542,23 +379,23 @@ const handleLogout = () => {
                     <motion.span
                       className="text-xl font-bold text-gray-800 tracking-tight"
                       variants={contentVariants}
-                 
+
                     >
                       <img className=" w-[160px] mx-auto !ml-[7px] h-[60px] object-contain" src={textlogo} />
                     </motion.span>
                   )}
                 </AnimatePresence>
               </div>
-           
+
             </div>
           </div>
 
-      <button
-  onClick={() => window.open("https://internal.grafizen.com", "_blank")} // ✅ opens in new tab
-  className="w-[80%] mx-auto gap-[10px] flex justify-center items-center font-[500] mt-[6px] py-[7px] bg-red-600 text-white rounded-lg text-sm hover:opacity-90 transition"
->
-  <i className="fa-solid fa-plus"></i> Complaint
-</button>
+          <button
+            onClick={() => window.open("https://internal.grafizen.com", "_blank")} // ✅ opens in new tab
+            className="w-[80%] mx-auto gap-[10px] flex justify-center items-center font-[500] mt-[6px] py-[7px] bg-red-600 text-white rounded-lg text-sm hover:opacity-90 transition"
+          >
+            <i className="fa-solid fa-plus"></i> Complaint
+          </button>
 
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto max-h-[75vh] pb-4 pt-[10px]">
@@ -568,7 +405,7 @@ const handleLogout = () => {
                   {!isCollapsed && (
                     <motion.div
                       className="px-6 mb-2"
-           
+
                     >
                       <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{section.title}</h3>
                     </motion.div>
@@ -578,7 +415,7 @@ const handleLogout = () => {
                 <nav className="space-y-1 px-2">
                   {section.items.map((item) => {
                     const mainActive = isMainMenuActive(item)
-        const expanded = expandedMenu.includes(item.id);
+                    const expanded = expandedMenu.includes(item.id);
 
                     return (
                       <div key={item.id} className="relative">
@@ -653,7 +490,7 @@ const handleLogout = () => {
                                     <div className="absolute -left-4 top-3 w-3 h-px bg-gray-200"></div>
 
                                     <motion.button
-                        onClick={() => handleSubmenuClick(subItem.href, item.id)}
+                                      onClick={() => handleSubmenuClick(subItem.href, item.id)}
                                       className={`w-full flex items-center pl-[10px] gap-[8px] py-2 text-sm rounded-md transition-colors ${isActive(subItem.href)
                                         ? "bg-blue-50 text-blue-700 font-medium"
                                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -664,9 +501,9 @@ const handleLogout = () => {
                                     >
                                       {subItem.icon && (
                                         <FontAwesomeIcon icon={subItem.icon} className={`w-4  h-4 text-gray-400${isActive(subItem.href)
-                                        ? " !text-blue-700 "
-                                        : "!text-gray-200"
-                                        }`} />
+                                          ? " !text-blue-700 "
+                                          : "!text-gray-200"
+                                          }`} />
                                       )}
                                       <span className="flex-1 flex-shrink-0 text-[13px] text-left">{subItem.label}</span>
                                       {subItem.isNew && (

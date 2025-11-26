@@ -190,7 +190,7 @@ const handleRowClick = useCallback(
             </div>
 
             {/* 🩺 Feedback Table */}
-            <div className="bg-white rounded-xl border shadow-sm w-[98%] mx-[10px] overflow-y-auto">
+            <div className="bg-white rounded-xl border shadow-sm w-[98%] mx-[10px] overflow-y-auto md11:!max-h-[86%] 2xl:!max-h-[89%]">
               <div className="w-[100%]">
                 <table className="w-[100%]">
                   <thead className="bg-gray-100">

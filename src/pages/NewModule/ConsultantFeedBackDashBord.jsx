@@ -1051,7 +1051,7 @@ export default function ConsultantFeedBackDashBord() {
     const handleWidgetClick = (type) => {
         switch (type) {
             case "totalFeedback":
-                navigate("/ipd-opd-list");
+                navigate("/consultant-all-list");
                 break;
             case "npsRating":
                 navigate("/reports/nps-all-list");
@@ -1119,18 +1119,6 @@ export default function ConsultantFeedBackDashBord() {
                                         />
                                     </div>
 
-                                    {/* 👍 NPS Rating (Navigate) */}
-                                    <div onClick={() => handleWidgetClick("npsRating")} className="cursor-pointer">
-                                        <Widgets1
-                                            data={{
-                                                title: "NPS Rating",
-                                                gros: `${kpiData.npsRating}%`,
-                                                total: `${kpiData.npsRating}%`,
-                                                color: "success",
-                                                icon: <ThumbsUp className="w-5 h-5 text-green-600" />,
-                                            }}
-                                        />
-                                    </div>
 
                                     {/* 🏆 Overall Score (Modal) */}
                                     <div onClick={() => handleWidgetClick("overallScore")} className="cursor-pointer">

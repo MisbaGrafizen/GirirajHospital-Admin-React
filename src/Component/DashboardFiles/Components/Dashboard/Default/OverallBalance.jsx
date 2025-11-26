@@ -30,7 +30,7 @@ const OverallBalance = ({ kpis, opdSummary, dateRange }) => {
       <Card className=" md11:!w-[500px] md13:!w-[630px] 2xl:!w-[800px]">
         <div className=" flex    px-[15px] w-[100%] pt-[15px] justify-between gap-3">
           <div className="flex  gap-[10px]">
-            <div className="profile-box1 rounded-md flex justify-center items-center w-[35px] h-[35px]">
+            <div className="profile-box1 flex-shrink-0 rounded-md flex justify-center items-center w-[35px] h-[35px]">
               <i className="fa-regular text-[15px] fa-chart-waterfall"></i>
             </div>
             <div>

@@ -689,7 +689,7 @@ useEffect(() => {
                         </table>
                       </div>
                       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
-                        <span>Showing {Math.min(400, filteredRecords.length)} of {filteredRecords.length} records</span>
+<div></div>
                         <button
 
                           className="flex items-center px-3 py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

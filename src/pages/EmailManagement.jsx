@@ -538,7 +538,7 @@ console.log('filteredEmails', filteredEmails)
 
                   </div>
                   {/* Email List */}
-                  <div className="flex-1 overflow-y-auto 2xl:!max-h-[86%] md11:!max-h-[82%]">
+                  <div className="flex-1 overflow-y-auto 2xl:!max-h-[84%] md11:!max-h-[79%]">
                     {filteredEmails.map((email) => (
                       <div
                         key={email.id}

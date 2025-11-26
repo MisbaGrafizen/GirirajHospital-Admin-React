@@ -17,7 +17,7 @@ const LightCard = ({ LightCardData, totals = {} }) => {
     const navigate = useNavigate();
 
   return (
-    <div  className='p-0  md11:!mt-0 md34:!mt-[30px]'>
+    <div  className='p-0  md11:!mt-0 '>
 
 
 
