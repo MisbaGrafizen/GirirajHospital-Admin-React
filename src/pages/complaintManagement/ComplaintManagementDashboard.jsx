@@ -119,11 +119,11 @@ const CONCERN_KEYS = [
 ]
 
 const DEPT_LABEL = {
-    doctorServices: "Doctor",
-    billingServices: "Billing",
+    doctorServices: "Doctor Services",
+    billingServices: "Billing Services",
     housekeeping: "Housekeeping",
     maintenance: "Maintenance",
-    diagnosticServices: "Diagnostic",
+    diagnosticServices: "Diagnostic Services",
     dietitianServices: "Dietitian",
     security: "Security",
     nursing: "Nursing",

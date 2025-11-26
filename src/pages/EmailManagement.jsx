@@ -210,65 +210,113 @@ setAllowedDepartments(Object.keys(permissionsByBlock));
       setLoading(true);
       const data = await ApiGet("/admin/notifications");
       console.log('data', data)
-      const mapped = (data?.notifications || []).map((n) => ({
-  id: n._id,
+const mapped = (data?.notifications || []).map((n) => {
+  const isInternal = n.title?.toLowerCase().includes("internal");
 
-  // 🔥 REQUIRED FIXES
-  data: n.data,                     // Store full backend data (needed for filtering)
-  department: n.department,         // Extra safety
+  function formatStatus(val) {
+    if (!val) return "Unknown";
+    return val.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase());
+  }
 
-  sender: `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
-  senderEmail: "",
-  subject: n.title,
+  function formatKey(key) {
+    return key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+  }
 
-  preview: n.body,
+  // ---- INTERNAL DETAILS BUILDER ----
+  const buildInternalContent = (data) => `
+      <div class="space-y-4">
+        <p class="text-gray-800 text-base">${n.body}</p>
 
-  status: n.data?.status
-    ? n.data.status.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase())
-    : "Unknown",
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
+            🏢 Internal Complaint Details
+          </h4>
 
-  content: `
-    <div class="space-y-4">
-      <p class="text-gray-800 text-base">${n.body}</p>
-      ${
-        n.data
-          ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
-              <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
-                📋 Patient Details
-              </h4>
-              <div class="divide-y divide-gray-200">
-                ${Object.entries(n.data)
-                  .filter(([key]) => !["complaintid", "_id", "__v"].includes(key.toLowerCase()))
-                  .map(([key, value]) => {
-                    let label = key.toLowerCase() === "complaint" ? "Complaint Id" : formatKey(key);
+          <div class="divide-y divide-gray-200">
+            ${row("Complaint ID", data.complaintId || data.complaint)}
+            ${row("Employee Name", data.employeeName)}
+            ${row("Employee ID", data.employeeId)}
+            ${row("Floor No", data.floorNo)}
+            ${row("Departments", data.departments)}
+            ${row("Status", formatStatus(data.status))}
+          </div>
+        </div>
+      </div>
+    `;
 
-                    if (key.toLowerCase() === "status") {
-                      value = formatStatus(value);
-                    }
+  function row(label, value) {
+    return `
+      <div class="flex items-start py-2">
+        <div class="w-40 font-medium text-gray-900">${label}</div>
+        <div class="flex-1 text-gray-700 break-words">${value || "-"}</div>
+      </div>
+    `;
+  }
 
-                    return `
-                      <div class="flex items-start py-2">
-                        <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
-                        <div class="flex-1 text-gray-700 break-words">${value}</div>
-                      </div>
-                    `;
-                  })
-                  .join("")}
-              </div>
-            </div>`
-          : ""
-      }
-    </div>
-  `,
+  return {
+    id: n._id,
 
-  timestamp: new Date(n.createdAt).toLocaleString(),
-  isRead: false,
-  isStarred: false,
-  isNew: true,
-  priority: "normal",
-  hasAttachment: false,
-}));
+    // raw data store
+    data: n.data,
+    department: n.department,
 
+    // DIFFERENT SENDER FORMAT FOR INTERNAL COMPLAINTS
+    sender: isInternal
+      ? `${n.data?.floorNo || "-"}/ ${n.data?.employeeName || "Unknown Employee"}`
+      : `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
+
+    subject: n.title,
+    senderEmail: "",
+    preview: n.body,
+
+    status: formatStatus(n.data?.status),
+
+    // DIFFERENT CONTENT FOR INTERNAL COMPLAINT
+    content: isInternal
+      ? buildInternalContent(n.data)
+      : `
+        <div class="space-y-4">
+          <p class="text-gray-800 text-base">${n.body}</p>
+
+          ${
+            n.data
+              ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
+                    📋 Patient Details
+                  </h4>
+                  <div class="divide-y divide-gray-200">
+                    ${Object.entries(n.data)
+                      .filter(([key]) => !["complaintid","_id","__v"].includes(key.toLowerCase()))
+                      .map(([key, value]) => {
+                        let label = key.toLowerCase() === "complaint" ? "Complaint Id" : formatKey(key);
+
+                        if (key.toLowerCase() === "status") {
+                          value = formatStatus(value);
+                        }
+
+                        return `
+                          <div class="flex items-start py-2">
+                            <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
+                            <div class="flex-1 text-gray-700 break-words">${value}</div>
+                          </div>
+                        `;
+                      })
+                      .join("")}
+                  </div>
+                </div>`
+              : ""
+          }
+        </div>
+      `,
+
+    timestamp: new Date(n.createdAt).toLocaleString(),
+    isRead: false,
+    isStarred: false,
+    isNew: true,
+    priority: "normal",
+    hasAttachment: false,
+  };
+});
 
       // Helper function
       function formatKey(key) {

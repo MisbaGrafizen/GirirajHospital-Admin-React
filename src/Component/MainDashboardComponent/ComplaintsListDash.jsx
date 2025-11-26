@@ -38,14 +38,64 @@ function resolvePermissions() {
   return { isAdmin, allowedBlocks };
 }
 
-/* ---------- Filter Allowed Departments ---------- */
-function getAllowedDepartments(departments = [], allowedBlocks = []) {
-  if (!departments.length) return [];
-  const allowed = allowedBlocks.map((b) => b.toLowerCase());
-  return departments.filter((dep) =>
-    allowed.some((block) => block.includes(dep.department?.toLowerCase()))
-  );
+
+const DEPT_LABEL = {
+    doctorServices: "Doctor Services",
+    billingServices: "Billing Services",
+    housekeeping: "Housekeeping",
+    maintenance: "Maintenance",
+    diagnosticServices: "Diagnostic Services",
+    dietitianServices: "Dietitian",
+    security: "Security",
+    nursing: "Nursing",
 }
+
+function getDepartmentsString(doc, allowedBlocks = []) {
+  if (!doc || !allowedBlocks.length) return "-";
+
+  const departments = [];
+
+  allowedBlocks.forEach((block) => {
+    // normalize block names (doctorServices → doctor_service)
+    const snake = block
+      .replace(/([A-Z])/g, "_$1")
+      .toLowerCase();
+
+    // Try all possible key names
+    const possibleKeys = [
+      block,                       // doctorServices
+      snake,                       // doctor_services
+      snake.replace("_services", ""), // doctor
+      snake.replace("_service", "")   // doctor
+    ];
+
+    let foundKey = null;
+    for (const key of possibleKeys) {
+      if (doc[key]) {
+        foundKey = key;
+        break;
+      }
+    }
+
+    if (!foundKey) return;
+
+    const blockData = doc[foundKey];
+    const hasText = blockData.text && blockData.text.trim();
+    const hasAttachments =
+      Array.isArray(blockData.attachments) && blockData.attachments.length > 0;
+
+    if (hasText || hasAttachments) {
+      const label =
+        DEPT_LABEL[block] ||
+        foundKey.replace(/_/g, " ").replace(/\b\w/g, (t) => t.toUpperCase());
+
+      departments.push(label);
+    }
+  });
+
+  return departments.length > 0 ? departments.join(", ") : "-";
+}
+
 
 export default function ComplaintsListDash() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,16 +126,24 @@ export default function ComplaintsListDash() {
     fetchComplaints();
   }, []);
 
-  // 🔍 Filter by search
-  const filteredComplaints = complaints.filter((c) => {
-    const q = searchTerm.toLowerCase();
-    return (
-      c.patientName?.toLowerCase().includes(q) ||
-      c.consultantDoctorName?.name?.toLowerCase().includes(q) ||
-      c.department?.toLowerCase().includes(q) ||
-      c.complaintId?.toLowerCase().includes(q)
-    );
-  });
+// 🔍 Filter by search
+const filteredComplaints = complaints.filter((c) => {
+  const q = searchTerm.toLowerCase();
+  return (
+    c.patientName?.toLowerCase().includes(q) ||
+    c.consultantDoctorName?.name?.toLowerCase().includes(q) ||
+    c.department?.toLowerCase().includes(q) ||
+    c.complaintId?.toLowerCase().includes(q)
+  );
+});
+
+// 🔥 Add this filter to hide unauthorized complaints
+const visibleComplaints = filteredComplaints.filter((c) => {
+  const deptString = getDepartmentsString(c, allowedBlocks);
+  return deptString && deptString !== "-";
+});
+
+
 
   // 📅 Format Date
   const formatDate = (dateString) => {
@@ -126,7 +184,6 @@ const openComplaintDetails = (complaint) => {
     },
   });
 };
-
 
 // 🎨 Status Badge Colors
 const getStatusBadge = (status) => {
@@ -206,6 +263,7 @@ const getStatusBadge = (status) => {
   transition={{ delay: 0.2 }}
   className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200"
 >
+  
   <div className="overflow-x-auto">
     <table className="w-full min-w-[1100px]">
       {/* 🔹 Header */}
@@ -247,8 +305,9 @@ const getStatusBadge = (status) => {
                 Loading...
               </td>
             </tr>
-          ) : filteredComplaints.length > 0 ? (
-            filteredComplaints.map((row, index) => (
+          ) : visibleComplaints.length > 0 ? (
+            visibleComplaints.map((row, index) => (
+              
               <motion.tr
                 key={row._id || index}
                 initial={{ opacity: 0, x: -20 }}
@@ -315,29 +374,14 @@ const getStatusBadge = (status) => {
                 </td>
 
                 {/* 🏥 Department */}
-             <td className="px-3 py-2 text-gray-700 text-[12px] font-[500]">
-  {(() => {
-    // 1️⃣ Get allowed departments
-    const allowedDeps = getAllowedDepartments(row.departments, allowedBlocks);
-
-    // 2️⃣ Filter to show only those having either text or attachments
-    const nonEmptyDeps = allowedDeps.filter(
-      (d) =>
-        (d.text && d.text.trim() !== "") ||
-        (Array.isArray(d.attachments) && d.attachments.length > 0)
-    );
-
-    // 3️⃣ Display names if available
-    if (nonEmptyDeps.length > 0) {
-      return nonEmptyDeps.map((d) => d.department).join(", ");
-    } else {
-      return "-";
-    }
-  })()}
+<td className="px-3 py-2 text-gray-700 text-[12px] font-[500]">
+ {row
+  ? getDepartmentsString(row, allowedBlocks) || "-"
+  : "-"
+}
 </td>
 
 
-                {/* 📊 Status */}
    {/* 📊 Status */}
 <td className="px-3 py-2">
   <div className="flex items-center gap-2">
