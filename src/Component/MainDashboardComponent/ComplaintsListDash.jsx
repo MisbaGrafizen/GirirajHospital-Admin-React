@@ -208,7 +208,9 @@ const getStatusBadge = (status) => {
       return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
   }
 };
-
+  const handlenavigate = () => {
+      navigate("/dashboards/complain-all-list")
+  };
 
   return (
     <>
@@ -247,7 +249,7 @@ const getStatusBadge = (status) => {
                    Export to Excel
                   </button>
                   <button
-                    // onClick={handlenavigate}
+                    onClick={handlenavigate}
                     className="flex items-center  justify-center h-[35px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
                     <Eye className="w-4 h-4" />

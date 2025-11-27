@@ -150,115 +150,114 @@ export default function NpsAllList() {
             <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px]  py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
               <div>
-             <div className="flex items-center justify-end px-3  pb-[10px]  top-0 z-10">
-                <div className="relative">
-                  <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                  <input
-                    type="text"
-                    placeholder="Search Nps ... "
-                    // value={searchTerm}
-                    // onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-3 py-2 w-[230px] border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="flex items-center justify-end px-3  pb-[10px]  top-0 z-10">
+                  <div className="relative">
+                    <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input
+                      type="text"
+                      placeholder="Search Nps ... "
+                      // value={searchTerm}
+                      // onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-3 py-2 w-[230px] border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
-              </div>
-        
 
-<div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[100%] mx-auto md11:!mb-[0px] border-gray-100 overflow-hidden">
-  <div className="overflow-x-auto">
-    <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
-      <thead className="bg-gray-100">
-        <tr>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[80px]">SR No</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[190px]">Date & Time</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[250px]">Patient Name</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">Room No</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[230px]">Doctor Name</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">NPS Rating</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
-          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
-        </tr>
-      </thead>
 
-      <tbody className="bg-white divide-y divide-gray-100">
-        {filteredRecords.map((rec, idx) => (
-          <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-            <td className="px-3 py-[12px] text-[13px] border-r text-gray-700">{idx + 1}</td>
-            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">{rec.datetime}</td>
+                <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[100%] mx-auto md11:!mb-[0px] border-gray-100 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[80px]">SR No</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[190px]">Date & Time</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[250px]">Patient Name</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">Room No</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[230px]">Doctor Name</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">NPS Rating</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
+                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
+                        </tr>
+                      </thead>
 
-            {/* 👤 Patient Name with icon */}
-            <td className="px-3 py-[12px] text-[13px] border-r font-[400] text-gray-900">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-400" />
-                <span>{rec.patient || "-"}</span>
-              </div>
-            </td>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {filteredRecords.map((rec, idx) => (
+                          <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-700">{idx + 1}</td>
+                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">{rec.datetime}</td>
 
-            {/* 🛏️ Room / Bed No with icon */}
-            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
-              <div className="flex items-center gap-2">
-                <Bed className="w-4 h-4 text-gray-400" />
-                <span>{rec.room || "-"}</span>
-              </div>
-            </td>
+                            {/* 👤 Patient Name with icon */}
+                            <td className="px-3 py-[12px] text-[13px] border-r font-[400] text-gray-900">
+                              <div className="flex items-center gap-2">
+                                <User className="w-4 h-4 text-gray-400" />
+                                <span>{rec.patient || "-"}</span>
+                              </div>
+                            </td>
 
-            {/* 🩺 Doctor Name with icon */}
-            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
-              <div className="flex items-center gap-2">
-                <Stethoscope className="w-4 h-4 text-gray-400" />
-                <span>{rec.doctor || "-"}</span>
-              </div>
-            </td>
+                            {/* 🛏️ Room / Bed No with icon */}
+                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
+                              <div className="flex items-center gap-2">
+                                <Bed className="w-4 h-4 text-gray-400" />
+                                <span>{rec.room || "-"}</span>
+                              </div>
+                            </td>
 
-            {/* 😄😐😞 NPS Rating with icon */}
-            <td className="px-3 py-[12px] text-[13px] border-r font-semibold text-gray-900">
-              <div className="flex items-center gap-2">
-                {rec.category === "Promoter" && <Smile className="w-5 h-5 text-emerald-600" />}
-                {rec.category === "Passive" && <Meh className="w-5 h-5 text-amber-500" />}
-                {rec.category === "Detractor" && <Frown className="w-5 h-5 text-rose-600" />}
-                <span>{rec.rating || "-"}</span>
-              </div>
-            </td>
+                            {/* 🩺 Doctor Name with icon */}
+                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
+                              <div className="flex items-center gap-2">
+                                <Stethoscope className="w-4 h-4 text-gray-400" />
+                                <span>{rec.doctor || "-"}</span>
+                              </div>
+                            </td>
 
-            {/* 🟢🟡🔴 Category Badge */}
-            <td className="px-3 py-[12px] text-[13px] border-r">
-              <span
-                className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                  rec.category === "Promoter"
-                    ? "bg-emerald-100 text-emerald-800"
-                    : rec.category === "Passive"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {rec.category}
-              </span>
-            </td>
+                            {/* 😄😐😞 NPS Rating with icon */}
+                            <td className="px-3 py-[12px] text-[13px] border-r font-semibold text-gray-900">
+                              <div className="flex items-center gap-2">
+                                {rec.category === "Promoter" && <Smile className="w-5 h-5 text-emerald-600" />}
+                                {rec.category === "Passive" && <Meh className="w-5 h-5 text-amber-500" />}
+                                {rec.category === "Detractor" && <Frown className="w-5 h-5 text-rose-600" />}
+                                <span>{rec.rating || "-"}</span>
+                              </div>
+                            </td>
 
-            {/* 💬 Comment with truncation */}
-            <td className="px-3 py-[12px] text-[10px] border-r text-gray-700  ">
-              {rec.comment ? rec.comment.split(" ").slice(0, 15).join(" ") + "" : ""}
-            </td>
-          </tr>
-        ))}
+                            {/* 🟢🟡🔴 Category Badge */}
+                            <td className="px-3 py-[12px] text-[13px] border-r">
+                              <span
+                                className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : rec.category === "Passive"
+                                      ? "bg-amber-100 text-amber-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                              >
+                                {rec.category}
+                              </span>
+                            </td>
 
-        {filteredRecords.length === 0 && (
-          <tr>
-            <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-              No records match your filters.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
+                            {/* 💬 Comment with truncation */}
+                            <td className="px-3 py-[12px] text-[10px] border-r text-gray-700  ">
+                              {rec.comment ? rec.comment.split(" ").slice(0, 15).join(" ") + "" : ""}
+                            </td>
+                          </tr>
+                        ))}
 
-  <div className="px-4 py-[12px] bg-gray-50 border-t border-gray-100 text-[13px] text-gray-600 flex items-center justify-between">
-    <span>
+                        {filteredRecords.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
+                              No records match your filters.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
-    </span>
-  </div>
-</div>
+                  <div className="px-4 py-[12px] bg-gray-50 border-t border-gray-100 text-[13px] text-gray-600 flex items-center justify-between">
+                    <span>
+
+                    </span>
+                  </div>
+                </div>
 
               </div>
             </div>

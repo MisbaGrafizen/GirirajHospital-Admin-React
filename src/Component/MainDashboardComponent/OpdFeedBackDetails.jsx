@@ -116,7 +116,7 @@ const openFeedbackDetails = (feedback) => {
 
   // 🔗 Dummy Navigate button
   const handlenavigate = () => {
-    alert("Navigating to all OPD feedback list (dummy)");
+      navigate("/dashboards/opd-all-list")
   };
 
   return (
