@@ -60,6 +60,35 @@ const DEPT_NAME_MAP = {
   "maintenance": "maintenance",
 };
 
+// Reverse map for internal departments → backend keys
+const DEPT_LABEL = {
+  doctorServices: "Doctor Services",
+  billingServices: "Billing Services",
+  housekeeping: "Housekeeping",
+  maintenance: "Maintenance",
+  diagnosticServices: "Diagnostic Services",
+  dietitianServices: "Dietitian Services",
+  security: "Security",
+  nursing: "Nursing",
+  itDepartment: "IT Department",
+  bioMedicalDepartment: "Bio Medical",
+  medicalAdmin: "Medical Admin",
+  hr: "HR",
+  pharmacy: "Pharmacy",
+  icn: "ICN",
+  mrd: "MRD",
+  accounts: "Accounts",
+};
+
+// Reverse mapping → "Doctor Services" → "doctorServices"
+const DEPT_REVERSE_MAP = Object.fromEntries(
+  Object.entries(DEPT_LABEL).map(([key, value]) => [
+    value.toLowerCase(),
+    key,
+  ])
+);
+
+
 
 function resolvePermissions() {
     const loginType = localStorage.getItem("loginType");
@@ -123,11 +152,11 @@ export default function EmailManagement() {
   const [allowedDepartments, setAllowedDepartments] = useState([]);
 
 
-  useEffect(() => {
+useEffect(() => {
   const fetchSettings = async () => {
     try {
-      const userId = localStorage.getItem("userId");
       const loginType = localStorage.getItem("loginType");
+      const userId = localStorage.getItem("userId");
       const userModel = loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
 
       if (!userId || !userModel) return;
@@ -138,24 +167,36 @@ export default function EmailManagement() {
 
       const s = res?.data || {};
 
-const { permissionsByBlock } = resolvePermissions();
-setAllowedDepartments(Object.keys(permissionsByBlock));
+      const { permissionsByBlock } = resolvePermissions();
+      setAllowedDepartments(Object.keys(permissionsByBlock));
 
+      // -------------------------------
+      // 1️⃣ ADMIN → Show all filters
+      // -------------------------------
+      if (loginType === "admin") {
+        setAllowedFilters(["OPD", "IPD", "Complaint", "Internal Complaint"]);
+        return;
+      }
+
+      // -------------------------------
+      // 2️⃣ ROLE USER → Show filters based on settings
+      // -------------------------------
       const temp = [];
       if (s.opd) temp.push("OPD");
       if (s.ipd) temp.push("IPD");
-      if (s.complaint) temp.push("Complain");
+      if (s.complaint) temp.push("Complaint");
+      if (s.internalComplaint) temp.push("Internal Complaint");
 
-      setAllowedFilters(temp.length > 0 ? temp : ["OPD", "IPD", "Complain"]);
+      setAllowedFilters(temp.length > 0 ? temp : ["Complaint", "Internal Complaint"]);
+
     } catch (err) {
       console.error("❌ Failed to fetch notification settings:", err);
-      setAllowedFilters(["OPD", "IPD", "Complain"]);
+      setAllowedFilters(["Complaint", "Internal Complaint"]);
     }
   };
 
   fetchSettings();
 }, []);
-
 
 
   const getSubjectColor = (subject) => {
@@ -211,7 +252,10 @@ setAllowedDepartments(Object.keys(permissionsByBlock));
       const data = await ApiGet("/admin/notifications");
       console.log('data', data)
 const mapped = (data?.notifications || []).map((n) => {
-  const isInternal = n.title?.toLowerCase().includes("internal");
+const isInternal =
+  n.title?.toLowerCase().includes("internal") ||
+  n.body?.toLowerCase().includes("internal") ||
+  n.data?.isInternal === true;
 
   function formatStatus(val) {
     if (!val) return "Unknown";
@@ -265,7 +309,7 @@ const mapped = (data?.notifications || []).map((n) => {
       ? `${n.data?.floorNo || "-"}/ ${n.data?.employeeName || "Unknown Employee"}`
       : `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
 
-    subject: n.title,
+subject: isInternal ? "Internal Complaint" : n.title,
     senderEmail: "",
     preview: n.body,
 
@@ -364,33 +408,35 @@ const filteredEmails = useMemo(() => {
     );
   }
 
-// ⭐ FINAL FIXED PERMISSION FILTER (handles plurals, dots, commas)
+// ⭐ Unified permission filter (Complaint + Internal Complaint)
 if (allowedDepartments.length > 0) {
   list = list.filter((email) => {
     const backendDept =
-      email.data?.departments ||            // <-- FIX HERE
-      email.data?.department ||             // fallback
-      email.department ||                   // backend sometimes sends root-level
+      email.data?.departments ||
+      email.data?.department ||
+      email.department ||
       "";
 
     if (!backendDept) return false;
 
     const deptList = backendDept
       .split(",")
-      .map((d) =>
-        d
-          .trim()
-          .toLowerCase()
-          .replace(/\./g, "") 
-          .replace(/[^a-zA-Z ]/g, "")
-      );
+      .map((d) => d.trim().toLowerCase());
 
-    return deptList.some((deptName) => {
-      const moduleKey = DEPT_NAME_MAP[deptName];
-      if (!moduleKey) return false;
+    return deptList.some((deptLabel) => {
+      // Internal dept text → dept key
+      const deptKey =
+        DEPT_REVERSE_MAP[deptLabel] ||  // internal departments
+        DEPT_NAME_MAP[deptLabel];       // complaint departments
 
-      const blockName = MODULE_TO_BLOCK[moduleKey];
-      if (!blockName) return false;
+      if (!deptKey) return false;
+
+      // doctorServices → doctor_service
+      const moduleKey = Object.keys(MODULE_TO_BLOCK).find(
+        (k) => MODULE_TO_BLOCK[k] === deptKey
+      ) || deptKey;
+
+      const blockName = MODULE_TO_BLOCK[moduleKey] || deptKey;
 
       return allowedDepartments.includes(blockName);
     });
@@ -398,18 +444,29 @@ if (allowedDepartments.length > 0) {
 }
 
 
+if (selectedFilters.length > 0) {
+  list = list.filter((email) => {
+    const sub = email.subject?.toLowerCase() || "";
 
-  // ✔ OPD / IPD / Complaint FILTER
-  if (selectedFilters.length > 0) {
-    list = list.filter((email) =>
-      selectedFilters.some((item) =>
-        email.subject?.toLowerCase().includes(item.toLowerCase())
-      )
-    );
-  }
+    const isInternal = sub.includes("internal");
+    const isRegularComplaint = sub.includes("complaint") && !isInternal;
+
+    if (selectedFilters.includes("Internal Complaint") && isInternal) return true;
+    if (selectedFilters.includes("Complaint") && isRegularComplaint) return true;
+
+    return false;
+  });
+}
 
   return list;
 }, [emails, searchQuery, selectedFilters, allowedDepartments]);
+
+useEffect(() => {
+  if (!filteredEmails.find(e => e.id === selectedEmail?.id)) {
+    setSelectedEmail(null);
+  }
+}, [filteredEmails]);
+
 
 console.log('filteredEmails', filteredEmails)
 
@@ -515,21 +572,22 @@ console.log('filteredEmails', filteredEmails)
                             transition={{ duration: 0.15 }}
                             className="absolute right-0 mt-2 w-44 h-fit bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200 z-50 px-2 py-[5px]"
                           >
-                            {allowedFilters.map((item, index, arr) => (
-                              <label
-                                key={item}
-                                className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
+                            {["Complaint", "Internal Complaint"].map((item, index, arr) => (
+  <label
+    key={item}
+    className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
       ${index !== arr.length - 1 ? "border-b-[0.2px] border-[#b6b4b4]" : ""}`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedFilters.includes(item)}
-                                  onChange={() => handleCheckboxChange(item)}
-                                  className="accent-blue-600"
-                                />
-                                {item}
-                              </label>
-                            ))}
+  >
+    <input
+      type="checkbox"
+      checked={selectedFilters.includes(item)}
+      onChange={() => handleCheckboxChange(item)}
+      className="accent-blue-600"
+    />
+    {item}
+  </label>
+))}
+
 
                           </motion.div>
                         )}

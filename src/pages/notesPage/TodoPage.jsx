@@ -370,7 +370,7 @@ const handleAddFolder = async () => {
 
                           {/* 🗑️ Folder Delete Button */}
                           <button
-                            onClick={() => handleDeleteFolder(folder.id)}
+                            onClick={() => handleDeleteFolder(folder._id)}
                             className="p-1.5 text-slate-500 absolute right-0 top-0 hover:text-red-600 hover:bg-red-50 rounded-md transition"
                             title="Delete folder"
                           >
@@ -552,7 +552,7 @@ const handleAddFolder = async () => {
                                     />
                                   </button>
                                   <button
-                                    onClick={() => handleDeleteTask(task.id)}
+                                    onClick={() => handleDeleteTask(task._id)}
                                     className="p-2 hover:bg-red-100 rounded-lg"
                                     title="Delete task"
                                   >

@@ -56,24 +56,56 @@ function resolvePermissions() {
 
 // Fetch all IPD concerns
 async function getConcerns() {
-  const res = await ApiGet(`/admin/ipd-concern`)
-  return Array.isArray(res?.data) ? res.data : [res?.data].filter(Boolean)
+  const res = await ApiGet(`/admin/complaint-details`)
+  console.log('res', res)
+  return Array.isArray(res) ? res : [res].filter(Boolean)
 }
 
-// Helper: check if concern item has text or attachments
-const hasConcernContent = (b) => {
-  if (!b || typeof b !== "object") return false
-  const hasText = typeof b.text === "string" && b.text.trim().length > 0
-  const hasFiles = Array.isArray(b.attachments) && b.attachments.length > 0
-  return hasText || hasFiles
-}
+// Helper: check if department item has text or attachments
+const hasConcernContent = (item) => {
+  if (!item) return false;
+  const hasText = item.text && item.text.trim() !== "";
+  const hasFiles = Array.isArray(item.attachments) && item.attachments.length > 0;
+  return hasText || hasFiles;
+};
 
-// Create readable department list from allowed blocks
-const getDepartmentsString = (doc, allowedBlocks) =>
-  allowedBlocks
-    .filter((k) => hasConcernContent(doc?.[k]))
-    .map((k) => DEPT_LABEL[k] || k)
-    .join(", ")
+// Convert backend dept names → module keys
+const DEPT_MAP = {
+  "doctor services": "doctorServices",
+  "doctor service": "doctorServices",
+  "billing services": "billingServices",
+  "billing service": "billingServices",
+  "housekeeping": "housekeeping",
+  "maintenance": "maintenance",
+  "diagnostic services": "diagnosticServices",
+  "diagnostic service": "diagnosticServices",
+  "dietetics": "dietitianServices",
+  "dietitian services": "dietitianServices",
+  "dietitian service": "dietitianServices",
+  "nursing": "nursing",
+  "security": "security",
+};
+
+const getDepartmentsString = (doc, allowedBlocks) => {
+  if (!Array.isArray(doc?.departments)) return "-";
+
+  const allowed = doc.departments
+    .map((d) => {
+      const key = DEPT_MAP[d.department?.toLowerCase()?.trim()];
+      if (!key) return null;
+
+      // Check permission
+      if (!allowedBlocks.includes(key)) return null;
+
+      if (!hasConcernContent(d)) return null;
+
+      return DEPT_LABEL[key] || d.department;
+    })
+    .filter(Boolean);
+
+  return allowed.length ? allowed.join(", ") : "-";
+};
+
 
 export default function TATAllList() {
   const [rows, setRows] = useState([])
@@ -85,53 +117,82 @@ export default function TATAllList() {
     navigate("/complaint-details", { state: { complaint: complaintRow, doc: fullDoc } })
   }
 
-  useEffect(() => {
-    let alive = true
-    ;(async () => {
-      try {
-        const docs = await getConcerns()
-        if (!alive) return
+useEffect(() => {
+    let alive = true;
+    (async () => {
+        try {
+            const docs = await getConcerns();
+            if (!alive) return;
 
-        // ✅ Only resolved complaints
-        const resolvedDocs = docs.filter((d) => d.resolution?.resolvedAt)
-        setRawConcerns(resolvedDocs)
+            // Only resolved complaints
+            const resolvedDocs = docs.filter((d) => d.stampOut);
+            console.log('resolvedDocs', resolvedDocs)
 
-        const mapped = resolvedDocs.map((d) => {
-          // compute TAT
-          let totalTime = null
-          if (d.resolution?.resolvedAt && d.createdAt) {
-            const diffMs = new Date(d.resolution.resolvedAt) - new Date(d.createdAt)
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-            totalTime = `${diffHours}h ${diffMinutes}m`
-          }
+            const mapped = resolvedDocs.map((d) => {
+                // Calculate TAT
+                let totalTime = null;
+             if (d.stampOut && d.stampIn) {
+    const diffMs = new Date(d.stampOut) - new Date(d.stampIn);
 
-          return {
-            id: d._id,
-            complaintId: d.complaintId,
-            patient: d.patientName || "-",
-            doctor: d.consultantDoctorName?.name || "-",
-            bedNo: d.bedNo || "-",
-            status: d.status || "Pending",
-            createdAt: d.createdAt,
-            stampIn: d.createdAt,
-            stampOut: d.resolution?.resolvedAt || null,
-            totalTimeTaken: totalTime,
-            departments: getDepartmentsString(d, allowedBlocks),
-          }
-        })
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        setRows(mapped)
-      } catch (e) {
-        if (!alive) return
-        console.error("Failed to load concerns", e)
-        setRawConcerns([])
-      }
-    })()
-    return () => {
-      alive = false
+    if (diffDays > 0) {
+        totalTime = `${diffDays}day ${diffHours}hrs`;
+    } else {
+        totalTime = `${diffHours}hrs ${diffMinutes}mins`;
     }
-  }, [])
+}
+
+                return {
+                    id: d._id,
+                    complaintId: d.complaintId,
+                    patient: d.patientName || "-",
+                    doctor: d.consultantDoctorName?.name || "-",
+                    bedNo: d.bedNo || "-",
+                    status: d.status || "Pending",
+                    createdAt: d.createdAt,
+                    stampIn: d.stampIn,
+                    stampOut: d.stampOut || null,
+                    totalTimeTaken: totalTime,
+
+                    // ✅ NEW DEPARTMENT LOGIC (based on API response)
+                    departments: Array.isArray(d.departments)
+                        ? d.departments
+                              .map((item) => {
+                                  const dep = item.department?.trim().toLowerCase();
+                                  const key = DEPT_MAP[dep];
+                                  if (!key) return null;
+
+                                  // permission check
+                                  if (!allowedBlocks.includes(key)) return null;
+
+                                  // must have text/attachment
+                                  if (!hasConcernContent(item)) return null;
+
+                                  return DEPT_LABEL[key] || item.department;
+                              })
+                              .filter(Boolean)
+                              .join(", ") || "-"
+                        : "-",
+                };
+            });
+            console.log('mapped', mapped)
+
+            setRows(mapped);
+        } catch (e) {
+            if (!alive) return;
+            console.error("Failed to load concerns", e);
+            setRows([]);
+        }
+    })();
+
+    return () => {
+        alive = false;
+    };
+}, []);
+
 
   return (
     <section className="flex w-full h-full select-none overflow-hidden">
