@@ -419,7 +419,7 @@ useEffect(() => {
 
             <div className="flex w-[100%] h-[100%]">
               <SideBar />
-              <div className="flex flex-col relative  w-[100%] max-h-[90%] py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
+              <div className="flex flex-col relative  w-[100%] overflow-x-hidden max-h-[90%] py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
                 <Preloader />
                 <div className="">
                   <main className="">

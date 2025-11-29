@@ -60,6 +60,7 @@ import IpdList from "../../Component/MainDashboardComponent/IpdList";
 import OpdFeedBackDetails from "../../Component/MainDashboardComponent/OpdFeedBackDetails";
 import ComplaintsListDash from "../../Component/MainDashboardComponent/ComplaintsListDash";
 import FeedbackTable from "../../Component/DashboardFiles/Components/TestingDesign/FeedbackTable";
+import AutoPopup from "../../Component/MainDashboardComponent/AutoPopup";
 // import CryptoAnnotations from "../../Component/DashboardFiles/Components/Widgets/Chart/CryptoAnnotations";
 
 // import 'react-clock/dist/Clock.css';
@@ -415,7 +416,7 @@ if (data.kpis || data.totals) {
 
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[100px] m md11:!pb-[40px] py-[10px]   overflow-y-auto gap-[10px] ">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[100px] m md11:!pb-[40px] py-[10px] overflow-x-hidden   overflow-y-auto gap-[10px] ">
               <Preloader />
               <Fragment>
                 <Breadcrumbs mainTitle="Default" parent="Dashboard" title="Default" />
@@ -520,7 +521,10 @@ if (data.kpis || data.totals) {
           </div>
         </div>
       </section>
-
+      <AutoPopup 
+        title="Last 7 Days Summary" 
+        message="Your dashboard data has been refreshed and shows the latest 7-day insights."
+      />
 
 
 

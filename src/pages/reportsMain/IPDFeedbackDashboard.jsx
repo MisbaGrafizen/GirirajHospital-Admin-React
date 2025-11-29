@@ -981,7 +981,8 @@ export default function IPDFeedbackDashboard() {
   const handleWidgetClick = (type) => {
     switch (type) {
       case "totalFeedback":
-        navigate("/ipd-opd-list");
+        // navigate("/ipd-opd-list");
+          navigate("/ipd-opd-list", { state: { select: "IPD" } })
         break;
       case "npsRating":
         navigate("/reports/nps-all-list");

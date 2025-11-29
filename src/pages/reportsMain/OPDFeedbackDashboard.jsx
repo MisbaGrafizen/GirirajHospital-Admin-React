@@ -2229,7 +2229,8 @@ const getRatingStars = (rating = 0) => {
   const handleWidgetClick = (type) => {
     switch (type) {
       case "totalFeedback":
-        navigate("/ipd-opd-list");
+        // navigate("/ipd-opd-list");
+        navigate("/ipd-opd-list", { state: { select: "OPD" } })
         break;
       case "npsRating":
         navigate("/reports/nps-all-list");
