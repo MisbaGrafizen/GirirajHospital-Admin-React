@@ -165,7 +165,26 @@ export default function ComplaintViewPage() {
     const [selectedDepartment, setSelectedDepartment] = useState("");
     const [selectedType, setSelectedType] = useState("CA");
     const [note, setNote] = useState("");
+    // NOTES for each type
+const [rcaNote, setRcaNote] = useState("");
+const [caNote, setCaNote] = useState("");
+const [paNote, setPaNote] = useState("");
 
+
+// return the correct note value based on type
+const getCurrentNote = () => {
+  if (selectedType === "RCA") return rcaNote;
+  if (selectedType === "CA") return caNote;
+  if (selectedType === "PA") return paNote;
+  return "";
+};
+
+// change the correct note value based on type
+const handleNoteChange = (value) => {
+  if (selectedType === "RCA") setRcaNote(value);
+  if (selectedType === "CA") setCaNote(value);
+  if (selectedType === "PA") setPaNote(value);
+};
 
 
 
@@ -512,8 +531,14 @@ const handleResolveSubmit = async () => {
         return;
     }
 
-    if (!note.trim()) {
-        alert("Please enter a note.");
+    // Determine correct note based on selectedType
+    const currentNote =
+        selectedType === "RCA" ? rcaNote :
+        selectedType === "CA"  ? caNote :
+        selectedType === "PA"  ? paNote : "";
+
+    if (!currentNote.trim()) {
+        alert(`Please enter a note for ${selectedType}`);
         return;
     }
 
@@ -525,21 +550,21 @@ const handleResolveSubmit = async () => {
             proofUrl = uploadRes.url;
         }
 
-        // 2️⃣ Get login type
+        // 2️⃣ User type
         const loginType = localStorage.getItem("loginType"); 
         const isAdmin = loginType === "admin";
 
-        // 3️⃣ Find active departments (with content)
+        // 3️⃣ Active departments
         const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
             blockHasContent(fullDoc[deptKey])
         );
 
-        // 4️⃣ Find allowed departments based on permissions
+        // 4️⃣ Find departments user can resolve
         const userResolvable = activeDepartments.filter((deptKey) =>
             permissionsByBlock[deptKey]?.includes("resolve")
         );
 
-        // 5️⃣ Determine department
+        // 5️⃣ Determine selected department
         let deptKey = null;
 
         if (userResolvable.length === 1) {
@@ -555,33 +580,31 @@ const handleResolveSubmit = async () => {
             return;
         }
 
-        // 6️⃣ Build payload
+        // 6️⃣ Build payload — UPDATED NOTE LOGIC
         const payload = {
             actionType: selectedType,
-            note,
+            note: currentNote,          // 👈 NOW CORRECT NOTE IS SENT
             proof: proofUrl ? [proofUrl] : [],
             department: deptKey,
             userId: localStorage.getItem("userId"),
         };
 
-        // 7️⃣ Determine API based on user type + department count
+        // 7️⃣ Determine correct endpoint
         let endpoint = "";
 
         if (isAdmin) {
-            // 🔹 ADMIN
             endpoint =
                 activeDepartments.length === 1
-                    ? `/admin/${complaint.id}/admin-resolve` // full admin resolve
-                    : `/admin/${complaint.id}/admin-partial-resolve`; // partial admin resolve
+                    ? `/admin/${complaint.id}/admin-resolve`
+                    : `/admin/${complaint.id}/admin-partial-resolve`;
         } else {
-            // 🔹 STAFF / ROLE USER
             endpoint =
                 activeDepartments.length === 1
-                    ? `/admin/${complaint.id}/resolve` // full staff resolve
-                    : `/admin/${complaint.id}/partial-resolve`; // partial staff resolve
+                    ? `/admin/${complaint.id}/resolve`
+                    : `/admin/${complaint.id}/partial-resolve`;
         }
 
-        // 8️⃣ Call API
+        // 8️⃣ Submit API request
         const res = await ApiPost(endpoint, payload);
 
         // 9️⃣ Extract updated status
@@ -596,7 +619,7 @@ const handleResolveSubmit = async () => {
                 : "Complaint fully resolved."
         );
 
-        // 10️⃣ Refresh history
+        // 🔟 Refresh history
         const newHistory = await fetchConcernHistory(complaint.id);
         setHistoryData(newHistory);
 
@@ -606,6 +629,7 @@ const handleResolveSubmit = async () => {
         alert(err?.response?.data?.message || "Something went wrong.");
     }
 };
+
 
 
 
@@ -934,7 +958,7 @@ console.log('filteredHistory', filteredHistory)
                                                         <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Department</p>
-                                                            <p className="font-medium text-gray-900">{complaint.department}</p>
+                                                            <p className="font-medium leading-4 text-gray-900">{complaint.department}</p>
                                                         </div>
                                                     </div>
 
@@ -952,7 +976,7 @@ console.log('filteredHistory', filteredHistory)
                                             </div>
 
                                             {/* Complaint Details */}
-                                            <div className="bg-white rounded-xl shadow-sm  overflow-y-auto 2xl:!h-[70%] border p-3">
+                                            <div className="bg-white rounded-xl shadow-sm  overflow-y-auto  border p-3">
                                                 <h2 className="text-[19px] font-semibold text-gray-900 mb-2">Complaint Details</h2>
                                                 <div className="space-y-3">
 
@@ -1043,10 +1067,8 @@ console.log('filteredHistory', filteredHistory)
                                             {/* Action Buttons */}
 
 
-
-
-                                            {complaint.status !== "Resolved" && (
-                                                <div className="bg-white rounded-xl border min-h-[300px]  overflow-y-auto scrollba shadow-sm p-3">
+                                            {complaint.status !== "resolved" && (
+                                                <div className="bg-white rounded-xl border  overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
                                                         {filteredHistory.slice(-3).reverse().map((h, index) => (
@@ -1114,7 +1136,11 @@ console.log('filteredHistory', filteredHistory)
 
 
                                                                     {h.type === "created" && (
-                                                                        <p className="text-sm text-gray-700">{formatDepartment(h.label)}</p>
+                                                                        <>
+                                                                        <p className="text-sm text-gray-700">{h.label}</p>
+                                                                         <p className="text-xs text-gray-600">{h.details?.patientName} - {h.details?.complaintId}</p>
+                                                                         </>
+                                                                        
                                                                     )}
 
                                                                     <p className="text-xs text-gray-500">
@@ -1135,7 +1161,7 @@ console.log('filteredHistory', filteredHistory)
 <div className="bg-white border rounded-xl shadow-sm p-3">
 
     {/* CASE 1: Complaint fully resolved → show only history */}
-    {complaint.status === "Resolved" ? (
+    {complaint.status === "resolved" ? (
         <div className="space-y-4 max-h-96 overflow-y-auto">
             {loadingHistory ? (
                 <p className="text-center text-gray-500">Loading history...</p>
@@ -1338,7 +1364,7 @@ console.log('filteredHistory', filteredHistory)
 
 
                                     {/* Modal 2: Resolve Complaint */}
-                                    <AnimatePresence>
+ <AnimatePresence>
     {isResolveModalOpen && (
         <motion.div
             initial={{ opacity: 0 }}
@@ -1367,32 +1393,30 @@ console.log('filteredHistory', filteredHistory)
 
                         <div className="space-y-5">
 
-                            {/* Department */}
-                          {/* Department Dropdown (Resolve Only) */}
-<div>
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-        Select Department <span className="text-red-500">*</span>
-    </label>
+                            {/* Select Department */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Select Department <span className="text-red-500">*</span>
+                                </label>
 
-    {resolveDepartments.length > 1 ? (
-        <AnimatedDropdown
-            isOpen={isForwardDeptDropdownOpen}
-            setIsOpen={setIsForwardDeptDropdownOpen}
-            selected={selectedDepartment || "Select Department"}
-            setSelected={setSelectedDepartment}
-            options={resolveDepartments.map((k) => DEPT_LABEL[k])}
-            placeholder="Select Department"
-            icon={MapPin}
-        />
-    ) : (
-        <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
-            {autoResolveDepartment}
-        </div>
-    )}
-</div>
+                                {resolveDepartments.length > 1 ? (
+                                    <AnimatedDropdown
+                                        isOpen={isForwardDeptDropdownOpen}
+                                        setIsOpen={setIsForwardDeptDropdownOpen}
+                                        selected={selectedDepartment || "Select Department"}
+                                        setSelected={setSelectedDepartment}
+                                        options={resolveDepartments.map((k) => DEPT_LABEL[k])}
+                                        placeholder="Select Department"
+                                        icon={MapPin}
+                                    />
+                                ) : (
+                                    <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
+                                        {autoResolveDepartment}
+                                    </div>
+                                )}
+                            </div>
 
-
-                            {/* RCA / CA / PA */}
+                            {/* RCA / CA / PA Buttons */}
                             <div>
                                 <div className="flex gap-3 mb-2">
                                     <button
@@ -1420,6 +1444,7 @@ console.log('filteredHistory', filteredHistory)
                                     </button>
                                 </div>
 
+                                {/* TYPE SPECIFIC NOTE FIELD */}
                                 {selectedType && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1427,11 +1452,11 @@ console.log('filteredHistory', filteredHistory)
                                         </label>
 
                                         <textarea
-                                            value={note}
-                                            onChange={(e) => setNote(e.target.value)}
+                                            value={getCurrentNote()}
+                                            onChange={(e) => handleNoteChange(e.target.value)}
                                             rows={4}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                                                    focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                                focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                                             placeholder={`Please provide details for ${selectedType} ...`}
                                         />
                                     </div>
@@ -1443,6 +1468,7 @@ console.log('filteredHistory', filteredHistory)
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Upload Proof (Optional)
                                 </label>
+
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
                                     <input
                                         type="file"
@@ -1468,6 +1494,7 @@ console.log('filteredHistory', filteredHistory)
                                 </div>
                             </div>
 
+                            {/* Info Note */}
                             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                                 <div className="flex items-center">
                                     <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
@@ -1476,6 +1503,7 @@ console.log('filteredHistory', filteredHistory)
                                     </span>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -1489,9 +1517,9 @@ console.log('filteredHistory', filteredHistory)
 
                         <button
                             onClick={handleResolveSubmit}
-                            disabled={!note || !selectedType}
+                            disabled={!selectedType || !getCurrentNote()}
                             className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 
-                                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Resolve Complaint
                         </button>
@@ -1501,6 +1529,7 @@ console.log('filteredHistory', filteredHistory)
         </motion.div>
     )}
 </AnimatePresence>
+
 
 
                                     {/* Modal 3: Escalate to Higher Authority */}
@@ -1668,9 +1697,9 @@ console.log('filteredHistory', filteredHistory)
                                                                             <div className="flex-1">
                                                                                 {h.type === "created" && (
                                                                                     <>
-                                                                                        <p className="text-sm font-medium text-gray-900">Complaint Created</p>
+                                                                                        <p className="text-sm font-medium text-gray-900">{h.label}</p>
                                                                                         <p className="text-xs text-gray-600">
-                                                                                            {h.details.patientName} ({h.details.complaintId})
+                                                                                            {h.patientName} ({h.complaintId})
                                                                                         </p>
                                                                                         <p className="text-xs text-gray-500">
                                                                                             {new Date(h.at).toLocaleString()}

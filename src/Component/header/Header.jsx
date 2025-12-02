@@ -407,12 +407,21 @@ function Header({
 
                   <div className="relative md34:!mb-[17px] md77:!mb-0">
 
-                    <ModernDatePicker />
+ <ModernDatePicker
+  label="From Date"
+  selectedDate={dateFrom}
+  setSelectedDate={setDateFrom}
+/>
+
                   </div>
 
                   <div className="relative">
 
-                    <ModernDatePicker />
+                 <ModernDatePicker
+  label="To Date"
+  selectedDate={dateTo}
+  setSelectedDate={setDateTo}
+/>
                   </div>
                 </div>
               )}

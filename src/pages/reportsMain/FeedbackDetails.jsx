@@ -143,7 +143,7 @@ export default function FeedbackDetails() {
         <Header pageName="Feedback Details" />
         <div className="flex gap-[10px] w-[100%] h-[100%]">
           <SideBar />
-          <div className="flex flex-col w-[100%] md34:!mx-[10px] mt-[10px] md11:!mx-auto max-h-[99%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] ">
+          <div className="flex flex-col w-[100%] md34:!mx-[10px] mt-[10px] md11:!mx-auto max-h-[92%] pb-[50px] md11:!pr-[15px] overflow-y-auto gap-[30px] ">
 
             <section className="bg-white  rounded-xl  md11:!mb-[0px] md34:!mb-[160px]   bg-white shadow-sm border border-red-600 ">
               {/* <div className="px-5 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-100">

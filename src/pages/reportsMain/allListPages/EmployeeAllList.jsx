@@ -82,6 +82,52 @@ export default function EmployeeAllList() {
           const [rawOPD, setRawOPD] = useState([])
     const navigate = useNavigate();
         
+
+     const getRatingStars = (rating = 0) => {
+  const totalStars = 5;
+  const filledStars = Math.floor(rating);
+  const fractionalPart = rating - filledStars;
+
+  return (
+    <div className="flex items-center">
+      {Array.from({ length: totalStars }, (_, i) => {
+        if (i < filledStars) {
+          return (
+            <Star
+              key={i}
+              className="w-4 h-4 text-yellow-400 fill-current"
+            />
+          );
+        } else if (i === filledStars && fractionalPart > 0) {
+          const fillPercent = Math.round(fractionalPart * 100);
+          return (
+            <div key={i} className="relative w-4 h-4">
+              <Star className="absolute w-4 h-4 text-gray-300" />
+              <Star
+                className="absolute w-4 h-4 text-yellow-400"
+                style={{
+                  clipPath: `inset(0 ${100 - fillPercent}% 0 0)`
+                }}
+              />
+            </div>
+          );
+        } else {
+          return (
+            <Star
+              key={i}
+              className="w-4 h-4 text-gray-300"
+            />
+          );
+        }
+      })}
+
+      <span className="ml-1 text-sm font-medium text-gray-700">
+        {rating.toFixed(1)}/5
+      </span>
+    </div>
+  );
+};
+
       
 
       const fetchOPD = useCallback(async () => {
@@ -90,20 +136,25 @@ export default function EmployeeAllList() {
           try {
             const res = await ApiGet(`${API_URL}`)
             const data = Array.isArray(res) ? res : (res.data?.feedbacks || [])
+            console.log('data', data)
             setRawOPD(data)
       
             const list = data.map((d) => {
               const id = normId(d._id ?? d.id);
-              const rating = calcRowAverage(d.ratings);
+                const ratings = d.ratings || {};
+      const ratingValues = Object.values(ratings).filter((v) => v >= 1 && v <= 5);
+      const avgRating = ratingValues.length
+        ? round1(ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length)
+        : 0;
               return {
                 id,
                 _id: id, // keep for safety
                 createdAt: normDate(d.createdAt ?? d.date),
-                patient: d.patientName || d.name || "-",
-                contact: d.contact || "-",
+                patient: d.employeeName || d.name || "-",
+                contact: d.employeeId || "-",
                 doctor: d.consultantDoctorName?.name || d.doctorName || d.consultant || "-",
-                rating,
-                comment: d.comments || d.comment || "",
+                rating: avgRating,
+                comment: d.comments || d.comment || "-",
                 overallRecommendation: d.overallRecommendation,
               };
             });
@@ -230,9 +281,9 @@ export default function EmployeeAllList() {
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
-                              <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Patient Name</th>
-                              <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Contact</th>
-                              <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th>
+                              <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">EmployeeId Name</th>
+                              <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Employee Id</th>
+                              {/* <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th> */}
                               <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
                               <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
                             </tr>
@@ -270,11 +321,11 @@ export default function EmployeeAllList() {
                                       {feedback.contact}
                                     </div>
                                   </td>
-                                  <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td>
+                                  {/* <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td> */}
                                   <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                     <div className="flex items-center">
                                       {getRatingStars(feedback.rating)}
-                                      <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span>
+                                      {/* <span className="ml-2 text-sm font-medium">{feedback.rating}</span> */}
                                     </div>
                                   </td>
                                   <td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">

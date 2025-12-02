@@ -334,7 +334,7 @@ const getStatusBadge = (status) => {
                 </td>
 
                 {/* 🕒 Date & Time */}
-                <td className="px-2 py-2">
+                <td className="px-2 w-[120px] py-2">
                   <div className="flex items-center gap-2 text-gray-700">
                     <Calendar size={16} className="text-blue-500" />
                     <span className="text-[11px] font-[500]">
@@ -343,7 +343,7 @@ const getStatusBadge = (status) => {
                   </div>
                 </td>
 
-                {/* 👤 Patient Name */}
+      
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <div className="w-[26px] h-[26px] rounded-full flex-shrink-0 text-[10px] bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-[600] shadow-md">
@@ -356,7 +356,7 @@ const getStatusBadge = (status) => {
                 </td>
 
                 {/* 🩺 Doctor Name */}
-                <td className="px-3 py-2">
+                <td className="px-3 w-[150px] py-2">
                   <div className="flex items-center gap-2 text-gray-700">
                     <Stethoscope size={15} className="text-purple-500 flex-shrink-0" />
                     <span className="font-medium text-[12px] flex-shrink-0">
@@ -366,7 +366,7 @@ const getStatusBadge = (status) => {
                 </td>
 
                 {/* 🛏 Bed No */}
-                <td className="px-2 py-2">
+                <td className="px-2 w-[100px] py-2">
                   <div className="flex items-center gap-2 text-gray-700">
                     <Bed size={16} className="text-orange-500" />
                     <span className="font-medium text-[13px]">

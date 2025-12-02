@@ -91,9 +91,7 @@ useEffect(() => {
                         <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Email
                         </th>
-                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
-                          Details
-                        </th>
+                  
                       </tr>
                     </thead>
 
@@ -135,15 +133,7 @@ useEffect(() => {
                               {u.email}
                             </div>
                           </td>
-                          <td className="px-6 py-[10px] text-sm border-r whitespace-nowrap">
-                            <button
-                              onClick={() => handleView(u)}
-                              className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </button>
-                          </td>
+                          
                         </tr>
                       ))}
 

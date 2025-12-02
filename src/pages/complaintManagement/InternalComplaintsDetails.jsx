@@ -985,7 +985,7 @@ const autoDepartment =
                                             </div>
 
                                             {/* Complaint Details */}
-                                            <div className="bg-white rounded-xl shadow-sm h-[30%] md13:h-[70%] overflow-y-auto scrollbar-default 2xl:!h-[70%] border p-3">
+                                            <div className="bg-white rounded-xl shadow-sm  border p-3">
                                                 <h2 className="text-[19px] font-semibold text-gray-900 mb-2">Complaint Details</h2>
                                                 <div className="space-y-3">
 
@@ -1079,7 +1079,7 @@ const autoDepartment =
 
 
                                             {complaint.status !== "Resolved" && (
-                                                <div className="bg-white rounded-xl border min-h-[300px]  overflow-y-auto scrollba shadow-sm p-3">
+                                                <div className="bg-white rounded-xl border overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
                                                         {filteredHistory.slice(-3).reverse().map((h, index) => (
@@ -1291,6 +1291,14 @@ const autoDepartment =
                             <TrendingUp className="w-5 h-5 mr-2" />
                             Escalate to Higher Authority
                         </button>
+
+                         <button
+                                            onClick={() => openModal("history")}
+                                            className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                        >
+                                            <Clock className="w-5 h-5 mr-2" />
+                                            View Full History
+                                        </button>
                     </div>
                 </>
             )}
@@ -1301,7 +1309,6 @@ const autoDepartment =
                                         </motion.div>
                                     </div>
 
-                                    {/* Modal 1: Forward to Another Department */}
                                     {/* Modal: Forward to Another Department */}
                                     <AnimatePresence>
                                         {isForwardModalOpen && (

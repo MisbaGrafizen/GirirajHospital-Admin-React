@@ -215,7 +215,7 @@ useEffect(() => {
                       <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 min-w-[180px]  uppercase">Created At</th>
                       <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 uppercase">Resolved At</th>
                       <th className="px-3 py-2 text-left text-xs  border-r font-medium text-gray-500 uppercase">TAT</th>
-                      <th className="px-3 py-2 text-left text-xs border-r font-medium text-gray-500 uppercase">Details</th>
+
                     </tr>
                   </thead>
                   <tbody className="bg-white">
@@ -254,14 +254,7 @@ useEffect(() => {
                         <td className="px-3 py-2 min-w-[100px]  border-r  text-[13px] text-gray-900">
                           {complaint.totalTimeTaken || "-"}
                         </td>
-                        <td className="px-3 py-2 min-w-[100px]  text-[13px] text-gray-900">
-                          <button
-                            onClick={() => handlenavigate(complaint, rawConcerns.find((d) => d._id === complaint.id))}
-                            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                          >
-                            <Eye className="w-4 h-4 mr-1" /> View
-                          </button>
-                        </td>
+                  
                       </tr>
                     ))}
                     {rows.length === 0 && (

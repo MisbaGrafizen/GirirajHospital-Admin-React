@@ -54,7 +54,7 @@ export default function OpdFeedBackDetails() {
     const q = searchTerm.toLowerCase();
     return (
       fb.patientName?.toLowerCase().includes(q) ||
-      fb.contact?.includes(searchTerm)    
+      fb.contact?.includes(searchTerm)
     );
   });
 
@@ -92,13 +92,13 @@ export default function OpdFeedBackDetails() {
     return parseFloat(avg.toFixed(1));
   };
 
-const openFeedbackDetails = (feedback) => {
-  // ✅ Save to sessionStorage for reload persistence
-  sessionStorage.setItem("opdFeedback:last", JSON.stringify({ id: feedback._id }));
+  const openFeedbackDetails = (feedback) => {
+    // ✅ Save to sessionStorage for reload persistence
+    sessionStorage.setItem("opdFeedback:last", JSON.stringify({ id: feedback._id }));
 
-  // ✅ Navigate to the details route
-  navigate("/opd-feedback-details", { state: { id: feedback._id } });
-};
+    // ✅ Navigate to the details route
+    navigate("/opd-feedback-details", { state: { id: feedback._id } });
+  };
 
 
 
@@ -116,7 +116,7 @@ const openFeedbackDetails = (feedback) => {
 
   // 🔗 Dummy Navigate button
   const handlenavigate = () => {
-      navigate("/dashboards/opd-all-list")
+    navigate("/dashboards/opd-all-list")
   };
 
   return (
@@ -166,147 +166,146 @@ const openFeedbackDetails = (feedback) => {
         </div>
 
         {/* ---------- Table ---------- */}
-  <div className="overflow-x-auto">
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.2 }}
-    className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200"
-  >
-    <table className="w-full min-w-[1000px]">
-      {/* 🔹 HEADER */}
-      <thead>
-        <tr className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">
-          <th className="px-3 py-[13px] text-left text-[11px] w-[140px] font-[600] text-white">
-            DATE & TIME
-          </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
-            PATIENT NAME
-          </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
-            CONTACT
-          </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
-            DOCTOR
-          </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
-            RATING
-          </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
-            COMMENT
-          </th>
-          <th className="px-6 py-[13px] text-center text-[11px] font-[600] text-white">
-            ACTIONS
-          </th>
-        </tr>
-      </thead>
+        <div className="overflow-x-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200"
+          >
+            <table className="w-full min-w-[1000px]">
+              {/* 🔹 HEADER */}
+              <thead>
+                <tr className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">
+                  <th className="px-3 py-[13px] text-left text-[11px] w-[140px] font-[600] text-white">
+                    DATE & TIME
+                  </th>
+                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+                    PATIENT NAME
+                  </th>
+                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+                    CONTACT
+                  </th>
+                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+                    DOCTOR
+                  </th>
+                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+                    RATING
+                  </th>
+                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+                    COMMENT
+                  </th>
+                  <th className="px-6 py-[13px] text-center text-[11px] font-[600] text-white">
+                    ACTIONS
+                  </th>
+                </tr>
+              </thead>
 
-      {/* 🔹 BODY */}
-      <tbody>
-        <AnimatePresence>
-          {filteredFeedback.map((feedback, index) => {
-            const avgRating = calculateAverageRating(feedback.ratings);
+              {/* 🔹 BODY */}
+              <tbody>
+                <AnimatePresence>
+                  {filteredFeedback.map((feedback, index) => {
+                    const avgRating = calculateAverageRating(feedback.ratings);
 
-                 return (
-              <motion.tr
-                key={feedback._id || index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ delay: index * 0.05 }}
-  onClick={(e) => {
-    e.stopPropagation();
-    openFeedbackDetails(feedback);
-  }}
-                className={`border-b border-gray-200 hover:shadow-md transition-all ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                } cursor-pointer`}
-              >
-                {/* 🕒 DATE & TIME */}
-                <td className="px-2 py-2 text-sm text-gray-900">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-500" />
-                    <span className="text-[11px]  leading-4 font-[500]">
-                      {formatDate(feedback.createdAt)}
-                    </span>
-                  </div>
-                </td>
+                    return (
+                      <motion.tr
+                        key={feedback._id || index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openFeedbackDetails(feedback);
+                        }}
+                        className={`border-b border-gray-200 hover:shadow-md transition-all ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          } cursor-pointer`}
+                      >
+                        {/* 🕒 DATE & TIME */}
+                        <td className="px-2 py-2 text-sm text-gray-900">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <span className="text-[11px]  leading-4 font-[500]">
+                              {formatDate(feedback.createdAt)}
+                            </span>
+                          </div>
+                        </td>
 
-                {/* 👤 PATIENT NAME */}
-                <td className="px-4 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-[28px] h-[28px] rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[11px] font-[600] shadow-sm">
-                      {feedback.patient?.charAt(0)?.toUpperCase() ||
-                        feedback.patientName?.charAt(0)?.toUpperCase() ||
-                        "?"}
-                    </div>
-                    <span className="text-gray-900 font-[500] text-[13px] leading-[15px]">
-                      {feedback.patient || feedback.patientName || "-"}
-                    </span>
-                  </div>
-                </td>
+                        {/* 👤 PATIENT NAME */}
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-[28px] h-[28px] rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[11px] font-[600] shadow-sm">
+                              {feedback.patient?.charAt(0)?.toUpperCase() ||
+                                feedback.patientName?.charAt(0)?.toUpperCase() ||
+                                "?"}
+                            </div>
+                            <span className="text-gray-900 font-[500] text-[13px] leading-[15px]">
+                              {feedback.patient || feedback.patientName || "-"}
+                            </span>
+                          </div>
+                        </td>
 
-                {/* ☎️ CONTACT */}
-                <td className="px-4 py-2">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Phone size={15} className="text-emerald-500" />
-                    <span className="text-[13px]">{feedback.contact || "-"}</span>
-                  </div>
-                </td>
+                        {/* ☎️ CONTACT */}
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <Phone size={15} className="text-emerald-500" />
+                            <span className="text-[13px]">{feedback.contact || "-"}</span>
+                          </div>
+                        </td>
 
-                {/* 🩺 DOCTOR */}
-                <td className="px-4 py-2">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Stethoscope size={15} className="text-purple-500" />
-                    <span className="text-[13px] font-[500]">
-                      {feedback.doctor ||
-                        feedback.consultantDoctorName?.name ||
-                        "-"}
-                    </span>
-                  </div>
-                </td>
+                        {/* 🩺 DOCTOR */}
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <Stethoscope size={15} className="text-purple-500" />
+                            <span className="text-[13px] font-[500]">
+                              {feedback.doctor ||
+                                feedback.consultantDoctorName?.name ||
+                                "-"}
+                            </span>
+                          </div>
+                        </td>
 
-                {/* ⭐ RATING */}
-                <td className="px-4 py-2 text-sm text-gray-900">
-                  <div className="flex items-center">
-                     {getRatingStars(avgRating)}
+                        {/* ⭐ RATING */}
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                          <div className="flex items-center">
+                            {getRatingStars(avgRating)}
                             <span className="ml-2 text-sm font-medium text-gray-600">
                               {avgRating}/5
                             </span>
-                  </div>
-                </td>
+                          </div>
+                        </td>
 
-                {/* 💬 COMMENT */}
-                <td className="px-4 py-2 text-gray-700 text-[12px] max-w-[200px] truncate">
-                  <div title={feedback.comment || "-"}>
-                    {feedback.comment || "-"}
-                  </div>
-                </td>
+                        {/* 💬 COMMENT */}
+                        <td className="px-4 py-2 text-gray-700 text-[12px] max-w-[200px] truncate">
+                          <div title={feedback.comment || "-"}>
+                            {feedback.comment || "-"}
+                          </div>
+                        </td>
 
-                {/* ⚙️ ACTIONS */}
-                <td className="px-4 py-2">
-                  <div className="flex justify-center">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-             onClick={(e) => {
-    e.stopPropagation();
-    openFeedbackDetails(feedback);
-  }}
-                      className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                    >
-                      <Eye size={18} className="text-blue-500" />
-                    </motion.button>
-                  </div>
-                </td>
-              </motion.tr>
-                 );
-          })}
-        </AnimatePresence>
-      </tbody>
-    </table>
-  </motion.div>
-</div>
+                        {/* ⚙️ ACTIONS */}
+                        <td className="px-4 py-2">
+                          <div className="flex justify-center">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFeedbackDetails(feedback);
+                              }}
+                              className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                            >
+                              <Eye size={18} className="text-blue-500" />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </motion.div>
+        </div>
 
         {error && <div className="text-red-600 text-sm mt-3 px-6">{error}</div>}
       </div>
