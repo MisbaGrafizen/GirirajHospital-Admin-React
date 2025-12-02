@@ -131,17 +131,28 @@ const CubaSidebar = () => {
           icon: React.createElement(HomeIcon),
           hasSubmenu: true,
           href: "/dashboards",
-          submenu: [
-            { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-            { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
-            { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-            { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
-            { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
-            { id: "employeeDashboard", label: "Employee Dash.. ", href: "/employee-feedback-dashboard", icon: faUsersCog },
-            { id: "consultantDashboard", label: "Consultant Dash.. ", href: "/doctor-feedback-dashboard", icon: faUserMd },
+submenu: [
+  { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+  { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
+  { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+  { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
+  { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
 
+  // ADMIN-ONLY
+  isAdmin && {
+    id: "employeeDashboard",
+    label: "Employee Dash.. ",
+    href: "/employee-feedback-dashboard",
+    icon: faUsersCog,
+  },
 
-          ],
+  isAdmin && {
+    id: "consultantDashboard",
+    label: "Consultant Dash.. ",
+    href: "/doctor-feedback-dashboard",
+    icon: faUserMd,
+  },
+].filter(Boolean),   
         },
 
         {

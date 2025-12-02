@@ -154,6 +154,7 @@ export default function TodoPage() {
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const userId = localStorage.getItem("userId");
   const loginType = localStorage.getItem("loginType");
+  
 
   const userModel =
       loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
@@ -299,23 +300,34 @@ const handleAddFolder = async () => {
   }
 };
 
-  // 🗑️ Delete folder handler
-  const handleDeleteFolder = async (folderId) => {
+  // Delete folder handler
+const handleDeleteFolder = async (folderId) => {
   if (window.confirm("Are you sure you want to delete this folder?")) {
     try {
       await ApiDelete(`${FOLDER_API}/${folderId}`);
-      const deletedName = folders.find((f) => f._id === folderId)?.name;
-      setFolders(folders.filter((f) => f._id !== folderId));
-      setTasks(tasks.filter((t) => t.category !== deletedName));
 
-      if (currentFolder?._id === folderId) {
-        setCurrentFolder(folders[0] || null);
+      const updatedFolders = folders.filter((f) => f._id !== folderId);
+      setFolders(updatedFolders);
+
+      // Remove tasks belonging to that folder
+      setTasks(tasks.filter((t) => t.listId !== folderId));
+
+      // 🔥 KEY FIX:
+      if (updatedFolders.length === 0) {
+        // no folders left → hide task screen
+        setCurrentFolder(null);
+      } 
+      else if (currentFolder?._id === folderId) {
+        // deleted selected folder → select next folder
+        setCurrentFolder(updatedFolders[0]);
       }
+
     } catch (err) {
       console.error("Folder delete failed:", err);
     }
   }
 };
+
 
 
   const completedCount = useMemo(() => {
