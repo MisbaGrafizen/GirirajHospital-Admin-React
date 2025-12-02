@@ -190,14 +190,22 @@ if (!dateRange.from || !dateRange.to) {
 
           console.log('qs', qs)
 
-          const res = await ApiGet(`/admin/dashboard${qs}`);
-          console.log('res', res)
-          const data = res?.data?.data || res?.data || {}
+          const [res] = await Promise.all([
+  ApiGet(`/admin/dashboard${qs}`),
+  new Promise((resolve) => setTimeout(resolve, 0)),
+]);
+
+const data = res?.data?.data || res.data || {};
+
+// 🏎️ free JS thread before heavy calculations
+await new Promise((resolve) => setTimeout(resolve, 0))
+          
 
           if (!mounted) return
 
 if (data.kpis || data.totals) {
   const kpiData = data.kpis || {};
+  console.log('kpiData', kpiData)
   const totalsData = data.totals || {};
 
   // ✅ Earnings and Expense Safety
@@ -281,7 +289,6 @@ if (data.kpis || data.totals) {
 
 
           // ----- Concerns (Admin vs Non-admin) -----
-          // ----- Concerns (Admin vs Non-admin) -----
           let statusCounts = { Open: 0, "In Progress": 0, Resolved: 0 };
           let totalForThisWeek = 0;
 
@@ -297,6 +304,7 @@ if (data.kpis || data.totals) {
           } else {
             // ✅ For non-admin, fallback to concerns array (supports in_progress key)
             const latestWeek = (data.concerns || [])[0] || { countsByModule: {}, total: 0 };
+            console.log('latestWeek', latestWeek)
             totalForThisWeek = latestWeek.total || 0;
 
             // sum across modules
@@ -305,7 +313,7 @@ if (data.kpis || data.totals) {
               // ✅ use in_progress if present, fallback to "In Progress"
               statusCounts["In Progress"] += mod.in_progress || mod["In Progress"] || 0;
               statusCounts.Resolved += mod.Resolved || 0;
-            });
+            }); 
 
             // normalize to backend's deduped total
             if (totalForThisWeek > 0) {

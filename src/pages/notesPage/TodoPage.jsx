@@ -72,9 +72,11 @@ const folderColors = [
 // 🧩 Different icons
 const availableIcons = [Home, Briefcase, Building2, Calendar, Inbox, ListPlus, Star, Clock, CheckSquare];
 
-// 🔹 Smart icon resolver (keyword-based)
+// ✔ Added stable fallback icon (ListPlus)
+
 const getIconForName = (name) => {
   const lower = name?.toLowerCase() || "";
+
   if (lower.includes("home")) return Home;
   if (lower.includes("work")) return Briefcase;
   if (lower.includes("office")) return Building2;
@@ -83,9 +85,11 @@ const getIconForName = (name) => {
   if (lower.includes("important")) return Star;
   if (lower.includes("schedule") || lower.includes("time")) return Clock;
   if (lower.includes("task") || lower.includes("done")) return CheckSquare;
-  // 🎲 Otherwise, return a random icon
-  return availableIcons[Math.floor(Math.random() * availableIcons.length)];
+
+  // 🛠 FIX: No random icon anymore. Use stable default icon.
+  return ListPlus;
 };
+
 
 // 🎨 Random color generator
 const getRandomColor = () => {

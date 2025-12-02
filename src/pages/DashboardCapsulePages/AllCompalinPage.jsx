@@ -104,30 +104,36 @@ export default function AllComplaintPage() {
         const allComplaints = res?.data || [];
 
         // 🔹 Filter by department (permissions)
-        const filteredByDept = isAdmin
-          ? allComplaints
-          : allComplaints.filter((c) =>
-              allowedBlocks.includes(c.departmentBlock)
-            );
+const filteredByDept = isAdmin
+  ? allComplaints
+  : allComplaints.filter((c) => {
+      return allowedBlocks.some((block) => {
+        const b = c[block];
+        if (!b) return false;
+
+        return (
+          (b.text && b.text.trim() !== "") ||
+          (Array.isArray(b.attachments) && b.attachments.length > 0)
+        );
+      });
+    });
+
 
         // 🔹 Filter by complaint status based on dashboard selection
-        const filteredByStatus = filteredByDept.filter((c) => {
-          const status = c.status?.toLowerCase();
-          switch (filterType) {
-            case "Open":
-            case "Pending":
-              return status === "open";
-            case "Resolved":
-              return status === "resolved";
-            case "Escalated":
-              return status === "escalated";
-            case "In Progress":
-              return status === "in_progress";
-            case "All":
-            default:
-              return true;
-          }
-        });
+const filteredByStatus = filteredByDept.filter((c) => {
+  const status = String(c.status || "").toLowerCase();
+
+  if (filterType === "All") return true;
+
+  if (filterType === "Open") return status === "open";
+  if (filterType === "Pending") return status === "open";
+  if (filterType === "Resolved") return status === "resolved";
+  if (filterType === "Escalated") return status === "escalated";
+  if (filterType === "In Progress") return status === "in_progress";
+
+  return true;
+});
+
 
         // 🔹 Sort by latest
         const sorted = filteredByStatus.sort(

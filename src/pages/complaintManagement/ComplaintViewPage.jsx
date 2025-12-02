@@ -188,6 +188,7 @@ const handleNoteChange = (value) => {
 
 
 
+
     // Button styles
     const getBtnStyles = (type) =>
         `px-4 py-2 rounded-lg text-sm font-semibold border transition 
@@ -253,13 +254,27 @@ const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
     const fullDoc = state?.doc || row;
 
 
+
+
+    console.log('CONCERN_KEYS', fullDoc)
+
+        const [fullDocState, setFullDocState] = useState(fullDoc);
+
+        // 🔹 Departments allowed for resolve only
+const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
+    const hasContent = blockHasContent(fullDocState[deptKey]); // Complaint exists for this department
+    const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
+    return hasContent && canResolve;
+});
+
     const CONCERN_KEYS = React.useMemo(() => {
-        if (!fullDoc || typeof fullDoc !== "object") return [];
-        return Object.keys(fullDoc).filter((key) => {
-            const block = fullDoc[key] || row[key] || fullDoc?.doc?.[key] || row?.doc?.[key];
-            return blockHasContent(block);
-        });
-    }, [fullDoc, row]);
+    if (!fullDocState || typeof fullDocState !== "object") return [];
+    return Object.keys(fullDocState).filter((key) => {
+        const block = fullDocState[key];
+        return blockHasContent(block);
+    });
+}, [fullDocState]);
+
 
     function collectPresentModuleLabels(src) {
         if (!src || typeof src !== "object") return [];
@@ -281,25 +296,17 @@ const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
     }
 
 
-    console.log('CONCERN_KEYS', fullDoc)
-        // 🔹 Departments allowed for resolve only
-const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
-    const hasContent = blockHasContent(fullDoc[deptKey]); // Complaint exists for this department
-    const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
-    return hasContent && canResolve;
-});
-
 // 🔹 Auto-select if only one
 const autoResolveDepartment =
     resolveDepartments.length === 1 ? DEPT_LABEL[resolveDepartments[0]] : null;
 
-    const presentLabels = collectPresentModuleLabels(fullDoc);
+    const presentLabels = collectPresentModuleLabels(fullDocState);
     const categoryText =
         presentLabels.length
             ? presentLabels.join(", ")
             : (row.category || "—");
 
-    const moduleAttachments = collectAllModuleAttachments(fullDoc);
+    const moduleAttachments = collectAllModuleAttachments(fullDocState);
     const attachments =
         moduleAttachments.length
             ? moduleAttachments
@@ -359,7 +366,7 @@ const autoResolveDepartment =
 
 // 1️⃣ Departments included in this complaint (have text/attachments)
 const complaintDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-    blockHasContent(fullDoc[deptKey])
+    blockHasContent(fullDocState[deptKey])
 );
 
 // 2️⃣ User only has access to these departments
@@ -369,7 +376,7 @@ const userDepartments = complaintDepartments.filter(
 
 // 3️⃣ A department is actionable ONLY when it is NOT resolved
 const actionableDepartment = userDepartments.find((deptKey) => {
-    const block = fullDoc[deptKey];
+    const block = fullDocState[deptKey];
     return block?.status?.toLowerCase() !== "resolved";
 });
 
@@ -409,10 +416,12 @@ const actionableDepartment = userDepartments.find((deptKey) => {
             alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
 
             // ✅ Re-fetch complaint & history to update UI
-            const updated = await fetchComplaintDetails(complaint.id);
-            if (updated) {
-                setStatus(updated.status || updated.data?.status);
-            }
+            // const updated = await fetchComplaintDetails(complaint.id);
+            // if (updated) {
+            //     setStatus(updated.status || updated.data?.status);
+            // }
+            await refreshComplaint();
+
 
             const newHistory = await fetchConcernHistory(complaint.id);
             setHistoryData(newHistory);
@@ -494,9 +503,11 @@ const actionableDepartment = userDepartments.find((deptKey) => {
             }
 
             // ✅ Determine and set status
-            const newStatus =
-                response?.data?.status || response?.data?.data?.status || "escalated";
-            setStatus(mapStatusUI(newStatus));
+            // const newStatus =
+            //     response?.data?.status || response?.data?.data?.status || "escalated";
+            // setStatus(mapStatusUI(newStatus));
+            await refreshComplaint();
+
 
             // ✅ Re-fetch history for timeline
             const newHistory = await fetchConcernHistory(complaint.id);
@@ -512,7 +523,7 @@ const actionableDepartment = userDepartments.find((deptKey) => {
     // 🔹 Allowed departments based on permissions & blocks with content
 const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
     // Must have block content (text or attachments)
-    const hasContent = blockHasContent(fullDoc[deptKey]);
+    const hasContent = blockHasContent(fullDocState[deptKey]);
 
     // Must be permitted for this user
     const hasPermission = permissionsByBlock[deptKey]?.includes("resolve");
@@ -556,7 +567,7 @@ const handleResolveSubmit = async () => {
 
         // 3️⃣ Active departments
         const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-            blockHasContent(fullDoc[deptKey])
+            blockHasContent(fullDocState[deptKey])
         );
 
         // 4️⃣ Find departments user can resolve
@@ -606,18 +617,21 @@ const handleResolveSubmit = async () => {
 
         // 8️⃣ Submit API request
         const res = await ApiPost(endpoint, payload);
+        console.log('res', res)
 
         // 9️⃣ Extract updated status
-        const newStatus =
-            res?.data?.status || res?.data?.data?.status || "resolved";
+        // const newStatus =
+        //     res?.data?.status || res?.data?.data?.status || "resolved";
 
-        setStatus(mapStatusUI(newStatus));
+        // setStatus(mapStatusUI(newStatus));
 
-        alert(
-            newStatus === "partial"
-                ? "Complaint partially resolved."
-                : "Complaint fully resolved."
-        );
+        // alert(
+        //     newStatus === "partial"
+        //         ? "Complaint partially resolved."
+        //         : "Complaint fully resolved."
+        // );
+        await refreshComplaint();
+
 
         // 🔟 Refresh history
         const newHistory = await fetchConcernHistory(complaint.id);
@@ -629,10 +643,6 @@ const handleResolveSubmit = async () => {
         alert(err?.response?.data?.message || "Something went wrong.");
     }
 };
-
-
-
-
 
     async function fetchConcernHistory(complaintId) {
         try {
@@ -809,9 +819,28 @@ const filteredHistory = useMemo(() => {
     });
 }, [historyData, allowedBlocks, isAdmin]);
 
-
-
 console.log('filteredHistory', filteredHistory)
+
+useEffect(() => {
+    setFullDocState(fullDoc);
+}, [fullDoc]);
+
+async function refreshComplaint() {
+    try {
+        const updatedDoc = await ApiGet(`/admin/ipd-concern/${complaint.id}`);
+        console.log('updatedDoc', updatedDoc)
+
+        if (updatedDoc?.data) {
+            // normalize structure
+            const doc = updatedDoc.data;
+
+            setFullDocState(doc);                                // 🔥 UI updates department status
+            setStatus(doc.status || doc.data?.status || "");     // Update main status
+        }
+    } catch (err) {
+        console.error("Refresh error:", err);
+    }
+}
 
 
     const handleFileUpload = (event) => {
@@ -981,10 +1010,10 @@ console.log('filteredHistory', filteredHistory)
                                                 <div className="space-y-3">
 
                                                     <div className="space-y-4">
-                                                        {Object.keys(fullDoc).map((key) => {
+                                                        {Object.keys(fullDocState).map((key) => {
                                                             if (!DEPT_LABEL[key]) return null;
                                                             if (!permissionsByBlock[key]) return null;
-                                                            const block = fullDoc[key];
+                                                            const block = fullDocState[key];
                                                             if (!blockHasContent(block)) return null;
 
                                                             return (

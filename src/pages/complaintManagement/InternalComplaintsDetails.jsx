@@ -189,6 +189,15 @@ export default function InternalComplaintsDetails() {
     const [status, setStatus] = useState("IN-PROGRESS")
     const [isEditing, setIsEditing] = useState(false)
     const [selectedDepartment, setSelectedDepartment] = useState("");
+    const [selectedType, setSelectedType] = useState("CA");
+        const [note, setNote] = useState("");
+
+      const getBtnStyles = (type) =>
+        `px-4 py-2 rounded-lg text-sm font-semibold border transition 
+  ${selectedType === type
+            ? "bg-green-600 text-white border-green-600"
+            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+        }`;
 
     const [isOpen, setIsOpen] = useState(false)
 
@@ -245,19 +254,40 @@ export default function InternalComplaintsDetails() {
     const row = state?.complaint || {};
     const fullDoc = state?.doc || row;
 const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
+const [fullDocState, setFullDocState] = useState(fullDoc);
 
+
+useEffect(() => {
+    setFullDocState(fullDoc);
+}, [fullDoc]);
+
+async function refreshComplaint() {
+    try {
+        const updatedDoc = await ApiGet(`/admin/internal-complaint/${complaint.id}`);
+        console.log('updatedDoc', updatedDoc)
+
+        if (updatedDoc?.data) {
+            const doc = updatedDoc.data;
+            setFullDocState(doc);
+            setStatus(doc.status || doc.data?.status || "");
+        }
+    } catch (err) {
+        console.error("Refresh error:", err);
+    }
+}
 
 
     const CONCERN_KEYS = React.useMemo(() => {
-        if (!fullDoc || typeof fullDoc !== "object") return [];
-        return Object.keys(fullDoc).filter((key) => {
-            const block = fullDoc[key] || row[key] || fullDoc?.doc?.[key] || row?.doc?.[key];
-            return blockHasContent(block);
-        });
-    }, [fullDoc, row]);
+    if (!fullDocState || typeof fullDocState !== "object") return [];
+    return Object.keys(fullDocState).filter((key) => {
+        const block = fullDocState[key];
+        return blockHasContent(block);
+    });
+}, [fullDocState]);
+
 
     const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
-    const hasContent = blockHasContent(fullDoc[deptKey]); // Complaint exists for this department
+    const hasContent = blockHasContent(fullDocState[deptKey]); // Complaint exists for this department
     const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
     return hasContent && canResolve;
 });
@@ -288,13 +318,13 @@ const autoResolveDepartment =
 
     console.log('CONCERN_KEYS', fullDoc)
 
-    const presentLabels = collectPresentModuleLabels(fullDoc);
+    const presentLabels = collectPresentModuleLabels(fullDocState);
     const categoryText =
         presentLabels.length
             ? presentLabels.join(", ")
             : (row.category || "—");
 
-    const moduleAttachments = collectAllModuleAttachments(fullDoc);
+    const moduleAttachments = collectAllModuleAttachments(fullDocState);
     const attachments =
         moduleAttachments.length
             ? moduleAttachments
@@ -358,7 +388,7 @@ const autoResolveDepartment =
 
     // Check if ANY allowed department is unresolved
     return allowedBlocks.some((deptKey) => {
-        const block = fullDoc[deptKey];
+        const block = fullDocState[deptKey];
         if (!block) return false;
         if (!blockHasContent(block)) return false;
         return block.status?.toLowerCase() !== "resolved";
@@ -406,10 +436,12 @@ const autoResolveDepartment =
             alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
 
             // ✅ Re-fetch complaint & history to update UI
-            const updated = await fetchComplaintDetails(complaint.id);
-            if (updated) {
-                setStatus(updated.status || updated.data?.status);
-            }
+            // const updated = await fetchComplaintDetails(complaint.id);
+            // if (updated) {
+            //     setStatus(updated.status || updated.data?.status);
+            // }
+            await refreshComplaint();
+
 
             const newHistory = await fetchConcernHistory(complaint.id);
             setHistoryData(newHistory);
@@ -491,9 +523,11 @@ const autoResolveDepartment =
             }
 
             // ✅ Determine and set status
-            const newStatus =
-                response?.data?.status || response?.data?.data?.status || "escalated";
-            setStatus(mapStatusUI(newStatus));
+            // const newStatus =
+            //     response?.data?.status || response?.data?.data?.status || "escalated";
+            // setStatus(mapStatusUI(newStatus));
+            await refreshComplaint();
+
 
             // ✅ Re-fetch history for timeline
             const newHistory = await fetchConcernHistory(complaint.id);
@@ -534,7 +568,7 @@ const autoResolveDepartment =
 
 const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
     // Must have block content (text or attachments)
-    const hasContent = blockHasContent(fullDoc[deptKey]);
+    const hasContent = blockHasContent(fullDocState[deptKey]);
 
     // Must be permitted for this user
     const hasPermission = permissionsByBlock[deptKey]?.includes("resolve");
@@ -546,105 +580,125 @@ const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
 const autoDepartment =
     allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
 
+const handleResolveSubmit = async () => {
+  if (!selectedType) {
+        alert("Please select RCA / CA / PA");
+        return;
+    }
 
-    const handleResolveSubmit = async () => {
-        // if (!selectedType) {
-        //     alert("Please select RCA / CA / PA");
-        //     return;
-        // }
-    
-        if (!resolutionNote.trim()) {
-            alert("Please enter a note.");
+    if (!note.trim()) {
+        alert("Please enter a note.");
+        return;
+    }
+
+    try {
+        // -------------------------------
+        // 1️⃣ Upload Proof
+        // -------------------------------
+        let proofUrl = "";
+        if (uploadedFile) {
+            const uploadRes = await uploadToHPanel(uploadedFile);
+            proofUrl = uploadRes.url;
+        }
+
+        // -------------------------------
+        // 2️⃣ Prepare payload
+        // -------------------------------
+        const payload = {
+            actionType: selectedType,
+            note,
+            proof: proofUrl ? [proofUrl] : [],
+            userId: localStorage.getItem("userId") || "",
+        };
+
+        // -------------------------------
+        // 3️⃣ Determine department
+        // -------------------------------
+        let deptKey = null;
+
+        // Only one department is resolvable → auto
+        if (resolveDepartments.length === 1) {
+            deptKey = resolveDepartments[0];
+        }
+
+        // Or from dropdown if selected manually
+        if (selectedDepartment) {
+            deptKey = Object.keys(DEPT_LABEL).find(
+                (k) => DEPT_LABEL[k] === selectedDepartment
+            );
+        }
+
+        if (!deptKey) {
+            alert("Please select a valid department.");
             return;
         }
-    
-        try {
-            // -------------------------------
-            // 1️⃣ Upload Proof
-            // -------------------------------
-            let proofUrl = "";
-            if (uploadedFile) {
-                const uploadRes = await uploadToHPanel(uploadedFile);
-                proofUrl = uploadRes.url;
-            }
-    
-            // -------------------------------
-            // 2️⃣ Prepare payload
-            // -------------------------------
-            const payload = {
-                // actionType: selectedType,
-                note: resolutionNote,
-                proof: proofUrl ? [proofUrl] : [],
-                userId: localStorage.getItem("userId") || "",
-            };
-    
-            // -------------------------------
-            // 3️⃣ Resolve Department Logic
-            // -------------------------------
-            let deptKey = null;
-    
-            // If only ONE department is resolvable → auto assign
+
+        payload.department = deptKey;
+
+        // -------------------------------
+        // 4️⃣ Determine ADMIN or STAFF
+        // -------------------------------
+        const loginType = localStorage.getItem("loginType");
+        const isAdmin = loginType === "admin";
+
+        // -------------------------------
+        // 5️⃣ Choose API endpoint
+        // -------------------------------
+        let endpoint = "";
+
+        if (isAdmin) {
+            // ADMIN HANDLING
             if (resolveDepartments.length === 1) {
-                deptKey = resolveDepartments[0];
+                // full admin resolve
+                endpoint = `/admin/internal/${complaint.id}/admin-resolve`;
+            } else {
+                // partial admin resolve
+                endpoint = `/admin/internal/${complaint.id}/admin-partial-resolve`;
             }
-    
-            // If dropdown is visible → use selectedDepartment
-            if (selectedDepartment) {
-                deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
-            }
-    
-            if (!deptKey) {
-                alert("Please select a valid department.");
-                return;
-            }
-    
-            payload.department = deptKey;
-    
-            // -------------------------------
-            // 4️⃣ Choose correct API endpoint
-            // -------------------------------
-            let endpoint = "";
-    
+        } else {
+            // STAFF HANDLING
             if (resolveDepartments.length === 1) {
-                // Only one department → full resolve
                 endpoint = `/admin/internal/${complaint.id}/resolve`;
             } else {
-                // Multiple departments → partial resolve
                 endpoint = `/admin/internal/${complaint.id}/partial-resolve`;
             }
-    
-            // -------------------------------
-            // 5️⃣ API Call
-            // -------------------------------
-            const res = await ApiPost(endpoint, payload);
-    
-            const newStatus =
-                res?.data?.status ||
-                res?.data?.data?.status ||
-                "resolved";
-    
-            setStatus(mapStatusUI(newStatus));
-    
-            alert(
-                newStatus === "partial"
-                    ? "Complaint partially resolved."
-                    : "Complaint fully resolved."
-            );
-    
-            // -------------------------------
-            // 6️⃣ Refresh history & close modal
-            // -------------------------------
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-    
-            closeAllModals();
-        } catch (err) {
-            console.error("Resolve Error:", err);
-            alert(err?.response?.data?.message || "Something went wrong.");
         }
-    };
+
+        // -------------------------------
+        // 6️⃣ CALL API
+        // -------------------------------
+        const res = await ApiPost(endpoint, payload);
+
+        const newStatus =
+            res?.data?.status ||
+            res?.data?.data?.status ||
+            "resolved";
+
+        setStatus(mapStatusUI(newStatus));
+
+        alert(
+            newStatus === "partial"
+                ? "Complaint partially resolved."
+                : "Complaint fully resolved."
+        );
+
+        // -------------------------------
+        // 7️⃣ REFRESH updated complaint
+        // -------------------------------
+        await refreshComplaint();
+
+        // -------------------------------
+        // 8️⃣ REFRESH history
+        // -------------------------------
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+    } catch (err) {
+        console.error("Resolve Error:", err);
+        alert(err?.response?.data?.message || "Something went wrong.");
+    }
+};
 
     async function fetchConcernHistory(complaintId) {
         try {
@@ -990,10 +1044,10 @@ const autoDepartment =
                                                 <div className="space-y-3">
 
                                                     <div className="space-y-4">
-                                                        {Object.keys(fullDoc).map((key) => {
+                                                        {Object.keys(fullDocState).map((key) => {
                                                             if (!DEPT_LABEL[key]) return null;
                                                             if (!permissionsByBlock[key]) return null;
-                                                            const block = fullDoc[key];
+                                                            const block = fullDocState[key];
                                                             if (!blockHasContent(block)) return null;
 
                                                             return (
@@ -1446,18 +1500,50 @@ const autoDepartment =
                                                                    </div>
                                                                )}
                                                            </div>
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                        Resolution Note <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <textarea
-                                                                        value={resolutionNote}
-                                                                        onChange={(e) => setResolutionNote(e.target.value)}
-                                                                        rows={4}
-                                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                                                                        placeholder="Please provide details about how the complaint was resolved..."
-                                                                    />
-                                                                </div>
+                                                          <div>
+                                <div className="flex gap-3 mb-2">
+                                    <button
+                                        className={getBtnStyles("RCA")}
+                                        onClick={() => setSelectedType("RCA")}
+                                        type="button"
+                                    >
+                                        RCA
+                                    </button>
+
+                                    <button
+                                        className={getBtnStyles("CA")}
+                                        onClick={() => setSelectedType("CA")}
+                                        type="button"
+                                    >
+                                        CA
+                                    </button>
+
+                                    <button
+                                        className={getBtnStyles("PA")}
+                                        onClick={() => setSelectedType("PA")}
+                                        type="button"
+                                    >
+                                        PA
+                                    </button>
+                                </div>
+
+                                {selectedType && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {selectedType} Note <span className="text-red-500">*</span>
+                                        </label>
+
+                                        <textarea
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            rows={4}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                                    focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                            placeholder={`Please provide details for ${selectedType} ...`}
+                                        />
+                                    </div>
+                                )}
+                            </div>
 
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">Upload Proof (Optional)</label>
@@ -1503,7 +1589,7 @@ const autoDepartment =
                                                             </button>
                                                             <button
                                                                 onClick={handleResolveSubmit}
-                                                                disabled={!resolutionNote}
+                                                                disabled={!note || !selectedType}
                                                                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                             >
                                                                 Resolve Complaint

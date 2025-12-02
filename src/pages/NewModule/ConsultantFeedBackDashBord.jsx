@@ -145,6 +145,21 @@ function calcRowAverage(feedback = {}) {
 }
 
 
+function getEnglishOnly(name = "") {
+  if (!name) return "";
+
+  // Split by slash if backend sends multiple languages
+  const parts = name.split("/").map((p) => p.trim());
+
+  // English = no Gujarati (઼-૿) and no Hindi (ँ-॰)
+  const english = parts.find(
+    (p) => !/[\u0A80-\u0AFF]/.test(p) && !/[\u0900-\u097F]/.test(p)
+  );
+
+  return english || name;
+}
+
+
 function calcNpsPercent(items) {
     const values = items
         .map((it) => it.overallRecommendation)
@@ -490,8 +505,6 @@ export default function ConsultantFeedBackDashBord() {
         '#ec4899',
     ]
 
-    const { canViewFeedback, canExportFeedback } = resolvePermissions()
-
     // ---------------- Service summary helpers ----------------
     function prettyKey(key = "") {
         return key
@@ -502,55 +515,74 @@ export default function ConsultantFeedBackDashBord() {
             .replace(/^./, (c) => c.toUpperCase());
     }
 
-    const SERVICE_GROUPS = {
-        "Overall Experience": ["overallExperience"],
-        "Consultant Doctor": ["consultantDoctorServices"],
-        "Medical Admin Doctor": ["medicalAdminDoctorService"],
-        "Billing Services": ["billingServices"],
-        "Housekeeping": ["housekeeping"],
-        "Maintenance": ["maintenance"],
-        "Radiology": ["radiologyDiagnosticServices"],
-        "Pathology": ["pathologyDiagnosticServices"],
-        "Dietitian Services": ["dietitianServices"],
-        "Security": ["security"],
-        "Nursing": ["nursing"]
-    };
+   const SERVICE_GROUPS = {
+  "OPD Services – Overall performance": ["OPD Services – Overall performance"],
+  "Front Desk – Admission, discharge, billing": ["Front Desk – Admission, discharge, billing"],
+  "ER Team – Coordination and response": ["ER Team – Coordination and response"],
+  "Medical Officers – Support and efficiency": ["Medical Officers – Support and efficiency"],
+  "CMO – Clinical coordination": ["CMO – Clinical coordination"],
+  "Patient Documentation – Accuracy and upkeep": ["Patient Documentation – Accuracy and upkeep"],
+  "Lab – Report speed and quality": ["Lab – Report speed and quality"],
+  "Radiology – Timely and effective support": ["Radiology – Timely and effective support"],
+  "OT Team – Skill and coordination (Surgeons/Anaesthetists)": ["OT Team – Skill and coordination (Surgeons/Anaesthetists)"],
+  "Pharmacy – Availability of medicines": ["Pharmacy – Availability of medicines"],
+  "Dietary – Food quality and hygiene": ["Dietary – Food quality and hygiene"],
+  "Security – Professionalism and vigilance": ["Security – Professionalism and vigilance"],
+  "Nursing – Care, medication, coordination": ["Nursing – Care, medication, coordination"],
+  "Maintenance/IT – Quick and reliable support": ["Maintenance/IT – Quick and reliable support"],
+  "Housekeeping – Cleanliness and standards": ["Housekeeping – Cleanliness and standards"],
+
+  // BD
+  "BD Team – Cooperation and support": ["BD Team – Cooperation and support"],
+  "BD – Any extra help needed": ["BD – Any extra help needed"],
+
+  // Management
+  "Major challenges this month": ["Major challenges this month"],
+  "Suggestions for process improvement": ["Suggestions for process improvement"],
+  "Extra administrative support needed": ["Extra administrative support needed"],
+  "Staff attitude and teamwork": ["Staff attitude and teamwork"],
+  "Training needs for staff": ["Training needs for staff"]
+};
+
 
     function toArray(maybeArray) {
         if (Array.isArray(maybeArray)) return maybeArray;
         return [];
     }
 
-    function buildServiceSummary(list = []) {
-        const summary = [];
-        const allLabels = {};
+   function buildServiceSummary(raw = []) {
+  const rows = [];
 
-        list.forEach((fb) => {
-            fb.serviceRatings?.forEach((item) => {
-                if (!allLabels[item.label]) {
-                    allLabels[item.label] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-                }
-                if (item.rating >= 1 && item.rating <= 5) {
-                    allLabels[item.label][item.rating] += 1;
-                }
-            });
-        });
+  for (const [serviceLabel, keys] of Object.entries(SERVICE_GROUPS)) {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
 
-        Object.entries(allLabels).forEach(([label, counts]) => {
-            const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+    raw.forEach((fb) => {
+      const ratings = fb?.serviceRatings || [];
 
-            summary.push({
-                service: label,
-                excellent: Math.round((counts[5] / total) * 100),
-                good: Math.round((counts[4] / total) * 100),
-                average: Math.round((counts[3] / total) * 100),
-                poor: Math.round((counts[2] / total) * 100),
-                veryPoor: Math.round((counts[1] / total) * 100),
-            });
-        });
+      ratings.forEach((r) => {
+        if (keys.includes(r.label) && r.rating >= 1 && r.rating <= 5) {
+          counts[r.rating] += 1;
+          total += 1;
+        }
+      });
+    });
 
-        return summary;
-    }
+    const denom = total || 1;
+
+    rows.push({
+      service: serviceLabel,      // 👈 Always English
+      excellent: Math.round((counts[5] / denom) * 100),
+      good: Math.round((counts[4] / denom) * 100),
+      average: Math.round((counts[3] / denom) * 100),
+      poor: Math.round((counts[2] / denom) * 100),
+      veryPoor: Math.round((counts[1] / denom) * 100),
+    });
+  }
+
+  return rows;
+}
+
 
 
     // ---------------- Trend helpers ----------------
@@ -1356,7 +1388,7 @@ export default function ConsultantFeedBackDashBord() {
                                                         return (
                                                             <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-colors`}>
                                                                 <td className="px-6 flex gap-[10px] py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">           <Icon className="w-4 h-4 text-gray-600" />
-                                                                    {service.service}</td>
+                                                                    {getEnglishOnly(service.service)}</td>
                                                                 <td className="px-6 py-[10px] text-center text-sm border-r border-gray-200">
                                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#10B981] text-white">{service.excellent}%</span>
                                                                 </td>
