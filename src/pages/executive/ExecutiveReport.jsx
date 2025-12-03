@@ -190,40 +190,40 @@ export default function ExecutiveReport() {
   }, [])
 
   // Build filtered + previous window slices (based on selected range)
-const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
-  if (!fromDate || !toDate) return { opdFiltered: [], ipdFiltered: [], opdPrev: [], ipdPrev: [] }
+  const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
+    if (!fromDate || !toDate) return { opdFiltered: [], ipdFiltered: [], opdPrev: [], ipdPrev: [] }
 
-  const slice = (arr, fromISO, toISO) =>
-    Array.isArray(arr)
-      ? arr.filter((d) => {
+    const slice = (arr, fromISO, toISO) =>
+      Array.isArray(arr)
+        ? arr.filter((d) => {
           const dtISO = toISODateOnly(
             normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
           )
           return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
         })
-      : []
+        : []
 
-  // current selected range
-  const filteredOpd = slice(opd, fromDate, toDate)
-  const filteredIpd = slice(ipd, fromDate, toDate)
+    // current selected range
+    const filteredOpd = slice(opd, fromDate, toDate)
+    const filteredIpd = slice(ipd, fromDate, toDate)
 
-  // previous range: same length as current
-  const from = new Date(fromDate)
-  const to = new Date(toDate)
-  const days = Math.max(1, Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1)
+    // previous range: same length as current
+    const from = new Date(fromDate)
+    const to = new Date(toDate)
+    const days = Math.max(1, Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1)
 
-  const prevFrom = new Date(from)
-  prevFrom.setDate(prevFrom.getDate() - days)
-  const prevTo = new Date(to)
-  prevTo.setDate(prevTo.getDate() - days)
+    const prevFrom = new Date(from)
+    prevFrom.setDate(prevFrom.getDate() - days)
+    const prevTo = new Date(to)
+    prevTo.setDate(prevTo.getDate() - days)
 
-  return {
-    opdFiltered: filteredOpd,
-    ipdFiltered: filteredIpd,
-    opdPrev: slice(opd, toLocalISO(prevFrom), toLocalISO(prevTo)),
-    ipdPrev: slice(ipd, toLocalISO(prevFrom), toLocalISO(prevTo)),
-  }
-}, [opd, ipd, fromDate, toDate])
+    return {
+      opdFiltered: filteredOpd,
+      ipdFiltered: filteredIpd,
+      opdPrev: slice(opd, toLocalISO(prevFrom), toLocalISO(prevTo)),
+      ipdPrev: slice(ipd, toLocalISO(prevFrom), toLocalISO(prevTo)),
+    }
+  }, [opd, ipd, fromDate, toDate])
 
 
 
@@ -258,7 +258,7 @@ const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
   }
 
   const cur = useMemo(() => computeFor(opdFiltered, ipdFiltered), [opdFiltered, ipdFiltered])
-const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
+  const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
 
 
   // Build table rows with trends + statuses
@@ -361,223 +361,120 @@ const prev = useMemo(() => computeFor(opdPrev, ipdPrev), [opdPrev, ipdPrev])
       <section className="flex w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header
-  pageName="Exe Report"
-  onDateRangeChange={({ from, to }) => {
-    if (from) setFromDate(from)
-    if (to) setToDate(to)
-  }}
-/>
+            pageName="Exe Report"
+            onDateRangeChange={({ from, to }) => {
+              if (from) setFromDate(from)
+              if (to) setToDate(to)
+            }}
+          />
 
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
             <div className="flex flex-col relative  w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
-             <Preloader />
-              <main>
-                {/* Filters */}
-                {/* <section className="mb-3 border border-gray-200 rounded-md">
-                  <form onSubmit={handleFilter} className="p-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
+              <Preloader />
+              <main className=" overflow-x-auto">
+            
+                <section
+                  aria-labelledby="metrics-table"
+                  className="rounded-2xl min-w-[1000px] shadow-md overflow-hidden border border-gray-200 bg-white"
+                >
+                  <h2 id="metrics-table" className="sr-only">
+                    Metric Summary Table
+                  </h2>
 
-                      <div className="relative md34:!mb-[17px] md77:!mb-0">
-        
-                          <ModernDatePicker />
-                      </div>
-
-                      <div className="relative">
-                       
-                        <ModernDatePicker />
-                      </div>
-                    </div>
-                  </form>
-                </section> */}
-
-                {/* Table */}
-                {/* <section aria-labelledby="metrics-table" className="border border-gray-200 rounded-md overflow-hidden">
-                  <h2 id="metrics-table" className="sr-only">Metric Summary Table</h2>
-
-                  {loading && (
-                    <div className="p-4 text-sm text-gray-600">Loading…</div>
-                  )}
-                  {error && (
-                    <div className="p-4 text-sm text-red-600">{error}</div>
-                  )}
-
-                  <div className="overflow-x-auto">
-                    <table className="md11:!min-w-full md34:!min-w-[800px]  md77:!min-w-[1000px] table-fixed">
-                      <colgroup>
-                        <col className="w-2/5" />
-                        <col className="w-1/5" />
-                        <col className="w-1/5" />
-                        <col className="w-1/5" />
-                      </colgroup>
-                      <thead className="bg-gray-100 border-b border-gray-200">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
-                            Metric
-                          </th>
-                          <th className="px-4 py-2 text-center text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
-                            Value
-                          </th>
-                          <th className="px-4 py-2 text-center text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
-                            Trend vs Previous
-                          </th>
-                          <th className="px-4 py-2 text-left text-[13px] font-semibold text-gray-700 uppercase tracking-wider">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {metrics.map((row, idx) => {
-                          const { Icon, iconClass } = statusStyles(row.status.type)
-                          return (
-                            <tr
-                              key={row.metric}
-                              className={idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100 transition-colors"}
-                            >
-                              <td className="px-4 py-2 text-sm font-semibold text-gray-900">{row.metric}</td>
-                              <td className="px-4 py-2 text-center">
-                                <span className="text-base sm:text-sm font-[400] text-gray-900">{row.value}</span>
-                              </td>
-                              <td className="px-4 py-2 text-center">
-                                <span className={`inline-flex items-center gap-2 text-sm font-medium ${trendColor(row.trend.direction)}`}>
-                                  <TrendIcon direction={row.trend.direction} />
-                                  {row.trend.value}
-                                </span>
-                              </td>
-                              <td className="px-4 py-2">
-                                <span className="inline-flex items-center gap-2 text-sm text-gray-800">
-                                  <Icon className={`w-4 h-4 ${iconClass}`} aria-hidden="true" />
-                                  <span className="font-medium">{row.status.label}</span>
-                                </span>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                        {(!loading && !error && metrics.length === 0) && (
-                          <tr>
-                            <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
-                              No data in the selected period.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <td colSpan={4} className="px-4 py-2 bg-gray-100 border-t border-gray-200 text-xs text-gray-600">
-                            Report period: {fromDate} to {toDate}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                  {/* Gradient Header */}
+                  <div className="bg-gradient-to-r from-[#5B7FFF] to-[#6C63FF] py-3 px-5 grid grid-cols-4 text-white text-[13px] font-semibold uppercase tracking-wide">
+                    <div>Metric</div>
+                    <div className="text-center">Value</div>
+                    <div className="text-center">Trend</div>
+                    <div className="text-left">Status</div>
                   </div>
 
-                  
-                </section> */}
+                  {/* Data Rows */}
+                  <div>
+                    {metrics.map((row, idx) => {
+                      const { Icon, iconClass } = statusStyles(row.status.type)
+                      const TrendArrow =
+                        row.trend.direction === "down" ? TrendingDown : TrendingUp
+                      const trendColorClass =
+                        row.trend.direction === "down"
+                          ? "text-red-500"
+                          : "text-emerald-600"
 
-                {/* Table */}
-<section
-  aria-labelledby="metrics-table"
-  className="rounded-2xl shadow-md overflow-hidden border border-gray-200 bg-white"
->
-  <h2 id="metrics-table" className="sr-only">
-    Metric Summary Table
-  </h2>
+                      // 🎨 gradient backgrounds per metric (same as APK)
+                      const iconGradients = {
+                        "Overall OPD Feedback": "from-[#5B7FFF] to-[#306BFF]",
+                        "Overall IPD Feedback": "from-[#A66CFF] to-[#7E5BFF]",
+                        "NPS (OPD)": "from-[#0EA5E9] to-[#06B6D4]",
+                        "NPS (IPD)": "from-[#FBBF24] to-[#F59E0B]",
+                        "Complaints (Detractors)": "from-[#F87171] to-[#EF4444]",
+                        "Avg Doctor Rating": "from-[#3B82F6] to-[#2563EB]",
+                        "Cleanliness (Housekeeping) Score": "from-[#10B981] to-[#059669]",
+                      }
 
-  {/* Gradient Header */}
-  <div className="bg-gradient-to-r from-[#5B7FFF] to-[#6C63FF] py-3 px-5 grid grid-cols-4 text-white text-[13px] font-semibold uppercase tracking-wide">
-    <div>Metric</div>
-    <div className="text-center">Value</div>
-    <div className="text-center">Trend</div>
-    <div className="text-left">Status</div>
-  </div>
+                      const gradientClass =
+                        iconGradients[row.metric] || "from-[#5B7FFF] to-[#3A46FF]"
 
-  {/* Data Rows */}
-  <div>
-    {metrics.map((row, idx) => {
-      const { Icon, iconClass } = statusStyles(row.status.type)
-      const TrendArrow =
-        row.trend.direction === "down" ? TrendingDown : TrendingUp
-      const trendColorClass =
-        row.trend.direction === "down"
-          ? "text-red-500"
-          : "text-emerald-600"
+                      return (
+                        <div
+                          key={row.metric}
+                          className={`grid grid-cols-4 items-center py-[8px] px-3 text-sm ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            } hover:bg-gray-100 transition`}
+                        >
+                          {/* Metric name + gradient icon */}
+                          <div className="flex items-center gap-3 font-[500] text-gray-800">
+                            <div
+                              className={`w-8 h-8 flex items-center justify-center rounded-md text-white bg-gradient-to-br ${gradientClass} shadow-sm`}
+                            >
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <span>{row.metric}</span>
+                          </div>
 
-      // 🎨 gradient backgrounds per metric (same as APK)
-      const iconGradients = {
-        "Overall OPD Feedback": "from-[#5B7FFF] to-[#306BFF]",
-        "Overall IPD Feedback": "from-[#A66CFF] to-[#7E5BFF]",
-        "NPS (OPD)": "from-[#0EA5E9] to-[#06B6D4]",
-        "NPS (IPD)": "from-[#FBBF24] to-[#F59E0B]",
-        "Complaints (Detractors)": "from-[#F87171] to-[#EF4444]",
-        "Avg Doctor Rating": "from-[#3B82F6] to-[#2563EB]",
-        "Cleanliness (Housekeeping) Score": "from-[#10B981] to-[#059669]",
-      }
+                          {/* Value */}
+                          <div className="text-center text-[15px] font-medium text-gray-900">
+                            {row.value}
+                          </div>
 
-      const gradientClass =
-        iconGradients[row.metric] || "from-[#5B7FFF] to-[#3A46FF]"
+                          {/* Trend */}
+                          <div
+                            className={`flex items-center justify-center gap-1 font-semibold ${trendColorClass}`}
+                          >
+                            <TrendArrow className="w-4 h-4" />
+                            {row.trend.value}
+                          </div>
 
-      return (
-        <div
-          key={row.metric}
-          className={`grid grid-cols-4 items-center py-[8px] px-3 text-sm ${
-            idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-          } hover:bg-gray-100 transition`}
-        >
-          {/* Metric name + gradient icon */}
-          <div className="flex items-center gap-3 font-[500] text-gray-800">
-            <div
-              className={`w-8 h-8 flex items-center justify-center rounded-md text-white bg-gradient-to-br ${gradientClass} shadow-sm`}
-            >
-              <Icon className="w-4 h-4" />
-            </div>
-            <span>{row.metric}</span>
-          </div>
+                          {/* Status */}
+                          <div className="flex items-center gap-2 text-gray-800">
+                            <Icon className={`w-4 h-4 ${iconClass}`} />
+                            <span
+                              className={`font-medium ${row.status.type === "attention"
+                                  ? "text-red-600"
+                                  : row.status.type === "improving"
+                                    ? "text-blue-600"
+                                    : "text-green-600"
+                                }`}
+                            >
+                              {row.status.label}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
 
-          {/* Value */}
-          <div className="text-center text-[15px] font-medium text-gray-900">
-            {row.value}
-          </div>
+                    {/* Empty State */}
+                    {!loading && !error && metrics.length === 0 && (
+                      <div className="py-6 text-center text-gray-500 text-sm">
+                        No data in the selected period.
+                      </div>
+                    )}
+                  </div>
 
-          {/* Trend */}
-          <div
-            className={`flex items-center justify-center gap-1 font-semibold ${trendColorClass}`}
-          >
-            <TrendArrow className="w-4 h-4" />
-            {row.trend.value}
-          </div>
-
-          {/* Status */}
-          <div className="flex items-center gap-2 text-gray-800">
-            <Icon className={`w-4 h-4 ${iconClass}`} />
-            <span
-              className={`font-medium ${
-                row.status.type === "attention"
-                  ? "text-red-600"
-                  : row.status.type === "improving"
-                  ? "text-blue-600"
-                  : "text-green-600"
-              }`}
-            >
-              {row.status.label}
-            </span>
-          </div>
-        </div>
-      )
-    })}
-
-    {/* Empty State */}
-    {!loading && !error && metrics.length === 0 && (
-      <div className="py-6 text-center text-gray-500 text-sm">
-        No data in the selected period.
-      </div>
-    )}
-  </div>
-
-  {/* Footer */}
-  <div className="bg-gray-100 text-gray-600 text-xs py-2 px-5 border-t border-gray-200 text-center rounded-b-2xl">
-    Report period: {fromDate} to {toDate}
-  </div>
-</section>
+                  {/* Footer */}
+                  <div className="bg-gray-100 text-gray-600 text-xs py-2 px-5 border-t border-gray-200 text-center rounded-b-2xl">
+                    Report period: {fromDate} to {toDate}
+                  </div>
+                </section>
 
               </main>
             </div>

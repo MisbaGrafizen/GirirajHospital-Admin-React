@@ -1476,7 +1476,7 @@ export default function ComplaintManagementDashboard() {
                                                 </h3>
                                             </div>
                                             <div className="w-full overflow-x-auto">
-                                                <table className=" w-[100%] mx">
+                                                <table className=" w-[100%] min-w-[900px] mx">
                                                     <thead className="bg-gray-50">
                                                         <tr>
                                                             <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">

@@ -21,7 +21,7 @@ export default {
         'AwanZaman Heavy': ['"AwanZaman Heavy"', 'AwanZaman Heavy'],
         'Poppins': ['"Poppins"', 'sans-serif'],
         'Outfit': ['"Outfit", sans-serif'],
-        'Potua':['Potua'],
+        'Potua': ['Potua'],
         'OpenSan': ['"Open Sans", "Roboto", "Arial", "sans-serif"'],
         'Lato': ['"Lato", serif'],
         'Jersy': ['"Jersey 25"']
@@ -30,8 +30,9 @@ export default {
         'md150': '1650px',
         'md11': '1160px',
         'md77': '770px',
-        'md34': '340px',  
-                'md13': '1300px',
+        'md34': '340px',
+        'md13': '1300px',
+        
       },
     },
   },

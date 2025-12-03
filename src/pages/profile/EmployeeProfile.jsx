@@ -82,177 +82,158 @@ export default function EmployeeProfile() {
           <Header pageName="Profile" />
           <div className="flex w-[100%] h-[100%]">
             <CubaSidebar />
-            <div className="flex flex-col w-[100%] relative max-h-[93%] md34:!pb-[100px] md11:!pb-[20px] overflow-y-auto gap-[10px]  ">
-          <div className="w-full h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex overflow-hidden">
-      {/* LEFT PANEL */}
-      <div className="w-[26%] bg-white/70 backdrop-blur-md border-r border-gray-200 p-3 flex flex-col justify-between shadow-md">
-        {/* Top Profile */}
-        <div>
-          <div className="flex flex-col items-center text-center">
-            <div className="relative w-48 h-48 rounded-2xl overflow-hidden shadow-lg border-4 border-white mb-4">
-              <img
-                src={employee.image}
-                alt={employee.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {employee.name}
-            </h1>
-            <p className="text-blue-600 font-medium mt-1">
-              {employee.position}
-            </p>
-            <p className="text-gray-500 text-sm">{employee.department}</p>
+            <div className="flex flex-col w-[100%] pt-[10px] relative max-h-[93%] md34:!pb-[100px] md11:!pb-[20px] overflow-y-auto gap-[10px]  ">
+         <div className="w-full min-h-screen bg-gray-50 px-2  ">
 
-            <span
-              className={`mt-4 px-5 py-1.5 text-sm font-semibold rounded-full ${
-                employee.status === "Active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {employee.status}
-            </span>
-          </div>
+  {/* GRID LAYOUT */}
+  <div className="grid grid-cols-1 md11:!pb-[10px] pb-[80px] lg:grid-cols-3 gap-6 ">
 
-          {/* Contact Info */}
-          <div className="mt-10 space-y-6">
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-500 mb-0.5">Email</p>
-                <a
-                  href={`mailto:${employee.email}`}
-                  className="text-gray-900 font-semibold hover:text-blue-600"
-                >
-                  {employee.email}
-                </a>
-              </div>
-            </div>
+    {/* ▬▬▬ LEFT PROFILE CARD ▬▬▬ */}
+    <div className="bg-white h-fit rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-200 p-6 flex flex-col items-center">
 
-            <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-500 mb-0.5">Phone</p>
-                <a
-                  href={`tel:${employee.phone}`}
-                  className="text-gray-900 font-semibold hover:text-blue-600"
-                >
-                  {employee.phone}
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Employee ID Footer */}
-        <div className="pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500 mb-1">Employee ID</p>
-          <p className="text-gray-800 font-semibold">{employee.employeeId}</p>
-          <p className="text-xs text-gray-400 mt-2">
-            Joined: {employee.joinDate}
-          </p>
-        </div>
+      {/* Photo */}
+      <div className="w-28 h-28 rounded-xl overflow-hidden shadow-md border border-gray-200">
+        <img
+          src={employee.image}
+          alt={employee.name}
+          className="w-full h-full object-cover"
+        />
       </div>
 
-      {/* RIGHT CONTENT */}
-      <div className="flex-1 p-3 overflow-y-auto">
-        {/* Header Bar */}
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <User className="w-7 h-7 text-blue-600" />
-              Employee Overview
-            </h2>
-            <p className=" text-[13px] text-gray-500">
-              Complete profile & professional information
-            </p>
-          </div>
+      {/* Name & Role */}
+      <h2 className="mt-4 text-lg font-bold text-gray-900">{employee.name}</h2>
+      <p className="text-indigo-600 font-semibold text-sm">{employee.position}</p>
+      <p className="text-gray-500 text-xs">{employee.department}</p>
 
+      {/* Status */}
+      <span
+        className={`mt-3 px-3 py-1 text-xs font-semibold rounded-full ${
+          employee.status === "Active"
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
+        }`}
+      >
+        {employee.status}
+      </span>
+
+      {/* Contact */}
+      <div className="w-full mt-6 space-y-4 text-sm">
+
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-blue-100">
+            <Mail className="w-5 h-5 text-blue-600" />
+          </div>
+          <span className="text-gray-700">{employee.email}</span>
         </div>
 
-        {/* DETAILS GRID */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Personal Information */}
-          <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-all">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-blue-600" />
-              Personal Information
-            </h3>
-
-            <div className="space-y-4 text-sm">
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-600">Department</span>
-                <span className="font-semibold text-gray-800">
-                  {employee.department}
-                </span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-600">Join Date</span>
-                <span className="font-semibold text-gray-800">
-                  {employee.joinDate}
-                </span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-600">Status</span>
-                <span className="font-semibold text-green-700">
-                  {employee.status}
-                </span>
-              </div>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-green-100">
+            <Phone className="w-5 h-5 text-green-600" />
           </div>
-
-          {/* Professional Details */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-purple-600" />
-              Professional Details
-            </h3>
-
-            <div className="space-y-4 text-sm">
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-600">Specialization</span>
-                <span className="font-semibold text-gray-800">
-                  {employee.specialization}
-                </span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-600">Position</span>
-                <span className="font-semibold text-gray-800">
-                  {employee.position}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Experience</span>
-                <span className="font-semibold text-gray-800">
-                  {employee.experience || "—"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Achievements / Projects */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all lg:col-span-2">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Award className="w-5 h-5 text-yellow-600" />
-              Recent Projects / Achievements
-            </h3>
-
-            <ul className="list-disc list-inside text-gray-700 text-sm space-y-1">
-              {employee.projects && employee.projects.length > 0 ? (
-                employee.projects.map((proj, i) => (
-                  <li key={i} className="leading-6">
-                    {proj}
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-400 italic">No recent records.</li>
-              )}
-            </ul>
-          </div>
+          <span className="text-gray-700">{employee.phone}</span>
         </div>
+
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-gray-200">
+            <User className="w-5 h-5 text-gray-700" />
+          </div>
+          <span className="text-gray-700">ID: {employee.employeeId}</span>
+        </div>
+
+      </div>
+
+      {/* Footer */}
+      <div className="mt-6 pt-4 w-full border-t text-xs text-gray-400 text-center">
+        Joined on {employee.joinDate}
       </div>
     </div>
+
+    {/* ▬▬▬ RIGHT SIDE CONTENT ▬▬▬ */}
+    <div className="lg:col-span-2 space-y-6">
+
+      {/* Personal Info */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <ClipboardList className="w-5 h-5 text-blue-600 bg-blue-100 p-1 rounded-md" />
+          Personal Information
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500">Department</p>
+            <p className="font-semibold text-gray-800">{employee.department}</p>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500">Join Date</p>
+            <p className="font-semibold text-gray-800">{employee.joinDate}</p>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500">Status</p>
+            <p className="font-semibold text-gray-800">{employee.status}</p>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Professional Details */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Briefcase className="w-5 h-5 text-purple-600 bg-purple-100 p-1 rounded-md" />
+          Professional Details
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500">Specialization</p>
+            <p className="font-semibold text-gray-800">{employee.specialization}</p>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500">Position</p>
+            <p className="font-semibold text-gray-800">{employee.position}</p>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500">Experience</p>
+            <p className="font-semibold text-gray-800">
+              {employee.experience || "—"}
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Achievements */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Award className="w-5 h-5 text-yellow-600 bg-yellow-100 p-1 rounded-md" />
+          Projects & Achievements
+        </h3>
+
+        <div className="space-y-3 text-sm">
+          {employee.projects?.length ? (
+            employee.projects.map((p, i) => (
+              <div
+                key={i}
+                className="p-3 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all"
+              >
+                {p}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-400 italic">No recent records.</p>
+          )}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
             </div>
           </div>
         </div>

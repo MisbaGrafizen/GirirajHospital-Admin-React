@@ -43,7 +43,7 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
       // initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
       // animate={{ opacity: 1, scale: 1, rotate: 0 }3
       // transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
-      className="relative bg-white md11:!w-fit  rounded-2xl flex flex-col  h-fit  dashShadow border-gray-100 p-[15px] "
+      className="relative bg-white md11:!w-[250px]  rounded-2xl flex flex-col  h-fit  dashShadow border-gray-100 p-[15px] "
     >
 
       <div className=' flex  mb-[6px] items-center gap-[10px]'>
@@ -54,15 +54,15 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
         </div>
         <h3 className="text-[14px] font-[400] text-gray-900 ">Complaint Distribution</h3>
       </div>
-      <div className="relative w-[280px]   2xl:!w-[250px] !h-[180px] md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
+      <div className="relative w-[280px] md13:!w-[200px]    !h-[180px] md34:items-start  md11:!items-center flex mx-auto justify-center items-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
+              cx="48%"
+              cy="48%"
+              innerRadius={45}
+              outerRadius={75}
               paddingAngle={2}
               dataKey="value"
               className=" "
@@ -118,19 +118,19 @@ export default function ConcernSummaryDonutChart({ data = [] }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.2, duration: 0.5 }}
-        className="    flex justify-center gap-x-3  gap-y-[10px] mt-[16px] mb-[5px]"
+        className="    flex justify-center  flex-wrap gap-x-3  gap-y-[px] mt-[2px] mb-[5px]"
       >
         {data.map((item, index) => (
           <motion.div
             key={item.name}
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-1 cursor-pointer"
+            className="flex items-center  gap-1 cursor-pointer"
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
           >
-            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
-            <div className="text-[11px]">
-              <span className="font-medium text-gray-900">{item.name}</span>
+            <div className="w-[10px] h-[10px] flex-shrink-0 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
+            <div className="text-[11px] ">
+              <span className="font-medium text-[10px] text-gray-900">{item.name}</span>
               <span className="text-gray-600 ml-1">({item.value})</span>
             </div>
           </motion.div>

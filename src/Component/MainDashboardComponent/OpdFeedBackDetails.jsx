@@ -171,9 +171,9 @@ export default function OpdFeedBackDetails() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200"
+            className="bg-white rounded-xl shadow-xl overflow-x-auto md11:!overflow-hidden border border-gray-200"
           >
-            <table className="w-full min-w-[1000px]">
+            <table className="w-full min-w-[1200px]">
               {/* 🔹 HEADER */}
               <thead>
                 <tr className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">

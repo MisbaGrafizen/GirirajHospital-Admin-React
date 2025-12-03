@@ -753,7 +753,7 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
 
                       {/* Create / Edit User Modal */}
                       {isModalOpen && (
-                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[22000] p-3">
                           <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn relative">
                             {/* Optional blocker while saving */}
                             {isSavingUser && (
@@ -1006,12 +1006,12 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
 
           {/* View Data Modal */}
           <NextUIModal onClose={handleClosemodal} isOpen={viewdatamodal}>
-            <ModalContent className="md:max-w-[750px] max-w-[733px] relative rounded-2xl z-[700] items-start flex justify-center !py-0 mx-auto h-[430px]">
+            <ModalContent className="md:max-w-[750px] max-w-[733px] relative h-[95vh] w-[90%] rounded-2xl items-start flex justify-center z-[23929329382938] !py-0  bg-transparent  md11:!bg-white mx-auto md11:!h-[490px]">
               {(handleClosemodal) => (
                 <>
-                  <div className="bg-white w-[100%] font-Poppins  overflow-y-auto animate-fadeIn">
+                  <div className="bg-white  rounded-[10px] w-[100%] font-Poppins  !z-[8800000]  block relative overflow-y-auto animate-fadeIn">
                     <div className="relative">
-                      <div className="h-[53px] bs-spj rounded-t- flex items-end">
+                      <div className="h-[53px]  bs-spj rounded-t- flex items-end">
                         <div className="absolute top-3 right-4">
                           <button
                             onClick={handleClosemodal}
@@ -1108,7 +1108,9 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
                             </div>
                           </div>
 
-                          <div className="space-y-2">
+                  
+                        </div>
+                                <div className="space-y-2">
                             <p className="text-sm font-medium text-gray-500">Profile Picture</p>
                             <div className="border rounded-lg p-8 flex flex-col items-center justify-center bg-gray-50">
                               {selectedUserData?.profilePicture ? (
@@ -1124,7 +1126,6 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
                               )}
                             </div>
                           </div>
-                        </div>
                       </div>
                     </div>
                   </div>

@@ -514,7 +514,7 @@ if (data.kpis || data.totals) {
                       <div className=" mt-[10px]">
                         <OpdFeedBackDetails />
                       </div>
-                      <div className=" mt-[7px]">
+                      <div className=" mt-[7px] pb-[40px] md11:!pb-0">
                         <ComplaintsListDash />
                       </div>
 

@@ -1378,7 +1378,7 @@ const filteredFeedback = rows
                 </div>
 
                 {/* Patient-Wise Feedback Table */}
-                <div className= "rounded-xl e md34:!mb-[100px] md11:!mb-0    overflow-hidden">
+                <div className= "rounded-xl e md34:!mb-[60px] md11:!mb-0    overflow-hidden">
                   <div className="px-2  pt-[5px] pb-[13px]   border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
                     <div className=' flex gap-[10px] items-center    justify-start '>
 

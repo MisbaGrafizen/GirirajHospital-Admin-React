@@ -407,21 +407,21 @@ function Header({
 
                   <div className="relative md34:!mb-[17px] md77:!mb-0">
 
- <ModernDatePicker
-  label="From Date"
-  selectedDate={dateFrom}
-  setSelectedDate={setDateFrom}
-/>
+                    <ModernDatePicker
+                      label="From Date"
+                      selectedDate={dateFrom}
+                      setSelectedDate={setDateFrom}
+                    />
 
                   </div>
 
                   <div className="relative">
 
-                 <ModernDatePicker
-  label="To Date"
-  selectedDate={dateTo}
-  setSelectedDate={setDateTo}
-/>
+                    <ModernDatePicker
+                      label="To Date"
+                      selectedDate={dateTo}
+                      setSelectedDate={setDateTo}
+                    />
                   </div>
                 </div>
               )}
@@ -500,7 +500,7 @@ function Header({
 
           <div className="relative   mr-[30px] gap-[15px] flex items-center">
             {location.pathname === "/settings/user-manage" && (
-              <div className=" flex gap-[10px]">
+              <div className=" md:!flex md34:!hidden gap-[10px]">
 
 
                 <button
@@ -526,7 +526,7 @@ function Header({
 
               <button
                 onClick={onCreateNewRole}
-                className="px-3  flex  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
+                className="px-3  md:!flex md34:!hidden  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
               >
                 <Plus className="w-5 h-5" />
                 Create New Role
@@ -536,7 +536,7 @@ function Header({
             {location.pathname === "/settings/bed-manage" && (
               <button
                 onClick={onCreateWard}
-                className="px-2  flex  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
+                className="px-2  md:!flex md34:!hidden  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
               >
                 <i className="fa-solid fa-plus"></i> Create Ward
               </button>

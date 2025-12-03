@@ -91,38 +91,38 @@ const DEPT_REVERSE_MAP = Object.fromEntries(
 
 
 function resolvePermissions() {
-    const loginType = localStorage.getItem("loginType");
-    const isAdmin = loginType === "admin";
+  const loginType = localStorage.getItem("loginType");
+  const isAdmin = loginType === "admin";
 
-    let permsArray = [];
-    try {
-        const parsed = JSON.parse(localStorage.getItem("rights"));
-        if (parsed?.permissions && Array.isArray(parsed.permissions)) {
-            permsArray = parsed.permissions;
-        } else if (Array.isArray(parsed)) {
-            permsArray = parsed;
-        }
-    } catch {
-        permsArray = [];
+  let permsArray = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem("rights"));
+    if (parsed?.permissions && Array.isArray(parsed.permissions)) {
+      permsArray = parsed.permissions;
+    } else if (Array.isArray(parsed)) {
+      permsArray = parsed;
     }
+  } catch {
+    permsArray = [];
+  }
 
-    const permissionsByBlock = {};
-    if (isAdmin) {
-        Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
-            permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
-        });
-    } else {
-        permsArray.forEach((p) => {
-            const blockKey = MODULE_TO_BLOCK[p.module];
-            if (blockKey) {
-                permissionsByBlock[blockKey] = p.permissions.map((x) =>
-                    x.toLowerCase()
-                );
-            }
-        });
-    }
+  const permissionsByBlock = {};
+  if (isAdmin) {
+    Object.entries(MODULE_TO_BLOCK).forEach(([module, block]) => {
+      permissionsByBlock[block] = ["view", "forward", "escalate", "resolve"];
+    });
+  } else {
+    permsArray.forEach((p) => {
+      const blockKey = MODULE_TO_BLOCK[p.module];
+      if (blockKey) {
+        permissionsByBlock[blockKey] = p.permissions.map((x) =>
+          x.toLowerCase()
+        );
+      }
+    });
+  }
 
-    return { isAdmin, permissionsByBlock };
+  return { isAdmin, permissionsByBlock };
 }
 
 
@@ -152,51 +152,51 @@ export default function EmailManagement() {
   const [allowedDepartments, setAllowedDepartments] = useState([]);
 
 
-useEffect(() => {
-  const fetchSettings = async () => {
-    try {
-      const loginType = localStorage.getItem("loginType");
-      const userId = localStorage.getItem("userId");
-      const userModel = loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const loginType = localStorage.getItem("loginType");
+        const userId = localStorage.getItem("userId");
+        const userModel = loginType === "admin" ? "GIRIRAJUser" : "GIRIRAJRoleUser";
 
-      if (!userId || !userModel) return;
+        if (!userId || !userModel) return;
 
-      const res = await ApiGet(
-        `/admin/notification-settings?userId=${userId}&userModel=${userModel}`
-      );
+        const res = await ApiGet(
+          `/admin/notification-settings?userId=${userId}&userModel=${userModel}`
+        );
 
-      const s = res?.data || {};
+        const s = res?.data || {};
 
-      const { permissionsByBlock } = resolvePermissions();
-      setAllowedDepartments(Object.keys(permissionsByBlock));
+        const { permissionsByBlock } = resolvePermissions();
+        setAllowedDepartments(Object.keys(permissionsByBlock));
 
-      // -------------------------------
-      // 1️⃣ ADMIN → Show all filters
-      // -------------------------------
-      if (loginType === "admin") {
-        setAllowedFilters(["OPD", "IPD", "Complaint", "Internal Complaint"]);
-        return;
+        // -------------------------------
+        // 1️⃣ ADMIN → Show all filters
+        // -------------------------------
+        if (loginType === "admin") {
+          setAllowedFilters(["OPD", "IPD", "Complaint", "Internal Complaint"]);
+          return;
+        }
+
+        // -------------------------------
+        // 2️⃣ ROLE USER → Show filters based on settings
+        // -------------------------------
+        const temp = [];
+        if (s.opd) temp.push("OPD");
+        if (s.ipd) temp.push("IPD");
+        if (s.complaint) temp.push("Complaint");
+        if (s.internalComplaint) temp.push("Internal Complaint");
+
+        setAllowedFilters(temp.length > 0 ? temp : ["Complaint", "Internal Complaint"]);
+
+      } catch (err) {
+        console.error("❌ Failed to fetch notification settings:", err);
+        setAllowedFilters(["Complaint", "Internal Complaint"]);
       }
+    };
 
-      // -------------------------------
-      // 2️⃣ ROLE USER → Show filters based on settings
-      // -------------------------------
-      const temp = [];
-      if (s.opd) temp.push("OPD");
-      if (s.ipd) temp.push("IPD");
-      if (s.complaint) temp.push("Complaint");
-      if (s.internalComplaint) temp.push("Internal Complaint");
-
-      setAllowedFilters(temp.length > 0 ? temp : ["Complaint", "Internal Complaint"]);
-
-    } catch (err) {
-      console.error("❌ Failed to fetch notification settings:", err);
-      setAllowedFilters(["Complaint", "Internal Complaint"]);
-    }
-  };
-
-  fetchSettings();
-}, []);
+    fetchSettings();
+  }, []);
 
 
   const getSubjectColor = (subject) => {
@@ -215,13 +215,13 @@ useEffect(() => {
 
     return "bg-gray-100 border-gray-200 text-gray-700" // default
   }
-  
+
   function formatStatus(value) {
-  if (!value) return "";
-  return value
-    .replace(/_/g, " ")     // convert underscores → spaces
-    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
-}
+    if (!value) return "";
+    return value
+      .replace(/_/g, " ")     // convert underscores → spaces
+      .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
+  }
 
 
 
@@ -234,7 +234,7 @@ useEffect(() => {
       return "bg-green-100 text-green-700 border border-green-300";
     if (s.includes("in progress"))
       return "bg-yellow-100 text-yellow-800 border border-yellow-300";
-    if (s.includes("open")) 
+    if (s.includes("open"))
       return "bg-blue-100 text-blue-700 border border-blue-300";
     if (s.includes("partial"))
       return "bg-orange-100 text-orange-700 border border-orange-300";
@@ -251,23 +251,23 @@ useEffect(() => {
       setLoading(true);
       const data = await ApiGet("/admin/notifications");
       console.log('data', data)
-const mapped = (data?.notifications || []).map((n) => {
-const isInternal =
-  n.title?.toLowerCase().includes("internal") ||
-  n.body?.toLowerCase().includes("internal") ||
-  n.data?.isInternal === true;
+      const mapped = (data?.notifications || []).map((n) => {
+        const isInternal =
+          n.title?.toLowerCase().includes("internal") ||
+          n.body?.toLowerCase().includes("internal") ||
+          n.data?.isInternal === true;
 
-  function formatStatus(val) {
-    if (!val) return "Unknown";
-    return val.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase());
-  }
+        function formatStatus(val) {
+          if (!val) return "Unknown";
+          return val.replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase());
+        }
 
-  function formatKey(key) {
-    return key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
-  }
+        function formatKey(key) {
+          return key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+        }
 
-  // ---- INTERNAL DETAILS BUILDER ----
-  const buildInternalContent = (data) => `
+        // ---- INTERNAL DETAILS BUILDER ----
+        const buildInternalContent = (data) => `
       <div class="space-y-4">
         <p class="text-gray-800 text-base">${n.body}</p>
 
@@ -288,79 +288,78 @@ const isInternal =
       </div>
     `;
 
-  function row(label, value) {
-    return `
+        function row(label, value) {
+          return `
       <div class="flex items-start py-2">
         <div class="w-40 font-medium text-gray-900">${label}</div>
         <div class="flex-1 text-gray-700 break-words">${value || "-"}</div>
       </div>
     `;
-  }
+        }
 
-  return {
-    id: n._id,
+        return {
+          id: n._id,
 
-    // raw data store
-    data: n.data,
-    department: n.department,
+          // raw data store
+          data: n.data,
+          department: n.department,
 
-    // DIFFERENT SENDER FORMAT FOR INTERNAL COMPLAINTS
-    sender: isInternal
-      ? `${n.data?.floorNo || "-"}/ ${n.data?.employeeName || "Unknown Employee"}`
-      : `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
+          // DIFFERENT SENDER FORMAT FOR INTERNAL COMPLAINTS
+          sender: isInternal
+            ? `${n.data?.floorNo || "-"}/ ${n.data?.employeeName || "Unknown Employee"}`
+            : `${n.data?.bedNo || "-"} / ${n.data?.consultantDoctorName || "Unknown Doctor"}`,
 
-subject: isInternal ? "Internal Complaint" : n.title,
-    senderEmail: "",
-    preview: n.body,
+          subject: isInternal ? "Internal Complaint" : n.title,
+          senderEmail: "",
+          preview: n.body,
 
-    status: formatStatus(n.data?.status),
+          status: formatStatus(n.data?.status),
 
-    // DIFFERENT CONTENT FOR INTERNAL COMPLAINT
-    content: isInternal
-      ? buildInternalContent(n.data)
-      : `
+          // DIFFERENT CONTENT FOR INTERNAL COMPLAINT
+          content: isInternal
+            ? buildInternalContent(n.data)
+            : `
         <div class="space-y-4">
           <p class="text-gray-800 text-base">${n.body}</p>
 
-          ${
-            n.data
+          ${n.data
               ? `<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
                   <h4 class="text-blue-600 font-semibold mb-3 flex items-center gap-2">
                     📋 Patient Details
                   </h4>
                   <div class="divide-y divide-gray-200">
                     ${Object.entries(n.data)
-                      .filter(([key]) => !["complaintid","_id","__v"].includes(key.toLowerCase()))
-                      .map(([key, value]) => {
-                        let label = key.toLowerCase() === "complaint" ? "Complaint Id" : formatKey(key);
+                .filter(([key]) => !["complaintid", "_id", "__v"].includes(key.toLowerCase()))
+                .map(([key, value]) => {
+                  let label = key.toLowerCase() === "complaint" ? "Complaint Id" : formatKey(key);
 
-                        if (key.toLowerCase() === "status") {
-                          value = formatStatus(value);
-                        }
+                  if (key.toLowerCase() === "status") {
+                    value = formatStatus(value);
+                  }
 
-                        return `
+                  return `
                           <div class="flex items-start py-2">
                             <div class="w-40 font-medium text-gray-900 capitalize">${label}</div>
                             <div class="flex-1 text-gray-700 break-words">${value}</div>
                           </div>
                         `;
-                      })
-                      .join("")}
+                })
+                .join("")}
                   </div>
                 </div>`
               : ""
-          }
+            }
         </div>
       `,
 
-    timestamp: new Date(n.createdAt).toLocaleString(),
-    isRead: false,
-    isStarred: false,
-    isNew: true,
-    priority: "normal",
-    hasAttachment: false,
-  };
-});
+          timestamp: new Date(n.createdAt).toLocaleString(),
+          isRead: false,
+          isStarred: false,
+          isNew: true,
+          priority: "normal",
+          hasAttachment: false,
+        };
+      });
 
       // Helper function
       function formatKey(key) {
@@ -379,7 +378,7 @@ subject: isInternal ? "Internal Complaint" : n.title,
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchEmails();
     socket.on("ipd:new", fetchEmails);
@@ -393,82 +392,82 @@ subject: isInternal ? "Internal Complaint" : n.title,
     };
   }, []);
 
-console.log('allowedDepartments', allowedDepartments)
+  console.log('allowedDepartments', allowedDepartments)
 
-const filteredEmails = useMemo(() => {
-  let list = emails;
+  const filteredEmails = useMemo(() => {
+    let list = emails;
 
-  // 🔍 SEARCH FILTER
-  if (searchQuery) {
-    list = list.filter(
-      (email) =>
-        email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.preview?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
+    // 🔍 SEARCH FILTER
+    if (searchQuery) {
+      list = list.filter(
+        (email) =>
+          email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          email.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          email.preview?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
-// ⭐ Unified permission filter (Complaint + Internal Complaint)
-if (allowedDepartments.length > 0) {
-  list = list.filter((email) => {
-    const backendDept =
-      email.data?.departments ||
-      email.data?.department ||
-      email.department ||
-      "";
+    // ⭐ Unified permission filter (Complaint + Internal Complaint)
+    if (allowedDepartments.length > 0) {
+      list = list.filter((email) => {
+        const backendDept =
+          email.data?.departments ||
+          email.data?.department ||
+          email.department ||
+          "";
 
-    if (!backendDept) return false;
+        if (!backendDept) return false;
 
-    const deptList = backendDept
-      .split(",")
-      .map((d) => d.trim().toLowerCase());
+        const deptList = backendDept
+          .split(",")
+          .map((d) => d.trim().toLowerCase());
 
-    return deptList.some((deptLabel) => {
-      // Internal dept text → dept key
-      const deptKey =
-        DEPT_REVERSE_MAP[deptLabel] ||  // internal departments
-        DEPT_NAME_MAP[deptLabel];       // complaint departments
+        return deptList.some((deptLabel) => {
+          // Internal dept text → dept key
+          const deptKey =
+            DEPT_REVERSE_MAP[deptLabel] ||  // internal departments
+            DEPT_NAME_MAP[deptLabel];       // complaint departments
 
-      if (!deptKey) return false;
+          if (!deptKey) return false;
 
-      // doctorServices → doctor_service
-      const moduleKey = Object.keys(MODULE_TO_BLOCK).find(
-        (k) => MODULE_TO_BLOCK[k] === deptKey
-      ) || deptKey;
+          // doctorServices → doctor_service
+          const moduleKey = Object.keys(MODULE_TO_BLOCK).find(
+            (k) => MODULE_TO_BLOCK[k] === deptKey
+          ) || deptKey;
 
-      const blockName = MODULE_TO_BLOCK[moduleKey] || deptKey;
+          const blockName = MODULE_TO_BLOCK[moduleKey] || deptKey;
 
-      return allowedDepartments.includes(blockName);
-    });
-  });
-}
-
-
-if (selectedFilters.length > 0) {
-  list = list.filter((email) => {
-    const sub = email.subject?.toLowerCase() || "";
-
-    const isInternal = sub.includes("internal");
-    const isRegularComplaint = sub.includes("complaint") && !isInternal;
-
-    if (selectedFilters.includes("Internal Complaint") && isInternal) return true;
-    if (selectedFilters.includes("Complaint") && isRegularComplaint) return true;
-
-    return false;
-  });
-}
-
-  return list;
-}, [emails, searchQuery, selectedFilters, allowedDepartments]);
-
-useEffect(() => {
-  if (!filteredEmails.find(e => e.id === selectedEmail?.id)) {
-    setSelectedEmail(null);
-  }
-}, [filteredEmails]);
+          return allowedDepartments.includes(blockName);
+        });
+      });
+    }
 
 
-console.log('filteredEmails', filteredEmails)
+    if (selectedFilters.length > 0) {
+      list = list.filter((email) => {
+        const sub = email.subject?.toLowerCase() || "";
+
+        const isInternal = sub.includes("internal");
+        const isRegularComplaint = sub.includes("complaint") && !isInternal;
+
+        if (selectedFilters.includes("Internal Complaint") && isInternal) return true;
+        if (selectedFilters.includes("Complaint") && isRegularComplaint) return true;
+
+        return false;
+      });
+    }
+
+    return list;
+  }, [emails, searchQuery, selectedFilters, allowedDepartments]);
+
+  useEffect(() => {
+    if (!filteredEmails.find(e => e.id === selectedEmail?.id)) {
+      setSelectedEmail(null);
+    }
+  }, [filteredEmails]);
+
+
+  console.log('filteredEmails', filteredEmails)
 
   const handleEmailClick = (email) => {
     setSelectedEmail(email);
@@ -524,6 +523,24 @@ console.log('filteredEmails', filteredEmails)
     )
   }
 
+
+  useEffect(() => {
+  const handleMobileBack = (e) => {
+    // If mobile detail view is open → BLOCK default browser back
+    if (isMobileDetail) {
+      e.preventDefault();
+      setIsMobileDetail(false);
+      return;
+    }
+  };
+
+  window.addEventListener("popstate", handleMobileBack);
+
+  return () => {
+    window.removeEventListener("popstate", handleMobileBack);
+  };
+}, [isMobileDetail]);
+
   return (
     <>
 
@@ -533,7 +550,7 @@ console.log('filteredEmails', filteredEmails)
           <Header pageName="Notification Management" />
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
-            <div className="flex w-[100%] max-h-[96%] bg-[#d3d3d34a] pl-[10px] pb-[50px]  relative    gap-[10px] ">
+            <div className="flex w-[100%] max-h-[96%] bg-[#d3d3d34a] md11:!pl-[10px] pb-[50px]  relative    gap-[10px] ">
               <Preloader />
               <div className="flex w-[100%] h-screen">
                 {/* Left Sidebar */}
@@ -573,20 +590,20 @@ console.log('filteredEmails', filteredEmails)
                             className="absolute right-0 mt-2 w-44 h-fit bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200 z-50 px-2 py-[5px]"
                           >
                             {["Complaint", "Internal Complaint"].map((item, index, arr) => (
-  <label
-    key={item}
-    className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
+                              <label
+                                key={item}
+                                className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
       ${index !== arr.length - 1 ? "border-b-[0.2px] border-[#b6b4b4]" : ""}`}
-  >
-    <input
-      type="checkbox"
-      checked={selectedFilters.includes(item)}
-      onChange={() => handleCheckboxChange(item)}
-      className="accent-blue-600"
-    />
-    {item}
-  </label>
-))}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedFilters.includes(item)}
+                                  onChange={() => handleCheckboxChange(item)}
+                                  className="accent-blue-600"
+                                />
+                                {item}
+                              </label>
+                            ))}
 
 
                           </motion.div>
@@ -819,28 +836,120 @@ console.log('filteredEmails', filteredEmails)
                           />
                         </div>
 
-                        <div className=" border  flex justify-center items-center rounded-[8px] w-[40px] h-[40px]">
-                          <i className="fa-regular text-[#787777] fa-filter"></i>
-                        </div>
+                        <button
+                          onClick={() => setFilterOpen((prev) => !prev)}
+                          className={`border flex justify-center items-center rounded-[8px] w-[40px] h-[40px] transition
+      ${filterOpen ? "bg-red-500 text-white" : selectedFilters.length > 0 ? "bg-red-500 text-white" : "bg-white hover:bg-gray-100"}`}
+                        >
+                          <i className="fa-regular fa-filter"></i>
+                        </button>
+
+
+                        <AnimatePresence>
+                          {filterOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute right-0 mt-10 w-44 h-fit bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200 z-50 px-2 py-[5px]"
+                            >
+                              {["Complaint", "Internal Complaint"].map((item, index, arr) => (
+                                <label
+                                  key={item}
+                                  className={`flex items-center !mb-[0px] gap-2 px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 
+      ${index !== arr.length - 1 ? "border-b-[0.2px] border-[#b6b4b4]" : ""}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedFilters.includes(item)}
+                                    onChange={() => handleCheckboxChange(item)}
+                                    className="accent-blue-600"
+                                  />
+                                  {item}
+                                </label>
+                              ))}
+
+
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {filteredEmails.map((email) => (
                         <div
                           key={email.id}
-                          onClick={() => {
-                            handleEmailClick(email);
-                            setIsMobileDetail(true);
-                          }}
-                          className="bg-white shadow-sm rounded-lg p-4 mb-3 border-[1.2px] cursor-pointer hover:bg-gray-50"
+                   onClick={() => {
+  handleEmailClick(email);
+  setIsMobileDetail(true);
+}}
+                          className={`
+                p-3 border-b border-gray-100 relative cursor-pointer transition-all mb-[8px]   shadow-sm rounded-[10px] duration-200
+                ${selectedEmail?.id === email.id
+                              ? "  rounded-l-[10px] border shadow-sm"
+                              : "  bg-white  border-[1px] border-[#bababa70] " +
+                              getPriorityColor(email.priority)
+                            }
+                ${!email.isRead ? "bg-blue-25" : ""}
+              `}
                         >
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-sm font-semibold text-gray-900">
-                              {email.sender}
-                            </h3>
-                            <span className="text-xs text-gray-500">{email.timestamp}</span>
+                          {/* ✅ Complaint Status Badge */}
+                          {email.status && (
+                            <div
+                              className={`absolute top-[6px] right-[6px] px-2 py-[2px] text-[10px] font-medium rounded-full ${getStatusColor(email.status)}`}
+                            >
+                              {email.status}
+                            </div>
+                          )}
+
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              {email.isRead ? (
+                                <MailOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              ) : (
+                                <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              )}
+                              <div className="flex  items-center min-w-0">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <span
+                                    className={`font-[500] truncate ${!email.isRead ? "text-gray-900" : "text-gray-700"
+                                      }`}
+                                  >
+                                    {email.sender}
+                                  </span>
+                                  {/* {email.isNew && (
+                                  <span className="bg-red-500 text-white  absolute text-xs px-2 py-0.5 rounded-full flex-shrink-0">
+                                    New 
+                                  </span>
+                                )} */}
+                                  {email.hasAttachment && (
+                                    <Paperclip className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                  )}
+                                </div>
+                                <span className="text-[8px] absolute right-0  pt-[1px] px-[10px] rounded-b-sm  bottom-[1px] flex-shrink-0 text-gray-500">
+                                  {email.timestamp}
+                                </span>
+                              </div>
+                            </div>
+
                           </div>
-                          <p className="text-sm font-medium text-gray-800">{email.subject}</p>
-                          <p className="text-xs text-gray-500 line-clamp-2">{email.preview}</p>
+
+                          <h3
+                            className={`text-sm mb-2 line-clamp-2 ${!email.isRead
+                              ? "font-semibold text-gray-900"
+                              : "font-medium text-gray-800"
+                              }`}
+                          >
+  
+
+                            {email.data?.type && (
+                              <span className="ml-2 text-xs text-blue-500">[{email.data.type}]</span>
+                            )}
+                          </h3>
+                          {/* 
+                                                <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                                                    {email.preview}
+                                                </p> */}
                         </div>
                       ))}
                     </div>

@@ -277,7 +277,7 @@ const navigate = useNavigate();
           className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200"
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px]">
+            <table className="w-full min-w-[1300px]">
               {/* 🔹 Header */}
               <thead>
                 <tr className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
