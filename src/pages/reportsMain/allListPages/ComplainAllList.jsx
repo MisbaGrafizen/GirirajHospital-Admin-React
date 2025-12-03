@@ -208,8 +208,8 @@ export default function ComplainAllList() {
                 "Status": c.status,
 
                 // NEW
-                "Resolved Department": c.resolvedDepartment,
-                "Resolution Note": c.resolutionNote,
+                // "Resolved Department": c.resolvedDepartment,
+                // "Resolution Note": c.resolutionNote,
             };
         });
 

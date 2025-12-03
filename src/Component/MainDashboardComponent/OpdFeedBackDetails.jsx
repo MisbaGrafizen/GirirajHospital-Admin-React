@@ -147,13 +147,7 @@ export default function OpdFeedBackDetails() {
             </div>
 
             <div className="flex gap-[10px]">
-              <button
-                onClick={exportToExcel}
-                className="items-center flex  px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export to Excel
-              </button>
+   
 
               <button
                 onClick={handlenavigate}

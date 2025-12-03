@@ -241,13 +241,7 @@ const getStatusBadge = (status) => {
               />
             </div>
         <div className="flex gap-[10px] items-center">
-                  <button
-                    onClick={exportToExcel}
-                    className="flex items-center px-2 py-[7px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                   Export to Excel
-                  </button>
+   
                   <button
                     onClick={handlenavigate}
                     className="flex items-center  justify-center h-[35px] w-[35px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
