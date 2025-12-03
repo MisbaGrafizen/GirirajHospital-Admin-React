@@ -594,7 +594,7 @@ const handleResolveSubmit = async () => {
         // 6️⃣ Build payload — UPDATED NOTE LOGIC
         const payload = {
             actionType: selectedType,
-            note: currentNote,          // 👈 NOW CORRECT NOTE IS SENT
+            note: currentNote,          
             proof: proofUrl ? [proofUrl] : [],
             department: deptKey,
             userId: localStorage.getItem("userId"),

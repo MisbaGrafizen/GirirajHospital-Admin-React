@@ -3,7 +3,8 @@ import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import { ApiGet } from '../../../helper/axios'
-import { User, Bed, Stethoscope, Smile, Meh, Frown } from "lucide-react"
+import { User, Bed, Stethoscope, Smile, Meh, Frown,Download,Search } from "lucide-react"
+import NewDatePicker from '../../../Component/MainInputFolder/NewDatePicker'
 
 const pick = (...vals) => vals.find((v) => v != null && v !== "") ?? "-"
 
@@ -53,6 +54,8 @@ export default function NpsAllList() {
   const [showDetractors, setShowDetractors] = useState(true)
   const [showPassives, setShowPassives] = useState(true)
   const [showPromoters, setShowPromoters] = useState(true)
+            const [dateFrom1, setDateFrom1] = useState(null);
+            const [dateTo1, setDateTo1] = useState(null);
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 14)
@@ -135,6 +138,62 @@ export default function NpsAllList() {
     })
   }, [baseRecords, room, query, showDetractors, showPassives, showPromoters])
 
+
+  // 🔥 Apply selectedDate filter on top of existing filters (UI date filter)
+const finalFilteredRecords = useMemo(() => {
+  if (!dateFrom1 && !dateTo1) return filteredRecords;
+
+  return filteredRecords.filter((rec) => {
+    const dt = new Date(rec.date);
+
+    if (dateFrom1) {
+      const from = new Date(dateFrom1);
+      from.setHours(0, 0, 0, 0);
+      if (dt < from) return false;
+    }
+
+    if (dateTo1) {
+      const to = new Date(dateTo1);
+      to.setHours(23, 59, 59, 999);
+      if (dt > to) return false;
+    }
+
+    return true;
+  });
+}, [filteredRecords, dateFrom1, dateTo1]);
+
+
+const exportToExcel = async () => {
+  const XLSX = await import("xlsx");
+
+  // ✔ Use the final date-filtered dataset
+  const excelRows = finalFilteredRecords.map((r, idx) => ({
+    "Sr No": idx + 1,
+    "Date": r.date,
+    "Date & Time": r.datetime,
+    "Patient Name": r.patient,
+    "Room No": r.room,
+    "Doctor Name": r.doctor,
+    "NPS Rating": r.rating,
+    "Category": r.category,
+    "Comment": r.comment,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+
+  ws["!cols"] = Object.keys(excelRows[0] || {}).map(() => ({ wch: 20 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "NPS Records");
+
+  XLSX.writeFile(
+    wb,
+    `NPS_Records_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
+
+
   return (
     <>
 
@@ -150,18 +209,57 @@ export default function NpsAllList() {
             <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px]  py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
               <div>
-                <div className="flex items-center justify-end px-3  pb-[10px]  top-0 z-10">
-                  <div className="relative">
-                    <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input
-                      type="text"
-                      placeholder="Search Nps ... "
-                      // value={searchTerm}
-                      // onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-3 py-2 w-[230px] border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
+            
+                                <div className=" flex justify-between items-center  mx-auto pb-[10px] w-[100%]">
+                                    <div className=' flex gap-[10px] items-center pt-[5px]  justify-start '>
+
+                                        <div className=" flex  gap-[20px]">
+
+                                            <div className="relative ">
+
+                                                <NewDatePicker
+                                                    label="From Date"
+                                                    selectedDate={dateFrom1}
+                                                    setSelectedDate={setDateFrom1}
+                                                />
+
+                                            </div>
+
+                                            <div className="relative">
+
+                                                <NewDatePicker
+                                                    label="To Date"
+                                                    selectedDate={dateTo1}
+                                                    setSelectedDate={setDateTo1}
+                                                />
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div className="flex flex-row justify-between gap-2">
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search Nps..."
+                                                // value={searchTerm}
+                                                // onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="pl-8 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none"
+                                            />
+                                        </div>
+
+                                        {/* Export only if permitted */}
+                                        <button
+                                            onClick={exportToExcel}
+                                            className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                        >
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Export to Excel
+                                        </button>
+
+                                    </div>
+                                </div>
 
 
                 <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[100%] mx-auto md11:!mb-[0px] border-gray-100 overflow-hidden">
@@ -181,7 +279,7 @@ export default function NpsAllList() {
                       </thead>
 
                       <tbody className="bg-white divide-y divide-gray-100">
-                        {filteredRecords.map((rec, idx) => (
+{finalFilteredRecords.map((rec, idx) => (
                           <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
                             <td className="px-3 py-[12px] text-[13px] border-r text-gray-700">{idx + 1}</td>
                             <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">{rec.datetime}</td>

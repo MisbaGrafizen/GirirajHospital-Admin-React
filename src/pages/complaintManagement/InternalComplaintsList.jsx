@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Eye, User } from "lucide-react";
+import { Eye, User, Search, Download, Clock } from "lucide-react";
 import * as XLSX from "xlsx";
 import Header from "../../Component/header/Header";
 import CubaSidebar from "../../Component/sidebar/CubaSidebar";
 import Preloader from "../../Component/loader/Preloader";
 import { useNavigate } from "react-router-dom";
 import { ApiGet } from "../../helper/axios";
+import NewDatePicker from "../../Component/MainInputFolder/NewDatePicker";
 
 // ✅ Department label mapping
 const DEPT_LABEL = {
@@ -93,6 +94,21 @@ function resolvePermissions() {
   }
 }
 
+const formatDateTime = (dateString) => {
+  if (!dateString) return "-";
+  const d = new Date(dateString);
+
+  return d.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).replace(",", " -");
+};
+
+
 export default function InternalComplaintsList() {
   const [complaints, setComplaints] = useState([]);
   const [filteredComplaints, setFilteredComplaints] = useState([]);
@@ -101,12 +117,14 @@ export default function InternalComplaintsList() {
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [allowedBlocks, setAllowedBlocks] = useState([]);
-  const [ready, setReady] = useState(false); 
-const [filters, setFilters] = useState({
-  search: "",
-  from: null,
-  to: null,
-});
+  const [ready, setReady] = useState(false);
+  const [dateFrom1, setDateFrom1] = useState(null);
+  const [dateTo1, setDateTo1] = useState(null);
+  const [filters, setFilters] = useState({
+    search: "",
+    from: null,
+    to: null,
+  });
 
 
   const navigate = useNavigate();
@@ -122,48 +140,48 @@ const [filters, setFilters] = useState({
   }, []);
 
 
-useEffect(() => {
-  let list = complaints;
+  useEffect(() => {
+    let list = complaints;
 
-  // 1️⃣ DATE FILTER
-  if (filters.from || filters.to) {
-    list = list.filter((c) => {
-      const created = new Date(c.createdAt);
+    // 1️⃣ DATE FILTER
+    if (filters.from || filters.to) {
+      list = list.filter((c) => {
+        const created = new Date(c.createdAt);
 
-      if (filters.from && created < new Date(filters.from)) return false;
-      if (filters.to && created > new Date(filters.to)) return false;
+        if (filters.from && created < new Date(filters.from)) return false;
+        if (filters.to && created > new Date(filters.to)) return false;
 
-      return true;
-    });
-  }
+        return true;
+      });
+    }
 
-  // 2️⃣ SEARCH FILTER
-  if (filters.search) {
-    const s = filters.search.toLowerCase();
+    // 2️⃣ SEARCH FILTER
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
 
-    list = list.filter((c) => {
-      const departments = Object.keys(c).filter(
-        (key) => typeof c[key] === "object" && c[key]?.text
-      );
+      list = list.filter((c) => {
+        const departments = Object.keys(c).filter(
+          (key) => typeof c[key] === "object" && c[key]?.text
+        );
 
-      const deptList = departments
-        .map((key) => DEPT_LABEL[key] || key)
-        .join(", ")
-        .toLowerCase();
+        const deptList = departments
+          .map((key) => DEPT_LABEL[key] || key)
+          .join(", ")
+          .toLowerCase();
 
-      return (
-        c.employeeName?.toLowerCase().includes(s) ||
-        c.contactNo?.toLowerCase().includes(s) ||
-        c.employeeId?.toLowerCase().includes(s) ||
-        c.floorNo?.toLowerCase().includes(s) ||
-        deptList.includes(s) ||
-        c.complaintId?.toLowerCase().includes(s)
-      );
-    });
-  }
+        return (
+          c.employeeName?.toLowerCase().includes(s) ||
+          c.contactNo?.toLowerCase().includes(s) ||
+          c.employeeId?.toLowerCase().includes(s) ||
+          c.floorNo?.toLowerCase().includes(s) ||
+          deptList.includes(s) ||
+          c.complaintId?.toLowerCase().includes(s)
+        );
+      });
+    }
 
-  setFilteredComplaints(list);
-}, [filters, complaints]);
+    setFilteredComplaints(list);
+  }, [filters, complaints]);
 
 
   useEffect(() => {
@@ -202,54 +220,58 @@ useEffect(() => {
   }, [ready, isAdmin, allowedBlocks]);
 
   // 🔥 Auto-refresh Internal Complaints every 10 seconds
-useEffect(() => {
-  const interval = setInterval(async () => {
-    try {
-      const res = await ApiGet("/admin/internal-complaints");
-      let updated = res?.data || [];
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await ApiGet("/admin/internal-complaints");
+        let updated = res?.data || [];
 
-      // 🔒 Apply permission filter again
-      if (!isAdmin && allowedBlocks.length > 0) {
-        updated = updated.filter((complaint) =>
-          Object.keys(complaint).some(
-            (key) =>
-              allowedBlocks.includes(key) &&
-              typeof complaint[key] === "object" &&
-              (complaint[key]?.text || (complaint[key]?.attachments?.length > 0))
-          )
-        );
+        // 🔒 Apply permission filter again
+        if (!isAdmin && allowedBlocks.length > 0) {
+          updated = updated.filter((complaint) =>
+            Object.keys(complaint).some(
+              (key) =>
+                allowedBlocks.includes(key) &&
+                typeof complaint[key] === "object" &&
+                (complaint[key]?.text || (complaint[key]?.attachments?.length > 0))
+            )
+          );
+        }
+
+        setComplaints(updated);
+        setFilteredComplaints(updated);
+
+      } catch (error) {
+        console.error("Auto refresh failed:", error);
       }
+    }, 10000); // ← 10 seconds
 
-      setComplaints(updated);
-      setFilteredComplaints(updated);
-
-    } catch (error) {
-      console.error("Auto refresh failed:", error);
-    }
-  }, 10000); // ← 10 seconds
-
-  return () => clearInterval(interval);
-}, [isAdmin, allowedBlocks]);
+    return () => clearInterval(interval);
+  }, [isAdmin, allowedBlocks]);
 
 
   // Step 3️⃣: Search handler
   useEffect(() => {
-    const filtered = complaints.filter((c) => {
-      const departments = Object.keys(c).filter(
-        (key) => typeof c[key] === "object" && c[key]?.text
+    let list = [...complaints];
+
+    // 1️⃣ date filter
+    list = filterByDate(list);
+
+    // 2️⃣ search filter
+    if (searchTerm) {
+      const s = searchTerm.toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.employeeName?.toLowerCase().includes(s) ||
+          c.contactNo?.toLowerCase().includes(s) ||
+          c.employeeId?.toLowerCase().includes(s) ||
+          c.floorNo?.toLowerCase().includes(s) ||
+          c.complaintId?.toLowerCase().includes(s)
       );
-      const deptList = departments.map((key) => DEPT_LABEL[key] || key).join(", ");
-      return (
-        c.employeeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.contactNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.floorNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deptList.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.complaintId?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-    setFilteredComplaints(filtered);
-  }, [searchTerm, complaints]);
+    }
+
+    setFilteredComplaints(list);
+  }, [searchTerm, complaints, dateFrom1, dateTo1]);
 
   const handleView = (row) => {
     navigate("/internal-complaint-details", { state: { complaint: row } });
@@ -270,36 +292,122 @@ useEffect(() => {
     }
   };
 
+  // DATE RANGE FILTER
+  const filterByDate = (list) => {
+    return list.filter((c) => {
+      const created = new Date(c.createdAt);
+
+      if (dateFrom1) {
+        const from = new Date(dateFrom1);
+        if (created < from) return false;
+      }
+
+      if (dateTo1) {
+        const to = new Date(dateTo1);
+        to.setHours(23, 59, 59, 999);
+        if (created > to) return false;
+      }
+
+      return true;
+    });
+  };
+
+
   const exportToExcel = () => {
+    const data = filteredComplaints.map((c) => {
+      const activeDepts = Object.keys(c)
+        .filter(
+          (k) =>
+            typeof c[k] === "object" &&
+            (c[k]?.text || c[k]?.attachments?.length > 0)
+        )
+        .map((k) => DEPT_LABEL[k] || k)
+        .join(", ");
+
+      return {
+        ComplaintID: c.complaintId,
+        EmployeeName: c.employeeName,
+        ContactNo: c.contactNo,
+        EmployeeID: c.employeeId,
+        FloorNo: c.floorNo,
+        Departments: activeDepts,
+        Status: c.status,
+        CreatedAt: formatDateTime(c.createdAt),
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Internal Complaints");
+    XLSX.writeFile(wb, "Internal_Complaints.xlsx");
+  };
+
+
+  const exportCAPA = () => {
     try {
-      const formatted = filteredComplaints.map((c) => {
-        const activeDepts = Object.keys(c)
-          .filter(
-            (key) =>
-              typeof c[key] === "object" &&
-              (c[key]?.text || c[key]?.attachments?.length > 0)
-          )
-          .map((key) => DEPT_LABEL[key] || key)
-          .join(", ");
-        return {
-          ComplaintID: c.complaintId,
-          EmployeeName: c.employeeName,
-          ContactNo: c.contactNo,
-          EmployeeID: c.employeeId,
-          FloorNo: c.floorNo,
-          Departments: activeDepts,
-          Status: c.status,
-          CreatedAt: new Date(c.createdAt).toLocaleString(),
-        };
-      });
-      const ws = XLSX.utils.json_to_sheet(formatted);
+      const data = filteredComplaints
+        .map((c) =>
+          Object.keys(c)
+            .filter((k) => {
+              const dept = c[k];
+
+              if (typeof dept !== "object" || !dept) return false;
+
+              // Active department (has text or attachment)
+              const hasContent =
+                dept.text ||
+                (dept.attachments && dept.attachments.length > 0);
+
+              if (!hasContent) return false;
+
+              // Must be resolved (either type)
+              const isResolved =
+                dept.status === "resolved" ||
+                dept.status === "resolved_by_admin";
+
+              return isResolved;
+            })
+            .map((k) => {
+              const dept = c[k];
+              const res = dept.resolution || {};
+              const type = res.actionType;
+
+              return {
+                ComplaintID: c.complaintId,
+                Department: DEPT_LABEL[k] || k,
+                Complaint: dept.text || "-",
+
+                RCA: type === "RCA" ? res.note || "-" : "",
+                CA: type === "CA" ? res.note || "-" : "",
+                PA: type === "PA" ? res.note || "-" : "",
+
+                CreatedAt: formatDateTime(c.createdAt),
+                ResolvedAt: formatDateTime(res.resolvedAt),
+                ResolvedBy: res.resolvedBy || "-",
+                ResolvedType: res.resolvedType || "-", // admin / staff
+              };
+            })
+        )
+        .flat();
+
+      if (!data.length) {
+        alert("No CAPA data found.");
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Internal Complaints");
-      XLSX.writeFile(wb, "Internal_Complaints.xlsx");
-    } catch {
-      setError("Export failed. Try again.");
+      XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
+
+      XLSX.writeFile(wb, "Internal_CAPA_Report.xlsx");
+
+    } catch (err) {
+      console.error("CAPA Export Error:", err);
+      alert("CAPA export failed.");
     }
   };
+
+
 
   // Step 4️⃣: handle loading / permission
   if (!ready) {
@@ -319,22 +427,87 @@ useEffect(() => {
   return (
     <section className="flex w-full h-full select-none overflow-hidden">
       <div className="flex w-full flex-col h-screen">
-<Header
-  pageName="Internal"
-  onFilterChange={(data) => setFilters(data)}
-/>
+        <Header
+          pageName="Internal"
+          onFilterChange={(data) => setFilters(data)}
+        />
         <div className="flex w-full h-full">
           <CubaSidebar />
           <div className="flex flex-col w-full relative max-h-[90%] py-[10px] overflow-y-auto gap-[10px]">
             {loading && <Preloader />}
 
+
+
+
+
+
             <div className="bg-white w-[98%] mx-auto rounded-lg border shadow-sm ">
+
+              <div className=" flex justify-between   px-[14px]  items-center  mx-auto pb-[10px] w-[100%]">
+                <div className=' flex gap-[10px] items-center pt-[14px]  justify-start '>
+
+                  <div className=" flex  gap-[20px]">
+
+                    <div className="relative ">
+
+                      <NewDatePicker
+                        label="From Date"
+                        selectedDate={dateFrom1}
+                        setSelectedDate={setDateFrom1}
+                      />
+
+                    </div>
+
+                    <div className="relative">
+
+                      <NewDatePicker
+                        label="To Date"
+                        selectedDate={dateTo1}
+                        setSelectedDate={setDateTo1}
+                      />
+                    </div>
+                  </div>
+
+
+                </div>
+                <div className="flex flex-row justify-between gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Search Complaints..."
+                      // value={searchTerm}
+                      // onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-8 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Export only if permitted */}
+                  <button
+                    onClick={exportToExcel}
+                    className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Excel
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={exportCAPA}
+                      className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      CAPA
+                    </button>
+                  )}
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full border-separate border-spacing-0">
                   <thead>
                     <tr className="bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
                       {[
                         "Complaint ID",
+                        "Date & Time",
                         "Employee Name",
                         "Contact No",
                         "Employee ID",
@@ -369,9 +542,8 @@ useEffect(() => {
                       return (
                         <tr
                           key={row._id}
-                          className={`${
-                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                          } hover:bg-blue-50 transition`}
+                          className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            } hover:bg-blue-50 transition`}
                         >
                           <td className="px-2 text-[12px] border-r py-[9px] border-b border-gray-100 font-medium text-blue-600">
                             <button
@@ -381,6 +553,13 @@ useEffect(() => {
                               {row.complaintId}
                             </button>
                           </td>
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 font-medium text-gray-800">
+                            <div className="flex gap-[5px] items-center">
+                              <Clock className="w-4 h-4 text-gray-400" />
+                              {formatDateTime(row.createdAt)}
+                            </div>
+                          </td>
+
                           <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 font-medium text-gray-800 flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-400" />
                             {row.employeeName}

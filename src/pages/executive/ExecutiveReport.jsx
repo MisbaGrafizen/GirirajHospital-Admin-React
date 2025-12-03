@@ -11,9 +11,11 @@ import {
   CheckCircle,
   AlertTriangle,
   Circle,
+  Download,Search
 } from "lucide-react"
 import Preloader from "../../Component/loader/Preloader"
 import ModernDatePicker from "../../Component/MainInputFolder/ModernDatePicker"
+import NewDatePicker from "../../Component/MainInputFolder/NewDatePicker"
 
 
 // ---------- Date helpers (local-time safe) ----------
@@ -151,13 +153,23 @@ function TrendIcon({ direction }) {
   return <Icon className="w-4 h-4" aria-hidden="true" />
 }
 
+// Convert UI date (NewDatePicker) → proper ISO yyyy-mm-dd
+const normalizeUIToISO = (d) => {
+  if (!d) return null;
+  const dd = new Date(d);
+  if (isNaN(dd)) return null;
+  return dd.toISOString().slice(0, 10);
+};
+
+
 // ---------- Component ----------
 export default function ExecutiveReport() {
 
   // Filters
   const [fromDate, setFromDate] = useState(() => monthStartLocalISO()) // first day of current month
   const [toDate, setToDate] = useState(() => todayLocalISO()) // today
-
+    const [dateFrom1, setDateFrom1] = useState(null);
+    const [dateTo1, setDateTo1] = useState(null);
   // Raw data
   const [opd, setOpd] = useState([])
   const [ipd, setIpd] = useState([])
@@ -202,10 +214,20 @@ export default function ExecutiveReport() {
           return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
         })
         : []
+        
+// normalize UI dates → ISO yyyy-mm-dd
+const uiFromISO = normalizeUIToISO(dateFrom1);
+const uiToISO   = normalizeUIToISO(dateTo1);
 
-    // current selected range
-    const filteredOpd = slice(opd, fromDate, toDate)
-    const filteredIpd = slice(ipd, fromDate, toDate)
+// final dates to apply
+const finalFrom = uiFromISO || fromDate;
+const finalTo   = uiToISO || toDate;
+
+// apply filter
+const filteredOpd = slice(opd, finalFrom, finalTo);
+const filteredIpd = slice(ipd, finalFrom, finalTo);
+
+
 
     // previous range: same length as current
     const from = new Date(fromDate)
@@ -223,7 +245,7 @@ export default function ExecutiveReport() {
       opdPrev: slice(opd, toLocalISO(prevFrom), toLocalISO(prevTo)),
       ipdPrev: slice(ipd, toLocalISO(prevFrom), toLocalISO(prevTo)),
     }
-  }, [opd, ipd, fromDate, toDate])
+}, [opd, ipd, fromDate, toDate, dateFrom1, dateTo1])
 
 
 
@@ -356,6 +378,40 @@ export default function ExecutiveReport() {
   }
 
 
+  const exportToExcel = async () => {
+  const XLSX = await import("xlsx");
+
+  const excelRows = opdFiltered.concat(ipdFiltered).map((d, idx) => ({
+    "Sr No": idx + 1,
+    "Date": toISODateOnly(d.createdAt ?? d.date ?? d.dateTime),
+    "Patient": d.patientName || d.name || "-",
+    "Doctor": d.consultantDoctorName?.name || d.doctorName || "-",
+    "Department": d.roomNo ? "IPD" : "OPD",
+    "NPS Score": d.overallRecommendation || "",
+    "Comments": d.comments || d.comment || "",
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+  ws["!cols"] = Object.keys(excelRows[0] || {}).map(() => ({ wch: 20 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Executive Report");
+
+  XLSX.writeFile(
+    wb,
+    `Executive_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
+// normalize UI dates → ISO yyyy-mm-dd
+const uiFromISO = normalizeUIToISO(dateFrom1);
+const uiToISO   = normalizeUIToISO(dateTo1);
+
+// Final report dates (today = show today)
+const reportFrom = uiFromISO || fromDate;
+const reportTo = uiToISO || toDate;
+
+
   return (
     <>
       <section className="flex w-[100%] h-[100%] select-none  overflow-hidden">
@@ -370,113 +426,162 @@ export default function ExecutiveReport() {
 
           <div className="flex w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col relative  w-[100%] max-h-[90%] pb-[50px] py-[10px] px-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
+            <div className="flex flex-col relative  w-[100%] max-h-[90%] pb-[50px] py-[10px] pr-[10px] bg-[#fff] overflow-y-auto gap-[10px] ">
               <Preloader />
-              <main className=" overflow-x-auto">
-            
-                <section
-                  aria-labelledby="metrics-table"
-                  className="rounded-2xl min-w-[1000px] shadow-md overflow-hidden border border-gray-200 bg-white"
-                >
-                  <h2 id="metrics-table" className="sr-only">
-                    Metric Summary Table
-                  </h2>
+              <div className=" flex flex-col w-[100%] pl-[10px]">
 
-                  {/* Gradient Header */}
-                  <div className="bg-gradient-to-r from-[#5B7FFF] to-[#6C63FF] py-3 px-5 grid grid-cols-4 text-white text-[13px] font-semibold uppercase tracking-wide">
-                    <div>Metric</div>
-                    <div className="text-center">Value</div>
-                    <div className="text-center">Trend</div>
-                    <div className="text-left">Status</div>
+
+                <div className=" flex justify-between items-center  mx-auto pb-[10px] pr-[10px] w-[100%]">
+                  <div className=' flex gap-[10px] items-center  justify-start '>
+
+                    <div className=" flex  gap-[20px]">
+
+                      <div className="relative ">
+
+                        <NewDatePicker
+                          label="From Date"
+                          selectedDate={dateFrom1}
+                          setSelectedDate={setDateFrom1}
+                        />
+
+                      </div>
+
+                      <div className="relative">
+
+                        <NewDatePicker
+                          label="To Date"
+                          selectedDate={dateTo1}
+                          setSelectedDate={setDateTo1}
+                        />
+                      </div>
+                    </div>
+
+
                   </div>
+                  <div className="flex flex-row justify-between gap-2">
 
-                  {/* Data Rows */}
-                  <div>
-                    {metrics.map((row, idx) => {
-                      const { Icon, iconClass } = statusStyles(row.status.type)
-                      const TrendArrow =
-                        row.trend.direction === "down" ? TrendingDown : TrendingUp
-                      const trendColorClass =
-                        row.trend.direction === "down"
-                          ? "text-red-500"
-                          : "text-emerald-600"
 
-                      // 🎨 gradient backgrounds per metric (same as APK)
-                      const iconGradients = {
-                        "Overall OPD Feedback": "from-[#5B7FFF] to-[#306BFF]",
-                        "Overall IPD Feedback": "from-[#A66CFF] to-[#7E5BFF]",
-                        "NPS (OPD)": "from-[#0EA5E9] to-[#06B6D4]",
-                        "NPS (IPD)": "from-[#FBBF24] to-[#F59E0B]",
-                        "Complaints (Detractors)": "from-[#F87171] to-[#EF4444]",
-                        "Avg Doctor Rating": "from-[#3B82F6] to-[#2563EB]",
-                        "Cleanliness (Housekeeping) Score": "from-[#10B981] to-[#059669]",
-                      }
+                    {/* Export only if permitted */}
+                    <button
+                      onClick={exportToExcel}
+                      className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export to Excel
+                    </button>
 
-                      const gradientClass =
-                        iconGradients[row.metric] || "from-[#5B7FFF] to-[#3A46FF]"
+                  </div>
+                </div>
 
-                      return (
-                        <div
-                          key={row.metric}
-                          className={`grid grid-cols-4 items-center py-[8px] px-3 text-sm ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            } hover:bg-gray-100 transition`}
-                        >
-                          {/* Metric name + gradient icon */}
-                          <div className="flex items-center gap-3 font-[500] text-gray-800">
-                            <div
-                              className={`w-8 h-8 flex items-center justify-center rounded-md text-white bg-gradient-to-br ${gradientClass} shadow-sm`}
-                            >
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <span>{row.metric}</span>
-                          </div>
 
-                          {/* Value */}
-                          <div className="text-center text-[15px] font-medium text-gray-900">
-                            {row.value}
-                          </div>
 
-                          {/* Trend */}
+
+                <main className=" overflow-x-auto">
+
+                  <section
+                    aria-labelledby="metrics-table"
+                    className="rounded-2xl min-w-[1000px] shadow-md overflow-hidden border border-gray-200 bg-white"
+                  >
+                    <h2 id="metrics-table" className="sr-only">
+                      Metric Summary Table
+                    </h2>
+
+                    {/* Gradient Header */}
+                    <div className="bg-gradient-to-r from-[#5B7FFF] to-[#6C63FF] py-3 pl-5 grid grid-cols-4 text-white text-[13px] font-semibold uppercase tracking-wide">
+                      <div>Metric</div>
+                      <div className="text-left pl-[40px]">Value</div>
+                      <div className="text-left pl-[30px]">Trend</div>
+                      <div className="text-left">Status</div>
+                    </div>
+
+                    {/* Data Rows */}
+                    <div>
+                      {metrics.map((row, idx) => {
+                        const { Icon, iconClass } = statusStyles(row.status.type)
+                        const TrendArrow =
+                          row.trend.direction === "down" ? TrendingDown : TrendingUp
+                        const trendColorClass =
+                          row.trend.direction === "down"
+                            ? "text-red-500"
+                            : "text-emerald-600"
+
+                        // 🎨 gradient backgrounds per metric (same as APK)
+                        const iconGradients = {
+                          "Overall OPD Feedback": "from-[#5B7FFF] to-[#306BFF]",
+                          "Overall IPD Feedback": "from-[#A66CFF] to-[#7E5BFF]",
+                          "NPS (OPD)": "from-[#0EA5E9] to-[#06B6D4]",
+                          "NPS (IPD)": "from-[#FBBF24] to-[#F59E0B]",
+                          "Complaints (Detractors)": "from-[#F87171] to-[#EF4444]",
+                          "Avg Doctor Rating": "from-[#3B82F6] to-[#2563EB]",
+                          "Cleanliness (Housekeeping) Score": "from-[#10B981] to-[#059669]",
+                        }
+
+                        const gradientClass =
+                          iconGradients[row.metric] || "from-[#5B7FFF] to-[#3A46FF]"
+
+                        return (
                           <div
-                            className={`flex items-center justify-center gap-1 font-semibold ${trendColorClass}`}
+                            key={row.metric}
+                            className={`grid grid-cols-4 items-center py-[8px] px-3 text-sm ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                              } hover:bg-gray-100 transition`}
                           >
-                            <TrendArrow className="w-4 h-4" />
-                            {row.trend.value}
-                          </div>
+                            {/* Metric name + gradient icon */}
+                            <div className="flex items-center gap-3 font-[500] text-gray-800">
+                              <div
+                                className={`w-8 h-8 flex items-center justify-center rounded-md text-white bg-gradient-to-br ${gradientClass} shadow-sm`}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <span>{row.metric}</span>
+                            </div>
 
-                          {/* Status */}
-                          <div className="flex items-center gap-2 text-gray-800">
-                            <Icon className={`w-4 h-4 ${iconClass}`} />
-                            <span
-                              className={`font-medium ${row.status.type === "attention"
+                            {/* Value */}
+                            <div className="text-left text-[15px] pl-[50px] font-medium text-gray-900">
+                              {row.value}
+                            </div>
+
+                            {/* Trend */}
+                            <div
+                              className={`flex items-center justify-left pl-[40px] gap-1 font-semibold ${trendColorClass}`}
+                            >
+                              <TrendArrow className="w-4 h-4" />
+                              {row.trend.value}
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-center  pl-[12px] gap-2 text-gray-800">
+                              <Icon className={`w-4 h-4 ${iconClass}`} />
+                              <span
+                                className={`font-medium ${row.status.type === "attention"
                                   ? "text-red-600"
                                   : row.status.type === "improving"
                                     ? "text-blue-600"
                                     : "text-green-600"
-                                }`}
-                            >
-                              {row.status.label}
-                            </span>
+                                  }`}
+                              >
+                                {row.status.label}
+                              </span>
+                            </div>
                           </div>
+                        )
+                      })}
+
+                      {/* Empty State */}
+                      {!loading && !error && metrics.length === 0 && (
+                        <div className="py-6 text-center text-gray-500 text-sm">
+                          No data in the selected period.
                         </div>
-                      )
-                    })}
+                      )}
+                    </div>
 
-                    {/* Empty State */}
-                    {!loading && !error && metrics.length === 0 && (
-                      <div className="py-6 text-center text-gray-500 text-sm">
-                        No data in the selected period.
-                      </div>
-                    )}
-                  </div>
+                    {/* Footer */}
+                    <div className="bg-gray-100 text-gray-600 text-xs py-2 px-5 border-t border-gray-200 text-center rounded-b-2xl">
+                      Report period: {reportFrom} to {reportTo}
+                    </div>
+                  </section>
 
-                  {/* Footer */}
-                  <div className="bg-gray-100 text-gray-600 text-xs py-2 px-5 border-t border-gray-200 text-center rounded-b-2xl">
-                    Report period: {fromDate} to {toDate}
-                  </div>
-                </section>
-
-              </main>
+                </main>
+              </div>
             </div>
           </div>
         </div>

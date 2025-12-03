@@ -401,7 +401,7 @@ function Header({
 
 
 
-              {location.pathname === "/reports/executive-report" && (
+              {/* {location.pathname === "/reports/executive-report" && (
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
 
@@ -424,25 +424,24 @@ function Header({
                     />
                   </div>
                 </div>
-              )}
-              {location.pathname === "/internal-complint-list" && (
+              )} */}
+              {/* {location.pathname === "/internal-complint-list" && (
                 <div className="grid  flex-shrink-0 grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 
-                  {/* From Date */}
                   <ModernDatePicker
                     label="From Date"
                     selectedDate={filterDateFrom}
                     setSelectedDate={setFilterDateFrom}
                   />
 
-                  {/* To Date */}
+          
                   <ModernDatePicker
                     label="To Date"
                     selectedDate={filterDateTo}
                     setSelectedDate={setFilterDateTo}
                   />
 
-                  {/* Search */}
+            
                   <div className="relative">
                     <Search className="absolute left-3 top-[12px] -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
@@ -455,7 +454,7 @@ function Header({
                   </div>
 
                 </div>
-              )}
+              )} */}
 
             </div>
 

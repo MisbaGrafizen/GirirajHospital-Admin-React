@@ -1056,7 +1056,6 @@ export default function ComplaintManagementDashboard() {
                 "Sr.No": exportData.length + 1,
                 "Date": formatDate(item.stampIn),
                 "Patient Name": item.patientName || "-",
-                "IP": "-", // As per new requirement: NOT NEEDED, REMOVE if not required
                 "Consultant": item.doctor || "-", // doctor name
                 "Bed No": item.bedNo || "-",
             };
@@ -1612,14 +1611,7 @@ export default function ComplaintManagementDashboard() {
 
                                                 <div className=" flex gap-[10px]">
 
-                                                    <button
-                                                        className=" md34:!hidden md11:!flex items-center flex-shrink-0 px-3 py-[3px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                        onClick={() => exportToExcel(tatComplaints)}
-                                                    >
-                                                        <i className="fa-regular fa-file-excel text-[16px] text-white"></i>
-                                                        Export to Excel
-                                                    </button>
-
+                                               
                                                     {/* 👁️ View All second */}
                                                     <button
                                                         className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-[10px] py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

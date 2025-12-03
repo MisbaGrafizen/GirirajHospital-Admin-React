@@ -9,6 +9,7 @@ import { MessageSquare, } from "lucide-react";
 import { Users, Stethoscope, ShieldCheck, Microscope } from "lucide-react";
 import { ApiGet } from '../../../helper/axios'
 import { useNavigate } from 'react-router-dom'
+import NewDatePicker from '../../../Component/MainInputFolder/NewDatePicker'
 
 const API_URL = "/admin/consultant-feedback"
 
@@ -98,7 +99,8 @@ export default function ConsultantAllList() {
           const [rawOPD, setRawOPD] = useState([])
     const navigate = useNavigate();
         
-      
+          const [dateFrom1, setDateFrom1] = useState(null);
+          const [dateTo1, setDateTo1] = useState(null);
 
       const fetchOPD = useCallback(async () => {
           setLoading(true)
@@ -144,34 +146,54 @@ export default function ConsultantAllList() {
         useEffect(() => { fetchOPD() }, [fetchOPD])
 
 
-        const filteredFeedback = rows.filter(
-    (f) =>
-      f.patient?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
-      f.doctor?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
-      f.comment?.toLowerCase().includes(searchTerm?.toLowerCase())
-  )
+const filteredFeedback = rows.filter((f) => {
+  const dt = new Date(f.createdAt);
+
+  const from = dateFrom1 ? new Date(dateFrom1) : null;
+  const to = dateTo1 ? new Date(dateTo1) : null;
+
+  // Make "To Date" include the whole day
+  if (to) to.setHours(23, 59, 59, 999);
+
+  // Date Filters
+  if (from && dt < from) return false;
+  if (to && dt > to) return false;
+
+  // Search Filters
+  return (
+    (f.doctor || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (f.comment || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+});
 
 
-        const exportToExcel = async () => {
-    const XLSX = await import("xlsx")
-    const rows = filteredFeedback.map((f) => ({
-      "Date": formatDate(f.createdAt),
-      "Doctor Name": f.doctorName,
-      "Rating (/5)": f.rating,
-      "Comment": f.finalComments || "",
-    }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const colWidths = Object.keys(rows[0] || { " ": "" }).map((key) => {
-      const headerLen = String(key).length
-      const maxCellLen = rows.reduce((m, r) => Math.max(m, String(r[key] ?? "").length), 0)
-      return { wch: Math.min(Math.max(headerLen, maxCellLen) + 2, 60) }
-    })
-    ws["!cols"] = colWidths
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Patient Feedback")
-    const fileName = `OPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`
-    XLSX.writeFile(wb, fileName)
-  }
+const exportToExcel = async () => {
+  const XLSX = await import("xlsx");
+
+  // Use the SAME filtered rows (already filtered by date & search)
+  const excelRows = filteredFeedback.map((f) => ({
+    "Date": formatDate(f.createdAt),
+    "Doctor Name": f.doctor || "-",
+    "Rating": f.rating || 0,
+    "Comment": f.comment || "",
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+
+  // Auto column width
+  ws["!cols"] = Object.keys(excelRows[0] || { " ": "" }).map((key) => ({
+    wch: 20
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Consultant Feedback");
+
+  XLSX.writeFile(
+    wb,
+    `Consultant_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
 
     const openFeedbackDetails = useCallback((fb) => {
       const id = normId(fb?._id ?? fb?.id)
@@ -192,9 +214,6 @@ export default function ConsultantAllList() {
     
   return (
  <>
-
-
-
           <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header pageName="Consultant Feedback List"  />
@@ -207,8 +226,28 @@ export default function ConsultantAllList() {
 
                <div className="bg-white  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
                       <div className="px-3 py-[8px] border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div className=' flex gap-[10px]  items-center py-[13px] justify-start '>
+                        <div className=' flex gap-[10px]  items-center pt-[7px] justify-start '>
+      <div className=" flex  gap-[20px]">
 
+                            <div className="relative ">
+
+                              <NewDatePicker
+                                label="From Date"
+                                selectedDate={dateFrom1}
+                                setSelectedDate={setDateFrom1}
+                              />
+
+                            </div>
+
+                            <div className="relative">
+
+                              <NewDatePicker
+                                label="To Date"
+                                selectedDate={dateTo1}
+                                setSelectedDate={setDateTo1}
+                              />
+                            </div>
+                          </div>
 
 
               
