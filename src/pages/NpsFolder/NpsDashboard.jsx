@@ -568,35 +568,34 @@ export default function NpsDashboard() {
                               <Tooltip contentStyle={{ fontSize: 12 }} />
                               <Legend />
 
-                              {/* ❌ Remove <div className="flex"> — this breaks the SVG rendering */}
                               {/* ✅ Keep only the <Area> components inside <AreaChart> */}
                               <Area
                                 type="monotone"
                                 dataKey="Detractors"
-                                stackId="1"
                                 stroke="#ef4444"
                                 fill="url(#gradDetractors)"
                                 isAnimationActive={true}
                                 animationDuration={600}
                               />
+
                               <Area
                                 type="monotone"
                                 dataKey="Passives"
-                                stackId="1"
                                 stroke="#f59e0b"
                                 fill="url(#gradPassives)"
                                 isAnimationActive={true}
                                 animationDuration={600}
                               />
+
                               <Area
                                 type="monotone"
                                 dataKey="Promoters"
-                                stackId="1"
                                 stroke="#10b981"
                                 fill="url(#gradPromoters)"
                                 isAnimationActive={true}
                                 animationDuration={600}
                               />
+
                             </AreaChart>
                           </ResponsiveContainer>
 

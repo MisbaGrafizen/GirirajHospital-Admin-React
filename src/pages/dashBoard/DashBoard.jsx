@@ -342,38 +342,60 @@ if (data.kpis || data.totals) {
           }));
 
 
-          // ----- Department bars -----
-          const DEPT_LABEL = {
-            doctorServices: "Doctor",
-            billingServices: "Front Desk",
-            housekeeping: "Housekeeping",
-            maintenance: "Maintenance",
-            diagnosticServices: "Diagnostic",
-            dietitianServices: "Dietitian",
-            security: "Security",
-            nursing: "Nursing",
-          };
+ // ----- Department bars (Admin = all, User = filtered) -----
+const DEPT_LABEL = {
+  doctorServices: "Doctor",
+  billingServices: "Front Desk",
+  housekeeping: "Housekeeping",
+  maintenance: "Maintenance",
+  diagnosticServices: "Diagnostic",
+  dietitianServices: "Dietitian",
+  security: "Security",
+  nursing: "Nursing",
+};
 
-          const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : [];
+const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : [];
 
-          // ✅ Convert backend array into quick lookup for existing departments
-          const backendDeptMap = Object.fromEntries(
-            dept.map((d) => [d.department, d])
-          );
+// Convert backend array into quick lookup
+const backendDeptMap = Object.fromEntries(
+  dept.map((d) => [d.department, d])
+);
 
-          // ✅ Build final list — include *all known departments* from DEPT_LABEL
-          const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
-            const match = backendDeptMap[label] || {};
-            return {
-              department: label,
-              concerns: Number(match.concerns || 0),
-              resolved: Number(match.resolved || 0),
-              pending: Number(match.pending || 0),
-            };
-          });
+// Decide list based on login type
+let finalDeptList = [];
 
-          // ✅ Now set all departments (including missing ones)
-          setDepartmentData(fullDeptList);
+if (loginType === "admin") {
+  // ✅ Admin sees ALL departments
+  finalDeptList = Object.values(DEPT_LABEL).map((label) => {
+    const match = backendDeptMap[label] || {};
+
+    return {
+      department: label,
+      concerns: Number(match.concerns || 0),
+      resolved: Number(match.resolved || 0),
+      pending: Number(match.pending || 0),
+    };
+  });
+} else {
+  // ✅ Non-admins see ONLY departments they have access to
+  finalDeptList = allowedModules
+    .filter((key) => DEPT_LABEL[key]) // must exist in our label map
+    .map((key) => {
+      const label = DEPT_LABEL[key];
+      const match = backendDeptMap[label] || {};
+
+      return {
+        department: label,
+        concerns: Number(match.concerns || 0),
+        resolved: Number(match.resolved || 0),
+        pending: Number(match.pending || 0),
+      };
+    });
+}
+
+// Set final list
+setDepartmentData(finalDeptList);
+
 
           // ----- Recent feedbacks -----
           const rec = Array.isArray(data?.recentFeedbacks) ? data.recentFeedbacks : []
@@ -501,10 +523,6 @@ if (data.kpis || data.totals) {
                           </motion.div>
                         </motion.div>
                       </div>
-
-
-
-
 
                       {/* <FeedbackTable /> */}
                       <div className=" mt-[10px]">
