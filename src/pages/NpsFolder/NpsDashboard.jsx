@@ -652,7 +652,7 @@ export default function NpsDashboard() {
                         <tbody className="bg-white divide-y divide-gray-100">
                           {filteredRecords
                             .slice() // clone
-                            .sort((a, b) => new Date(b.datetime) - new Date(a.datetime)) // latest first
+                            .sort((a, b) => new Date(b.date) - new Date(a.date))
                             .slice(0, 5) // ✅ latest 5
                             .map((rec, idx) => (
                               <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">

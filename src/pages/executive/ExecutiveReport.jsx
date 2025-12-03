@@ -153,14 +153,18 @@ function TrendIcon({ direction }) {
   return <Icon className="w-4 h-4" aria-hidden="true" />
 }
 
-// Convert UI date (NewDatePicker) → proper ISO yyyy-mm-dd
+// Convert date from UI → ISO yyyy-mm-dd without timezone shift
 const normalizeUIToISO = (d) => {
   if (!d) return null;
   const dd = new Date(d);
   if (isNaN(dd)) return null;
-  return dd.toISOString().slice(0, 10);
-};
 
+  const year = dd.getFullYear();
+  const month = String(dd.getMonth() + 1).padStart(2, "0");
+  const day = String(dd.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
 
 // ---------- Component ----------
 export default function ExecutiveReport() {
@@ -455,8 +459,6 @@ const reportTo = uiToISO || toDate;
                         />
                       </div>
                     </div>
-
-
                   </div>
                   <div className="flex flex-row justify-between gap-2">
 
