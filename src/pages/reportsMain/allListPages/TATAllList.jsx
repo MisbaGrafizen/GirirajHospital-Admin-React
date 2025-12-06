@@ -3,7 +3,7 @@ import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import React, { useState, useEffect } from "react"
-import { Eye ,Search ,Download } from "lucide-react"
+import { Eye, Search, Download } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 import { ApiGet } from '../../../helper/axios'
 import NewDatePicker from '../../../Component/MainInputFolder/NewDatePicker'
@@ -49,7 +49,7 @@ function resolvePermissions() {
     const parsed = JSON.parse(localStorage.getItem("rights"))
     if (parsed?.permissions) permsArray = parsed.permissions
     else if (Array.isArray(parsed)) permsArray = parsed
-  } catch {}
+  } catch { }
 
   const allowedBlocks = isAdmin
     ? Object.values(MODULE_TO_BLOCK)
@@ -71,20 +71,39 @@ const hasConcernContent = (item) => {
 };
 
 const DEPT_MAP = {
+  // Doctor
+  "doctorservices": "doctorServices",
   "doctor services": "doctorServices",
-  "doctor service": "doctorServices",
+  "doctor_service": "doctorServices",
+  "doctorservices": "doctorServices",
+
+  // Billing
+  "billingservices": "billingServices",
   "billing services": "billingServices",
-  "billing service": "billingServices",
-  "housekeeping": "housekeeping",
-  "maintenance": "maintenance",
+  "billing_service": "billingServices",
+
+  // Diagnostic
+  "diagnosticservices": "diagnosticServices",
   "diagnostic services": "diagnosticServices",
-  "diagnostic service": "diagnosticServices",
-  "dietetics": "dietitianServices",
+  "diagnostic_service": "diagnosticServices",
+
+  // Housekeeping
+  "housekeeping": "housekeeping",
+
+  // Maintenance
+  "maintenance": "maintenance",
+
+  // Dietitian
+  "dietitianservices": "dietitianServices",
   "dietitian services": "dietitianServices",
-  "dietitian service": "dietitianServices",
-  "nursing": "nursing",
+
+  // Security
   "security": "security",
+
+  // Nursing
+  "nursing": "nursing",
 };
+
 
 
 export default function TATAllList() {
@@ -110,7 +129,6 @@ export default function TATAllList() {
         const resolvedDocs = docs.filter((d) => d.stampOut);
 
         const mapped = resolvedDocs.map((d) => {
-          // TAT calculation
           let totalTime = null;
           if (d.stampOut && d.stampIn) {
             const diffMs = new Date(d.stampOut) - new Date(d.stampIn);
@@ -124,6 +142,48 @@ export default function TATAllList() {
                 : `${diffHours}hrs ${diffMinutes}mins`;
           }
 
+          // ---------------- FIXED DEPARTMENT UI DISPLAY ----------------
+          let uiDepartments = [];
+
+          if (Array.isArray(d.departments) && d.departments.length > 0) {
+            uiDepartments = d.departments
+              .map((item) => {
+                const deptKey = item.department
+                  ?.toLowerCase()
+                  ?.replace(/\s+/g, "")
+                  ?.replace(/_/g, "")
+                  ?.trim();
+                const mapped = DEPT_MAP[deptKey];
+
+                if (!mapped) return null;
+                if (!allowedBlocks.includes(mapped)) return null;
+                if (!hasConcernContent(item)) return null;
+
+                return DEPT_LABEL[mapped] || item.department;
+              })
+              .filter(Boolean);
+          } else {
+            const backendKeys = [
+              "doctorServices",
+              "billingServices",
+              "housekeeping",
+              "maintenance",
+              "diagnosticServices",
+              "dietitianServices",
+              "security",
+              "nursing",
+            ];
+
+            backendKeys.forEach((key) => {
+              if (d[key] && hasConcernContent(d[key])) {
+                uiDepartments.push(DEPT_LABEL[key]);
+              }
+            });
+          }
+
+          const departmentsDisplay =
+            uiDepartments.length > 0 ? uiDepartments.join(", ") : "-";
+
           return {
             ...d,
             id: d._id,
@@ -133,71 +193,55 @@ export default function TATAllList() {
             createdAt: d.stampIn,
             resolvedAt: d.stampOut,
             totalTimeTaken: totalTime,
+            departments: departmentsDisplay,
 
-            // 🔥 Full data for Excel
+            // FULL DEPT DATA (unchanged)
             fullDepartments:
-  // CASE 1: backend gives d.departments array (your earlier structure)
-  Array.isArray(d.departments) && d.departments.length > 0
-    ? d.departments.map((dep) => {
-        const action = dep?.resolution?.actionType || "";
-        const note = dep?.resolution?.note || "";
+              Array.isArray(d.departments) && d.departments.length > 0
+                ? d.departments.map((dep) => {
+                  const action = dep?.resolution?.actionType || "";
+                  const note = dep?.resolution?.note || "";
 
-        return {
-          department: dep.department || "-",
-          text: dep.text || "-",
-          rca: action === "RCA" ? note : "NA",
-          ca: action === "CA" ? note : "NA",
-          pa: action === "PA" ? note : "NA",
-        };
-      })
+                  return {
+                    department: dep.department || "-",
+                    text: dep.text || "-",
+                    rca: action === "RCA" ? note : "NA",
+                    ca: action === "CA" ? note : "NA",
+                    pa: action === "PA" ? note : "NA",
+                  };
+                })
+                : Object.keys(d)
+                  .filter((key) =>
+                    [
+                      "doctorServices",
+                      "billingServices",
+                      "housekeeping",
+                      "maintenance",
+                      "diagnosticServices",
+                      "dietitianServices",
+                      "security",
+                      "nursing",
+                    ].includes(key)
+                  )
+                  .map((key) => {
+                    const depData = d[key];
+                    if (!depData) return null;
 
-    // CASE 2: backend gives department blocks like: housekeeping, nursing, maintenance, etc.
-    : Object.keys(d)
-        .filter((key) =>
-          [
-            "doctorServices",
-            "billingServices",
-            "housekeeping",
-            "maintenance",
-            "diagnosticServices",
-            "dietitianServices",
-            "security",
-            "nursing",
-          ].includes(key)
-        )
-        .map((key) => {
-          const depData = d[key];
-          if (!depData) return null;
+                    const action = depData?.resolution?.actionType || "";
+                    const note = depData?.resolution?.note || "";
 
-          const action = depData?.resolution?.actionType || "";
-          const note = depData?.resolution?.note || "";
-
-          return {
-            department: key,
-            text: depData.text || "-",
-            rca: action === "RCA" ? note : "NA",
-            ca: action === "CA" ? note : "NA",
-            pa: action === "PA" ? note : "NA",
-          };
-        })
-        .filter(Boolean),
-
-
-            // UI display (unchanged)
-            departments: Array.isArray(d.departments)
-              ? d.departments
-                  .map((item) => {
-                    const key = DEPT_MAP[item.department?.toLowerCase()?.trim()];
-                    if (!key) return null;
-                    if (!allowedBlocks.includes(key)) return null;
-                    if (!hasConcernContent(item)) return null;
-                    return DEPT_LABEL[key] || item.department;
+                    return {
+                      department: key,
+                      text: depData.text || "-",
+                      rca: action === "RCA" ? note : "NA",
+                      ca: action === "CA" ? note : "NA",
+                      pa: action === "PA" ? note : "NA",
+                    };
                   })
-                  .filter(Boolean)
-                  .join(", ") || "-"
-              : "-",
+                  .filter(Boolean),
           };
         });
+
 
         setRows(mapped);
         setFilteredRows(mapped);
@@ -235,49 +279,146 @@ export default function TATAllList() {
     setFilteredRows(filtered);
   }, [dateFrom1, dateTo1, rows]);
 
+  // ---------------- EXCEL EXPORT (FULL TABLE EXPORT + CLEAN DEPT NAMES) ------------------
+  // const exportToExcel = (data) => {
+  //     if (!Array.isArray(data) || data.length === 0) {
+  //         alert("No data available to export.");
+  //         return;
+  //     }
 
-  // ---------------- EXCEL EXPORT ------------------
-const exportToExcel = (data) => {
+  //     let exportData = [];
+
+  //     data.forEach((item, index) => {
+  //         let tatDays = "-";
+  //         let tatHours = "-";
+  //         let tatTotal = item.totalTimeTaken || "-";
+
+  //         if (item.stampIn && item.stampOut) {
+  //             const diffMs = new Date(item.stampOut) - new Date(item.stampIn);
+  //             tatDays = Math.floor(diffMs / 86400000);
+  //             tatHours = Math.floor((diffMs % 86400000) / 3600000);
+  //         }
+
+  //         // Base row — matches table columns
+  //         const baseRow = {
+  //             "Sr No": index + 1,
+  //             "Complaint ID": item.complaintId,
+  //             "Patient Name": item.patient || "-",
+  //             "Departments (UI Display)": item.departments || "-", // 🔥 EXACT table value
+  //             "Created At": item.createdAt ? new Date(item.createdAt).toLocaleString("en-GB") : "-",
+  //             "Resolved At": item.resolvedAt ? new Date(item.resolvedAt).toLocaleString("en-GB") : "-",
+  //             "TAT (Readable)": tatTotal,
+  //             "TAT Days": tatDays,
+  //             "TAT Hours": tatHours,
+  //         };
+
+  //         // If multiple dept rows exist — export them one by one
+  //         if (Array.isArray(item.fullDepartments) && item.fullDepartments.length > 0) {
+  //             item.fullDepartments.forEach((dep) => {
+  //                 const deptRaw = dep.department || "-";
+
+  //                 // Normalize and map correct readable label
+  //                 const deptKey = deptRaw
+  //                     ?.toLowerCase()
+  //                     ?.replace(/\s+/g, "")
+  //                     ?.replace(/_/g, "")
+  //                     ?.trim();
+
+  //                 const mapped = DEPT_MAP[deptKey];
+  //                 const readableDept = mapped ? DEPT_LABEL[mapped] : deptRaw;
+
+  //                 exportData.push({
+  //                     ...baseRow,
+  //                     "Department": readableDept,     // 🔥 Clean readable dept
+  //                     "Complaints / Suggestions": dep.text || "-",
+  //                     "RCA": dep.rca || "NA",
+  //                     "CA": dep.ca || "NA",
+  //                     "PA": dep.pa || "NA",
+  //                 });
+  //             });
+  //         } else {
+  //             // No department data
+  //             exportData.push({
+  //                 ...baseRow,
+  //                 "Department": "-",
+  //                 "Complaints / Suggestions": "-",
+  //                 "RCA": "NA",
+  //                 "CA": "NA",
+  //                 "PA": "NA",
+  //             });
+  //         }
+  //     });
+
+  //     const worksheet = XLSX.utils.json_to_sheet(exportData);
+  //     const workbook = XLSX.utils.book_new();
+  //     XLSX.utils.book_append_sheet(workbook, worksheet, "TAT_Report");
+  //     XLSX.writeFile(workbook, "TAT_Report.xlsx");
+  // };
+
+  // ---------------- EXCEL EXPORT (ONLY TABLE COLUMNS + DEPARTMENT NAME) ------------------
+  const exportToExcel = (data) => {
     if (!Array.isArray(data) || data.length === 0) {
-        alert("No data available to export.");
-        return;
+      alert("No data available to export.");
+      return;
     }
 
     let exportData = [];
 
     data.forEach((item, index) => {
-        const baseRow = {
-            "Sr No": index + 1,
-            "Complaint ID": item.complaintId,
-            "Date": item.stampIn ? new Date(item.stampIn).toLocaleString("en-GB") : "-",
-            "Patient Name": item.patient || "-",
-            "Consultant": item.doctor || "-",
-            "Bed No": item.bedNo || "-",
-        };
 
-        // If multiple dept rows exist
-        if (Array.isArray(item.fullDepartments) && item.fullDepartments.length > 0) {
-            item.fullDepartments.forEach((deptObj) => {
-                exportData.push({
-                    ...baseRow,
-                    "Department": deptObj.department,
-                    "Complaints / Suggestions": deptObj.text,
-                    "Root Cause Analysis (RCA)": deptObj.rca,
-                    "Corrective Actions (CA)": deptObj.ca,
-                    "Preventive Actions (PA)": deptObj.pa,
-                });
-            });
-        } else {
-            // If no dept found
-            exportData.push({
-                ...baseRow,
-                "Department": "-",
-                "Complaints / Suggestions": "-",
-                "Root Cause Analysis (RCA)": "NA",
-                "Corrective Actions (CA)": "NA",
-                "Preventive Actions (PA)": "NA",
-            });
-        }
+      // ------------- TAT Calculation -------------
+      let tatDays = "-";
+      let tatHours = "-";
+      let tatTotal = item.totalTimeTaken || "-";
+
+      if (item.stampIn && item.stampOut) {
+        const diffMs = new Date(item.stampOut) - new Date(item.stampIn);
+        tatDays = Math.floor(diffMs / 86400000);
+        tatHours = Math.floor((diffMs % 86400000) / 3600000);
+      }
+
+      // ------------- Base Row (Matches Table UI Columns) -------------
+      const baseRow = {
+        "Sr No": index + 1,
+        "Complaint ID": item.complaintId,
+        "Patient Name": item.patient || "-",
+        "Departments": item.departments || "-",       // 🔥 Readable Dept same as UI
+        "Created At": item.createdAt ? new Date(item.createdAt).toLocaleString("en-GB") : "-",
+        "Resolved At": item.resolvedAt ? new Date(item.resolvedAt).toLocaleString("en-GB") : "-",
+        "TAT (Readable)": tatTotal,
+        "TAT Days": tatDays,
+        "TAT Hours": tatHours,
+      };
+
+      // ------------- If Multiple Departments -------------
+      if (Array.isArray(item.fullDepartments) && item.fullDepartments.length > 0) {
+
+        item.fullDepartments.forEach((dep) => {
+          const rawDept = dep.department || "-";
+
+          // normalize to match DEPT_MAP
+          const deptKey = rawDept
+            ?.toLowerCase()
+            ?.replace(/\s+/g, "")
+            ?.replace(/_/g, "")
+            ?.trim();
+
+          const mapped = DEPT_MAP[deptKey];
+          const readableDept = mapped ? DEPT_LABEL[mapped] : rawDept;
+
+          exportData.push({
+            ...baseRow,
+            "Department": readableDept,   // 🔥 Only dept name
+          });
+        });
+
+      } else {
+        // If no department data
+        exportData.push({
+          ...baseRow,
+          "Department": "-",
+        });
+      }
     });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -285,9 +426,7 @@ const exportToExcel = (data) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "TAT_Report");
 
     XLSX.writeFile(workbook, "TAT_Report.xlsx");
-};
-
-
+  };
 
   // ---------------- UI (UNCHANGED) ------------------
   return (
@@ -309,18 +448,18 @@ const exportToExcel = (data) => {
                   <NewDatePicker label="To Date" selectedDate={dateTo1} setSelectedDate={setDateTo1} />
                 </div>
 
-                <button
+                {/* <button
                   onClick={() => exportToExcel(filteredRows)}
                   className="flex items-center px-2 py-1 bg-blue-600 text-white rounded-md"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Export Excel
-                </button>
+                </button> */}
               </div>
 
 
               {/* --- TABLE UI (UNCHANGED) --- */}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto pt-2">
                 <table className="min-w-full">
                   <thead className="bg-gray-100">
                     <tr>
@@ -334,20 +473,27 @@ const exportToExcel = (data) => {
                   </thead>
 
                   <tbody>
-                    {filteredRows.map((r, idx) => (
-                      <tr key={r.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                        <td className="px-3 py-2 border-r">{r.complaintId}</td>
-                        <td className="px-3 py-2 border-r">{r.patient}</td>
-                        <td className="px-3 py-2 border-r">{r.departments}</td>
-                        <td className="px-3 py-2 border-r">
-                          {r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : "-"}
-                        </td>
-                        <td className="px-3 py-2 border-r">
-                          {r.resolvedAt ? new Date(r.resolvedAt).toLocaleString("en-GB") : "-"}
-                        </td>
-                        <td className="px-3 py-2 border-r">{r.totalTimeTaken}</td>
-                      </tr>
-                    ))}
+                    {filteredRows
+                      .slice()
+                      .sort((a, b) => {
+                        const aTime = new Date(a.resolvedAt || a.createdAt).getTime();
+                        const bTime = new Date(b.resolvedAt || b.createdAt).getTime();
+                        return bTime - aTime; 
+                      })
+                      .map((r, idx) => (
+                        <tr key={r.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                          <td className="px-3 py-2 border-r">{r.complaintId}</td>
+                          <td className="px-3 py-2 border-r">{r.patient}</td>
+                          <td className="px-3 py-2 border-r">{r.departments}</td>
+                          <td className="px-3 py-2 border-r">
+                            {r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : "-"}
+                          </td>
+                          <td className="px-3 py-2 border-r">
+                            {r.resolvedAt ? new Date(r.resolvedAt).toLocaleString("en-GB") : "-"}
+                          </td>
+                          <td className="px-3 py-2 border-r">{r.totalTimeTaken}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
 

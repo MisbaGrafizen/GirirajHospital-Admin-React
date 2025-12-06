@@ -343,69 +343,115 @@ export default function InternalComplaintsList() {
   };
 
 
-  const exportCAPA = () => {
-    try {
-      const data = filteredComplaints
-        .map((c) =>
-          Object.keys(c)
-            .filter((k) => {
-              const dept = c[k];
+const exportCAPA = async () => {
+  try {
+    const XLSX = await import("xlsx");
+    const excelRows = [];
 
-              if (typeof dept !== "object" || !dept) return false;
+    filteredComplaints.forEach((doc) => {
+      if (!doc) return;
 
-              // Active department (has text or attachment)
-              const hasContent =
-                dept.text ||
-                (dept.attachments && dept.attachments.length > 0);
+      const deptBlocks = [
+        "maintenance",
+        "itDepartment",
+        "bioMedicalDepartment",
+        "nursing",
+        "medicalAdmin",
+        "frontDesk",
+        "housekeeping",
+        "dietitian",
+        "pharmacy",
+        "security",
+        "hr",
+        "icn",
+        "mrd",
+        "accounts",
+      ];
 
-              if (!hasContent) return false;
+      deptBlocks.forEach((block) => {
+        const dep = doc[block];
+        if (!dep) return;
 
-              // Must be resolved (either type)
-              const isResolved =
-                dept.status === "resolved" ||
-                dept.status === "resolved_by_admin";
+        const hasText = dep?.text?.trim();
+        const hasFiles =
+          Array.isArray(dep?.attachments) && dep.attachments.length > 0;
 
-              return isResolved;
-            })
-            .map((k) => {
-              const dept = c[k];
-              const res = dept.resolution || {};
-              const type = res.actionType;
+        // Skip inactive departments
+        if (!hasText && !hasFiles) return;
 
-              return {
-                ComplaintID: c.complaintId,
-                Department: DEPT_LABEL[k] || k,
-                Complaint: dept.text || "-",
+        const status = (dep?.status || "").toLowerCase();
+        if (status !== "resolved" && status !== "resolved_by_admin") return;
 
-                RCA: type === "RCA" ? res.note || "-" : "",
-                CA: type === "CA" ? res.note || "-" : "",
-                PA: type === "PA" ? res.note || "-" : "",
+        if (!dep.resolution) return;
 
-                CreatedAt: formatDateTime(c.createdAt),
-                ResolvedAt: formatDateTime(res.resolvedAt),
-                ResolvedBy: res.resolvedBy || "-",
-                ResolvedType: res.resolvedType || "-", // admin / staff
-              };
-            })
-        )
-        .flat();
+        const res = dep.resolution;
 
-      if (!data.length) {
-        alert("No CAPA data found.");
-        return;
-      }
+        // ⭐ Get RCA / CA / PA properly (fallback → NA)
+        const RCA =
+          res.rcaNote ||
+          (res.actionType === "RCA" ? res.note : null) ||
+          "NA";
 
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
+        const CA =
+          res.caNotes ||
+          (res.actionType === "CA" ? res.note : null) ||
+          "NA";
 
-      XLSX.writeFile(wb, "Internal_CAPA_Report.xlsx");
+        const PA =
+          res.paNotes ||
+          (res.actionType === "PA" ? res.note : null) ||
+          "NA";
 
-    } catch (err) {
-      console.error("CAPA Export Error:", err);
-      alert("CAPA export failed.");
+        excelRows.push({
+          "Complaint ID": doc.complaintId,
+          "Date & Time": formatDateTime(doc.createdAt),
+          "Employee Name": doc.employeeName || "-",
+          "Contact No": doc.contactNo || "-",
+          "Employee ID": doc.employeeId || "-",
+          "Floor No": doc.floorNo || "-",
+
+          "Department": DEPT_LABEL[block] || block,
+          "Complaint Text": dep.text || "-",
+
+          // ⭐ Always show NA when not available
+          RCA,
+          CA,
+          PA,
+
+          // "Resolved At": res.resolvedAt
+          //   ? new Date(res.resolvedAt).toLocaleString()
+          //   : "-",
+          // "Resolved By": res.resolvedBy || "-",
+          // "Resolved Type": res.resolvedType || "-",
+        });
+      });
+    });
+
+    if (excelRows.length === 0) {
+      alert("No CAPA data found for export.");
+      return;
     }
-  };
+
+    const ws = XLSX.utils.json_to_sheet(excelRows);
+
+    ws["!cols"] = Object.keys(excelRows[0]).map((key) => ({
+      wch: Math.max(15, key.length + 5),
+    }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Internal_CAPA_Report");
+
+    XLSX.writeFile(
+      wb,
+      `Internal_CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  } catch (err) {
+    console.error("CAPA Export Error:", err);
+    alert("Failed to export CAPA report.");
+  }
+};
+
+
 
 
 
@@ -483,7 +529,7 @@ export default function InternalComplaintsList() {
                   </div>
 
                   {/* Export only if permitted */}
-                  <button
+                  {/* <button
                     onClick={exportToExcel}
                     className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
@@ -498,7 +544,7 @@ export default function InternalComplaintsList() {
                       <Download className="w-4 h-4 mr-2" />
                       CAPA
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
               <div className="overflow-x-auto">

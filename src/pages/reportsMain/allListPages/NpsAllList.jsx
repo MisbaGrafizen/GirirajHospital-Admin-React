@@ -116,7 +116,8 @@ export default function NpsAllList() {
     if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"))
     if (wantIPD) recs = recs.concat(project(rawIpd, "IPD"))
     // stable chronology for table
-    return recs.sort((a, b) => a.date.localeCompare(b.date) || a.datetime.localeCompare(b.datetime))
+return recs
+  .sort((a, b) => b.date.localeCompare(a.date) || b.datetime.localeCompare(a.datetime));
   }, [rawOpd, rawIpd, department, doctor, dateFrom, dateTo])
 
   const filteredRecords = useMemo(() => {
@@ -250,13 +251,13 @@ const exportToExcel = async () => {
                                         </div>
 
                                         {/* Export only if permitted */}
-                                        <button
+                                        {/* <button
                                             onClick={exportToExcel}
                                             className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                         >
                                             <Download className="w-4 h-4 mr-2" />
                                             Export to Excel
-                                        </button>
+                                        </button> */}
 
                                     </div>
                                 </div>

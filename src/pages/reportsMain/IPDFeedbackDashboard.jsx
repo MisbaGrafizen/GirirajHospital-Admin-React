@@ -692,95 +692,95 @@ export default function IPDFeedbackDashboard() {
   }, [fetchIPD])
 
   useEffect(() => {
-  if (!Array.isArray(rawIPD) || !rawIPD.length) {
-    setRows([]);
-    setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
-    setChartData(buildDistribution([]));
-    setServiceSummary([]);
-    setLineData([]);
-    return;
-  }
-
-  const start = dateFrom ? new Date(dateFrom) : null;
-  const end = dateTo ? new Date(dateTo) : null;
-  if (start) start.setHours(0, 0, 0, 0);
-  if (end) end.setHours(23, 59, 59, 999);
-
-  const doctorFilter = (doctor || "").trim().toLowerCase();
-  const roomFilter = (room || "").trim().toLowerCase();
-  const serviceFilter = (service || "").trim().toLowerCase().replace(/\s+/g, "");
-
-  // ✅ Filtering logic
-  const filteredDocs = rawIPD.filter((d) => {
-    // 🔹 Date filter
-    const dt = new Date(d.createdAt || d.date);
-    if (isNaN(dt)) return false;
-    if (start && dt < start) return false;
-    if (end && dt > end) return false;
-
-    // 🔹 Doctor filter
-    if (doctorFilter && doctorFilter !== "all doctors") {
-      const nm = (d.consultantDoctorName?.name || d.doctorName || "").trim().toLowerCase();
-      if (!nm.includes(doctorFilter)) return false;
+    if (!Array.isArray(rawIPD) || !rawIPD.length) {
+      setRows([]);
+      setKpiData({ totalFeedback: 0, averageRating: 0, npsRating: 0, overallScore: "-" });
+      setChartData(buildDistribution([]));
+      setServiceSummary([]);
+      setLineData([]);
+      return;
     }
 
-    // 🔹 Service filter
-    if (serviceFilter && serviceFilter !== "allservices") {
-      const ratings = d?.ratings || {};
-      const hasService = Object.keys(ratings).some((key) =>
-        key.toLowerCase().includes(serviceFilter)
-      );
-      if (!hasService) return false;
-    }
+    const start = dateFrom ? new Date(dateFrom) : null;
+    const end = dateTo ? new Date(dateTo) : null;
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(23, 59, 59, 999);
 
-    // 🔹 Room filter
-    if (roomFilter && roomFilter !== "all rooms") {
-      const b = String(d.bedNo ?? "").trim().toLowerCase();
-      if (b !== roomFilter) return false;
-    }
+    const doctorFilter = (doctor || "").trim().toLowerCase();
+    const roomFilter = (room || "").trim().toLowerCase();
+    const serviceFilter = (service || "").trim().toLowerCase().replace(/\s+/g, "");
 
-    return true;
-  });
+    // ✅ Filtering logic
+    const filteredDocs = rawIPD.filter((d) => {
+      // 🔹 Date filter
+      const dt = new Date(d.createdAt || d.date);
+      if (isNaN(dt)) return false;
+      if (start && dt < start) return false;
+      if (end && dt > end) return false;
 
-  // ✅ Build display rows
-  const list = filteredDocs.map((d) => {
-    const rating = calcRowAverage(d.ratings);
-    return {
-      id: String(d._id || d.id),
-      createdAt: d.createdAt || d.date,
-      patient: d.patientName || d.name || "-",
-      contact: d.contact || "-",
-      bedNo: d.bedNo || "-",
-      consultantDoctorName: d.consultantDoctorName?.name || "-",
-      rating,
-      overallRecommendation: d.overallRecommendation,
-      comments: d.comments,
-    };
-  });
+      // 🔹 Doctor filter
+      if (doctorFilter && doctorFilter !== "all doctors") {
+        const nm = (d.consultantDoctorName?.name || d.doctorName || "").trim().toLowerCase();
+        if (!nm.includes(doctorFilter)) return false;
+      }
 
-  // ✅ KPI & Charts
-  const avg = list.length
-    ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
-    : 0;
-  const nps = calcNpsPercent(filteredDocs);
-  const overallScore = getOverallScoreLabel(avg);
+      // 🔹 Service filter
+      if (serviceFilter && serviceFilter !== "allservices") {
+        const ratings = d?.ratings || {};
+        const hasService = Object.keys(ratings).some((key) =>
+          key.toLowerCase().includes(serviceFilter)
+        );
+        if (!hasService) return false;
+      }
 
-  setRows(list);
-  setKpiData({
-    totalFeedback: list.length,
-    averageRating: avg,
-    npsRating: nps,
-    overallScore,
-  });
+      // 🔹 Room filter
+      if (roomFilter && roomFilter !== "all rooms") {
+        const b = String(d.bedNo ?? "").trim().toLowerCase();
+        if (b !== roomFilter) return false;
+      }
 
-  setChartData(buildDistribution(list));
-  setServiceSummary(buildServiceSummary(filteredDocs));
+      return true;
+    });
 
-  // ✅ Line chart trend
-  const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
-  setTrendBucket(bucket);
-  setLineData(trend);
-}, [rawIPD, dateFrom, dateTo, doctor, service, room]);
+    // ✅ Build display rows
+    const list = filteredDocs.map((d) => {
+      const rating = calcRowAverage(d.ratings);
+      return {
+        id: String(d._id || d.id),
+        createdAt: d.createdAt || d.date,
+        patient: d.patientName || d.name || "-",
+        contact: d.contact || "-",
+        bedNo: d.bedNo || "-",
+        consultantDoctorName: d.consultantDoctorName?.name || "-",
+        rating,
+        overallRecommendation: d.overallRecommendation,
+        comments: d.comments,
+      };
+    });
+
+    // ✅ KPI & Charts
+    const avg = list.length
+      ? round1(list.reduce((s, r) => s + (r.rating || 0), 0) / list.length)
+      : 0;
+    const nps = calcNpsPercent(filteredDocs);
+    const overallScore = getOverallScoreLabel(avg);
+
+    setRows(list);
+    setKpiData({
+      totalFeedback: list.length,
+      averageRating: avg,
+      npsRating: nps,
+      overallScore,
+    });
+
+    setChartData(buildDistribution(list));
+    setServiceSummary(buildServiceSummary(filteredDocs));
+
+    // ✅ Line chart trend
+    const { trend, bucket } = buildAutoTrend(list, dateFrom, dateTo);
+    setTrendBucket(bucket);
+    setLineData(trend);
+  }, [rawIPD, dateFrom, dateTo, doctor, service, room]);
 
 
 
@@ -792,9 +792,18 @@ export default function IPDFeedbackDashboard() {
 
   // ---------------- Search + Export ----------------
   const filteredFeedback = rows
-    .filter((f) =>
-      f.patient?.toLowerCase().includes(searchTerm?.toLowerCase())
-    )
+    .filter((f) => {
+      const q = searchTerm.toLowerCase();
+
+      return (
+        f.patient?.toLowerCase().includes(q) ||
+        f.contact?.toLowerCase().includes(q) ||
+        String(f.consultantDoctorName || "")
+          .toLowerCase()
+          .includes(q) ||
+        f.comments?.toLowerCase().includes(q)
+      );
+    })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // latest first
     .slice(0, 5); // only top
 
@@ -982,7 +991,7 @@ export default function IPDFeedbackDashboard() {
     switch (type) {
       case "totalFeedback":
         // navigate("/ipd-opd-list");
-          navigate("/ipd-opd-list", { state: { select: "IPD" } })
+        navigate("/ipd-opd-list", { state: { select: "IPD" } })
         break;
       case "npsRating":
         navigate("/reports/nps-all-list");
@@ -1002,16 +1011,16 @@ export default function IPDFeedbackDashboard() {
     <>
       <section className="flex font-Poppins w-[100%] h-[100%] select-none  overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-<Header
-  pageName="IPD"
-  doctors={doctorOptions}
-  onDateRangeChange={({ from, to, doctor, service }) => {
-    setDateFrom(from);
-    setDateTo(to);
-    setDoctor(doctor || "All Doctors");
-    setService(service || "All Services");
-  }}
-/>
+          <Header
+            pageName="IPD"
+            doctors={doctorOptions}
+            onDateRangeChange={({ from, to, doctor, service }) => {
+              setDateFrom(from);
+              setDateTo(to);
+              setDoctor(doctor || "All Doctors");
+              setService(service || "All Services");
+            }}
+          />
 
 
 
@@ -1071,14 +1080,14 @@ export default function IPDFeedbackDashboard() {
                         total: (
                           <span
                             className={`font-semibold ${kpiData.overallScore === "Excellent"
-                                ? "text-green-600"
-                                : kpiData.overallScore === "Good"
-                                  ? "text-blue-600"
-                                  : kpiData.overallScore === "Average"
-                                    ? "text-yellow-600"
-                                    : kpiData.overallScore === "Poor"
-                                      ? "text-orange-600"
-                                      : "text-red-600"
+                              ? "text-green-600"
+                              : kpiData.overallScore === "Good"
+                                ? "text-blue-600"
+                                : kpiData.overallScore === "Average"
+                                  ? "text-yellow-600"
+                                  : kpiData.overallScore === "Poor"
+                                    ? "text-orange-600"
+                                    : "text-red-600"
                               }`}
                           >
                             {kpiData.overallScore}
@@ -1134,16 +1143,16 @@ export default function IPDFeedbackDashboard() {
                         <div className="mt-4 text-center">
                           <p
                             className={`text-4xl font-bold ${showPopup === "averageRating"
-                                ? "text-yellow-600"
-                                : kpiData.overallScore === "Excellent"
-                                  ? "text-green-600"
-                                  : kpiData.overallScore === "Good"
-                                    ? "text-blue-600"
-                                    : kpiData.overallScore === "Average"
-                                      ? "text-yellow-600"
-                                      : kpiData.overallScore === "Poor"
-                                        ? "text-orange-600"
-                                        : "text-red-600"
+                              ? "text-yellow-600"
+                              : kpiData.overallScore === "Excellent"
+                                ? "text-green-600"
+                                : kpiData.overallScore === "Good"
+                                  ? "text-blue-600"
+                                  : kpiData.overallScore === "Average"
+                                    ? "text-yellow-600"
+                                    : kpiData.overallScore === "Poor"
+                                      ? "text-orange-600"
+                                      : "text-red-600"
                               }`}
                           >
                             {showPopup === "averageRating"
@@ -1223,7 +1232,7 @@ export default function IPDFeedbackDashboard() {
                       </div>
                       <h3 className="ext-[13px] font-[500] text-gray-900">Feedback Keywords</h3>
                     </div>
-                   
+
                     <div className="bg-white   ">
                       <div className="flex flex-wrap gap-2">
                         {frequentRatings.length ? (
@@ -1337,7 +1346,7 @@ export default function IPDFeedbackDashboard() {
                 </div>
 
                 {/* Patient-Wise Feedback Table */}
-                <div className= "rounded-xl e md34:!mb-[100px] md11:!mb-0    overflow-hidden">
+                <div className="rounded-xl e md34:!mb-[100px] md11:!mb-0    overflow-hidden">
                   <div className="px-2  pt-[5px] pb-[13px]   border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
                     <div className=' flex gap-[10px] items-center    justify-start '>
 
@@ -1363,7 +1372,7 @@ export default function IPDFeedbackDashboard() {
                       <div className=' flex gap-[10px]'>
 
 
-                 
+
 
 
                         <button
@@ -1410,6 +1419,11 @@ export default function IPDFeedbackDashboard() {
                           <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
                         </tr>
                       </thead>
+                      {filteredFeedback.length === 0 && (
+                        <div className="py-6 text-center text-gray-500 text-sm">
+                          No feedback found
+                        </div>
+                      )}
                       <tbody className="bg-white">
                         {filteredFeedback.map((feedback, index) => (
                           <tr

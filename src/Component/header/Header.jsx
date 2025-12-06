@@ -65,7 +65,7 @@ function Header({
   const [filterSearch, setFilterSearch] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState(null);
   const [filterDateTo, setFilterDateTo] = useState(null);
-
+  const isAdmin = localStorage.getItem("loginType") === "admin";
 
 
   // close dropdown when clicking outside
@@ -89,23 +89,7 @@ function Header({
       });
     }
   }, [filterSearch, filterDateFrom, filterDateTo]);
-
-  // useEffect(() => {
-  //   const fetchCount = async () => {
-  //     try {
-  //       const data = await ApiGet("/admin/notifications");
-  //       setCount(data?.notifications?.length || 0);
-  //     } catch (err) {
-  //       console.error("Error fetching notifications:", err);
-  //     }
-  //   };
-
-  //   fetchCount(); // initial
-  //   const interval = setInterval(fetchCount, 5000); // every 5 sec refresh
-
-  //   return () => clearInterval(interval); // cleanup
-  // }, []);
-
+ 
   useEffect(() => {
     // initial fetch
     const fetchCount = async () => {
@@ -118,7 +102,7 @@ function Header({
     };
     fetchCount();
 
-    // ✅ listen for new notifications
+    // listen for new notifications
     socket.on("notification:new", () => {
       fetchCount(); // re-fetch count immediately when new notification comes
     });
@@ -598,24 +582,26 @@ function Header({
                   >
                     <User size={16} /> My Profile
                   </button>
-                  <button
+                  {/* <button
                     className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={() => setOpenNotif(true)}
                   >
                     <Bell size={16} /> Notification Settings
-                  </button>
-                  <button
-                    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={handleLogDetails}
-                  >
-                    <FileText size={16} /> Log Details
+                  </button> */}
+                 {isAdmin && (
+  <button
+    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition"
+    onClick={handleLogDetails}
+  >
+    <FileText size={16} /> Log Details
+  </button>
+)}
 
-                    <img className=" absolute w-[33px] object-contain h-[33px] right-7 rotate-[30deg]" src={comming} />
-                  </button>
-                  <button
+                  {/* <button
                     className="w-full flex items-center relative  gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={() => setOpenBug(true)}
                   >
                     <Bug size={16} /> Report a Bug
                     <img className=" absolute w-[33px] object-contain h-[33px] right-7 rotate-[30deg]" src={comming} />
-                  </button>
+                  </button> */}
                   <hr className=" border-gray-200" />
                   <button
                     onClick={handleLogout}

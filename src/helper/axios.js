@@ -19,7 +19,7 @@ export const ApiGet = (type) => {
       })
       .catch((error) => {
         reject({
-          code: error?.response?.status,
+          code: error?.response?.status,  
           error: error?.response?.data?.error,
           message: error?.response?.data?.message,
         });
@@ -151,28 +151,43 @@ export const ApiPostNoAuth = (type, userData) => {
   });
 };
 
+// export const getHttpOptions = (options = defaultHeaders) => {
+//   let headers = {
+//     Authorization: "",
+//     "Content-Type": "application/json",
+//     "Access-Control-Allow-Origin": "*",
+//     "Access-Control-Allow-credentials": true,
+//   };
+ 
+//   if (options.hasOwnProperty("isAuth") && options.isAuth) {
+//     const token = Cookies.get('token');
+//     headers["Authorization"] = token ? `Bearer ${token}` : "";
+//   }
+
+//   if (options.hasOwnProperty("isJsonRequest") && options.isJsonRequest) {
+//     headers["Content-Type"] = "application/json";
+//   }
+
+//   if (options.hasOwnProperty("AdditionalParams") && options.AdditionalParams) {
+//     headers = { ...headers, ...options.AdditionalParams };
+//   }
+
+//   return { headers };
+// };
+
 export const getHttpOptions = (options = defaultHeaders) => {
   let headers = {
-    Authorization: "",
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-credentials": true,
   };
- 
-  if (options.hasOwnProperty("isAuth") && options.isAuth) {
-    const token = Cookies.get('token');
-    headers["Authorization"] = token ? `Bearer ${token}` : "";
+
+  if (options.isAuth) {
+    const token = localStorage.getItem("authToken");
+    if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  if (options.hasOwnProperty("isJsonRequest") && options.isJsonRequest) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  if (options.hasOwnProperty("AdditionalParams") && options.AdditionalParams) {
-    headers = { ...headers, ...options.AdditionalParams };
-  }
+  const userId = localStorage.getItem("userId");
+  if (userId) headers["x-user-id"] = userId;
 
   return { headers };
 };
-
 

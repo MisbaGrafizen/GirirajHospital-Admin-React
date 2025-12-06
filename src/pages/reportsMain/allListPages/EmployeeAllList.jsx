@@ -306,13 +306,13 @@ const exportToExcel = async () => {
                         />
                       </div>
 
-                      <button
+                      {/* <button
                         onClick={exportToExcel}
                         className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel
-                      </button>
+                      </button> */}
 
                     </div>
 

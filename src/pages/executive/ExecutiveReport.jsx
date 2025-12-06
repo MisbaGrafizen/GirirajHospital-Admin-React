@@ -381,31 +381,68 @@ const filteredIpd = slice(ipd, finalFrom, finalTo);
     // All metrics auto-update on date change
   }
 
-
-  const exportToExcel = async () => {
+const exportToExcel = async () => {
   const XLSX = await import("xlsx");
 
-  const excelRows = opdFiltered.concat(ipdFiltered).map((d, idx) => ({
-    "Sr No": idx + 1,
-    "Date": toISODateOnly(d.createdAt ?? d.date ?? d.dateTime),
-    "Patient": d.patientName || d.name || "-",
-    "Doctor": d.consultantDoctorName?.name || d.doctorName || "-",
-    "Department": d.roomNo ? "IPD" : "OPD",
-    "NPS Score": d.overallRecommendation || "",
-    "Comments": d.comments || d.comment || "",
-  }));
+  try {
+    if (!metrics || metrics.length === 0) {
+      alert("No metric data available for export.");
+      return;
+    }
 
-  const ws = XLSX.utils.json_to_sheet(excelRows);
-  ws["!cols"] = Object.keys(excelRows[0] || {}).map(() => ({ wch: 20 }));
+    // Build rows for Excel based on the UI metrics table
+    const excelRows = metrics.map((row) => ({
+      Metric: row.metric,
+      Value: row.value,
+      Trend: row.trend?.value || "-",
+      "Trend Direction": row.trend?.direction || "-",
+      Status: row.status?.label || "-",
+    }));
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Executive Report");
+    // Add date range footer in Excel (new row)
+    excelRows.push({
+      Metric: "Report From",
+      Value: reportFrom,
+      Trend: "",
+      "Trend Direction": "",
+      Status: "",
+    });
 
-  XLSX.writeFile(
-    wb,
-    `Executive_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
-  );
+    // excelRows.push({
+    //   Metric: "Report To",
+    //   Value: reportTo,
+    //   Trend: "",
+    //   "Trend Direction": "",
+    //   Status: "",
+    // });
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(excelRows);
+
+    // Auto column widths
+    ws["!cols"] = [
+      { wch: 35 }, // Metric
+      { wch: 20 }, // Value
+      { wch: 20 }, // Trend
+      { wch: 18 }, // Direction
+      { wch: 25 }, // Status
+    ];
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Executive Metrics");
+
+    // Filename
+    const fileName = `Executive_Report_${reportFrom}_to_${reportTo}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+
+  } catch (err) {
+    console.error("Excel Export Error:", err);
+    alert("Failed to export Excel.");
+  }
 };
+
 
 // normalize UI dates → ISO yyyy-mm-dd
 const uiFromISO = normalizeUIToISO(dateFrom1);
@@ -464,13 +501,13 @@ const reportTo = uiToISO || toDate;
 
 
                     {/* Export only if permitted */}
-                    <button
+                    {/* <button
                       onClick={exportToExcel}
                       className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Export to Excel
-                    </button>
+                    </button> */}
 
                   </div>
                 </div>

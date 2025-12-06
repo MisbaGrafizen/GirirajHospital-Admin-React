@@ -263,14 +263,14 @@ const exportToExcel = async () => {
                               className="pl-10 pr-3 py-[5px] border md34:!w-[190px] md11:!w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
                             />
                           </div>
-
+{/* 
                           <button
                             onClick={exportToExcel}
                             className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                           >
                             <Download className="w-4 h-4 mr-2" />
                             Export to Excel
-                          </button>
+                          </button> */}
 
                         </div>
 

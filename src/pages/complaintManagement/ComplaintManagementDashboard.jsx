@@ -154,75 +154,6 @@ function normalizeServiceName(name = "") {
     return SERVICE_NORMALIZATION_MAP[name] || name;
 }
 
-function getActiveDepartments(complaint, allowedBlocks = []) {
-    const allDepartments = [
-        "maintenance",
-        "itDepartment",
-        "bioMedicalDepartment",
-        "nursing",
-        "medicalAdmin",
-        "frontDesk",
-        "housekeeping",
-        "dietitian",
-        "pharmacy",
-        "security",
-        "hr",
-        "icn",
-        "mrd",
-        "accounts",
-    ];
-
-    const labelMap = {
-        hr: "HR",
-        itDepartment: "IT Department",
-        bioMedicalDepartment: "Bio Medical",
-        medicalAdmin: "Medical Admin",
-        frontDesk: "Front Desk",
-        housekeeping: "Housekeeping",
-        dietitian: "Dietitian",
-        pharmacy: "Pharmacy",
-        security: "Security",
-        nursing: "Nursing",
-        maintenance: "Maintenance",
-        icn: "ICN",
-        mrd: "MRD",
-        accounts: "Accounts",
-    };
-
-    const activeDepartments = [];
-
-    for (const dept of allDepartments) {
-        const d = complaint?.[dept];
-        if (!d) continue;
-
-        const hasText = d.text && d.text.trim().length > 0;
-        const hasAttachments =
-            Array.isArray(d.attachments) && d.attachments.length > 0;
-
-        if (hasText || hasAttachments) {
-            const displayName = labelMap[dept] || dept.charAt(0).toUpperCase() + dept.slice(1);
-            activeDepartments.push(displayName);
-        }
-    }
-
-    // 🔹 Apply permission filter only if allowedBlocks passed
-    const filteredDepartments =
-        allowedBlocks && allowedBlocks.length > 0
-            ? activeDepartments.filter((name) =>
-                allowedBlocks.some((block) =>
-                    block.toLowerCase().includes(name.toLowerCase())
-                )
-            )
-            : activeDepartments;
-
-    // 🔹 Return formatted string or fallback
-    return filteredDepartments.length > 0
-        ? filteredDepartments.join(", ")
-        : "-";
-}
-
-
-
 
 // ===================== DATE HELPERS =====================
 const pad2 = (n) => String(n).padStart(2, "0")
@@ -554,12 +485,11 @@ async function getInternalComplaints() {
         if (Array.isArray(res?.data)) return res.data;
         if (Array.isArray(res?.response?.data)) return res.response.data;
         return [];
-    } catch (err) {
+    } catch (err) { 
         console.error("❌ Error fetching internal complaints:", err);
         return [];
     }
 }
-
 
 function extractFrequentServices(docs, topN = 6) {
     const serviceCounts = {};
@@ -1020,12 +950,6 @@ export default function ComplaintManagementDashboard() {
             allowed.some((block) => block.includes(dep.department.toLowerCase()))
         );
     }
-
-
-    const handleFilterChange = useCallback((next) => {
-        setFilters((prev) => ({ ...prev, ...next }));
-    }, []);
-
 
     const openModal = (complaint) => {
         setSelectedComplaint(complaint)
@@ -1681,7 +1605,11 @@ export default function ComplaintManagementDashboard() {
                                                     <tbody className="bg-white">
                                                         {tatComplaints
                                                             .slice()
-                                                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                                            .sort((a, b) => {
+            const aTime = new Date(a.stampOut || a.stampIn || a.createdAt).getTime();
+            const bTime = new Date(b.stampOut || b.stampIn || b.createdAt).getTime();
+            return bTime - aTime; // Latest first
+        })
                                                             .slice(0, 5)
                                                             .map((complaint, index) => {
                                                                 const fullDoc = rawConcerns.find(d => d._id === complaint._id);
@@ -1704,7 +1632,7 @@ export default function ComplaintManagementDashboard() {
                                                                         </td>
                                                                         <td className="px-3 py-2  border-r  min-w-[85px] text-sm text-gray-900">
                                                                             <div className="flex items-center">
-                                                                                <Bed className="w-4 h-4 text-gray-400 mr-2" />  098
+                                                                                <Bed className="w-4 h-4 text-gray-400 mr-2" />{complaint.bedNo}
                                                                             </div>
                                                                         </td>
                                                                         <td className="px-3 py-2 border-r text-[13px] min-w-[300px] text-gray-900">
@@ -2276,70 +2204,103 @@ export default function ComplaintManagementDashboard() {
                                                                     )}
 
                                                                 </div>
+{/* ------------------- RESOLUTION NOTE ------------------- */}
+<div className="bg-gray-50 p-3 border rounded-lg">
+    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+        Resolution Note
+    </h4>
 
-                                                                <div className="bg-gray-50 p-3 border rounded-lg">
-                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                                                                        Resolution Note
-                                                                    </h4>
+    {selectedComplaint?.departments?.map((dep, i) => {
+        const deptName = dep.department || "Department";
+        const res = dep.resolution;
 
-                                                                    {/* Resolution Text */}
-                                                                    <p className="text-gray-600 leading-[21px] text-[14px] mb-3">
-                                                                        {selectedComplaint?.resolution?.note || "-"}
-                                                                    </p>
+        // Skip if no resolution note & no proof
+        if (
+            !res ||
+            ((!res.note || res.note.trim() === "") &&
+                (!res.proof || res.proof.length === 0))
+        ) {
+            return null;
+        }
 
-                                                                    {/* Proof Attachments (only if valid files exist) */}
-                                                                    {selectedComplaint?.resolution?.proof &&
-                                                                        selectedComplaint.resolution.proof.filter(file => file && file.trim() !== "").length > 0 && (
-                                                                            <div className="mt-3">
-                                                                                <h5 className="text-sm font-semibold text-gray-700 mb-2">
-                                                                                    Proof Attachments
-                                                                                </h5>
-                                                                                <div className="flex gap-3 flex-wrap">
-                                                                                    {selectedComplaint.resolution.proof
-                                                                                        .filter(file => file && file.trim() !== "")
-                                                                                        .map((file, idx) => {
-                                                                                            const isImage = file.match(/\.(jpeg|jpg|png|gif)$/i);
-                                                                                            const isAudio = file.match(/\.(mp3|wav|ogg)$/i);
+        return (
+            <div key={i} className="mb-4">
+                {/* Department Name */}
+                <h5 className="text-sm font-semibold text-gray-700 mb-1">
+                    {deptName}
+                </h5>
 
-                                                                                            if (isImage) {
-                                                                                                return (
-                                                                                                    <img
-                                                                                                        key={idx}
-                                                                                                        src={file}
-                                                                                                        alt="Resolution Proof"
-                                                                                                        className="w-32 h-32 object-cover rounded border"
-                                                                                                    />
-                                                                                                );
-                                                                                            }
+                {/* Resolution Note */}
+                {res.note && (
+                    <p className="text-gray-600 text-[14px] mb-2 leading-[21px]">
+                        {res.note}
+                    </p>
+                )}
 
-                                                                                            if (isAudio) {
-                                                                                                return (
-                                                                                                    <audio key={idx} controls className="w-full">
-                                                                                                        <source src={file} type="audio/mpeg" />
-                                                                                                        Your browser does not support the audio element.
-                                                                                                    </audio>
-                                                                                                );
-                                                                                            }
+                {/* Resolution Attachments */}
+                <div className="flex gap-3 flex-wrap">
+                    {res.proof
+                        ?.filter((file) => file && file.trim() !== "")
+                        .map((file, idx) => {
+                            const isImage = file.match(/\.(jpeg|jpg|png|gif)$/i);
+                            const isAudio = file.match(/\.(mp3|wav|ogg)$/i);
 
-                                                                                            return (
-                                                                                                <a
-                                                                                                    key={idx}
-                                                                                                    href={file}
-                                                                                                    target="_blank"
-                                                                                                    rel="noopener noreferrer"
-                                                                                                    className="text-blue-600 underline text-sm"
-                                                                                                >
-                                                                                                    View Proof
-                                                                                                </a>
-                                                                                            );
-                                                                                        })}
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
+                            if (isImage) {
+                                return (
+                                    <img
+                                        key={idx}
+                                        src={file}
+                                        alt="Resolution Proof"
+                                        className="w-32 h-32 object-cover rounded border"
+                                    />
+                                );
+                            }
+
+                            if (isAudio) {
+                                return (
+                                    <audio
+                                        key={idx}
+                                        controls
+                                        className="w-full"
+                                    >
+                                        <source src={file} type="audio/mpeg" />
+                                    </audio>
+                                );
+                            }
+
+                            return (
+                                <a
+                                    key={idx}
+                                    href={file}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 underline text-sm"
+                                >
+                                    View Proof
+                                </a>
+                            );
+                        })}
+                </div>
+            </div>
+        );
+    })}
+
+    {/* If no department has resolution */}
+    {selectedComplaint?.departments?.every((d) => {
+        const res = d.resolution;
+        return (
+            !res ||
+            ((!res.note || res.note.trim() === "") &&
+                (!res.proof || res.proof.length === 0))
+        );
+    }) && (
+        <p className="text-gray-500 text-sm">
+            No resolution details available.
+        </p>
+    )}
+</div>
 
 
-
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>

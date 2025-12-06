@@ -229,76 +229,90 @@ export default function ComplainAllList() {
     };
 
     /* ------------------ EXPORT CAPA TO EXCEL (FINAL LOGIC) ------------------ */
-    const exportCAPA = async () => {
-        const XLSX = await import("xlsx");
+const exportCAPA = async () => {
+    const XLSX = await import("xlsx");
 
-        const excelRows = [];
+    const excelRows = [];
 
-        filteredComplaints.forEach((c) => {
-            const doc = rawConcerns.find((d) => d._id === c.id);
-            if (!doc) return;
+    filteredComplaints.forEach((c) => {
+        const doc = rawConcerns.find((d) => d._id === c.id);
+        if (!doc) return;
 
-            const deptBlocks = [
-                "doctorServices",
-                "billingServices",
-                "housekeeping",
-                "maintenance",
-                "diagnosticServices",
-                "dietitianServices",
-                "security",
-                "nursing",
-            ];
+        const deptBlocks = [
+            "doctorServices",
+            "billingServices",
+            "housekeeping",
+            "maintenance",
+            "diagnosticServices",
+            "dietitianServices",
+            "security",
+            "nursing",
+        ];
 
-            deptBlocks.forEach((block) => {
-                const dep = doc?.[block];
-                if (!dep) return;
+        deptBlocks.forEach((block) => {
+            const dep = doc?.[block];
+            if (!dep) return;
 
-                const hasText = dep?.text?.trim();
-                const hasFiles = Array.isArray(dep?.attachments) && dep.attachments.length > 0;
+            const hasText = dep?.text?.trim();
+            const hasFiles =
+                Array.isArray(dep?.attachments) && dep.attachments.length > 0;
 
-                // ❌ Skip inactive (no text/attachment)
-                if (!hasText && !hasFiles) return;
+            // ❌ Skip inactive department (no text or attachments)
+            if (!hasText && !hasFiles) return;
 
-                // ❌ Skip if not resolved
-                if (dep?.status?.toLowerCase() !== "resolved_by_admin" &&
-                    dep?.status?.toLowerCase() !== "resolved") return;
+            // ❌ Skip if not resolved
+            const status = dep?.status?.toLowerCase();
+            if (status !== "resolved" && status !== "resolved_by_admin") return;
 
-                // ❌ Skip if no resolution object
-                if (!dep?.resolution) return;
+            // ❌ Skip if no resolution object
+            const resObj = dep?.resolution;
+            if (!resObj) return;
 
-                const action = dep.resolution.actionType || "";
-                const note = dep.resolution.note || "-";
+            // Extract actionType / note (fallback)
+            const action = resObj.actionType || "";
+            const note = resObj.note || "-";
 
-                excelRows.push({
-                    "Complaint ID": c.complaintId,
-                    "Date & Time": c.date,
-                    "Patient Name": c.patient,
-                    "Doctor Name": c.doctor,
-                    "Bed No": c.bedNo,
-                    "Department": DEPT_LABEL[block] || block,
-                    "Complaint Text": dep.text || "-",
+            // NEW — SMART RCA/CA/PA EXTRACTION
+            const rca = resObj.rcaNote || (action === "RCA" ? note : "NA");
+            const ca  = resObj.caNote  || (action === "CA"  ? note : "NA");
+            const pa  = resObj.paNote  || (action === "PA"  ? note : "NA");
 
-                    // ✅ ONLY THE MATCHED ACTIONTYPE GETS THE NOTE
-                    "RCA": action === "RCA" ? note : "NA",
-                    "CA": action === "CA" ? note : "NA",
-                    "PA": action === "PA" ? note : "NA",
-                });
+            excelRows.push({
+                "Complaint ID": c.complaintId,
+                "Date & Time": c.date,
+                "Patient Name": c.patient,
+                "Doctor Name": c.doctor,
+                "Bed No": c.bedNo,
+                "Department": DEPT_LABEL[block] || block,
+                "Complaint Text": dep.text || "-",
+
+                // FINAL SMART FIELDS
+                "RCA": rca || "NA",
+                "CA": ca || "NA",
+                "PA": pa || "NA",
             });
         });
+    });
 
-        if (excelRows.length === 0) {
-            alert("No CAPA data found for export.");
-            return;
-        }
+    // ❗ If still empty, alert user
+    if (excelRows.length === 0) {
+        alert("No CAPA data found for export.");
+        return;
+    }
 
-        const ws = XLSX.utils.json_to_sheet(excelRows);
-        ws["!cols"] = Object.keys(excelRows[0]).map((k) => ({ wch: Math.max(15, k.length + 6) }));
+    const ws = XLSX.utils.json_to_sheet(excelRows);
+    ws["!cols"] = Object.keys(excelRows[0]).map((k) => ({
+        wch: Math.max(15, k.length + 6),
+    }));
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
 
-        XLSX.writeFile(wb, `CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    };
+    XLSX.writeFile(
+        wb,
+        `CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+};
 
 
     /* ======================================================
@@ -342,7 +356,7 @@ export default function ComplainAllList() {
                                         />
                                     </div>
 
-                                    <button
+                                    {/* <button
                                         onClick={exportToExcel}
                                         className="flex items-center px-2 py-1 bg-blue-600 text-white rounded-md"
                                     >
@@ -357,7 +371,7 @@ export default function ComplainAllList() {
                                             <Download className="w-4 h-4 mr-2" />
                                             CAPA
                                         </button>
-                                    )}
+                                    )} */}
 
                                 </div>
                             </div>
@@ -374,10 +388,6 @@ export default function ComplainAllList() {
                                             <th className="px-3 py-2 border-r text-xs">Bed No</th>
                                             <th className="px-3 py-2 border-r text-xs">Departments</th>
                                             <th className="px-3 py-2 border-r text-xs">Status</th>
-
-                                            {/* NEW COLUMN */}
-                                            <th className="px-3 py-2 border-r text-xs">Resolution Note</th>
-
                                             <th className="px-3 py-2 border-r text-xs">Details</th>
                                         </tr>
                                     </thead>
@@ -418,11 +428,6 @@ export default function ComplainAllList() {
                                                         <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(c.status)}`}>
                                                             {c.status}
                                                         </span>
-                                                    </td>
-
-                                                    {/* NEW RESOLUTION NOTE CELL */}
-                                                    <td className="px-3 py-2 border-r">
-                                                        {c.resolutionNote}
                                                     </td>
 
                                                     <td className="px-3 py-2 border-r">

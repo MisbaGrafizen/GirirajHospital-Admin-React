@@ -402,7 +402,7 @@ submenu: [
           </div>
 
           <button
-            onClick={() => window.open("https://internal.grafizen.com", "_blank")} // ✅ opens in new tab
+            onClick={() => window.open("https://internal.feedbacks.live", "_blank")} // ✅ opens in new tab
             className="w-[80%] mx-auto gap-[10px] flex justify-center items-center font-[500] mt-[6px] py-[7px] bg-red-600 text-white rounded-lg text-sm hover:opacity-90 transition"
           >
             <i className="fa-solid fa-plus"></i> Complaint

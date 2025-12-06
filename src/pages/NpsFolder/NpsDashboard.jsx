@@ -292,38 +292,41 @@ export default function NpsDashboard() {
     const doctorFilter = doctor !== "All Doctors" ? doctor.toLowerCase() : null;
 
     const project = (list, dept) => {
-      if (!Array.isArray(list)) return [];
-      return list
-        .map((d) => {
-          const nps = toNps(d.overallRecommendation);
-          if (nps === null) return null;
+  if (!Array.isArray(list)) return [];
 
-          const when = pickCreatedAt(d);
-          if (!inRange(when, dateFrom, dateTo)) return null;
+  return list
+    .map((d) => {
+      const nps = toNps(d.overallRecommendation);
+      if (nps === null) return null;
 
-          const docName = pickDoctor(d);
-          if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null;
+      // ⛔ DO NOT FILTER BY DATE
+      const when = pickCreatedAt(d);
 
-          const bed = pickRoom(d, dept);
+      const docName = pickDoctor(d);
+      if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null;
 
-          return {
-            date: when.toISOString().slice(0, 10),
-            datetime: when.toLocaleString(),
-            patient: pickPatient(d),
-            room: bed,
-            doctor: docName,
-            department: dept,
-            rating: nps,
-            category: categoryFromRating(nps),
-            comment: pick(d.comments, d.comment, ""),
-          };
-        })
-        .filter(Boolean);
-    };
+      const bed = pickRoom(d, dept);
+
+      return {
+        date: when.toISOString().slice(0, 10),
+        datetime: when.toLocaleString(),
+        patient: pickPatient(d),
+        room: bed,
+        doctor: docName,
+        department: dept,
+        rating: nps,
+        category: categoryFromRating(nps),
+        comment: pick(d.comments, d.comment, ""),
+      };
+    })
+    .filter(Boolean);
+};
+
 
     let recs = [];
     if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"));
     if (wantIPD) recs = recs.concat(project(rawIpd, "IPD"));
+    
 
     return recs.sort((a, b) => a.date.localeCompare(b.date) || a.datetime.localeCompare(b.datetime));
   }, [rawOpd, rawIpd, department, doctor, dateFrom, dateTo]);
@@ -379,10 +382,6 @@ export default function NpsDashboard() {
 
     return { detrPercent, passPercent, promPercent, nps }
   }, [filteredRecords])
-
-
-  console.log('areaData', areaData)
-
 
   const areaKey = JSON.stringify({
     dateFrom,
@@ -529,7 +528,7 @@ export default function NpsDashboard() {
                         data={{
                           title: "Overall NPS",
                           gros: `${kpi.nps}`,
-                          total: `${kpi.nps}%`,
+                          total: `${kpi.nps}`,
                           color: "secondary",
                           icon: <i className="fa-regular fa-chart-line !text-[20px] text-gray-600"></i>,
                         }}

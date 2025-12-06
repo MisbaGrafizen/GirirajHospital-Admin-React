@@ -374,22 +374,14 @@ const userDepartments = complaintDepartments.filter(
     (deptKey) => permissionsByBlock[deptKey]
 );
 
-// 3️⃣ A department is actionable ONLY when it is NOT resolved
+// 3️⃣ A department is actionable ONLY when status is NOT resolved or resolved_by_admin
 const actionableDepartment = userDepartments.find((deptKey) => {
-    const block = fullDocState[deptKey];
-    return block?.status?.toLowerCase() !== "resolved";
+    const status = fullDocState[deptKey]?.status?.toLowerCase();
+    return status !== "resolved" && status !== "resolved_by_admin";
 });
 
+console.log("actionableDepartment FIXED:", actionableDepartment);
 
-    async function fetchComplaintDetails(id) {
-        try {
-            const response = await ApiGet(`/admin/complaint/${id}`);
-            return response.data || response; // assumes backend returns updated complaint object
-        } catch (error) {
-            console.error("Failed to fetch updated complaint:", error);
-            return null;
-        }
-    }
     // in handleForwardSubmit
     const handleForwardSubmit = async () => {
         if (!forwardDepartment || !forwardReason) {
@@ -415,7 +407,7 @@ const actionableDepartment = userDepartments.find((deptKey) => {
             const res = await ApiPost(`/admin/${complaint.id}/forward`, payload);
             alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
 
-            // ✅ Re-fetch complaint & history to update UI
+            //Re-fetch complaint & history to update UI
             // const updated = await fetchComplaintDetails(complaint.id);
             // if (updated) {
             //     setStatus(updated.status || updated.data?.status);
@@ -448,7 +440,7 @@ const actionableDepartment = userDepartments.find((deptKey) => {
         }
     }
 
-    // ✅ Department-level escalation API
+    //Department-level escalation API
     async function escalateDepartmentComplaint(complaintId, department, { level, note, userId }) {
         try {
             const response = await ApiPost(`/admin/${complaintId}/partial-escalate`, {
@@ -535,14 +527,13 @@ const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
 const autoDepartment =
     allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
 
-
 const handleResolveSubmit = async () => {
     if (!selectedType) {
         alert("Please select RCA / CA / PA");
         return;
     }
 
-    // Determine correct note based on selectedType
+    // Selected note validation
     const currentNote =
         selectedType === "RCA" ? rcaNote :
         selectedType === "CA"  ? caNote :
@@ -553,6 +544,12 @@ const handleResolveSubmit = async () => {
         return;
     }
 
+    // // ⭐ NEW: Validate all 3 notes BEFORE sending to API
+    // if (!rcaNote.trim() || !caNote.trim() || !paNote.trim()) {
+    //     alert("Please enter RCA, CA, and PA — all three notes are required.");
+    //     return;
+    // }
+
     try {
         // 1️⃣ Upload file
         let proofUrl = "";
@@ -562,7 +559,7 @@ const handleResolveSubmit = async () => {
         }
 
         // 2️⃣ User type
-        const loginType = localStorage.getItem("loginType"); 
+        const loginType = localStorage.getItem("loginType");
         const isAdmin = loginType === "admin";
 
         // 3️⃣ Active departments
@@ -570,7 +567,7 @@ const handleResolveSubmit = async () => {
             blockHasContent(fullDocState[deptKey])
         );
 
-        // 4️⃣ Find departments user can resolve
+        // 4️⃣ Determine departments the user can resolve
         const userResolvable = activeDepartments.filter((deptKey) =>
             permissionsByBlock[deptKey]?.includes("resolve")
         );
@@ -591,16 +588,20 @@ const handleResolveSubmit = async () => {
             return;
         }
 
-        // 6️⃣ Build payload — UPDATED NOTE LOGIC
+        // 6️⃣ Build payload — ⭐ UPDATED TO MATCH BACKEND ⭐
         const payload = {
+            // rcaNote,
+            // caNote,
+            // paNote,
             actionType: selectedType,
-            note: currentNote,          
+            note: currentNote,
             proof: proofUrl ? [proofUrl] : [],
             department: deptKey,
             userId: localStorage.getItem("userId"),
         };
+        console.log('payload', payload)
 
-        // 7️⃣ Determine correct endpoint
+        // 7️⃣ Decide API endpoint (admin / staff + full / partial)
         let endpoint = "";
 
         if (isAdmin) {
@@ -615,34 +616,24 @@ const handleResolveSubmit = async () => {
                     : `/admin/${complaint.id}/partial-resolve`;
         }
 
-        // 8️⃣ Submit API request
+        // 8️⃣ Submit request
         const res = await ApiPost(endpoint, payload);
-        console.log('res', res)
+        console.log("Resolve Result:", res);
 
-        // 9️⃣ Extract updated status
-        // const newStatus =
-        //     res?.data?.status || res?.data?.data?.status || "resolved";
-
-        // setStatus(mapStatusUI(newStatus));
-
-        // alert(
-        //     newStatus === "partial"
-        //         ? "Complaint partially resolved."
-        //         : "Complaint fully resolved."
-        // );
         await refreshComplaint();
 
-
-        // 🔟 Refresh history
+        // Refresh history too
         const newHistory = await fetchConcernHistory(complaint.id);
         setHistoryData(newHistory);
 
         closeAllModals();
+        
     } catch (err) {
         console.error("Resolve Error:", err);
         alert(err?.response?.data?.message || "Something went wrong.");
     }
 };
+
 
     async function fetchConcernHistory(complaintId) {
         try {
@@ -658,7 +649,7 @@ const handleResolveSubmit = async () => {
             console.warn("Unexpected history response format:", response);
             return [];
         } catch (error) {
-            console.error("❌ Failed to fetch complaint history:", error);
+            console.error("Failed to fetch complaint history:", error);
             alert(error.message || "Failed to fetch complaint history");
             return [];
         }
@@ -671,15 +662,14 @@ const handleResolveSubmit = async () => {
             const response = await ApiPut(`/admin/update-progress/${complaintId}`, {
                 updateNote: note,
                 userId: localStorage.getItem("userId") || "",
-                userModel: getUserModel(), // ✅ added
+                userModel: getUserModel(), // added
             });
 
-            return response; // ✅ keep full response for status
+            return response; // keep full response for status
         } catch (error) {
             throw new Error(error.message || "Failed to update in_progress remark");
         }
     }
-
 
     async function updateDepartmentProgressAPI(complaintId, department, note, proofFile) {
         try {
@@ -799,10 +789,10 @@ const filteredHistory = useMemo(() => {
     if (isAdmin) return historyData;
 
     return historyData.filter((h) => {
-        // ✔ Always show complaint created event
+        // ⭐ Always show "created" event
         if (h.type === "created") return true;
 
-        // Try to detect the department key from multiple formats
+        // Detect department key variations
         let deptKey = "";
 
         if (h.department) deptKey = h.department;
@@ -812,12 +802,13 @@ const filteredHistory = useMemo(() => {
 
         deptKey = String(deptKey).toLowerCase();
 
-        // ✔ Show ONLY if dept matches user allowed department blocks
+        // ⭐ Only allow if matches permitted blocks
         return allowedBlocks.some((allowed) =>
             deptKey.includes(String(allowed).toLowerCase())
         );
     });
 }, [historyData, allowedBlocks, isAdmin]);
+
 
 console.log('filteredHistory', filteredHistory)
 
@@ -1100,7 +1091,7 @@ async function refreshComplaint() {
                                                 <div className="bg-white rounded-xl border  overflow-y-auto scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
                                                     <div className="space-y-4">
-                                                        {filteredHistory.slice(-3).reverse().map((h, index) => (
+                                                        {filteredHistory.map((h, index) => (
                                                             <div key={index} className="flex items-start space-x-3">
                                                                 <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
                                                                 <div className="flex-1">
@@ -1393,16 +1384,144 @@ async function refreshComplaint() {
 
 
                                     {/* Modal 2: Resolve Complaint */}
- <AnimatePresence>
-    {isResolveModalOpen && (
+<AnimatePresence>
+  {isResolveModalOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+      onClick={closeAllModals}
+    >
+      {/* <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+
         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-            onClick={closeAllModals}
-        >
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+          onClick={(e) => e.stopPropagation()}
+        > */}
+
+          {/* HEADER */}
+          {/* <div className="bg-white px-6 pt-6 pb-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
+              <button
+                onClick={closeAllModals}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Department <span className="text-red-500">*</span>
+                </label>
+
+                {resolveDepartments.length > 1 ? (
+                  <AnimatedDropdown
+                    isOpen={isForwardDeptDropdownOpen}
+                    setIsOpen={setIsForwardDeptDropdownOpen}
+                    selected={selectedDepartment || "Select Department"}
+                    setSelected={setSelectedDepartment}
+                    options={resolveDepartments.map((k) => DEPT_LABEL[k])}
+                    placeholder="Select Department"
+                    icon={MapPin}
+                  />
+                ) : (
+                  <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
+                    {autoResolveDepartment}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex gap-3 mb-2">
+                  {["RCA", "CA", "PA"].map((type) => (
+                    <button
+                      key={type}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg border transition
+                        ${
+                          selectedType === type
+                            ? "bg-green-100 text-green-700 border-green-500"
+                            : "bg-gray-100 text-gray-700 border-gray-300"
+                        }`}
+                      onClick={() => setSelectedType(type)}
+                      type="button"
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {selectedType} Note <span className="text-red-500">*</span>
+                  </label>
+
+                  <textarea
+                    value={
+                      selectedType === "RCA"
+                        ? rcaNote
+                        : selectedType === "CA"
+                        ? caNote
+                        : paNote
+                    }
+                    onChange={(e) => {
+                      if (selectedType === "RCA") setRcaNote(e.target.value);
+                      if (selectedType === "CA") setCaNote(e.target.value);
+                      if (selectedType === "PA") setPaNote(e.target.value);
+                    }}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                    placeholder={`Enter ${selectedType} details...`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Proof (Optional)
+                </label>
+
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                  <input
+                    type="file"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                    accept="image/*,.pdf,.doc,.docx"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                    <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                    <span className="text-sm text-gray-600 mb-1">Click to upload</span>
+                    <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
+                    {uploadedFile && (
+                      <span className="text-sm text-green-600 mt-2 font-medium">
+                        File: {uploadedFile.name}
+                      </span>
+                    )}
+                  </label>
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center">
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  <span className="text-sm text-green-800">
+                    Employee will receive an SMS on resolution.
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div> */}
+           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1523,20 +1642,33 @@ async function refreshComplaint() {
                                 </div>
                             </div>
 
-                            {/* Info Note */}
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                <div className="flex items-center">
-                                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                                    <span className="text-sm text-green-800">
-                                        Employee will receive an SMS on resolution.
-                                    </span>
-                                </div>
                             </div>
+                            </div>
+                            
 
-                        </div>
-                    </div>
+          {/* FOOTER BUTTONS */}
+          {/* <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+            <button
+              onClick={closeAllModals}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
 
-                    <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+            <button
+              onClick={handleResolveSubmit}
+              disabled={
+                !rcaNote.trim() ||
+                !caNote.trim() ||
+                !paNote.trim()
+              }
+              className="px-6 py-2 bg-green-600 text-white rounded-lg 
+                        hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Resolve Complaint
+            </button>
+          </div> */}
+             <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                         <button
                             onClick={closeAllModals}
                             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
@@ -1555,9 +1687,14 @@ async function refreshComplaint() {
                     </div>
                 </motion.div>
             </div>
+
         </motion.div>
-    )}
+    //   </div>
+    // </motion.div>
+  )}
 </AnimatePresence>
+
+
 
 
 
@@ -1728,7 +1865,7 @@ async function refreshComplaint() {
                                                                                     <>
                                                                                         <p className="text-sm font-medium text-gray-900">{h.label}</p>
                                                                                         <p className="text-xs text-gray-600">
-                                                                                            {h.patientName} ({h.complaintId})
+                                                                                            {h.details.patientName} - ({h.details.complaintId})
                                                                                         </p>
                                                                                         <p className="text-xs text-gray-500">
                                                                                             {new Date(h.at).toLocaleString()}

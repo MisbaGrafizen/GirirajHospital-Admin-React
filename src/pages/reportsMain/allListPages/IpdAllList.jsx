@@ -216,14 +216,14 @@ export default function IpdAllList() {
                           className="pl-8 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none"
                         />
                       </div>
-
+{/* 
                       <button
                         onClick={exportToExcel}
                         className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel
-                      </button>
+                      </button> */}
                     </div>
                   </div>
 

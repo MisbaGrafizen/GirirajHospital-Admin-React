@@ -98,14 +98,17 @@ const RATING_KEYS = [
 ]
 
 function calcRowAverage(ratings = {}) {
-  const vals = [];
-  for (const key of RATING_KEYS) {
-    const v = Number(ratings?.[key]);
-    if (v >= 1 && v <= 5) vals.push(v);
-  }
-  if (!vals.length) return 0;
-  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+  const values = Object.values(ratings || {})
+    .map((v) => Number(v))
+    .filter((v) => v >= 1 && v <= 5);
+
+  if (!values.length) return 0;
+
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+
+  return Number(avg.toFixed(1)); // consistent rounding
 }
+
 
 
 function calcNpsPercent(items) {
@@ -367,7 +370,7 @@ export default function OPDFeedbackDashboard() {
   useEffect(() => {
     const fetchFrequentRatings = async () => {
       try {
-        const res = await ApiGet("/admin/frequent-ratings"); // backend endpoint we made
+        const res = await ApiGet("/admin/opd-frequent-ratings"); // backend endpoint we made
         setFrequentRatings(res?.keywords || []);
       } catch (err) {
         console.error("Failed to fetch frequent ratings:", err);
@@ -1401,9 +1404,6 @@ const filteredFeedback = rows
                       </div>
                       {/* Export only if permitted */}
                       <div className=' flex gap-[10px]'>
-
-
-          
 
                         <button
                           onClick={exportToExcel}

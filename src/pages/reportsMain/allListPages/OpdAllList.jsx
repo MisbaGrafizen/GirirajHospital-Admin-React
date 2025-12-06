@@ -243,14 +243,14 @@ export default function OpdAllList() {
                         className="pl-10 pr-3 py-[5px] border rounded-md"
                       />
                     </div>
-
+{/* 
                     <button
                       onClick={exportToExcel}
                       className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Export to Excel
-                    </button>
+                    </button> */}
                   </div>
                 </div>
 
