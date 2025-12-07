@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   User,
-  Phone,
+  Phone,CalendarClock,
   Download,
   Eye,
   Stethoscope,
@@ -171,7 +171,7 @@ export default function OpdFeedBackDetails() {
               {/* 🔹 HEADER */}
               <thead>
                 <tr className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">
-                  <th className="px-3 py-[13px] text-left text-[11px] w-[140px] font-[600] text-white">
+                  <th className="px-2 py-[13px] text-left text-[11px] w-[140px] font-[600] text-white">
                     DATE & TIME
                   </th>
                   <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
@@ -218,7 +218,8 @@ export default function OpdFeedBackDetails() {
                         {/* 🕒 DATE & TIME */}
                         <td className="px-2 py-2 text-sm text-gray-900">
                           <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <CalendarClock className="w-4 h-4 text-blue-500" />
+                      
                             <span className="text-[11px]  leading-4 font-[500]">
                               {formatDate(feedback.createdAt)}
                             </span>

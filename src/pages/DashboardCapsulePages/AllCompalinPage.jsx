@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Eye, Clock, Bed } from "lucide-react";
+import { Eye, Clock, Bed, CalendarClock, User, Stethoscope } from "lucide-react";
 import Header from "../../Component/header/Header";
 import CubaSidebar from "../../Component/sidebar/CubaSidebar";
 import Preloader from "../../Component/loader/Preloader";
@@ -104,35 +104,35 @@ export default function AllComplaintPage() {
         const allComplaints = res?.data || [];
 
         // 🔹 Filter by department (permissions)
-const filteredByDept = isAdmin
-  ? allComplaints
-  : allComplaints.filter((c) => {
-      return allowedBlocks.some((block) => {
-        const b = c[block];
-        if (!b) return false;
+        const filteredByDept = isAdmin
+          ? allComplaints
+          : allComplaints.filter((c) => {
+            return allowedBlocks.some((block) => {
+              const b = c[block];
+              if (!b) return false;
 
-        return (
-          (b.text && b.text.trim() !== "") ||
-          (Array.isArray(b.attachments) && b.attachments.length > 0)
-        );
-      });
-    });
+              return (
+                (b.text && b.text.trim() !== "") ||
+                (Array.isArray(b.attachments) && b.attachments.length > 0)
+              );
+            });
+          });
 
 
         // 🔹 Filter by complaint status based on dashboard selection
-const filteredByStatus = filteredByDept.filter((c) => {
-  const status = String(c.status || "").toLowerCase();
+        const filteredByStatus = filteredByDept.filter((c) => {
+          const status = String(c.status || "").toLowerCase();
 
-  if (filterType === "All") return true;
+          if (filterType === "All") return true;
 
-  if (filterType === "Open") return status === "open";
-  if (filterType === "Pending") return status === "open";
-  if (filterType === "Resolved") return status === "resolved";
-  if (filterType === "Escalated") return status === "escalated";
-  if (filterType === "In Progress") return status === "in_progress";
+          if (filterType === "Open") return status === "open";
+          if (filterType === "Pending") return status === "open";
+          if (filterType === "Resolved") return status === "resolved";
+          if (filterType === "Escalated") return status === "escalated";
+          if (filterType === "In Progress") return status === "in_progress";
 
-  return true;
-});
+          return true;
+        });
 
 
         // 🔹 Sort by latest
@@ -169,36 +169,24 @@ const filteredByStatus = filteredByDept.filter((c) => {
         <div className="flex w-full h-full">
           <CubaSidebar />
 
-          <div className="flex flex-col w-full bg-white relative max-h-[92%] overflow-y-auto gap-1 ">
+          <div className="flex flex-col w-full bg-white relative pt-[10px]  max-h-[92%] overflow-y-auto gap-1 ">
             {loading && <Preloader />}
 
-            {/* 🔍 Search Bar */}
-            <div className="flex items-center justify-end px-2 py-2   top-0 z-10">
-              <div className="relative">
-                <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input
-                  type="text"
-                  placeholder="Search complaints..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-3 py-2 w-[230px] border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+       
 
             {/* 📋 Complaint Table */}
             <div className="bg-white mx-[10px] rounded-xl border shadow-sm w-[98.2%]  max-h-[88%] overflow-y-auto">
               <table className="w-full">
                 <thead className="bg-gray-100 !text-xs !font-[500] text-gray-600 uppercase tracking-wide">
                   <tr>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[120px]">Comp. ID</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[220px]">Date & Time</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r">Patient</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[220px]">Doctor</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r">Bed No.</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r">Department</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r">Status</th>
-                    <th className="px-3 py-[12px] text-left font-[500]">Details</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r w-[100px]">Comp. ID</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r w-[210px]">Date & Time</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r w-[230px] ">Patient</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r w-[220px]">Doctor</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r w-[90px]">Bed No.</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r">Department</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r">Status</th>
+                    <th className="px-3 py-[12px] text-left text-[12px] font-[500]">Details</th>
                   </tr>
                 </thead>
 
@@ -206,44 +194,59 @@ const filteredByStatus = filteredByDept.filter((c) => {
                   {filtered.map((issue, idx) => (
                     <tr
                       key={issue._id || `${issue.complaintId}-${idx}`}
-                      className={`${
-                        idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      } hover:bg-blue-50 transition text`}
+                      className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        } hover:bg-blue-50 transition text`}
                     >
-                      <td className="px-3 py-[12px] font-semibold text-blue-700 border-r cursor-pointer hover:underline">
-                        {issue.complaintId || issue.id}
+                      <td className="px-3 py-[12px] font-[500] text-blue-700 border-r cursor-pointer hover:underline">
+
+                        <div className=" flex gap-[5px] items-center">
+                          <i className="fa-regular fa-ticket text-[14px] text-blue-500"></i>
+                          {issue.complaintId || issue.id}
+
+                        </div>
+
                       </td>
 
                       <td className="px-3 py-[12px] border-r  text-[13px]">
-                      <div className=" flex items-center gap-2">
+                        <div className=" flex items-center gap-2">
 
 
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        {new Date(issue.createdAt).toLocaleString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                                              </div>
+                          <CalendarClock className="w-4 h-4 text-gray-400" />
+                          {new Date(issue.createdAt).toLocaleString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
                       </td>
 
-                      <td className="px-3 py-[12px] border-r font-[400] capitalize">
-                        {issue.patientName || "-"}
+                      <td className="px-2 py-[12px] border-r font-[400] capitalize">
+                        <div className=" flex items-center gap-2">
+                          <User className="w-4 h-4 flex-shrink-0 text-gray-400" />
+
+
+                          {issue.patientName || "-"}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r">
-                        {issue.consultantDoctorName?.name || "-"}
+
+                        <div className=" flex items-center gap-2">
+                          <Stethoscope className="w-4 h-4 flex-shrink-0 text-gray-400" />
+
+                          {issue.consultantDoctorName?.name || "-"}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r text-[13px]  gap-2">
-                      <div className=" flex items-center gap-[10px]">  
+                        <div className=" flex items-center gap-[10px]">
 
 
-                        <Bed className="w-4 h-4 text-gray-400" />
-                        {issue.bedNo || "-"}
-                                              </div>
+                          <Bed className="w-4 h-4 text-gray-400" />
+                          {issue.bedNo || "-"}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r">
@@ -257,17 +260,16 @@ const filteredByStatus = filteredByDept.filter((c) => {
 
                       <td className="px-3 py-[12px] border-r">
                         <span
-                          className={`px-3 py-[3px] rounded-full text-xs font-semibold ${
-                            issue.status === "resolved"
-                              ? "bg-green-100 text-green-700"
-                              : issue.status === "open"
+                          className={`px-2 py-[3px] rounded-full  text-[10px]  font-[500] ${issue.status === "resolved"
+                            ? "bg-green-100 text-green-700"
+                            : issue.status === "open"
                               ? "bg-yellow-100 text-yellow-700"
                               : issue.status === "escalated"
-                              ? "bg-red-100 text-red-700"
-                              : issue.status === "in_progress"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
+                                ? "bg-red-100 text-red-700"
+                                : issue.status === "in_progress"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-gray-100 text-gray-700"
+                            }`}
                         >
                           {issue.status?.toUpperCase() || "-"}
                         </span>
@@ -279,10 +281,13 @@ const filteredByStatus = filteredByDept.filter((c) => {
                             state: { complaint: issue },
                           })
                         }
-                        className="px-3 py-[12px] text-blue-600 font-medium cursor-pointer flex items-center gap-1 hover:underline"
+                        className="px-3 py-[12px] text-blue-600 font-medium cursor-pointer  items-center gap-1 hover:underline"
                       >
-                        <Eye className="w-4 h-4" />
-                        View
+                        <div  className=" flex  gap-1 items-center">
+                          <Eye className="w-4 h-4" />
+                          View
+
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -10,7 +10,9 @@ import {
   Phone,
   Bed,
   Clock,
-  Star
+  Star,
+  PhoneCall,
+  Stethoscope
 } from "lucide-react"
 
 import { ApiGet } from '../../../helper/axios'
@@ -66,6 +68,11 @@ export default function OpdAllList() {
   const [dateTo1, setDateTo1] = useState(null)
   const [loading, setLoading] = useState(false)
   const [rawOPD, setRawOPD] = useState([])
+const [filters, setFilters] = useState({
+  search: "",
+  from: null,
+  to: null,
+});
   const navigate = useNavigate()
 
   const getRatingStars = (rating = 0) => {
@@ -112,8 +119,7 @@ export default function OpdAllList() {
       const to = new Date(dateTo1);
       to.setHours(23, 59, 59, 999);
       if (entryDate > to) return false;
-    }
-
+    };
     return true;
   };
 
@@ -152,16 +158,28 @@ export default function OpdAllList() {
   useEffect(() => { fetchOPD() }, [fetchOPD])
 
   /* -------------------- Filters -------------------- */
-  const filteredFeedback = rows.filter((f) => {
-    const matchText =
-      f.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.comment.toLowerCase().includes(searchTerm.toLowerCase());
+const filteredFeedback = rows.filter((f) => {
+  const q = (filters.search || "").toLowerCase();
 
-    const matchDate = isWithinDateRange(f.createdAt);
+  const matchSearch =
+    f.patient.toLowerCase().includes(q) ||
+    f.doctor.toLowerCase().includes(q) ||
+    (f.comment || "").toLowerCase().includes(q);
 
-    return matchText && matchDate;
-  })
+  const entryDate = new Date(f.createdAt);
+
+// From
+const matchFrom =
+  !filters.from || entryDate >= new Date(filters.from.setHours(0, 0, 0, 0));
+
+// To
+const matchTo =
+  !filters.to || entryDate <= new Date(filters.to.setHours(23, 59, 59, 999));
+
+
+  return matchSearch && matchFrom && matchTo;
+});
+
 
   /* -------------------- Export Excel -------------------- */
   const exportToExcel = async () => {
@@ -206,7 +224,10 @@ export default function OpdAllList() {
     <>
       <section className="flex w-[100%] h-[100%] overflow-hidden">
         <div className="flex flex-col w-full h-[100vh]">
-          <Header pageName="Opd Feedback List" />
+          <Header
+  pageName="Opd Feedback List"
+  onFilterChange={(f) => setFilters(f)}
+/>
           <div className="flex w-full h-full">
             <CubaSidebar />
 
@@ -215,56 +236,18 @@ export default function OpdAllList() {
 
               {/* Top Bar */}
               <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-                <div className="px-3 py-2 border-b flex justify-between items-center">
-
-                  {/* Date Range */}
-                  <div className="flex gap-4">
-                    <NewDatePicker
-                      label="From Date"
-                      selectedDate={dateFrom1}
-                      setSelectedDate={setDateFrom1}
-                    />
-                    <NewDatePicker
-                      label="To Date"
-                      selectedDate={dateTo1}
-                      setSelectedDate={setDateTo1}
-                    />
-                  </div>
-
-                  {/* Search + Export */}
-                  <div className="flex gap-3 items-center">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
-                        placeholder="Search feedback..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-3 py-[5px] border rounded-md"
-                      />
-                    </div>
-{/* 
-                    <button
-                      onClick={exportToExcel}
-                      className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export to Excel
-                    </button> */}
-                  </div>
-                </div>
-
+   
                 {/* Table */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-[1200px]">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-[1200px] w-[100%]">
+                    <thead className="bg-gray-50 w-[100%]">
                       <tr>
-                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase border-r">Date</th>
-                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase border-r">Patient Name</th>
-                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase border-r">Contact</th>
-                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase border-r">Doctor</th>
-                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase border-r">Rating</th>
-                        <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Comment</th>
+                        <th className="px-6 py-2 text-left  text-[12px] font-medium text-gray-500 uppercase border-r">Date</th>
+                        <th className="px-6 py-2 text-left  text-[12px] font-medium text-gray-500 uppercase border-r">Patient Name</th>
+                        <th className="px-6 py-2 text-left  text-[12px] font-medium text-gray-500 uppercase border-r">Contact</th>
+                        <th className="px-6 py-2 text-left  text-[12px] font-medium text-gray-500 uppercase border-r">Doctor</th>
+                        <th className="px-6 py-2 text-left  text-[12px] font-medium text-gray-500 uppercase border-r">Rating</th>
+                        <th className="px-6 py-2 text-left  text-[12px] font-medium text-gray-500 uppercase">Comment</th>
                       </tr>
                     </thead>
 
@@ -282,15 +265,38 @@ export default function OpdAllList() {
                             </div>
                           </td>
 
-                          <td className="px-6 py-2 border-r">{fb.patient}</td>
-                          <td className="px-6 py-2 border-r">{fb.contact}</td>
-                          <td className="px-6 py-2 border-r">{fb.doctor}</td>
+                          <td className="px-6 py-2 border-r">
+
+                            <div className="flex items-center">
+                              <User className="w-4 h-4 text-gray-400 mr-[4px]" />
+                              {fb.patient}
+
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-2 border-r">
+
+                            <div className="flex  gap-[4px] items-center">
+                              <Phone className="w-4 h-4 text-gray-400 mr-[2px]" />
+
+                              {fb.contact}
+                            </div>
+                          </td>
+                          <td className="px-6 py-2 border-r">
+                            <div className="flex  gap-[4px] items-center">
+                              <Stethoscope className="w-4 h-4 text-gray-400 mr-[2px]" />
+
+                              {fb.doctor}
+                            </div>
+                          </td>
 
                           <td className="px-6 py-2 border-r">
                             {getRatingStars(fb.rating)}
                           </td>
 
-                          <td className="px-6 py-2">{fb.comment}</td>
+<td className="px-6 py-2">
+  {fb.comment && fb.comment.trim() !== "" ? fb.comment : "-"}
+</td>
                         </tr>
                       ))}
 

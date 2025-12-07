@@ -42,14 +42,14 @@ export default function UserAllList() {
   // 🔍 Search Filter — only admin can search
   const filteredUsers = isAdmin
     ? users.filter((u) => {
-        const q = searchTerm.toLowerCase();
-        return (
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          u.department.toLowerCase().includes(q) ||
-          u.employeeId.toLowerCase().includes(q)
-        );
-      })
+      const q = searchTerm.toLowerCase();
+      return (
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.department.toLowerCase().includes(q) ||
+        u.employeeId.toLowerCase().includes(q)
+      );
+    })
     : []; // ❗ Non-admin → no users shown
 
   // Count users ONLY for admin
@@ -98,22 +98,22 @@ export default function UserAllList() {
                   <table className="min-w-[1000px] w-full border-collapse">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[12px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Name
                         </th>
-                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[12px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Contact Number
                         </th>
-                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[12px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Employee ID
                         </th>
-                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[12px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Department
                         </th>
-                        <th className="px-6 py-[12px] text-left text-[13px] border-r font-medium text-gray-600 uppercase tracking-wider">
+                        <th className="px-6 py-[12px] text-left text-[12px] border-r font-medium text-gray-600 uppercase tracking-wider">
                           Email
                         </th>
-                  
+
                       </tr>
                     </thead>
 
@@ -121,9 +121,8 @@ export default function UserAllList() {
                       {filteredUsers.map((u, index) => (
                         <tr
                           key={u.id}
-                          className={`hover:bg-blue-50 transition-colors ${
-                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                          }`}
+                          className={`hover:bg-blue-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            }`}
                         >
                           <td className="px-6 py-[10px] text-sm border-r">
                             <div className="flex items-center gap-2">
@@ -141,7 +140,7 @@ export default function UserAllList() {
 
                           <td className="px-6 py-[10px] text-sm border-r">
                             <div className="flex items-center gap-2">
-                              <IdCard className="w-4 h-4 text-gray-400" />
+                              <IdCard className="w-5 h-5 text-gray-400" />
                               {u.employeeId}
                             </div>
                           </td>
@@ -160,21 +159,6 @@ export default function UserAllList() {
                             </div>
                           </td>
 
-
-                          <td className="px-6 py-[10px] text-sm border-r">
-                            <button
-                              onClick={() => handleView(u)}
-                              disabled={!isAdmin}
-                              className={`flex items-center ${
-                                isAdmin
-                                  ? "text-blue-600 hover:text-blue-800"
-                                  : "text-gray-400 cursor-not-allowed"
-                              }`}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </button>
-                          </td>
 
                         </tr>
                       ))}

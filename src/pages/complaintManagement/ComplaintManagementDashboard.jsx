@@ -21,6 +21,9 @@ import {
     Phone,
     FileText,
     CalendarIcon,
+    Ticket,
+    CalendarClock,
+    Stethoscope,
 } from "lucide-react"
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -183,6 +186,8 @@ function mapStatusUI(status) {
             return "In Progress";
         case "partial":
             return "Partial";
+        case "forwarded":
+            return "Forwarded";
         default:
             return "Unknown";
     }
@@ -485,7 +490,7 @@ async function getInternalComplaints() {
         if (Array.isArray(res?.data)) return res.data;
         if (Array.isArray(res?.response?.data)) return res.response.data;
         return [];
-    } catch (err) { 
+    } catch (err) {
         console.error("❌ Error fetching internal complaints:", err);
         return [];
     }
@@ -516,19 +521,6 @@ function extractFrequentServices(docs, topN = 6) {
         .map(([service]) => service);
 }
 
-// async function getPartialResolveDetails(complaintId) {
-//     try {
-//         const res = await ApiGet(`/admin/partial-resolve/${complaintId}`);
-//         console.log('reswewrew', res)
-//         if (res?.data?.success) {
-//             return res.data.data;
-//         }
-//         return null;
-//     } catch (err) {
-//         console.error("Failed to fetch partial resolve details:", err);
-//         return null;
-//     }
-// }
 
 // ===================== COMPONENT =====================
 export default function ComplaintManagementDashboard() {
@@ -610,24 +602,6 @@ export default function ComplaintManagementDashboard() {
         );
     }
 
-    // const handlePartialModalOpen = async (complaint) => {
-    //     try {
-    //         setSelectedComplaint(null);
-    //         setIsPartialModalOpen(true);
-
-    //         const details = await getPartialResolveDetails(complaint.id);
-    //         if (details) {
-    //             setSelectedComplaint(details);
-    //         } else {
-    //             setSelectedComplaint({ error: true });
-    //         }
-    //     } catch (err) {
-    //         console.error("Error loading partial details:", err);
-    //         setSelectedComplaint({ error: true });
-    //     }
-    // };
-
-
     const closePartialModal = () => {
         setSelectedComplaint(null);
         setIsPartialModalOpen(false);
@@ -651,24 +625,6 @@ export default function ComplaintManagementDashboard() {
         setFrequentServices(topServices);
     }, [rawConcerns]);
 
-
-
-    // useEffect(() => {
-    //     if (!rawConcerns || !rawConcerns.length) {
-    //         setDoctorOptions([]);
-    //         return;
-    //     }
-
-    //     const uniqueDoctors = Array.from(
-    //         new Set(
-    //             rawConcerns
-    //                 .map(d => d.consultantDoctorName?.name)
-    //                 .filter(Boolean)
-    //         )
-    //     );
-
-    //     setDoctorOptions(uniqueDoctors);
-    // }, [rawConcerns]);
 
     useEffect(() => {
         let alive = true;
@@ -728,7 +684,7 @@ export default function ComplaintManagementDashboard() {
     };
 
     const handleAllPageNavigate = () => {
-        navigate("/dashboards/complain-all-list");
+        navigate("/complain-list");
     };
 
     const handleTATPageNavigate = () => {
@@ -1535,7 +1491,7 @@ export default function ComplaintManagementDashboard() {
 
                                                 <div className=" flex gap-[10px]">
 
-                                               
+
                                                     {/* 👁️ View All second */}
                                                     <button
                                                         className="md34:!hidden  md11:!flex items-center flex-shrink-0 px-[10px] py-[6px] h-[35px] w-fit gap-[8px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -1570,31 +1526,31 @@ export default function ComplaintManagementDashboard() {
                                                     <thead className="bg-gray-100 w-[100%]">
                                                         <tr>
 
-                                                            <th className="px-3 py-2 text-left  border-r  text-xs font-medium text-gray-500 flex-shrink-0  uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left  border-r  text-[12px] font-medium text-gray-500 flex-shrink-0  uppercase tracking-wider">
                                                                 Comp. ID
                                                             </th>
-                                                            <th className="px-2 py-2 text-left   border-r  text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-2 py-2 text-left   border-r  text-[12px]  min-w-[220px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Patient Name
                                                             </th>
-                                                            <th className="px-3 py-2 text-left  border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left  border-r text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Bed no
                                                             </th>
-                                                            <th className="px-3 py-2 text-left  border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left  border-r text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Department
                                                             </th>
-                                                            {/* <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            {/* <th className="px-3 py-2 text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Compalin details
                                                             </th>
-                                                            <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-6 min-w-[200px] flex-shrink-0 py-2 text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Resolution details
                                                             </th> */}
-                                                            <th className="px-3 py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left border-r text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Stamp In
                                                             </th>
-                                                            <th className="px-6 min-w-[200px] border-r flex-shrink-0 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-6 min-w-[200px] border-r flex-shrink-0 py-2 text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Stamp Out
                                                             </th>
-                                                            <th className="px-3 py-2 text-left border-r text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-3 py-2 text-left border-r text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 TAT Time
                                                             </th>
                                                             {/* <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1606,10 +1562,10 @@ export default function ComplaintManagementDashboard() {
                                                         {tatComplaints
                                                             .slice()
                                                             .sort((a, b) => {
-            const aTime = new Date(a.stampOut || a.stampIn || a.createdAt).getTime();
-            const bTime = new Date(b.stampOut || b.stampIn || b.createdAt).getTime();
-            return bTime - aTime; // Latest first
-        })
+                                                                const aTime = new Date(a.stampOut || a.stampIn || a.createdAt).getTime();
+                                                                const bTime = new Date(b.stampOut || b.stampIn || b.createdAt).getTime();
+                                                                return bTime - aTime; // Latest first
+                                                            })
                                                             .slice(0, 5)
                                                             .map((complaint, index) => {
                                                                 const fullDoc = rawConcerns.find(d => d._id === complaint._id);
@@ -1621,10 +1577,14 @@ export default function ComplaintManagementDashboard() {
                                                                         className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                     >
 
-                                                                        <td className="px-3 py-2 text-sm  min-w-[95px]  border-r font-medium !w-[200px] text-blue-600">{complaint.complaintId}</td>
+                                                                        <td className="px-3 py-2 text-sm  min-w-[95px]  border-r font-medium !w-[200px] text-blue-600">
+                                                                            <div className=" flex  items-center gap-[8px]">
+                                                                                <i className="fa-regular fa-ticket text-[14px] text-blue-500"></i>{complaint.complaintId}
+                                                                            </div>
+                                                                        </td>
 
 
-                                                                        <td className="px-2 py-2 border-r text-[13px] min-w-[200px] text-gray-900">
+                                                                        <td className="px-2 py-2 border-r text-[13px]  text-gray-900">
                                                                             <div className="flex items-center">
                                                                                 <User className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
                                                                                 {complaint.patientName}
@@ -1724,16 +1684,16 @@ export default function ComplaintManagementDashboard() {
                                             <table className=" md34:!min-w-[1350px]  md11:!min-w-full">
                                                 <thead className="bg-gray-100 overflow-y-scroll">
                                                     <tr>
-                                                        <th className="px-3 py-2 border-r min-w-[140px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r min-w-[100px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Comp. ID
                                                         </th>
-                                                        <th className="px-4 py-2 border-r text-left min-w-[160px] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r text-left min-w-[180px] text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Date & Time
                                                         </th>
-                                                        <th className="px-3 py-2 border-r text-left text-xs min-w-[180px] font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r text-left text-xs min-w-[230px] font-medium text-gray-500 uppercase tracking-wider">
                                                             Patient Name
                                                         </th>
-                                                        <th className="px-3 py-2 border-r min-w-[209px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-2 border-r min-w-[229px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Doctor Name
                                                         </th>
                                                         <th className="px-3 py-2 border-r min-w-[90px]  text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1761,31 +1721,39 @@ export default function ComplaintManagementDashboard() {
                                                                     className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer transition-colors`}
                                                                 >
                                                                     <td className="px-3  py-2 border-r text-sm font-medium text-blue-600">
-                                                                        <div className=" flex  cursor-pointer"   >
+                                                                        <div className=" flex  cursor-pointer gap-[6px] "   >
 
 
                                                                             <button
-                                                                                onClick={() => handlenavigate(complaint, fullDoc)}
+
 
                                                                                 className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                                                                             >
-                                                                                <Eye className="w-4 h-4 mr-1" />
 
+                                                                                <i className="fa-regular fa-ticket text-[14px] text-blue-500"></i>
                                                                             </button> {complaint.complaintId}
 
                                                                         </div>
                                                                     </td>
 
-                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-4 py-2 border-r text-sm text-gray-900">
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
-
+                                                                            <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.date}
                                                                         </div>
                                                                     </td>
-                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm font- text-gray-900">{complaint.patient}</td>
+                                                                    <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm font- text-gray-900">
+
+                                                                        <div className=" flex ">
+                                                                            <User className="w-4 flex-shrink-0 h-4 text-gray-400 mr-2" />
+                                                                            {complaint.patient}
+                                                                        </div>
+
+
+                                                                    </td>
                                                                     <td onClick={() => handlenavigate(complaint, fullDoc)} className="px-3 py-2 border-r text-sm text-gray-900">
                                                                         <div className="flex items-center">
-                                                                            <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                                            <Stethoscope className="w-4 h-4 text-gray-400 mr-2" />
                                                                             {complaint.doctor}
                                                                         </div>
                                                                     </td>
@@ -2204,101 +2172,101 @@ export default function ComplaintManagementDashboard() {
                                                                     )}
 
                                                                 </div>
-{/* ------------------- RESOLUTION NOTE ------------------- */}
-<div className="bg-gray-50 p-3 border rounded-lg">
-    <h4 className="text-lg font-semibold text-gray-900 mb-3">
-        Resolution Note
-    </h4>
+                                                                {/* ------------------- RESOLUTION NOTE ------------------- */}
+                                                                <div className="bg-gray-50 p-3 border rounded-lg">
+                                                                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                                                                        Resolution Note
+                                                                    </h4>
 
-    {selectedComplaint?.departments?.map((dep, i) => {
-        const deptName = dep.department || "Department";
-        const res = dep.resolution;
+                                                                    {selectedComplaint?.departments?.map((dep, i) => {
+                                                                        const deptName = dep.department || "Department";
+                                                                        const res = dep.resolution;
 
-        // Skip if no resolution note & no proof
-        if (
-            !res ||
-            ((!res.note || res.note.trim() === "") &&
-                (!res.proof || res.proof.length === 0))
-        ) {
-            return null;
-        }
+                                                                        // Skip if no resolution note & no proof
+                                                                        if (
+                                                                            !res ||
+                                                                            ((!res.note || res.note.trim() === "") &&
+                                                                                (!res.proof || res.proof.length === 0))
+                                                                        ) {
+                                                                            return null;
+                                                                        }
 
-        return (
-            <div key={i} className="mb-4">
-                {/* Department Name */}
-                <h5 className="text-sm font-semibold text-gray-700 mb-1">
-                    {deptName}
-                </h5>
+                                                                        return (
+                                                                            <div key={i} className="mb-4">
+                                                                                {/* Department Name */}
+                                                                                <h5 className="text-sm font-semibold text-gray-700 mb-1">
+                                                                                    {deptName}
+                                                                                </h5>
 
-                {/* Resolution Note */}
-                {res.note && (
-                    <p className="text-gray-600 text-[14px] mb-2 leading-[21px]">
-                        {res.note}
-                    </p>
-                )}
+                                                                                {/* Resolution Note */}
+                                                                                {res.note && (
+                                                                                    <p className="text-gray-600 text-[14px] mb-2 leading-[21px]">
+                                                                                        {res.note}
+                                                                                    </p>
+                                                                                )}
 
-                {/* Resolution Attachments */}
-                <div className="flex gap-3 flex-wrap">
-                    {res.proof
-                        ?.filter((file) => file && file.trim() !== "")
-                        .map((file, idx) => {
-                            const isImage = file.match(/\.(jpeg|jpg|png|gif)$/i);
-                            const isAudio = file.match(/\.(mp3|wav|ogg)$/i);
+                                                                                {/* Resolution Attachments */}
+                                                                                <div className="flex gap-3 flex-wrap">
+                                                                                    {res.proof
+                                                                                        ?.filter((file) => file && file.trim() !== "")
+                                                                                        .map((file, idx) => {
+                                                                                            const isImage = file.match(/\.(jpeg|jpg|png|gif)$/i);
+                                                                                            const isAudio = file.match(/\.(mp3|wav|ogg)$/i);
 
-                            if (isImage) {
-                                return (
-                                    <img
-                                        key={idx}
-                                        src={file}
-                                        alt="Resolution Proof"
-                                        className="w-32 h-32 object-cover rounded border"
-                                    />
-                                );
-                            }
+                                                                                            if (isImage) {
+                                                                                                return (
+                                                                                                    <img
+                                                                                                        key={idx}
+                                                                                                        src={file}
+                                                                                                        alt="Resolution Proof"
+                                                                                                        className="w-32 h-32 object-cover rounded border"
+                                                                                                    />
+                                                                                                );
+                                                                                            }
 
-                            if (isAudio) {
-                                return (
-                                    <audio
-                                        key={idx}
-                                        controls
-                                        className="w-full"
-                                    >
-                                        <source src={file} type="audio/mpeg" />
-                                    </audio>
-                                );
-                            }
+                                                                                            if (isAudio) {
+                                                                                                return (
+                                                                                                    <audio
+                                                                                                        key={idx}
+                                                                                                        controls
+                                                                                                        className="w-full"
+                                                                                                    >
+                                                                                                        <source src={file} type="audio/mpeg" />
+                                                                                                    </audio>
+                                                                                                );
+                                                                                            }
 
-                            return (
-                                <a
-                                    key={idx}
-                                    href={file}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 underline text-sm"
-                                >
-                                    View Proof
-                                </a>
-                            );
-                        })}
-                </div>
-            </div>
-        );
-    })}
+                                                                                            return (
+                                                                                                <a
+                                                                                                    key={idx}
+                                                                                                    href={file}
+                                                                                                    target="_blank"
+                                                                                                    rel="noopener noreferrer"
+                                                                                                    className="text-blue-600 underline text-sm"
+                                                                                                >
+                                                                                                    View Proof
+                                                                                                </a>
+                                                                                            );
+                                                                                        })}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
 
-    {/* If no department has resolution */}
-    {selectedComplaint?.departments?.every((d) => {
-        const res = d.resolution;
-        return (
-            !res ||
-            ((!res.note || res.note.trim() === "") &&
-                (!res.proof || res.proof.length === 0))
-        );
-    }) && (
-        <p className="text-gray-500 text-sm">
-            No resolution details available.
-        </p>
-    )}
-</div>
+                                                                    {/* If no department has resolution */}
+                                                                    {selectedComplaint?.departments?.every((d) => {
+                                                                        const res = d.resolution;
+                                                                        return (
+                                                                            !res ||
+                                                                            ((!res.note || res.note.trim() === "") &&
+                                                                                (!res.proof || res.proof.length === 0))
+                                                                        );
+                                                                    }) && (
+                                                                            <p className="text-gray-500 text-sm">
+                                                                                No resolution details available.
+                                                                            </p>
+                                                                        )}
+                                                                </div>
 
 
                                                             </div>

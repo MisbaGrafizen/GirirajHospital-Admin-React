@@ -8,6 +8,8 @@ import {
   Download,
   Search,
   Star,
+  Pill,
+  ClipboardPlus,
   ThumbsUp,
   Award,
   Phone,
@@ -19,6 +21,7 @@ import {
   TestTube2,
 
   IndianRupee,
+  CalendarClock,
 } from "lucide-react"
 import {
   Stethoscope,
@@ -34,8 +37,8 @@ import {
 
 const serviceIcons = {
   "Overall Experience": Star,
-  "Consultant Doctor": User,
-  "Medical Admin Doctor": User,
+  "Consultant Doctor": Stethoscope,
+  "Medical Admin Doctor": Pill ,
   "Billing Services": IndianRupee,
   "Housekeeping": SprayCan,
   "Maintenance": Wrench,
@@ -43,7 +46,8 @@ const serviceIcons = {
   "Pathology": TestTube2,
   "Dietitian Services": Utensils,
   "Security": ShieldCheck,
-  "Nursing": User,
+  "Nursing": ClipboardPlus,
+
 };
 import { ApiGet } from '../../helper/axios'
 import { Calendar, ChevronDown, Hospital, MessageSquare, User, Activity, HeartPulse, Frown, Minus, } from "lucide-react"
@@ -990,8 +994,8 @@ export default function IPDFeedbackDashboard() {
   const handleWidgetClick = (type) => {
     switch (type) {
       case "totalFeedback":
-        // navigate("/ipd-opd-list");
-        navigate("/ipd-opd-list", { state: { select: "IPD" } })
+        // navigate("/dashboard/ipd-opd-list");
+        navigate("/dashboard/ipd-opd-list", { state: { select: "IPD" } })
         break;
       case "npsRating":
         navigate("/reports/nps-all-list");
@@ -1271,7 +1275,7 @@ export default function IPDFeedbackDashboard() {
                 <div className="flex w-[100%] mb-[15px] gap-[30px]">
                   {/* Service-Wise Summary Table */}
                   <div className=" rounded-xl  w-[100%]  overflow-hidden">
-                    <div className="px-2 items-center py-[8px] flex  mt-[5px] gap-[10px] border-gray-200">
+                    <div className="px-2 items-center py-[8px] flex  mt-[5px]  mb-[6px] gap-[10px] border-gray-200">
                       <div className="w-[35px] h-[35px]  bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
                         <i className="fa-solid  text-[15px] text-[#fff] fa-user-md"></i>
 
@@ -1282,22 +1286,22 @@ export default function IPDFeedbackDashboard() {
                       <table className=" min-w-[800px] md11:!min-w-full">
                         <thead className="bg-gray-100">
                           <tr>
-                            <th className="px-6 py-[13px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Service
                             </th>
-                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Excellent %
                             </th>
-                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Good %
                             </th>
-                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Average %
                             </th>
-                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                               Poor %
                             </th>
-                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                               Very Poor %
                             </th>
                           </tr>
@@ -1398,25 +1402,25 @@ export default function IPDFeedbackDashboard() {
                     <table className=" min-w-[1200px] md11:!min-w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                             Date & Time
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                             Patient Name
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                             Contact
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                             Bed No
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                             Doctor Name
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                             Rating
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
                         </tr>
                       </thead>
                       {filteredFeedback.length === 0 && (
@@ -1433,7 +1437,7 @@ export default function IPDFeedbackDashboard() {
                           >
                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                               <div className="flex items-center">
-                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                 {formatDate(feedback.createdAt)}
                               </div>
                             </td>
@@ -1457,7 +1461,7 @@ export default function IPDFeedbackDashboard() {
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                               <div className="flex items-center">
-                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                <Stethoscope className="w-4 h-4 text-gray-400 mr-2" />
                                 {feedback.consultantDoctorName}
                               </div>
                             </td>

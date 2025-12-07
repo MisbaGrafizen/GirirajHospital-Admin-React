@@ -54,7 +54,7 @@ const totalTATMinutes = kpis?.totalResolvedTAT?.hours
   const handleWidgetClick = (type) => {
     switch (type) {
       case "feedback":
-        navigate("/ipd-opd-list");
+        navigate("/dashboard/ipd-opd-list");
         break;
       case "avgRating":
         setShowPopup("avgRating");
@@ -63,16 +63,16 @@ const totalTATMinutes = kpis?.totalResolvedTAT?.hours
         setShowPopup("responseRate");
         break;
       case "openIssues":
-        navigate("/open-issues");
+        navigate("/dashboard/open-issues");
         break;
       case "concerns":
-        navigate("/dashboards/complain-all-list");
+        navigate("/dashboard/complain-list");
         break;
       case "tat":
         setShowPopup("tat");
         break;
       case "users":
-        navigate("/user-all-list");
+        navigate("/dashboard/user-all-list");
         break;
       default:
         break;

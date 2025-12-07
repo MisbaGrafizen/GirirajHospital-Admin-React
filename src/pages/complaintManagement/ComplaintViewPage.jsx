@@ -199,53 +199,7 @@ const handleNoteChange = (value) => {
 
     const [isOpen, setIsOpen] = useState(false)
 
-    const [priority, setPriority] = useState("");
-
-    const statusConfig = {
-        OPEN: { color: "bg-red-100 text-red-800 border-red-200", label: "OPEN" },
-        "IN-PROGRESS": { color: "bg-yellow-100 text-yellow-800 border-yellow-200", label: "IN-PROGRESS" },
-        RESOLVED: { color: "bg-green-100 text-green-800 border-green-200", label: "RESOLVED" },
-    }
-
-
     const escalationLevels = ["PGRO", "CEO", "Board of Directors", "Medical Director"]
-
-    // 🔹 FIXED ESCALATION USER MAP
-    const ESCALATION_USER_MAP = {
-        "CEO": {
-            _id: "68ef88c724a8a2a8317e0cb3",
-            name: "Jalpa Raichura",
-            email: "jr.grj@feedbacks.live",
-            mobileNumber: "9924022922",
-            fcmTokens: [
-                "eUviBDD32z_4IwQ8IZCnVy:APA91bHiaUvm_fG86tZ6IbQnW6RHGxV-O5sAolZAxpfDUP0zOcnDnoDokG2kJkZWk5SH-OUEV0N0EoSULOEPpMY2hynjEdPjBiYFPDzhgFZT-hme8lTDQr4"
-            ],
-        },
-        "Board of Directors": {
-            _id: "68ef884624a8a2a8317e0cab",
-            name: "Mayank Thakkar",
-            email: "mt.grj@feedbacks.live",
-            mobileNumber: "9924022911",
-            fcmTokens: [
-                "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8",
-                "c06WC1uMbylI6YjNx0qRU7:APA91bFOgOALzusK1HWR_rpZ_NbGFkT10q-NeOg-5034YhdYr65JCz7o1f1IUYTpQ9ulL7unXVerGReU5Z6J3kcwUuJjIaFu737Y6glhcTO0YTh2B9sTB-s",
-                "cNScS4yueulGgnV7j9fcsr:APA91bE4suE86YiiTnPfpLcbGfwMBS4u1adPHA3aFrvyVb_cjPl4eQBh5IY5LklAFM7hN-k7_wMob1PQZUqiUqbTs6nE9XidMHcMH3-5yQonaqV9o032e4E",
-                "c4aaNywdDZj6TRmX90qn6g:APA91bF2RGN3f3JVYqvQm3gpwIyMDqpxoX7TE4KCrEWfte-q3O_aAJrf_8sfDNyMjVrovJuOJEyqj8ILxE9ad_3693ijFE-4MxJix-M28UZyLBmOdPYFfuw",
-                "dO9oS8NgqH3fU_b__GQPwb:APA91bH-rUW8e8vdUYGexL2U9r45Nt1aspKgNqpXD4E_9CcL8HOQMSx3jsZph1MtzBwh2wygpuMFIfzbfUPfs0-XRGT1kihhiXIsywQRf3l-3-caXsBc-2k",
-                "eKxt4jNeMDk5akRGDE_hss:APA91bGDvdxE5awm0ImycsvRF9yPse7_c1la-wGz828OiatqcAe3_tDUCk35Q1fCwYOdedzPZguc8C5x8rpHg80DtPv4s4uAvZnArCQJul2rGS24oN8Frzs",
-                "eKxt4jNeMDk5akRGDE_hss:APA91bHEJcMWaCOG1X3j5Zl8O2HExS3kEqPOlLoHrJgZDMpuIq55l41FiPWnpkrlDWF0LH7FYyxbJ5mhyCH7BSkEp4thz1s62tHObHl4tuAorVIaFCNy-UA"
-            ],
-        },
-        "Medical Director": {
-            _id: "68ef88b124a8a2a8317e0caf",
-            name: "Shivani Kathrotiya",
-            email: "sk.grj@feedbacks.live",
-            mobileNumber: "9924022912",
-            fcmTokens: [
-                "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8"
-            ],
-        },
-    };
 
 const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
 
@@ -259,6 +213,28 @@ const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
     console.log('CONCERN_KEYS', fullDoc)
 
         const [fullDocState, setFullDocState] = useState(fullDoc);
+
+// 1️⃣ Departments present in this complaint (text or attachments exist)
+const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+    blockHasContent(fullDocState[deptKey])
+);
+
+// 2️⃣ Departments user has rights for
+const allowedForwardDepartments = activeDepartments.filter((deptKey) =>
+    permissionsByBlock[deptKey]?.includes("forward")
+);
+
+const allowedEscalateDepartments = activeDepartments.filter((deptKey) =>
+    permissionsByBlock[deptKey]?.includes("escalate")
+);
+
+// 3️⃣ Auto-select department when only one is allowed
+useEffect(() => {
+    if (allowedEscalateDepartments.length === 1) {
+        setSelectedDepartment(DEPT_LABEL[allowedEscalateDepartments[0]]);
+    }
+}, [fullDocState]);
+
 
         // 🔹 Departments allowed for resolve only
 const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
@@ -383,49 +359,108 @@ const actionableDepartment = userDepartments.find((deptKey) => {
 console.log("actionableDepartment FIXED:", actionableDepartment);
 
     // in handleForwardSubmit
-    const handleForwardSubmit = async () => {
-        if (!forwardDepartment || !forwardReason) {
-            alert("Please select a department and provide a reason.");
+const handleForwardSubmit = async () => {
+    if (!forwardDepartment || !forwardReason.trim()) {
+        alert("Please select a department and enter forward reason.");
+        return;
+    }
+
+    try {
+        const loginType = localStorage.getItem("loginType");
+        const isAdmin = loginType === "admin";
+
+        // 1️⃣ Determine which departments have content (same as resolve)
+        const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+            blockHasContent(fullDocState[deptKey])
+        );
+
+        // 2️⃣ User allowed departments
+        const userForwardable = activeDepartments.filter((deptKey) =>
+            permissionsByBlock[deptKey]?.includes("forward")
+        );
+
+        // 3️⃣ Determine FROM department (actionable department)
+        const fromDeptKey = userForwardable[0]; 
+        if (!fromDeptKey) {
+            alert("No department available to forward from.");
             return;
         }
 
-        try {
-            const departmentKey = DEPT_KEY[forwardDepartment];
-            if (!departmentKey) {
-                alert("Invalid department selected");
-                return;
-            }
-
-            const payload = {
-                department: departmentKey,
-                topic: "Forwarded Complaint",
-                text: forwardReason,
-                attachments: uploadedFile ? [uploadedFile.name] : [],
-                mode: "text",
-            };
-
-            const res = await ApiPost(`/admin/${complaint.id}/forward`, payload);
-            alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
-
-            //Re-fetch complaint & history to update UI
-            // const updated = await fetchComplaintDetails(complaint.id);
-            // if (updated) {
-            //     setStatus(updated.status || updated.data?.status);
-            // }
-            await refreshComplaint();
-
-
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Forward Error:", error);
-            alert(error.message || "Something went wrong while forwarding");
+        // 4️⃣ Determine TO department
+        const toDeptKey = Object.keys(DEPT_LABEL).find(
+            (k) => DEPT_LABEL[k] === forwardDepartment
+        );
+        if (!toDeptKey) {
+            alert("Invalid target department");
+            return;
         }
-    };
 
+        // 5️⃣ Upload attachment if needed
+        let uploadedURL = "";
+        if (uploadedFile) {
+            const uploadRes = await uploadToHPanel(uploadedFile);
+            uploadedURL = uploadRes.url;
+        }
 
+        // 6️⃣ Build payloads (FULL vs PARTIAL)
+        const fullForwardPayload = {
+            department: toDeptKey,
+            topic: "Forwarded Complaint",
+            text: forwardReason.trim(),
+            attachments: uploadedURL ? [uploadedURL] : [],
+            mode: "text",
+            note: forwardReason.trim()
+        };
+
+        const partialForwardPayload = {
+            fromDepartment: fromDeptKey,
+            toDepartment: toDeptKey,
+            note: forwardReason.trim(),
+        };
+
+        // 7️⃣ Select endpoint exactly like resolve
+        let endpoint = "";
+        let body = {};
+
+        if (isAdmin) {
+            if (activeDepartments.length === 1) {
+                // FULL ADMIN FORWARD
+                endpoint = `/admin/${complaint.id}/admin-forward`;
+                body = fullForwardPayload;
+            } else {
+                // PARTIAL ADMIN FORWARD
+                endpoint = `/admin/${complaint.id}/admin-partial-forward`;
+                body = partialForwardPayload;
+            }
+        } else {
+            if (activeDepartments.length === 1) {
+                // FULL STAFF FORWARD
+                endpoint = `/admin/${complaint.id}/forward`;
+                body = fullForwardPayload;
+            } else {
+                // PARTIAL STAFF FORWARD
+                endpoint = `/admin/${complaint.id}/partial-forward`;
+                body = partialForwardPayload;
+            }
+        }
+
+        // 8️⃣ Call API
+        const res = await ApiPost(endpoint, body);
+
+        alert(res.message || "Complaint forwarded successfully");
+
+        // 9️⃣ Refresh UI
+        await refreshComplaint();
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+
+    } catch (err) {
+        console.error("Forward Error:", err);
+        alert(err?.response?.data?.error || "Something went wrong.");
+    }
+};
 
     async function escalateComplaint(complaintId, { level, note, userId }) {
         try {
@@ -456,61 +491,74 @@ console.log("actionableDepartment FIXED:", actionableDepartment);
         }
     }
 
-    const handleEscalateSubmit = async () => {
-        if (!escalationLevel || !escalationNote) {
-            alert("Please select escalation level and provide a note.");
+const handleEscalateSubmit = async () => {
+    if (!escalationLevel || !escalationNote.trim()) {
+        alert("Please select escalation level and provide a note.");
+        return;
+    }
+
+    try {
+        const loginType = localStorage.getItem("loginType"); // admin / staff
+        const userId = localStorage.getItem("userId");
+
+        // Decide FROM department
+        const fromDeptKey =
+            selectedDepartment
+                ? Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === selectedDepartment)
+                : allowedEscalateDepartments[0]; // auto-select
+
+        if (!fromDeptKey) {
+            alert("No valid department for escalation.");
             return;
         }
 
-        try {
-            const currentUserId = localStorage.getItem("userId") || "12345";
-            const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
+        const isSingleDept = activeDepartments.length === 1;
 
-            const payload = {
-                level: escalationLevel,
-                note: escalationNote,
-                userId: currentUserId,
-                userModel: getUserModel(), // ✅ added
-                escalatedTo: targetUser?._id || null,
-            };
+        // Build payload used by all 4 APIs
+        const payload = {
+            department: fromDeptKey,
+            level: escalationLevel,
+            note: escalationNote.trim(),
+            userId
+        };
 
+        // FINAL endpoint selection (IDENTICAL to forward logic)
+        let endpoint = "";
 
-            let response;
-
-            if (selectedDepartment) {
-                const deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
-
-                if (!deptKey) {
-                    alert("Invalid department selected.");
-                    return;
-                }
-
-                response = await escalateDepartmentComplaint(complaint.id, deptKey, payload);
-                alert(`Complaint for ${selectedDepartment} escalated to ${escalationLevel}`);
-            } else {
-                response = await escalateComplaint(complaint.id, payload);
-                alert(`Complaint escalated to ${escalationLevel}`);
-            }
-
-            // ✅ Determine and set status
-            // const newStatus =
-            //     response?.data?.status || response?.data?.data?.status || "escalated";
-            // setStatus(mapStatusUI(newStatus));
-            await refreshComplaint();
-
-
-            // ✅ Re-fetch history for timeline
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Escalation Error:", error);
-            alert(error.message || "Something went wrong while escalating complaint");
+        if (loginType === "admin") {
+            endpoint = isSingleDept
+                ? `/admin/${complaint.id}/admin-escalate`
+                : `/admin/${complaint.id}/admin-partial-escalate`;
+        } else {
+            endpoint = isSingleDept
+                ? `/admin/${complaint.id}/escalate`
+                : `/admin/${complaint.id}/partial-escalate`;
         }
-    };
+
+        console.log("➡ Escalate API:", endpoint);
+        console.log("➡ Payload:", payload);
+
+        const res = await ApiPost(endpoint, payload);
+
+        alert(
+            `Complaint ${
+                selectedDepartment ? `(${selectedDepartment}) ` : ""
+            }escalated to ${escalationLevel}`
+        );
+
+        await refreshComplaint();
+
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+    } catch (error) {
+        console.error("Escalation Error:", error);
+        alert(error?.response?.data?.message || "Escalation failed.");
+    }
+};
+
+
 
     // 🔹 Allowed departments based on permissions & blocks with content
 const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
@@ -1088,9 +1136,9 @@ async function refreshComplaint() {
 
 
                                             {complaint.status !== "resolved" && (
-                                                <div className="bg-white rounded-xl border  overflow-y-auto scrollba shadow-sm p-3">
+                                                <div className="bg-white rounded-xl border  scrollba shadow-sm p-3">
                                                     <h2 className="text-[18px] font-semibold text-gray-900 mb-2">Recent Activity</h2>
-                                                    <div className="space-y-4">
+                                                    <div className="space-y-4  max-h-[500px]  overflow-y-auto">
                                                         {filteredHistory.map((h, index) => (
                                                             <div key={index} className="flex items-start space-x-3">
                                                                 <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
@@ -1725,15 +1773,19 @@ async function refreshComplaint() {
                                                             </div>
 
                                                             <div className="space-y-6">
-                                                                <AnimatedDropdown
-                                                                    isOpen={isForwardDeptDropdownOpen}
-                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                    selected={selectedDepartment || "Select Department"}
-                                                                    setSelected={setSelectedDepartment}
-                                                                    options={forwardDepartments}
-                                                                    placeholder="Select Department"
-                                                                    icon={MapPin}
-                                                                />
+                                                                {/* Show dropdown ONLY if multiple departments available */}
+{allowedEscalateDepartments.length > 1 && (
+    <AnimatedDropdown
+        isOpen={isForwardDeptDropdownOpen}
+        setIsOpen={setIsForwardDeptDropdownOpen}
+        selected={selectedDepartment || "Select Department"}
+        setSelected={setSelectedDepartment}
+        options={allowedEscalateDepartments.map((d) => DEPT_LABEL[d])}
+        placeholder="Select Department"
+        icon={MapPin}
+    />
+)}
+
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Select Escalation Level <span className="text-red-500">*</span>

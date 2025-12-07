@@ -8,7 +8,8 @@ import {
     Eye,
     User,
     Bed,
-    Clock,
+    CalendarClock,
+    Stethoscope,
 } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 import { ApiGet } from '../../../helper/axios'
@@ -112,6 +113,13 @@ export default function ComplainAllList() {
     const [selectedStatus, setSelectedStatus] = useState("All Status");
     const [dateFrom1, setDateFrom1] = useState(null);
     const [dateTo1, setDateTo1] = useState(null);
+    const [filters, setFilters] = useState({
+    search: "",
+    from: null,
+    to: null,
+    status: "All Status"
+});
+
 
     const navigate = useNavigate();
     const { isAdmin, allowedBlocks } = resolvePermissions();
@@ -153,38 +161,37 @@ export default function ComplainAllList() {
 
     /* ------------------ DATE RANGE FILTER ------------------ */
     const isWithinDateRange = (createdAt) => {
-        if (!dateFrom1 && !dateTo1) return true;
+    if (!filters.from && !filters.to) return true;
 
-        const entryDate = new Date(createdAt);
+    const dt = new Date(createdAt);
 
-        if (dateFrom1) {
-            const from = new Date(dateFrom1);
-            if (entryDate < from) return false;
-        }
+    if (filters.from && dt < new Date(filters.from)) return false;
 
-        if (dateTo1) {
-            const to = new Date(dateTo1);
-            to.setHours(23, 59, 59, 999);
-            if (entryDate > to) return false;
-        }
+    if (filters.to) {
+        const end = new Date(filters.to);
+        end.setHours(23, 59, 59, 999);
+        if (dt > end) return false;
+    }
 
-        return true;
-    };
+    return true;
+};
+
 
     /* ------------------ Filters ------------------ */
     const filteredComplaints = useMemo(() => {
-        const q = searchTerm.toLowerCase();
+    const q = filters.search.toLowerCase();
 
-        return rows
-            .filter((c) =>
-                [c.patient, c.complaintId, c.doctor]
-                    .some((v) => String(v || "").toLowerCase().includes(q))
-            )
-            .filter((c) =>
-                selectedStatus === "All Status" ? true : c.status === selectedStatus
-            )
-            .filter((c) => isWithinDateRange(c.createdAt));
-    }, [rows, searchTerm, selectedStatus, dateFrom1, dateTo1]);
+    return rows
+        .filter((c) =>
+            [c.patient, c.complaintId, c.doctor]
+                .some((v) => String(v || "").toLowerCase().includes(q))
+        )
+        .filter((c) =>
+            filters.status === "All Status" ? true : c.status === filters.status
+        )
+        .filter((c) => isWithinDateRange(c.createdAt));
+}, [rows, filters]);
+
 
     /* ------------------ Navigate ------------------ */
     const handlenavigate = (row, fullDoc) => {
@@ -229,90 +236,90 @@ export default function ComplainAllList() {
     };
 
     /* ------------------ EXPORT CAPA TO EXCEL (FINAL LOGIC) ------------------ */
-const exportCAPA = async () => {
-    const XLSX = await import("xlsx");
+    const exportCAPA = async () => {
+        const XLSX = await import("xlsx");
 
-    const excelRows = [];
+        const excelRows = [];
 
-    filteredComplaints.forEach((c) => {
-        const doc = rawConcerns.find((d) => d._id === c.id);
-        if (!doc) return;
+        filteredComplaints.forEach((c) => {
+            const doc = rawConcerns.find((d) => d._id === c.id);
+            if (!doc) return;
 
-        const deptBlocks = [
-            "doctorServices",
-            "billingServices",
-            "housekeeping",
-            "maintenance",
-            "diagnosticServices",
-            "dietitianServices",
-            "security",
-            "nursing",
-        ];
+            const deptBlocks = [
+                "doctorServices",
+                "billingServices",
+                "housekeeping",
+                "maintenance",
+                "diagnosticServices",
+                "dietitianServices",
+                "security",
+                "nursing",
+            ];
 
-        deptBlocks.forEach((block) => {
-            const dep = doc?.[block];
-            if (!dep) return;
+            deptBlocks.forEach((block) => {
+                const dep = doc?.[block];
+                if (!dep) return;
 
-            const hasText = dep?.text?.trim();
-            const hasFiles =
-                Array.isArray(dep?.attachments) && dep.attachments.length > 0;
+                const hasText = dep?.text?.trim();
+                const hasFiles =
+                    Array.isArray(dep?.attachments) && dep.attachments.length > 0;
 
-            // ❌ Skip inactive department (no text or attachments)
-            if (!hasText && !hasFiles) return;
+                // ❌ Skip inactive department (no text or attachments)
+                if (!hasText && !hasFiles) return;
 
-            // ❌ Skip if not resolved
-            const status = dep?.status?.toLowerCase();
-            if (status !== "resolved" && status !== "resolved_by_admin") return;
+                // ❌ Skip if not resolved
+                const status = dep?.status?.toLowerCase();
+                if (status !== "resolved" && status !== "resolved_by_admin") return;
 
-            // ❌ Skip if no resolution object
-            const resObj = dep?.resolution;
-            if (!resObj) return;
+                // ❌ Skip if no resolution object
+                const resObj = dep?.resolution;
+                if (!resObj) return;
 
-            // Extract actionType / note (fallback)
-            const action = resObj.actionType || "";
-            const note = resObj.note || "-";
+                // Extract actionType / note (fallback)
+                const action = resObj.actionType || "";
+                const note = resObj.note || "-";
 
-            // NEW — SMART RCA/CA/PA EXTRACTION
-            const rca = resObj.rcaNote || (action === "RCA" ? note : "NA");
-            const ca  = resObj.caNote  || (action === "CA"  ? note : "NA");
-            const pa  = resObj.paNote  || (action === "PA"  ? note : "NA");
+                // NEW — SMART RCA/CA/PA EXTRACTION
+                const rca = resObj.rcaNote || (action === "RCA" ? note : "NA");
+                const ca = resObj.caNote || (action === "CA" ? note : "NA");
+                const pa = resObj.paNote || (action === "PA" ? note : "NA");
 
-            excelRows.push({
-                "Complaint ID": c.complaintId,
-                "Date & Time": c.date,
-                "Patient Name": c.patient,
-                "Doctor Name": c.doctor,
-                "Bed No": c.bedNo,
-                "Department": DEPT_LABEL[block] || block,
-                "Complaint Text": dep.text || "-",
+                excelRows.push({
+                    "Complaint ID": c.complaintId,
+                    "Date & Time": c.date,
+                    "Patient Name": c.patient,
+                    "Doctor Name": c.doctor,
+                    "Bed No": c.bedNo,
+                    "Department": DEPT_LABEL[block] || block,
+                    "Complaint Text": dep.text || "-",
 
-                // FINAL SMART FIELDS
-                "RCA": rca || "NA",
-                "CA": ca || "NA",
-                "PA": pa || "NA",
+                    // FINAL SMART FIELDS
+                    "RCA": rca || "NA",
+                    "CA": ca || "NA",
+                    "PA": pa || "NA",
+                });
             });
         });
-    });
 
-    // ❗ If still empty, alert user
-    if (excelRows.length === 0) {
-        alert("No CAPA data found for export.");
-        return;
-    }
+        // ❗ If still empty, alert user
+        if (excelRows.length === 0) {
+            alert("No CAPA data found for export.");
+            return;
+        }
 
-    const ws = XLSX.utils.json_to_sheet(excelRows);
-    ws["!cols"] = Object.keys(excelRows[0]).map((k) => ({
-        wch: Math.max(15, k.length + 6),
-    }));
+        const ws = XLSX.utils.json_to_sheet(excelRows);
+        ws["!cols"] = Object.keys(excelRows[0]).map((k) => ({
+            wch: Math.max(15, k.length + 6),
+        }));
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
 
-    XLSX.writeFile(
-        wb,
-        `CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
-};
+        XLSX.writeFile(
+            wb,
+            `CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+        );
+    };
 
 
     /* ======================================================
@@ -322,73 +329,26 @@ const exportCAPA = async () => {
         <>
             <section className="flex w-[100%] h-[100%] select-none md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] flex-col h-[100vh]">
-                    <Header pageName="Complaint List" />
+                    <Header pageName="Complaint List" onFilterChange={setFilters} />
                     <div className="flex w-[100%] h-[100%]">
                         <CubaSidebar />
                         <div className="flex flex-col w-[100%]  pl-[10px] relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">
                             <Preloader />
 
 
-                            {/* --- TOP FILTER BAR (UNCHANGED UI) --- */}
-                            <div className="flex justify-between items-center  px-2">
-                                <div className="flex gap-[20px]">
-                                    <NewDatePicker
-                                        label="From Date"
-                                        selectedDate={dateFrom1}
-                                        setSelectedDate={setDateFrom1}
-                                    />
-                                    <NewDatePicker
-                                        label="To Date"
-                                        selectedDate={dateTo1}
-                                        setSelectedDate={setDateTo1}
-                                    />
-                                </div>
-
-                                <div className="flex gap-2 items-center">
-                                    <div className="relative">
-                                        <Search className="absolute left-2 top-[8px] text-gray-400 w-4 h-4" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search feedback..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-8 pr-2 py-1 w-[200px] border border-gray-300 rounded-md"
-                                        />
-                                    </div>
-
-                                    {/* <button
-                                        onClick={exportToExcel}
-                                        className="flex items-center px-2 py-1 bg-blue-600 text-white rounded-md"
-                                    >
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Excel
-                                    </button>
-                                    {isAdmin && (
-                                        <button
-                                            onClick={exportCAPA}
-                                            className="flex items-center px-2 py-1 bg-blue-600 text-white rounded-md"
-                                        >
-                                            <Download className="w-4 h-4 mr-2" />
-                                            CAPA
-                                        </button>
-                                    )} */}
-
-                                </div>
-                            </div>
-
                             {/* --- TABLE (UNCHANGED UI EXCEPT ADDED COLUMN) --- */}
                             <div className="w-full overflow-x-auto border rounded-lg shadow-sm">
                                 <table className="min-w-[1350px]">
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-3 py-2 border-r text-xs">Comp. ID</th>
-                                            <th className="px-3 py-2 border-r text-xs">Date & Time</th>
-                                            <th className="px-3 py-2 border-r text-xs">Patient Name</th>
-                                            <th className="px-3 py-2 border-r text-xs">Doctor Name</th>
-                                            <th className="px-3 py-2 border-r text-xs">Bed No</th>
-                                            <th className="px-3 py-2 border-r text-xs">Departments</th>
-                                            <th className="px-3 py-2 border-r text-xs">Status</th>
-                                            <th className="px-3 py-2 border-r text-xs">Details</th>
+                                            <th className="px-3 font-[500] py-2 border-r w-[90px] text-xs">Comp. ID</th>
+                                            <th className="px-2 font-[500] py-2 border-r w-[180px] text-xs">Date & Time</th>
+                                            <th className="px-3 font-[500] py-2 border-r text-xs">Patient Name</th>
+                                            <th className="px-3 font-[500] py-2 border-r  w-[220px] text-xs">Doctor Name</th>
+                                            <th className="px-3 font-[500] py-2 border-r w-[100px] text-xs">Bed No</th>
+                                            <th className="px-3 font-[500] py-2 border-r text-xs">Departments</th>
+                                            <th className="px-3 font-[500] py-2 border-r text-xs">Status</th>
+                                            <th className="px-3 font-[500] py-2 border-r text-xs">Details</th>
                                         </tr>
                                     </thead>
 
@@ -401,17 +361,39 @@ const exportCAPA = async () => {
                                                     key={c.id}
                                                     className={`${index % 2 ? "bg-gray-50" : "bg-white"} hover:bg-blue-50`}
                                                 >
-                                                    <td className="px-3 py-2 border-r text-blue-600">{c.complaintId}</td>
+                                                    <td className="px-3 py-2 border-r text-blue-600">
+                                                    <div className=' flex  items-center  gap-[5px]'>
 
-                                                    <td className="px-3 py-2 border-r">
-                                                        <Clock className="w-4 h-4 inline mr-2 text-gray-400" />
-                                                        {c.date}
+                                              
+                                                                        <i className="fa-regular fa-ticket text-[14px] text-blue-600"></i>
+
+                                                    {c.complaintId}
+                                                          </div>
+                                                    
                                                     </td>
 
-                                                    <td className="px-3 py-2 border-r">{c.patient}</td>
+                                                    <td className="px-2 py-2 border-r">
+                                                        <div className=' flex  '>
+                                                            <CalendarClock className="w-4 h-4  mt-[1px] inline mr-2 text-gray-400" />
+                                                            <span className=' text-[12px]'>
+                                                                {c.date}
+                                                            </span>
+
+
+                                                        </div>
+                                                    </td>
 
                                                     <td className="px-3 py-2 border-r">
-                                                        <User className="w-4 h-4 inline mr-2 text-gray-400" />
+                                                        <div className=' flex '>
+
+                                                            <User className="w-4 h-4  mt-[1px] inline mr-1 text-gray-400" />
+                                                            {c.patient}
+
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-3 py-3 border-r">
+                                                        <Stethoscope className="w-4 h-4 inline mr-2 text-gray-400" />
                                                         {c.doctor}
                                                     </td>
 
@@ -420,7 +402,7 @@ const exportCAPA = async () => {
                                                         {c.bedNo}
                                                     </td>
 
-                                                    <td className="px-3 py-2 border-r">
+                                                    <td className="px-3 py-1 border-r">
                                                         {getDepartmentsString(fullDoc, allowedBlocks)}
                                                     </td>
 

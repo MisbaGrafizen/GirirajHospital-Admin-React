@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, CalendarClock } from "lucide-react"
 
 import { FileText, Download, Star, ThumbsUp, BarChart3, Award, Phone, Clock } from "lucide-react"
 import { MessageSquare, } from "lucide-react";
@@ -152,19 +152,19 @@ const filteredFeedback = rows.filter((f) => {
   const from = dateFrom1 ? new Date(dateFrom1) : null;
   const to = dateTo1 ? new Date(dateTo1) : null;
 
-  // Make "To Date" include the whole day
   if (to) to.setHours(23, 59, 59, 999);
 
-  // Date Filters
   if (from && dt < from) return false;
   if (to && dt > to) return false;
 
-  // Search Filters
+  const s = searchTerm.toLowerCase();
+
   return (
-    (f.doctor || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (f.comment || "").toLowerCase().includes(searchTerm.toLowerCase())
+    (f.doctor || "").toLowerCase().includes(s) ||
+    (f.comment || "").toLowerCase().includes(s)
   );
 });
+
 
 
 const exportToExcel = async () => {
@@ -216,7 +216,15 @@ const exportToExcel = async () => {
  <>
           <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Consultant Feedback List"  />
+          <Header 
+  pageName="Consultant Feedback"
+  onFilterChange={(data) => {
+    setDateFrom1(data.from);
+    setDateTo1(data.to);
+    setSearchTerm(data.search || "");
+  }}
+/>
+
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
           <div className="flex flex-col w-[100%]  pl-[10px] relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">
@@ -225,56 +233,7 @@ const exportToExcel = async () => {
 
 
                <div className="bg-white  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
-                      <div className="px-3 py-[8px] border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div className=' flex gap-[10px]  items-center pt-[7px] justify-start '>
-      <div className=" flex  gap-[20px]">
-
-                            <div className="relative ">
-
-                              <NewDatePicker
-                                label="From Date"
-                                selectedDate={dateFrom1}
-                                setSelectedDate={setDateFrom1}
-                              />
-
-                            </div>
-
-                            <div className="relative">
-
-                              <NewDatePicker
-                                label="To Date"
-                                selectedDate={dateTo1}
-                                setSelectedDate={setDateTo1}
-                              />
-                            </div>
-                          </div>
-
-
-              
-                        </div>
-                        <div className="flex flex-row items-center    gap-3">
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <input
-                              type="text"
-                              placeholder="Search feedback..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10 pr-3 py-[5px] border md34:!w-[190px] md11:!w-[230px] border-gray-300 rounded-md focus:outline-none focus:ring-[1.3px] focus:ring-blue-500"
-                            />
-                          </div>
-{/* 
-                          <button
-                            onClick={exportToExcel}
-                            className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Export to Excel
-                          </button> */}
-
-                        </div>
-
-                      </div>
+         
 
                       <div className="overflow-x-auto">
                         <table className=" md34:!min-w-[1200px] md11:!min-w-full">
@@ -302,7 +261,7 @@ const exportToExcel = async () => {
 
                                   <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                     <div className="flex items-center">
-                                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                                      <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                       {formatDate(feedback.createdAt)}
                                     </div>
                                   </td>
@@ -321,7 +280,13 @@ const exportToExcel = async () => {
                                       {feedback.contact}
                                     </div>
                                   </td> */}
-                                  <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">{feedback.doctor}</td>
+                                  <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
+                                                                      <div className="flex items-center">
+                                      <Stethoscope className="w-4 h-4 text-gray-400 mr-2" />
+                                  
+                                  {feedback.doctor}
+                                  </div>
+                                  </td>
                                   <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                     <div className="flex items-center">
                                       {getRatingStars(feedback.rating)}
@@ -329,7 +294,7 @@ const exportToExcel = async () => {
                                     </div>
                                   </td>
                                   <td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">
-                                    <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
+                                    <div className="truncate" title={feedback.comment}>  {feedback.comment?.trim() || "-"}</div>
                                   </td>
                                 </tr>
                               ))}

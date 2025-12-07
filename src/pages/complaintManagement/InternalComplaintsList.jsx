@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Eye, User, Search, Download, Clock } from "lucide-react";
+import { Eye, User, Search, Download, Clock, Calendar, CalendarClock, Contact, Phone, IdCard, Hospital } from "lucide-react";
 import * as XLSX from "xlsx";
 import Header from "../../Component/header/Header";
 import CubaSidebar from "../../Component/sidebar/CubaSidebar";
@@ -251,27 +251,55 @@ export default function InternalComplaintsList() {
 
 
   // Step 3️⃣: Search handler
-  useEffect(() => {
-    let list = [...complaints];
+useEffect(() => {
+  let list = complaints;
 
-    // 1️⃣ date filter
-    list = filterByDate(list);
+  // 🔥 FIXED DATE RANGE FILTER (Includes All Days Fully)
+  if (filters.from || filters.to) {
+    const from = filters.from ? new Date(filters.from) : null;
+    const to = filters.to ? new Date(filters.to) : null;
 
-    // 2️⃣ search filter
-    if (searchTerm) {
-      const s = searchTerm.toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.employeeName?.toLowerCase().includes(s) ||
-          c.contactNo?.toLowerCase().includes(s) ||
-          c.employeeId?.toLowerCase().includes(s) ||
-          c.floorNo?.toLowerCase().includes(s) ||
-          c.complaintId?.toLowerCase().includes(s)
+    if (from) from.setHours(0, 0, 0, 0);                 // Start of day
+    if (to) to.setHours(23, 59, 59, 999);               // End of day
+
+    list = list.filter((c) => {
+      const created = new Date(c.createdAt);
+
+      if (from && created < from) return false;
+      if (to && created > to) return false;
+
+      return true;
+    });
+  }
+
+  // 🔍 SEARCH FILTER (same as before)
+  if (filters.search) {
+    const s = filters.search.toLowerCase();
+
+    list = list.filter((c) => {
+      const departments = Object.keys(c).filter(
+        (key) => typeof c[key] === "object" && c[key]?.text
       );
-    }
 
-    setFilteredComplaints(list);
-  }, [searchTerm, complaints, dateFrom1, dateTo1]);
+      const deptList = departments
+        .map((key) => DEPT_LABEL[key] || key)
+        .join(", ")
+        .toLowerCase();
+
+      return (
+        c.employeeName?.toLowerCase().includes(s) ||
+        c.contactNo?.toLowerCase().includes(s) ||
+        c.employeeId?.toLowerCase().includes(s) ||
+        c.floorNo?.toLowerCase().includes(s) ||
+        deptList.includes(s) ||
+        c.complaintId?.toLowerCase().includes(s)
+      );
+    });
+  }
+
+  setFilteredComplaints(list);
+}, [filters, complaints]);
+
 
   const handleView = (row) => {
     navigate("/internal-complaint-details", { state: { complaint: row } });
@@ -279,7 +307,7 @@ export default function InternalComplaintsList() {
 
   const getStatusBadge = (status) => {
     const base =
-      "px-3 py-[3px] rounded-full text-xs font-semibold inline-flex items-center justify-center";
+      "px-3 py-[3px] rounded-full text-xs font-[500] inline-flex items-center justify-center";
     switch (status) {
       case "resolved":
         return `${base} bg-green-100 text-green-700`;
@@ -343,113 +371,113 @@ export default function InternalComplaintsList() {
   };
 
 
-const exportCAPA = async () => {
-  try {
-    const XLSX = await import("xlsx");
-    const excelRows = [];
+  const exportCAPA = async () => {
+    try {
+      const XLSX = await import("xlsx");
+      const excelRows = [];
 
-    filteredComplaints.forEach((doc) => {
-      if (!doc) return;
+      filteredComplaints.forEach((doc) => {
+        if (!doc) return;
 
-      const deptBlocks = [
-        "maintenance",
-        "itDepartment",
-        "bioMedicalDepartment",
-        "nursing",
-        "medicalAdmin",
-        "frontDesk",
-        "housekeeping",
-        "dietitian",
-        "pharmacy",
-        "security",
-        "hr",
-        "icn",
-        "mrd",
-        "accounts",
-      ];
+        const deptBlocks = [
+          "maintenance",
+          "itDepartment",
+          "bioMedicalDepartment",
+          "nursing",
+          "medicalAdmin",
+          "frontDesk",
+          "housekeeping",
+          "dietitian",
+          "pharmacy",
+          "security",
+          "hr",
+          "icn",
+          "mrd",
+          "accounts",
+        ];
 
-      deptBlocks.forEach((block) => {
-        const dep = doc[block];
-        if (!dep) return;
+        deptBlocks.forEach((block) => {
+          const dep = doc[block];
+          if (!dep) return;
 
-        const hasText = dep?.text?.trim();
-        const hasFiles =
-          Array.isArray(dep?.attachments) && dep.attachments.length > 0;
+          const hasText = dep?.text?.trim();
+          const hasFiles =
+            Array.isArray(dep?.attachments) && dep.attachments.length > 0;
 
-        // Skip inactive departments
-        if (!hasText && !hasFiles) return;
+          // Skip inactive departments
+          if (!hasText && !hasFiles) return;
 
-        const status = (dep?.status || "").toLowerCase();
-        if (status !== "resolved" && status !== "resolved_by_admin") return;
+          const status = (dep?.status || "").toLowerCase();
+          if (status !== "resolved" && status !== "resolved_by_admin") return;
 
-        if (!dep.resolution) return;
+          if (!dep.resolution) return;
 
-        const res = dep.resolution;
+          const res = dep.resolution;
 
-        // ⭐ Get RCA / CA / PA properly (fallback → NA)
-        const RCA =
-          res.rcaNote ||
-          (res.actionType === "RCA" ? res.note : null) ||
-          "NA";
+          // ⭐ Get RCA / CA / PA properly (fallback → NA)
+          const RCA =
+            res.rcaNote ||
+            (res.actionType === "RCA" ? res.note : null) ||
+            "NA";
 
-        const CA =
-          res.caNotes ||
-          (res.actionType === "CA" ? res.note : null) ||
-          "NA";
+          const CA =
+            res.caNotes ||
+            (res.actionType === "CA" ? res.note : null) ||
+            "NA";
 
-        const PA =
-          res.paNotes ||
-          (res.actionType === "PA" ? res.note : null) ||
-          "NA";
+          const PA =
+            res.paNotes ||
+            (res.actionType === "PA" ? res.note : null) ||
+            "NA";
 
-        excelRows.push({
-          "Complaint ID": doc.complaintId,
-          "Date & Time": formatDateTime(doc.createdAt),
-          "Employee Name": doc.employeeName || "-",
-          "Contact No": doc.contactNo || "-",
-          "Employee ID": doc.employeeId || "-",
-          "Floor No": doc.floorNo || "-",
+          excelRows.push({
+            "Complaint ID": doc.complaintId,
+            "Date & Time": formatDateTime(doc.createdAt),
+            "Employee Name": doc.employeeName || "-",
+            "Contact No": doc.contactNo || "-",
+            "Employee ID": doc.employeeId || "-",
+            "Floor No": doc.floorNo || "-",
 
-          "Department": DEPT_LABEL[block] || block,
-          "Complaint Text": dep.text || "-",
+            "Department": DEPT_LABEL[block] || block,
+            "Complaint Text": dep.text || "-",
 
-          // ⭐ Always show NA when not available
-          RCA,
-          CA,
-          PA,
+            // ⭐ Always show NA when not available
+            RCA,
+            CA,
+            PA,
 
-          // "Resolved At": res.resolvedAt
-          //   ? new Date(res.resolvedAt).toLocaleString()
-          //   : "-",
-          // "Resolved By": res.resolvedBy || "-",
-          // "Resolved Type": res.resolvedType || "-",
+            // "Resolved At": res.resolvedAt
+            //   ? new Date(res.resolvedAt).toLocaleString()
+            //   : "-",
+            // "Resolved By": res.resolvedBy || "-",
+            // "Resolved Type": res.resolvedType || "-",
+          });
         });
       });
-    });
 
-    if (excelRows.length === 0) {
-      alert("No CAPA data found for export.");
-      return;
+      if (excelRows.length === 0) {
+        alert("No CAPA data found for export.");
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(excelRows);
+
+      ws["!cols"] = Object.keys(excelRows[0]).map((key) => ({
+        wch: Math.max(15, key.length + 5),
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Internal_CAPA_Report");
+
+      XLSX.writeFile(
+        wb,
+        `Internal_CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+      );
+    } catch (err) {
+      console.error("CAPA Export Error:", err);
+      alert("Failed to export CAPA report.");
     }
-
-    const ws = XLSX.utils.json_to_sheet(excelRows);
-
-    ws["!cols"] = Object.keys(excelRows[0]).map((key) => ({
-      wch: Math.max(15, key.length + 5),
-    }));
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Internal_CAPA_Report");
-
-    XLSX.writeFile(
-      wb,
-      `Internal_CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
-  } catch (err) {
-    console.error("CAPA Export Error:", err);
-    alert("Failed to export CAPA report.");
-  }
-};
+  };
 
 
 
@@ -482,77 +510,14 @@ const exportCAPA = async () => {
           <div className="flex flex-col w-full relative max-h-[90%] py-[10px] overflow-y-auto gap-[10px]">
             {loading && <Preloader />}
 
-
-
-
-
-
             <div className="bg-white w-[98%] mx-auto rounded-lg border shadow-sm ">
 
-              <div className=" flex justify-between   px-[14px]  items-center  mx-auto pb-[10px] w-[100%]">
-                <div className=' flex gap-[10px] items-center pt-[14px]  justify-start '>
-
-                  <div className=" flex  gap-[20px]">
-
-                    <div className="relative ">
-
-                      <NewDatePicker
-                        label="From Date"
-                        selectedDate={dateFrom1}
-                        setSelectedDate={setDateFrom1}
-                      />
-
-                    </div>
-
-                    <div className="relative">
-
-                      <NewDatePicker
-                        label="To Date"
-                        selectedDate={dateTo1}
-                        setSelectedDate={setDateTo1}
-                      />
-                    </div>
-                  </div>
-
-
-                </div>
-                <div className="flex flex-row justify-between gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search Complaints..."
-                      // value={searchTerm}
-                      // onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Export only if permitted */}
-                  {/* <button
-                    onClick={exportToExcel}
-                    className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Excel
-                  </button>
-                  {isAdmin && (
-                    <button
-                      onClick={exportCAPA}
-                      className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      CAPA
-                    </button>
-                  )} */}
-                </div>
-              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full border-separate border-spacing-0">
                   <thead>
-                    <tr className="bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
+                    <tr className="bg-gray-100 text-gray-600 text-[12px] font-semibold uppercase tracking-wider">
                       {[
-                        "Complaint ID",
+                        "Comp. ID",
                         "Date & Time",
                         "Employee Name",
                         "Contact No",
@@ -564,7 +529,7 @@ const exportCAPA = async () => {
                       ].map((header, i) => (
                         <th
                           key={i}
-                          className="px-2 font-[500] text-[12px] border-r py-[10px] border-b border-gray-200 text-left whitespace-nowrap"
+                          className="px-[10px] font-[500] text-[12px] border-r py-[10px] border-b border-gray-200 text-left whitespace-nowrap"
                         >
                           {header}
                         </th>
@@ -594,30 +559,42 @@ const exportCAPA = async () => {
                           <td className="px-2 text-[12px] border-r py-[9px] border-b border-gray-100 font-medium text-blue-600">
                             <button
                               onClick={() => handleView(row)}
-                              className="hover:underline"
+                              className="hover:underline flex items-center gap-[6px]"
                             >
+                              <i className="fa-regular fa-ticket text-[14px] text-blue-500"></i>
                               {row.complaintId}
                             </button>
                           </td>
-                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 font-medium text-gray-800">
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 w-[180px]  text-gray-800">
                             <div className="flex gap-[5px] items-center">
-                              <Clock className="w-4 h-4 text-gray-400" />
+                              <CalendarClock className="w-4 h-4 text-gray-400" />
                               {formatDateTime(row.createdAt)}
                             </div>
                           </td>
 
-                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 font-medium text-gray-800 flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-400" />
-                            {row.employeeName}
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 w-[170px]  text-gray-800  gap-2">
+                            <div className=" flex gap-[6px]">
+                              <User className="w-4 h-4 text-gray-400" />
+                              {row.employeeName}
+                            </div>
                           </td>
                           <td className="px-2 text-[12px] border-r py-[9px] border-gray-100">
-                            {row.contactNo}
+                            <div className=" flex gap-[7px] items-center">
+                              <Phone className="w-4 h-4 text-gray-400" />
+                              {row.contactNo}
+                            </div>
                           </td>
                           <td className="px-2 text-[12px] border-r py-[9px] border-gray-100">
-                            {row.employeeId}
+                            <div className=" flex gap-[7px] items-center">
+                              <IdCard className="w-5 h-5 text-gray-400" />
+                              {row.employeeId}
+                            </div>
                           </td>
                           <td className="px-2 text-[12px] border-r py-[9px] border-gray-100">
-                            {row.floorNo}
+                            <div className=" flex gap-[7px] items-center">
+                              <Hospital className="w-4 h-4 text-gray-400" />
+                              {row.floorNo}
+                            </div>
                           </td>
                           <td className="px-2 text-[12px] border-r py-[9px] border-gray-100">
                             {activeDepartments || "-"}
@@ -627,7 +604,10 @@ const exportCAPA = async () => {
                               {row.status}
                             </span>
                           </td>
-                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 text-blue-600 text-sm font-medium flex items-center gap-1">
+                          <td className="px-2 text-[12px] w-[100px] border-r py-[9px] border-gray-100 text-blue-600 text-sm font-medium gap-1">
+                          <div className=" flex  items-center gap-1 ju">
+
+                         
                             <Eye className="w-4 h-4" />
                             <button
                               onClick={() => handleView(row)}
@@ -635,6 +615,7 @@ const exportCAPA = async () => {
                             >
                               View
                             </button>
+                             </div>
                           </td>
                         </tr>
                       );

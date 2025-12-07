@@ -3,12 +3,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Preloader from "../../Component/loader/Preloader";
 import Header from "../../Component/header/Header";
 import CubaSidebar from "../../Component/sidebar/CubaSidebar";
-import { Search, Clock, User, Phone, Bed } from "lucide-react";
+import { Search, CalendarClock, User, Phone, Bed, Stethoscope } from "lucide-react";
 import { ApiGet } from "../../helper/axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import { MdStar, MdStarHalf, MdStarBorder } from "react-icons/md";
+
 import {
   faStar as solidStar,
-  faStarHalfAlt as halfStar,
+  faStarHalfStroke as halfStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as regularStar } from "@fortawesome/free-regular-svg-icons";
 
@@ -77,41 +80,60 @@ export default function OpdIpdAllDetails() {
   };
 
   // ⭐ FontAwesome stars renderer
-  const renderStars = (rating = 0) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.25 && rating % 1 < 0.75;
-    const totalStars = 5;
+const renderStars = (rating = 0) => {
+  const stars = [];
+  const totalStars = 5;
 
-    for (let i = 1; i <= totalStars; i++) {
-      if (i <= fullStars) {
-        stars.push(
-          <FontAwesomeIcon
-            key={`full-${i}`}
-            icon={solidStar}
-            className="text-yellow-400 w-4 h-4"
-          />
-        );
-      } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(
-          <FontAwesomeIcon
-            key={`half-${i}`}
-            icon={halfStar}
-            className="text-yellow-400 w-4 h-4"
-          />
-        );
-      } else {
-        stars.push(
-          <FontAwesomeIcon
-            key={`empty-${i}`}
-            icon={regularStar}
-            className="text-gray-300 w-4 h-4"
-          />
-        );
-      }
+  const fullStars = Math.floor(rating);
+  const decimal = rating - fullStars;
+
+  // ⭐ New perfect half-star logic
+  const hasHalfStar = decimal >= 0.25 && decimal < 0.75;
+  const extraFullStar = decimal >= 0.75;
+
+  for (let i = 1; i <= totalStars; i++) {
+    if (i <= fullStars) {
+      // Full star
+      stars.push(
+        <FontAwesomeIcon
+          key={`full-${i}`}
+          icon={solidStar}
+          className="text-yellow-400 w-4 h-4"
+        />
+      );
+    } else if (i === fullStars + 1 && hasHalfStar) {
+      // Half star
+      stars.push(
+        <FontAwesomeIcon
+          key={`half-${i}`}
+          icon={halfStar}
+          className="text-yellow-400 w-4 h-4"
+        />
+      );
+    } else if (i === fullStars + 1 && extraFullStar) {
+      // Decimal above 0.75 → convert to full star
+      stars.push(
+        <FontAwesomeIcon
+          key={`full-dec-${i}`}
+          icon={solidStar}
+          className="text-yellow-400 w-4 h-4"
+        />
+      );
+    } else {
+      // Empty star
+      stars.push(
+        <FontAwesomeIcon
+          key={`empty-${i}`}
+          icon={regularStar}
+          className="text-gray-300 w-4 h-4"
+        />
+      );
     }
-    return <div className="flex items-center gap-[2px]">{stars}</div>;
-  };
+  }
+
+  return <div className="flex items-center gap-[2px]">{stars}</div>;
+};
+
 
   // ✅ Filter feedback safely
   const filteredFeedback = (
@@ -158,7 +180,7 @@ const handleRowClick = useCallback(
           <div className="flex flex-col w-full bg-white  relative max-h-[93%]  gap-2 ">
             {loading && <Preloader />}
 
-            {/* 🔘 Toggle + Search */}
+
             <div className="flex items-center justify-between px-3 pt-2  sticky top-0 z-10">
               <div className="relative flex items-center justify-center bg-gray-200 rounded-full w-[130px] h-[40px] p-[4px] cursor-pointer select-none">
                 <div
@@ -185,45 +207,35 @@ const handleRowClick = useCallback(
                 </div>
               </div>
 
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder={`Search ${activeType} feedback...`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-3 py-[6px] w-[220px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
             </div>
 
-            {/* 🩺 Feedback Table */}
+        
             <div className="bg-white rounded-xl border shadow-sm w-[98%] mx-[10px] overflow-y-auto md11:!max-h-[86%] 2xl:!max-h-[89%]">
               <div className="w-[100%]">
                 <table className="w-[100%]">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-6 py-[7px] text-left border-r text-[13px] font-medium text-gray-500 w-[180px] uppercase border-r">
+                      <th className="px-3 py-[7px] text-left border-r text-[11px] font-medium text-gray-500 w-[180px] uppercase border-r">
                         Date & Time
                       </th>
-                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500  w-[200px] uppercase border-r">
+                      <th className="px-3 py-[7px] text-left text-[11px] font-medium text-gray-500  w-[230px] uppercase border-r">
                         Patient Name
                       </th>
-                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 uppercase border-r">
+                      <th className="px-3 py-[7px] text-left text-[11px] font-medium text-gray-500 uppercase border-r">
                         Contact
                       </th>
                       {activeType === "IPD" && (
-                        <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 w-[100px] uppercase border-r">
+                        <th className="px-3 py-[7px] text-left text-[11px] font-medium text-gray-500 w-[100px] uppercase border-r">
                           Bed No
                         </th>
                       )}
-                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 w-[200px] uppercase border-r">
+                      <th className="px-3 py-[7px] text-left text-[11px] font-medium text-gray-500 w-[200px] uppercase border-r">
                         Doctor Name
                       </th>
-                      <th className="px-6 py-[7px] text-left text-[13px] font-medium text-gray-500 uppercase border-r">
+                      <th className="px-3 py-[7px] text-left text-[11px] font-medium text-gray-500 uppercase border-r">
                         Rating
                       </th>
-                      <th className="px-6 py-[10px] text-left text-[13px] font-medium text-gray-500 uppercase">
+                      <th className="px-3 py-[10px] text-left text-[11px] font-medium text-gray-500 uppercase">
                         Comment
                       </th>
                     </tr>
@@ -240,7 +252,7 @@ const handleRowClick = useCallback(
                       >
                         <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-gray-400" />
+                            <CalendarClock className="w-4 h-4 text-gray-400" />
                             {formatDate(fb.createdAt)}
                           </div>
                         </td>
@@ -270,7 +282,7 @@ const handleRowClick = useCallback(
 
                         <td className="px-3 py-2 text-[13px] text-gray-700 border-r">
                           <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-400" />
+                            <Stethoscope className="w-4 h-4 text-gray-400" />
                             {typeof fb.consultantDoctorName === "object"
                               ? fb.consultantDoctorName?.name
                               : fb.consultantDoctorName || "-"}

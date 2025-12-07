@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search } from "lucide-react"
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, CalendarClock, IdCard } from "lucide-react"
 
 import { FileText, Download, Star, ThumbsUp, BarChart3, Award, Phone, Clock } from "lucide-react"
 import { MessageSquare, } from "lucide-react";
@@ -82,8 +82,14 @@ export default function EmployeeAllList() {
   const [dateTo, setDateTo] = useState("2024-01-31")
   const [rawOPD, setRawOPD] = useState([])
   const navigate = useNavigate();
-    const [dateFrom1, setDateFrom1] = useState(null);
-    const [dateTo1, setDateTo1] = useState(null);
+  const [dateFrom1, setDateFrom1] = useState(null);
+  const [dateTo1, setDateTo1] = useState(null);
+  const [filters, setFilters] = useState({
+  search: "",
+  from: null,
+  to: null,
+});
+
 
 
   const getRatingStars = (rating = 0) => {
@@ -182,31 +188,28 @@ export default function EmployeeAllList() {
 
   useEffect(() => { fetchOPD() }, [fetchOPD])
 
-
-
 const filteredFeedback = rows.filter((f) => {
   const dt = new Date(f.createdAt);
 
-  const from = dateFrom1 ? new Date(dateFrom1) : null;
-  const to = dateTo1 ? new Date(dateTo1) : null;
+  // Normalize header FROM date
+  const from = filters.from ? new Date(filters.from) : null;
+  if (from) from.setHours(0, 0, 0, 0);
 
-  // To date must include the whole day
-  if (to) {
-    to.setHours(23, 59, 59, 999);
-  }
+  // Normalize header TO date
+  const to = filters.to ? new Date(filters.to) : null;
+  if (to) to.setHours(23, 59, 59, 999);
 
-  // DATE CHECK
+  // DATE FILTER
   if (from && dt < from) return false;
   if (to && dt > to) return false;
 
-  // SEARCH CHECK
+  // SEARCH FILTER
+  const s = filters.search?.toLowerCase() || "";
   return (
-    f.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.comment.toLowerCase().includes(searchTerm.toLowerCase())
+    f.patient.toLowerCase().includes(s) ||
+    f.comment.toLowerCase().includes(s)
   );
 });
-
-
 
 const exportToExcel = async () => {
   const XLSX = await import("xlsx");
@@ -254,16 +257,18 @@ const exportToExcel = async () => {
 
       <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Employee Feedback List" />
+          <Header
+  pageName="Employee Feedback"
+  onFilterChange={(f) => setFilters(f)}
+/>
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
             <div className="flex flex-col w-[100%]  pl-[10px] relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
               <div>
 
-
                 <div className="bg-white  md11:!mb-[0px] rounded-lg border shadow-sm overflow-hidden">
-                  <div className="px-3 py-[8px] border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  {/* <div className="px-3 py-[8px] border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div className=' flex gap-[10px]  items-center  pt-[5px] justify-start '>
 
             
@@ -306,28 +311,28 @@ const exportToExcel = async () => {
                         />
                       </div>
 
-                      {/* <button
+                 <button
                         onClick={exportToExcel}
                         className="flex items-center px-2 py-[6px] w-[140px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Export to Excel
-                      </button> */}
+                      </button> 
 
                     </div>
 
-                  </div>
+                  </div> */}
 
                   <div className="overflow-x-auto">
                     <table className=" md34:!min-w-[1200px] md11:!min-w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
-                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">EmployeeId Name</th>
-                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Employee Id</th>
-                          {/* <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th> */}
-                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
-                          <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                          <th className="px-6 py-[7px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>
+                          <th className="px-6 py-[7px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">EmployeeId Name</th>
+                          <th className="px-6 py-[7px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Employee Id</th>
+                          {/* <th className="px-6 py-[7px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Doctor</th> */}
+                          <th className="px-6 py-[7px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Rating</th>
+                          <th className="px-6 py-[7px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider">Comment</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white">
@@ -344,22 +349,22 @@ const exportToExcel = async () => {
 
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
-                                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                                  <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                   {formatDate(feedback.createdAt)}
                                 </div>
                               </td>
-                              <td className="px-6 py-[7px] text-sm font-medium text-gray-900 border-r border-gray-200">
+                              <td className="px-6 py-[7px] text-sm  text-gray-900 border-r border-gray-200">
 
 
 
                                 <div className="flex flex-shrink-0 items-center">
-                                  <User className="w-4 h-4 text-gray-400 mr-2" />
+                                  <User className="w-5 h-5 text-gray-400 mr-2" />
                                   {feedback.patient}
                                 </div>
                               </td>
                               <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                 <div className="flex items-center">
-                                  <Phone className="w-4 h-4 text-gray-400 mr-2" />
+                                  <IdCard className="w-5 h-5 text-gray-400 mr-2" />
                                   {feedback.contact}
                                 </div>
                               </td>

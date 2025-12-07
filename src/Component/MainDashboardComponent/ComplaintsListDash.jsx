@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Calendar, User, Bed, Download, Search, Stethoscope } from "lucide-react";
+import { Eye, Calendar, User,CalendarClock, Bed, Download, Search, Stethoscope } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { ApiGet } from "../../helper/axios";
@@ -187,7 +187,7 @@ const openComplaintDetails = (complaint) => {
 
 // 🎨 Status Badge Colors
 const getStatusBadge = (status) => {
-  const base = "px-3 py-[3px] rounded-full text-[12px] font-semibold inline-block";
+  const base = "px-2 py-[3px] rounded-full text-[10px] font-semibold inline-block";
 
   switch (status?.toLowerCase()) {
     case "resolved":
@@ -265,25 +265,25 @@ const getStatusBadge = (status) => {
       {/* 🔹 Header */}
       <thead>
         <tr className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
-          <th className="px-3 py-[13px] text-left text-[11px] w-[130px] font-[600] text-white">
+          <th className="px-2 py-[13px] text-left text-[11px] w-[100px] font-[600] text-white">
             COMPLAINT ID
           </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+          <th className="px-2 py-[13px] text-left  w-[140px] text-[11px] font-[600] text-white">
             DATE & TIME
           </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+          <th className="px-3 py-[13px] text-left text-[11px] font-[600] text-white">
             PATIENT NAME
           </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+          <th className="px-3 py-[13px] text-left text-[11px] font-[600] text-white">
             DOCTOR NAME
           </th>
           <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
             BED NO
           </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+          <th className="px-3 py-[13px] text-left text-[11px] font-[600] text-white">
             DEPARTMENT
           </th>
-          <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">
+          <th className="px-3 py-[13px] text-left text-[11px] font-[600] text-white">
             STATUS
           </th>
           <th className="px-6 py-[13px] text-center text-[11px] font-[600] text-white">
@@ -330,7 +330,9 @@ const getStatusBadge = (status) => {
                 {/* 🕒 Date & Time */}
                 <td className="px-2 w-[120px] py-2">
                   <div className="flex items-center gap-2 text-gray-700">
-                    <Calendar size={16} className="text-blue-500" />
+                    <CalendarClock size={16} className="text-blue-500" />
+
+                    
                     <span className="text-[11px] font-[500]">
                       {formatDate(row.createdAt)}
                     </span>
@@ -359,8 +361,8 @@ const getStatusBadge = (status) => {
                   </div>
                 </td>
 
-                {/* 🛏 Bed No */}
-                <td className="px-2 w-[100px] py-2">
+      
+                <td className="px-6 w-[100px] py-2">
                   <div className="flex items-center gap-2 text-gray-700">
                     <Bed size={16} className="text-orange-500" />
                     <span className="font-medium text-[13px]">

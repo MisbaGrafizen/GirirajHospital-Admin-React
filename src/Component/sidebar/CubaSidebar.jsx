@@ -15,7 +15,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion"
 import logofevicon from "../../../public/imges/fevicon.png"
 import textlogo from "../../../public/imges/onlyText.jpeg"
-// import textlogo from "../../../public/imges/onlyTextnbh.jpeg"
 
 import { NavLink } from "react-router-dom"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -110,13 +109,31 @@ const CubaSidebar = () => {
     ],
     "/complaint-dashboard": [
       "/complaint-details",
-      "/dashboards/complain-all-list",
+      "/complain-list",
     ],
     "/reports/nps-reports": [
       "/reports/nps-all-list",
     ],
 
+    "/internal-complint-list": [
+      "/internal-complaint-details",
+    ],
 
+        "/employee-feedback": [
+      "/employee-all-list",
+      "/employee-feedback-details",
+
+    ],
+
+
+    
+
+
+        "/consultant-feedback": [
+      "/consultant-all-list",
+ "/consultant-feedback-details",
+     
+    ],
   };
 
 
@@ -142,14 +159,14 @@ submenu: [
   isAdmin && {
     id: "employeeDashboard",
     label: "Employee Dash.. ",
-    href: "/employee-feedback-dashboard",
+    href: "/employee-feedback",
     icon: faUsersCog,
   },
 
   isAdmin && {
     id: "consultantDashboard",
     label: "Consultant Dash.. ",
-    href: "/doctor-feedback-dashboard",
+    href: "/consultant-feedback",
     icon: faUserMd,
   },
 ].filter(Boolean),   

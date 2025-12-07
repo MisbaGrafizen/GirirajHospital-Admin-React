@@ -3,7 +3,7 @@ import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import { ApiGet } from '../../../helper/axios'
-import { User, Bed, Stethoscope, Smile, Meh, Frown,Download,Search } from "lucide-react"
+import { User, Bed, CalendarClock, Stethoscope, Smile, Meh, Frown, Download, Search } from "lucide-react"
 import NewDatePicker from '../../../Component/MainInputFolder/NewDatePicker'
 
 const pick = (...vals) => vals.find((v) => v != null && v !== "") ?? "-"
@@ -54,8 +54,14 @@ export default function NpsAllList() {
   const [showDetractors, setShowDetractors] = useState(true)
   const [showPassives, setShowPassives] = useState(true)
   const [showPromoters, setShowPromoters] = useState(true)
-            const [dateFrom1, setDateFrom1] = useState(null);
-            const [dateTo1, setDateTo1] = useState(null);
+  const [dateFrom1, setDateFrom1] = useState(null);
+  const [dateTo1, setDateTo1] = useState(null);
+  const [filters, setFilters] = useState({
+  from: null,
+  to: null,
+  search: "",
+});
+
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 14)
@@ -116,8 +122,8 @@ export default function NpsAllList() {
     if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"))
     if (wantIPD) recs = recs.concat(project(rawIpd, "IPD"))
     // stable chronology for table
-return recs
-  .sort((a, b) => b.date.localeCompare(a.date) || b.datetime.localeCompare(a.datetime));
+    return recs
+      .sort((a, b) => b.date.localeCompare(a.date) || b.datetime.localeCompare(a.datetime));
   }, [rawOpd, rawIpd, department, doctor, dateFrom, dateTo])
 
   const filteredRecords = useMemo(() => {
@@ -142,56 +148,74 @@ return recs
 
   // 🔥 Apply selectedDate filter on top of existing filters (UI date filter)
 const finalFilteredRecords = useMemo(() => {
-  if (!dateFrom1 && !dateTo1) return filteredRecords;
+  let list = [...filteredRecords];
 
-  return filteredRecords.filter((rec) => {
-    const dt = new Date(rec.date);
+  const { from, to, search } = filters;
 
-    if (dateFrom1) {
-      const from = new Date(dateFrom1);
-      from.setHours(0, 0, 0, 0);
-      if (dt < from) return false;
-    }
+  // 🔥 SEARCH FILTER
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter((r) =>
+      r.patient.toLowerCase().includes(q) ||
+      r.doctor.toLowerCase().includes(q) ||
+      r.comment.toLowerCase().includes(q)
+    );
+  }
 
-    if (dateTo1) {
-      const to = new Date(dateTo1);
-      to.setHours(23, 59, 59, 999);
-      if (dt > to) return false;
-    }
+  // 🔥 DATE FILTER (Header based)
+  if (from || to) {
+    list = list.filter((r) => {
+      const dt = new Date(r.date);
 
-    return true;
-  });
-}, [filteredRecords, dateFrom1, dateTo1]);
+      if (from) {
+        const f = new Date(from);
+        f.setHours(0, 0, 0, 0);
+        if (dt < f) return false;
+      }
+
+      if (to) {
+        const t = new Date(to);
+        t.setHours(23, 59, 59, 999);
+        if (dt > t) return false;
+      }
+
+      return true;
+    });
+  }
+
+  return list;
+}, [filteredRecords, filters]);
 
 
-const exportToExcel = async () => {
-  const XLSX = await import("xlsx");
 
-  // ✔ Use the final date-filtered dataset
-  const excelRows = finalFilteredRecords.map((r, idx) => ({
-    "Sr No": idx + 1,
-    "Date": r.date,
-    "Date & Time": r.datetime,
-    "Patient Name": r.patient,
-    "Room No": r.room,
-    "Doctor Name": r.doctor,
-    "NPS Rating": r.rating,
-    "Category": r.category,
-    "Comment": r.comment,
-  }));
+  const exportToExcel = async () => {
+    const XLSX = await import("xlsx");
 
-  const ws = XLSX.utils.json_to_sheet(excelRows);
+    // ✔ Use the final date-filtered dataset
+    const excelRows = finalFilteredRecords.map((r, idx) => ({
+      "Sr No": idx + 1,
+      "Date": r.date,
+      "Date & Time": r.datetime,
+      "Patient Name": r.patient,
+      "Room No": r.room,
+      "Doctor Name": r.doctor,
+      "NPS Rating": r.rating,
+      "Category": r.category,
+      "Comment": r.comment,
+    }));
 
-  ws["!cols"] = Object.keys(excelRows[0] || {}).map(() => ({ wch: 20 }));
+    const ws = XLSX.utils.json_to_sheet(excelRows);
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "NPS Records");
+    ws["!cols"] = Object.keys(excelRows[0] || {}).map(() => ({ wch: 20 }));
 
-  XLSX.writeFile(
-    wb,
-    `NPS_Records_${new Date().toISOString().slice(0, 10)}.xlsx`
-  );
-};
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "NPS Records");
+
+    XLSX.writeFile(
+      wb,
+      `NPS_Records_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  };
 
 
 
@@ -204,63 +228,18 @@ const exportToExcel = async () => {
 
       <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Nps All Record" />
+        <Header 
+  pageName="Nps All Record"
+  onFilterChange={(data) => setFilters(data)} 
+/>
+
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
             <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px]  py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
               <Preloader />
               <div>
-            
-                                <div className=" flex justify-between items-center  mx-auto pb-[10px] w-[100%]">
-                                    <div className=' flex gap-[10px] items-center pt-[5px]  justify-start '>
 
-                                        <div className=" flex  gap-[20px]">
-
-                                            <div className="relative ">
-
-                                                <NewDatePicker
-                                                    label="From Date"
-                                                    selectedDate={dateFrom1}
-                                                    setSelectedDate={setDateFrom1}
-                                                />
-
-                                            </div>
-
-                                            <div className="relative">
-
-                                                <NewDatePicker
-                                                    label="To Date"
-                                                    selectedDate={dateTo1}
-                                                    setSelectedDate={setDateTo1}
-                                                />
-                                            </div>
-                                        </div>
-
-
-                                    </div>
-                                    <div className="flex flex-row justify-between gap-2">
-                                        <div className="relative">
-                                            <Search className="absolute left-2 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search Nps..."
-                                                // value={searchTerm}
-                                                // onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="pl-8 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none"
-                                            />
-                                        </div>
-
-                                        {/* Export only if permitted */}
-                                        {/* <button
-                                            onClick={exportToExcel}
-                                            className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                        >
-                                            <Download className="w-4 h-4 mr-2" />
-                                            Export to Excel
-                                        </button> */}
-
-                                    </div>
-                                </div>
+    
 
 
                 <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[100%] mx-auto md11:!mb-[0px] border-gray-100 overflow-hidden">
@@ -268,22 +247,31 @@ const exportToExcel = async () => {
                     <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[80px]">SR No</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[190px]">Date & Time</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[250px]">Patient Name</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">Room No</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[230px]">Doctor Name</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">NPS Rating</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
-                          <th className="px-3 py-[12px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[100px]">SR No</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[220px]">Date & Time</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[250px]">Patient Name</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">Room No</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[230px]">Doctor Name</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">NPS Rating</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
+                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
                         </tr>
                       </thead>
 
                       <tbody className="bg-white divide-y divide-gray-100">
-{finalFilteredRecords.map((rec, idx) => (
+                        {finalFilteredRecords.map((rec, idx) => (
                           <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
                             <td className="px-3 py-[12px] text-[13px] border-r text-gray-700">{idx + 1}</td>
-                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">{rec.datetime}</td>
+                            <td className="px-2 py-[12px] text-[13px] border-r text-gray-900">
+                              <div className=' flex gap-[9px]'>
+
+
+                                <CalendarClock className="w-4 h-4 text-gray-400" />
+
+                                {rec.datetime}
+
+                              </div>
+                            </td>
 
                             {/* 👤 Patient Name with icon */}
                             <td className="px-3 py-[12px] text-[13px] border-r font-[400] text-gray-900">
@@ -310,11 +298,11 @@ const exportToExcel = async () => {
                             </td>
 
                             {/* 😄😐😞 NPS Rating with icon */}
-                            <td className="px-3 py-[12px] text-[13px] border-r font-semibold text-gray-900">
+                            <td className="px-3 py-[12px] text-[13px] border-r font-[]500 text-gray-900">
                               <div className="flex items-center gap-2">
-                                {rec.category === "Promoter" && <Smile className="w-5 h-5 text-emerald-600" />}
-                                {rec.category === "Passive" && <Meh className="w-5 h-5 text-amber-500" />}
-                                {rec.category === "Detractor" && <Frown className="w-5 h-5 text-rose-600" />}
+                                {rec.category === "Promoter" && <Smile className="w-4 h-4 text-emerald-600" />}
+                                {rec.category === "Passive" && <Meh className="w-4 h-4 text-amber-500" />}
+                                {rec.category === "Detractor" && <Frown className="w-4 h-4 text-rose-600" />}
                                 <span>{rec.rating || "-"}</span>
                               </div>
                             </td>
@@ -323,10 +311,10 @@ const exportToExcel = async () => {
                             <td className="px-3 py-[12px] text-[13px] border-r">
                               <span
                                 className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : rec.category === "Passive"
-                                      ? "bg-amber-100 text-amber-800"
-                                      : "bg-red-100 text-red-800"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : rec.category === "Passive"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-red-100 text-red-800"
                                   }`}
                               >
                                 {rec.category}
@@ -334,7 +322,7 @@ const exportToExcel = async () => {
                             </td>
 
                             {/* 💬 Comment with truncation */}
-                            <td className="px-3 py-[12px] text-[10px] border-r text-gray-700  ">
+                            <td className="px-3 py-[12px] text-[12px] border-r text-gray-700  ">
                               {rec.comment ? rec.comment.split(" ").slice(0, 15).join(" ") + "" : ""}
                             </td>
                           </tr>

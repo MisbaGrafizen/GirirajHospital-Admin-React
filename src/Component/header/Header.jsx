@@ -32,11 +32,22 @@ import OpdFilter from "../ReportFilter/OpdFilter";
 import { motion, AnimatePresence } from "framer-motion"
 import NotificationSettingsModal from "../NotifiactionSetting/NotificationSettingsModal";
 import ReportBugModal from "../NotifiactionSetting/ReportBugModal";
+import OpdListFilter from "../MainFilterCom/OpdListFilter";
+import IpdListFilter from "../MainFilterCom/IpdListFilter";
+import ComplainListFilter from "../MainFilterCom/ComplainListFilter";
+import NpsListFilter from "../MainFilterCom/NpsListFilter";
+import TatListFilter from "../MainFilterCom/TatListFilter";
+import InternalComFilter from "../MainFilterCom/InternalComFilter";
+import EmployeeListFilter from "../MainFilterCom/EmployeeListFilter";
+import ConsultantFilter from "../MainFilterCom/ConsultantFilter";
+import ExcutiveFilter from "../MainFilterCom/ExcutiveFilter";
+import EmployeeDashFilter from "../MainFilterCom/EmployeeDashFilter";
+import ConsultantDashFilter from "../MainFilterCom/ConsultantDashFilter";
 
 function Header({
   pageName = "",
   onDateRangeChange,
-  onFilterChange,       // ⭐ ADD THIS
+  onFilterChange,       // ADD THIS
   onCreateWard,
   onCreateDoctor,
   onCreateRoleUser,
@@ -65,7 +76,22 @@ function Header({
   const [filterSearch, setFilterSearch] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState(null);
   const [filterDateTo, setFilterDateTo] = useState(null);
+  const [filterFrom, setFilterFrom] = useState(null);
+  const [filterTo, setFilterTo] = useState(null);
+
+
   const isAdmin = localStorage.getItem("loginType") === "admin";
+
+  useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange({
+        search: filterSearch,
+        from: filterFrom,
+        to: filterTo,
+      });
+    }
+  }, [filterSearch, filterFrom, filterTo]);
+
 
 
   // close dropdown when clicking outside
@@ -89,7 +115,7 @@ function Header({
       });
     }
   }, [filterSearch, filterDateFrom, filterDateTo]);
- 
+
   useEffect(() => {
     // initial fetch
     const fetchCount = async () => {
@@ -190,7 +216,7 @@ function Header({
               </h1>
             </div>
 
-            <div className=" md:!flex md34:!hidden">
+            <div className=" md:!flex md34:!hidden w-[600px]">
 
 
               {location.pathname === "/dashboard" && (
@@ -385,30 +411,182 @@ function Header({
 
 
 
-              {/* {location.pathname === "/reports/executive-report" && (
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 md77:!gap-4">
 
-                  <div className="relative md34:!mb-[17px] md77:!mb-0">
 
-                    <ModernDatePicker
-                      label="From Date"
-                      selectedDate={dateFrom}
-                      setSelectedDate={setDateFrom}
-                    />
 
-                  </div>
+              {location.pathname === "/reports/executive-report" && (
 
-                  <div className="relative">
+                <>
 
-                    <ModernDatePicker
-                      label="To Date"
-                      selectedDate={dateTo}
-                      setSelectedDate={setDateTo}
-                    />
-                  </div>
-                </div>
-              )} */}
+                  <ExcutiveFilter
+                    onFilterChange={({ from, to }) => {
+                      setDateFrom(from);
+                      setDateTo(to);
+
+                      if (onDateRangeChange) {
+                        onDateRangeChange({ from, to });
+                      }
+                    }}
+                  />
+
+
+                </>
+              )}
+
+
+
+
+
+              {location.pathname === "/dashboards/opd-all-list" && (
+
+                <>
+
+                  <OpdListFilter
+                    onChange={(f) => {
+                      setFilterSearch(f.search);
+                      setFilterFrom(f.from);
+                      setFilterTo(f.to);
+                    }}
+                  />
+
+                </>
+
+              )}
+
+              {location.pathname === "/dashboards/ipd-all-list" && (
+
+                <>
+
+                  <IpdListFilter onFilterChange={onFilterChange} />
+                </>
+
+              )}
+
+
+              {location.pathname === "/dashboard/ipd-opd-list" && (
+
+                <>
+
+                  <IpdListFilter />
+                </>
+
+              )}
+
+              {location.pathname === "/dashboards/complain-all-list" && (
+
+                <>
+
+                  <ComplainListFilter onFilterChange={onFilterChange} />
+                </>
+
+              )}
+
+
+              {location.pathname === "/reports/nps-all-list" && (
+
+                <>
+
+                  <NpsListFilter onFilterChange={onFilterChange} />
+                </>
+
+              )}
+
+              {location.pathname === "/dashboard/open-issues" && (
+
+                <>
+
+                  <ComplainListFilter />
+                </>
+
+              )}
+
+
+
+              {location.pathname === "/complain-list" && (
+
+                <>
+
+                  <ComplainListFilter />
+                </>
+
+              )}
+                           {location.pathname === "/dashboard/complain-list" && (
+
+                <>
+
+                  <ComplainListFilter />
+                </>
+
+              )}
+
+
+              {location.pathname === "/dashboards/tat-view" && (
+
+                <>
+
+                  <TatListFilter />
+                </>
+
+              )}
+
+
+              {location.pathname === "/dashboards/tat-view" && (
+
+                <>
+
+                  <TatListFilter />
+                </>
+
+              )}
+
+              {location.pathname === "/internal-complint-list" && (
+
+                <>
+
+                  <InternalComFilter onFilterChange={onFilterChange} />
+                </>
+
+              )}
+
+
+
+              {location.pathname === "/employee-feedback" && (
+
+                <>
+
+                  <EmployeeDashFilter />
+                </>
+
+              )}
+
+              {location.pathname === "/employee-all-list" && (
+
+                <>
+
+                  <EmployeeListFilter onFilterChange={onFilterChange} />
+                </>
+
+              )}
+
+              {location.pathname === "/consultant-all-list" && (
+
+                <>
+
+                  <ConsultantFilter onFilterChange={onFilterChange} />
+                </>
+
+              )}
+
+
+              {location.pathname === "/consultant-feedback" && (
+
+                <>
+
+                  <ConsultantDashFilter  />
+                </>
+
+              )}
               {/* {location.pathname === "/internal-complint-list" && (
                 <div className="grid  flex-shrink-0 grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 
@@ -587,14 +765,14 @@ function Header({
                   >
                     <Bell size={16} /> Notification Settings
                   </button> */}
-                 {isAdmin && (
-  <button
-    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition"
-    onClick={handleLogDetails}
-  >
-    <FileText size={16} /> Log Details
-  </button>
-)}
+                  {isAdmin && (
+                    <button
+                      className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition"
+                      onClick={handleLogDetails}
+                    >
+                      <FileText size={16} /> Log Details
+                    </button>
+                  )}
 
                   {/* <button
                     className="w-full flex items-center relative  gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 transition" onClick={() => setOpenBug(true)}

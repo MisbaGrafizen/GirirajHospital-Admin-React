@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock, User, Phone, Bed, Eye, Download, Search,
 
-
+CalendarClock,
   Stethoscope,
 
   MoreVertical,
@@ -275,11 +275,11 @@ const navigate = useNavigate();
               {/* 🔹 Header */}
               <thead>
                 <tr className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
-                  <th className="px-3 py-[13px] text-left text-[11px] w-[130px] font-[600] text-white">DATE & TIME</th>
-                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">PATIENT NAME</th>
-                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">CONTACT</th>
+                  <th className="px-2 py-[13px] text-left text-[11px] w-[130px] font-[600] text-white">DATE &  TIME</th>
+                  <th className="px-3 py-[13px] text-left text-[11px] font-[600] text-white">PATIENT NAME</th>
+                  <th className="px-3 py-[13px] text-left text-[11px] font-[600] text-white">CONTACT</th>
                   <th className="px-2 py-[13px] text-left text-[11px] font-[600] w-[100px] text-white">BED NO</th>
-                  <th className="px-6 py-[13px] text-left text-[11px] font-[600] w-[160px] text-white">DOCTOR NAME</th>
+                  <th className="px-3 py-[13px] text-left text-[11px] font-[600] w-[160px] text-white">DOCTOR NAME</th>
                   <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">AVG RATING</th>
                   <th className="px-6 py-[13px] text-left text-[11px] font-[600] text-white">COMMENT</th>
                   <th className="px-6 py-[13px] text-center text-[11px] font-[600] text-white">ACTIONS</th>
@@ -305,7 +305,8 @@ const navigate = useNavigate();
                         {/* 🕒 Date & Time */}
                         <td className="px-2 py-2">
                           <div className="flex items-center gap-2 text-gray-700">
-                            <Clock size={16} className="text-blue-500 flex" />
+                            <CalendarClock size={20} className="text-blue-500 flex" />
+                            {/* <CalendarClock /> */}
                             <div>
                               <p className="text-[10px]  flex-shrink-0  leading-[10px] font-[500]">
                                 {formatDate(fb.createdAt)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Eye, Clock, Bed } from "lucide-react";
+import { Eye, CalendarClock, Bed, User, Stethoscope } from "lucide-react";
 import Header from "../../Component/header/Header";
 import CubaSidebar from "../../Component/sidebar/CubaSidebar";
 import Preloader from "../../Component/loader/Preloader";
@@ -101,27 +101,27 @@ export default function OpenIssues() {
         const res = await ApiGet("/admin/ipd-concern");
         const allComplaints = res?.data || [];
 
-// 🔹 Filter by department (permissions)
-const filteredByDept = isAdmin
-  ? allComplaints
-  : allComplaints.filter((c) =>
-      allowedBlocks.some((block) => {
-        const deptData = c[block]; // example: c["maintenance"]
-        if (!deptData) return false;
+        // 🔹 Filter by department (permissions)
+        const filteredByDept = isAdmin
+          ? allComplaints
+          : allComplaints.filter((c) =>
+            allowedBlocks.some((block) => {
+              const deptData = c[block]; // example: c["maintenance"]
+              if (!deptData) return false;
 
-        return (
-          (deptData.text && deptData.text.trim() !== "") ||
-          (Array.isArray(deptData.attachments) && deptData.attachments.length > 0)
-        );
-      })
-    );
+              return (
+                (deptData.text && deptData.text.trim() !== "") ||
+                (Array.isArray(deptData.attachments) && deptData.attachments.length > 0)
+              );
+            })
+          );
 
 
         // 🔹 Filter by complaint status based on dashboard selection
         // 🔹 Always show only open complaints
-const filteredByStatus = filteredByDept.filter(
-  (c) => c.status?.toLowerCase() === "open"
-);
+        const filteredByStatus = filteredByDept.filter(
+          (c) => c.status?.toLowerCase() === "open"
+        );
 
 
         // 🔹 Sort by latest
@@ -180,12 +180,12 @@ const filteredByStatus = filteredByDept.filter(
               <table className="w-full">
                 <thead className="bg-gray-100 !text-xs !font-[500] text-gray-600 uppercase tracking-wide">
                   <tr>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[120px]">Comp. ID</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[90px]">Comp. ID</th>
                     <th className="px-3 py-[12px] text-left font-[500] border-r w-[220px]">Date & Time</th>
                     <th className="px-3 py-[12px] text-left font-[500] border-r">Patient</th>
                     <th className="px-3 py-[12px] text-left font-[500] border-r w-[220px]">Doctor</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r">Bed No.</th>
-                    <th className="px-3 py-[12px] text-left font-[500] border-r">Department</th>
+                    <th className="px-3 py-[12px] text-left font-[500] w-[90px] border-r">Bed No.</th>
+                    <th className="px-3 py-[12px] text-left font-[500] border-r w-[400px]">Department</th>
                     <th className="px-3 py-[12px] text-left font-[500] border-r">Status</th>
                     <th className="px-3 py-[12px] text-left font-[500]">Details</th>
                   </tr>
@@ -195,44 +195,54 @@ const filteredByStatus = filteredByDept.filter(
                   {filtered.map((issue, idx) => (
                     <tr
                       key={issue._id || `${issue.complaintId}-${idx}`}
-                      className={`${
-                        idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      } hover:bg-blue-50 transition text`}
+                      className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        } hover:bg-blue-50 transition text`}
                     >
                       <td className="px-3 py-[12px] font-semibold text-blue-700 border-r cursor-pointer hover:underline">
-                        {issue.complaintId || issue.id}
+                        <div className=" flex items-center  gap-[5px]">
+
+                          <i className="fa-regular fa-ticket text-[14px] text-blue-600"></i>
+
+                          {issue.complaintId || issue.id}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r  text-[13px]">
-                      <div className=" flex items-center gap-2">
+                        <div className=" flex items-center gap-2">
 
 
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        {new Date(issue.createdAt).toLocaleString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                                              </div>
+                          <CalendarClock className="w-4 h-4 text-gray-400" />
+                          {new Date(issue.createdAt).toLocaleString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r font-[400] capitalize">
-                        {issue.patientName || "-"}
+                        <div className=" flex gap-[5px] ">
+                          <User className="w-4 h-4 text-gray-400" />
+                          {issue.patientName || "-"}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r">
-                        {issue.consultantDoctorName?.name || "-"}
+                        <div className=" flex gap-[5px] ">
+                          <Stethoscope className="w-4 h-4 mt-[2px] text-gray-400" />
+                          {issue.consultantDoctorName?.name || "-"}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r text-[13px]  gap-2">
-                      <div className=" flex items-center gap-[10px]">  
+                        <div className=" flex items-center gap-[5px]">
 
 
-                        <Bed className="w-4 h-4 text-gray-400" />
-                        {issue.bedNo || "-"}
-                                              </div>
+                          <Bed className="w-4 h-4 text-gray-400" />
+                          {issue.bedNo || "-"}
+                        </div>
                       </td>
 
                       <td className="px-3 py-[12px] border-r">
@@ -246,17 +256,16 @@ const filteredByStatus = filteredByDept.filter(
 
                       <td className="px-3 py-[12px] border-r">
                         <span
-                          className={`px-3 py-[3px] rounded-full text-xs font-semibold ${
-                            issue.status === "resolved"
-                              ? "bg-green-100 text-green-700"
-                              : issue.status === "open"
+                          className={`px-3 py-[3px] rounded-full text-xs font-semibold ${issue.status === "resolved"
+                            ? "bg-green-100 text-green-700"
+                            : issue.status === "open"
                               ? "bg-yellow-100 text-yellow-700"
                               : issue.status === "escalated"
-                              ? "bg-red-100 text-red-700"
-                              : issue.status === "in_progress"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
+                                ? "bg-red-100 text-red-700"
+                                : issue.status === "in_progress"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-gray-100 text-gray-700"
+                            }`}
                         >
                           {issue.status?.toUpperCase() || "-"}
                         </span>
@@ -269,9 +278,11 @@ const filteredByStatus = filteredByDept.filter(
                           })
                         }
                         className="px-3 py-[12px] text-blue-600 font-medium cursor-pointer flex items-center gap-1 hover:underline"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View
+                      ><div className=" flex gap-[5px] items-center">
+
+                          <Eye className="w-4 h-4" />
+                          View
+                        </div>
                       </td>
                     </tr>
                   ))}

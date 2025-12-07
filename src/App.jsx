@@ -156,17 +156,20 @@ function App() {
           <Route path="/settings/bed-manage" element={<PrivateRoute><BedCreate /></PrivateRoute>} />
           <Route path="/dashboards/ipd-all-list" element={<PrivateRoute><IpdAllList /></PrivateRoute>} />
           <Route path="/dashboards/opd-all-list" element={<PrivateRoute><OpdAllList /></PrivateRoute>} />
-          <Route path="/dashboards/complain-all-list" element={<PrivateRoute><ComplainAllList /></PrivateRoute>} />
+          {/* <Route path="/dashboard/complain-all-list" element={<PrivateRoute><ComplainAllList /></PrivateRoute>} /> */}
+          {/* <Route path="/complain-all-list" element={<PrivateRoute><ComplainAllList /></PrivateRoute>} /> */}
+
           <Route path="/reports/nps-all-list" element={<PrivateRoute><NpsAllList /></PrivateRoute>} />
           <Route path="/mail" element={<PrivateRoute><EmailManagement /></PrivateRoute>} />
           <Route path="/dashboards/tat-view" element={<PrivateRoute><TATAllList /></PrivateRoute>} />
            <Route path="/notes" element={<PrivateRoute><NotesAdd /></PrivateRoute>} />
            <Route path="/todolist" element={<PrivateRoute><TodoPage /></PrivateRoute>} />
            <Route path="/profile" element={<PrivateRoute><EmployeeProfile /></PrivateRoute>} />
-           <Route path="/ipd-opd-list" element={<PrivateRoute><OpdIpdAllDetails /></PrivateRoute>} />
-           <Route path="/open-issues" element={<PrivateRoute><OpenIssues /></PrivateRoute>} />
-                 <Route path="/user-all-list" element={<PrivateRoute><UserAllList /></PrivateRoute>} />
+           <Route path="/dashboard/ipd-opd-list" element={<PrivateRoute><OpdIpdAllDetails /></PrivateRoute>} />
+           <Route path="/dashboard/open-issues" element={<PrivateRoute><OpenIssues /></PrivateRoute>} />
+                 <Route path="/dashboard/user-all-list" element={<PrivateRoute><UserAllList /></PrivateRoute>} />
                  <Route path="/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
+                                  <Route path="/dashboard/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
                  <Route path="/internal-complint-list" element={<PrivateRoute><InternalComplaintsList /></PrivateRoute>} />
                  <Route path="/internal-complaint-details" element={<PrivateRoute><InternalComplaintsDetails /></PrivateRoute>} />
 
@@ -176,8 +179,8 @@ function App() {
 
           {/* NewModule  */}
 
-          <Route path="/employee-feedback-dashboard" element={<PrivateRoute><EmployeeFeedbackDashBoard /></PrivateRoute>} />
-          <Route path="/doctor-feedback-dashboard" element={<PrivateRoute><ConsultantFeedBackDashBord /></PrivateRoute>} />
+          <Route path="/employee-feedback" element={<PrivateRoute><EmployeeFeedbackDashBoard /></PrivateRoute>} />
+          <Route path="/consultant-feedback" element={<PrivateRoute><ConsultantFeedBackDashBord /></PrivateRoute>} />
           <Route path="/employee-all-list" element={<PrivateRoute><EmployeeAllList/></PrivateRoute>} />
           <Route path="/consultant-all-list" element={<PrivateRoute><ConsultantAllList/></PrivateRoute>} />
           <Route path="/consultant-feedback-details" element={<PrivateRoute><ConsultantFeedbackDetails/></PrivateRoute>} />

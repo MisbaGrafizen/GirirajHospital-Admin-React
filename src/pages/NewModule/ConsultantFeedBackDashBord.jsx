@@ -26,6 +26,7 @@ import {
     Lightbulb,
     UserPlus,
     GraduationCap,
+    CalendarClock,
 } from "lucide-react"
 import {
     Stethoscope,
@@ -1362,22 +1363,22 @@ export default function ConsultantFeedBackDashBord() {
                                             <table className=" min-w-[800px] md11:!min-w-full">
                                                 <thead className="bg-gray-100">
                                                     <tr>
-                                                        <th className="px-6 py-[13px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[13px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Service
                                                         </th>
-                                                        <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Excellent %
                                                         </th>
-                                                        <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Good %
                                                         </th>
-                                                        <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Average %
                                                         </th>
-                                                        <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Poor %
                                                         </th>
-                                                        <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                             Very Poor %
                                                         </th>
                                                     </tr>
@@ -1470,22 +1471,22 @@ export default function ConsultantFeedBackDashBord() {
                                             <thead className="bg-gray-50">
                                                 <tr>
                                                     {/* Date & Time */}
-                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
                                                         Date & Time
                                                     </th>
 
                                                     {/* Doctor Name */}
-                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
                                                         Doctor Name
                                                     </th>
 
                                                     {/* Overall Rating */}
-                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
                                                         Rating
                                                     </th>
 
                                                     {/* Comment */}
-                                                    <th className="px-2 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                                                    <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
                                                         Comment
                                                     </th>
 
@@ -1523,29 +1524,29 @@ export default function ConsultantFeedBackDashBord() {
                                                         {/* Date & Time */}
                                                         <td className="px-4 py-2 text-sm text-gray-900 border-r">
                                                             <div className="flex items-center">
-                                                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                                                <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                                                 {formatDate(feedback.createdAt)}
                                                             </div>
                                                         </td>
 
                                                         {/* Doctor Name */}
-                                                        <td className="px-2 py-[10px] text-sm font-medium text-gray-900 border-r">
+                                                        <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r">
                                                             <div className="flex items-center">
-                                                                <User className="w-2 h-4 text-gray-400 mr-2" />
+                                                                <Stethoscope className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
                                                                 {feedback.doctorName || "-"}
                                                             </div>
                                                         </td>
 
 
                                                         {/* Rating */}
-                                                        <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                        <td className="px-6 py-2 text-sm text-gray-900 border-r">
                                                             <div className="flex items-center">
                                                                 {getRatingStars(feedback.rating)}
                                                             </div>
                                                         </td>
 
                                                         {/* Comments */}
-                                                        <td className="px-2 py-2 text-sm text-gray-900 border-r">
+                                                        <td className="px-6 py-2 text-sm text-gray-900 border-r">
                                                             <div className="text-[12px]">
                                                                 {feedback.comments || "-"}
                                                             </div>

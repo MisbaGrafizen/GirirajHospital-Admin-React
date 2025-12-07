@@ -436,30 +436,16 @@ export default function TATAllList() {
         <div className="flex w-full h-full">
           <CubaSidebar />
 
-          <div className="flex flex-col w-full relative max-h-[93%] py-3 px-2 overflow-y-auto gap-3 ">
+          <div className="flex flex-col w-full relative max-h-[90%] py-3 px-2 overflow-y-auto gap-3 ">
             <Preloader />
 
-            <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white border rounded-lg shadow-sm overflow-hidden ">
 
-              {/* --- DATE FILTER UI --- */}
-              <div className="flex justify-between px-3 pt-3">
-                <div className="flex gap-4">
-                  <NewDatePicker label="From Date" selectedDate={dateFrom1} setSelectedDate={setDateFrom1} />
-                  <NewDatePicker label="To Date" selectedDate={dateTo1} setSelectedDate={setDateTo1} />
-                </div>
-
-                {/* <button
-                  onClick={() => exportToExcel(filteredRows)}
-                  className="flex items-center px-2 py-1 bg-blue-600 text-white rounded-md"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Excel
-                </button> */}
-              </div>
+ 
 
 
-              {/* --- TABLE UI (UNCHANGED) --- */}
-              <div className="overflow-x-auto pt-2">
+            
+              <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead className="bg-gray-100">
                     <tr>

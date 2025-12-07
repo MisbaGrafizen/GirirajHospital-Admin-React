@@ -206,50 +206,48 @@ export default function ExecutiveReport() {
   }, [])
 
   // Build filtered + previous window slices (based on selected range)
-  const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
-    if (!fromDate || !toDate) return { opdFiltered: [], ipdFiltered: [], opdPrev: [], ipdPrev: [] }
+const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
+  // Convert UI date to ISO
+  const uiFromISO = normalizeUIToISO(dateFrom1)
+  const uiToISO = normalizeUIToISO(dateTo1)
 
-    const slice = (arr, fromISO, toISO) =>
-      Array.isArray(arr)
-        ? arr.filter((d) => {
-          const dtISO = toISODateOnly(
-            normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
-          )
-          return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
-        })
-        : []
-        
-// normalize UI dates → ISO yyyy-mm-dd
-const uiFromISO = normalizeUIToISO(dateFrom1);
-const uiToISO   = normalizeUIToISO(dateTo1);
+  // Final filters → UI dates override header dates
+  const finalFrom = uiFromISO || fromDate
+  const finalTo = uiToISO || toDate
 
-// final dates to apply
-const finalFrom = uiFromISO || fromDate;
-const finalTo   = uiToISO || toDate;
+  // Slice helper
+  const slice = (arr, fromISO, toISO) => {
+    if (!Array.isArray(arr)) return []
+    return arr.filter((d) => {
+      const dtISO = toISODateOnly(
+        normDate(d.createdAt ?? d.date ?? d.dateTime ?? d.createdOn)
+      )
+      return dtISO ? dateInRange(dtISO, fromISO, toISO) : false
+    })
+  }
 
-// apply filter
-const filteredOpd = slice(opd, finalFrom, finalTo);
-const filteredIpd = slice(ipd, finalFrom, finalTo);
+  // Filtered current range
+  const filteredOpd = slice(opd, finalFrom, finalTo)
+  const filteredIpd = slice(ipd, finalFrom, finalTo)
 
+  // Previous range calculation
+  const f = new Date(finalFrom)
+  const t = new Date(finalTo)
+  const days = Math.max(1, Math.round((t - f) / (1000 * 60 * 60 * 24)) + 1)
 
+  const pf = new Date(f)
+  const pt = new Date(t)
+  pf.setDate(pf.getDate() - days)
+  pt.setDate(pt.getDate() - days)
 
-    // previous range: same length as current
-    const from = new Date(fromDate)
-    const to = new Date(toDate)
-    const days = Math.max(1, Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1)
-
-    const prevFrom = new Date(from)
-    prevFrom.setDate(prevFrom.getDate() - days)
-    const prevTo = new Date(to)
-    prevTo.setDate(prevTo.getDate() - days)
-
-    return {
-      opdFiltered: filteredOpd,
-      ipdFiltered: filteredIpd,
-      opdPrev: slice(opd, toLocalISO(prevFrom), toLocalISO(prevTo)),
-      ipdPrev: slice(ipd, toLocalISO(prevFrom), toLocalISO(prevTo)),
-    }
+  return {
+    opdFiltered: filteredOpd,
+    ipdFiltered: filteredIpd,
+    opdPrev: slice(opd, toLocalISO(pf), toLocalISO(pt)),
+    ipdPrev: slice(ipd, toLocalISO(pf), toLocalISO(pt)),
+  }
 }, [opd, ipd, fromDate, toDate, dateFrom1, dateTo1])
+
 
 
 
@@ -459,10 +457,10 @@ const reportTo = uiToISO || toDate;
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header
             pageName="Exe Report"
-            onDateRangeChange={({ from, to }) => {
-              if (from) setFromDate(from)
-              if (to) setToDate(to)
-            }}
+              onFilterChange={({ from, to }) => {
+        setDateFrom1(from);
+        setDateTo1(to);
+    }}
           />
 
           <div className="flex w-[100%] h-[100%]">
@@ -472,45 +470,7 @@ const reportTo = uiToISO || toDate;
               <div className=" flex flex-col w-[100%] pl-[10px]">
 
 
-                <div className=" flex justify-between items-center  mx-auto pb-[10px] pr-[10px] w-[100%]">
-                  <div className=' flex gap-[10px] items-center  justify-start '>
-
-                    <div className=" flex  gap-[20px]">
-
-                      <div className="relative ">
-
-                        <NewDatePicker
-                          label="From Date"
-                          selectedDate={dateFrom1}
-                          setSelectedDate={setDateFrom1}
-                        />
-
-                      </div>
-
-                      <div className="relative">
-
-                        <NewDatePicker
-                          label="To Date"
-                          selectedDate={dateTo1}
-                          setSelectedDate={setDateTo1}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-row justify-between gap-2">
-
-
-                    {/* Export only if permitted */}
-                    {/* <button
-                      onClick={exportToExcel}
-                      className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export to Excel
-                    </button> */}
-
-                  </div>
-                </div>
+       
 
 
 

@@ -20,6 +20,8 @@
         TestTube2,
 
         IndianRupee,
+        CalendarClock,
+        IdCard,
     } from "lucide-react"
     import {
         Stethoscope,
@@ -1312,22 +1314,22 @@ const SERVICE_GROUPS = {
                                                 <table className=" min-w-[800px] md11:!min-w-full">
                                                     <thead className="bg-gray-100">
                                                         <tr>
-                                                            <th className="px-6 py-[13px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                            <th className="px-6 py-[13px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                                 Service
                                                             </th>
-                                                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                                 Excellent %
                                                             </th>
-                                                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                                 Good %
                                                             </th>
-                                                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                                 Average %
                                                             </th>
-                                                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                                 Poor %
                                                             </th>
-                                                            <th className="px-6 py-[13px] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider">
                                                                 Very Poor %
                                                             </th>
                                                         </tr>
@@ -1419,25 +1421,25 @@ const SERVICE_GROUPS = {
                                             <table className=" min-w-[1200px] md11:!min-w-full">
                                                 <thead className="bg-gray-50">
                                                     <tr>
-                                                        <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Date & Time
                                                         </th>
-                                                        <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Employee Name
                                                         </th>
-                                                        <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Employee Id
                                                         </th>
-                                                        {/* <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        {/* <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Contact
                                                         </th>
-                                                            <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                            <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                     Floor
                                                         </th> */}
-                                                        <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                                             Rating
                                                         </th>
-                                                        <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
+                                                        <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  border-gray-200">Comment</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white">
@@ -1449,11 +1451,11 @@ const SERVICE_GROUPS = {
                                                         >
                                                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                                                 <div className="flex items-center">
-                                                                    <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                                                    <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                                                     {formatDate(feedback.createdAt)}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-[10px] text-sm font-medium text-gray-900 border-r border-gray-200">
+                                                            <td className="px-6 py-[10px] text-sm  text-gray-900 border-r border-gray-200">
                                                                 <div className="flex items-center">
                                                                     <User className="w-4 h-4 text-gray-400 mr-2" />
                                                                     {feedback.employeeName}
@@ -1461,7 +1463,7 @@ const SERVICE_GROUPS = {
                                                             </td>
                                                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                                                                 <div className="flex items-center">
-                                                                #   {/* <Phone className="w-4 h-4 text-gray-400 mr-2" /> */}
+                                                              <IdCard className="w-5 h-5 text-gray-400 mr-2" /> 
                                                                     {feedback.employeeId}
                                                                 </div>
                                                             </td>

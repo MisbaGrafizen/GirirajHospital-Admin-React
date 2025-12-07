@@ -10,6 +10,8 @@ import {
   Phone,
   Clock,
   Bed,
+  CalendarClock,
+  Stethoscope,
 } from "lucide-react"
 import { ApiGet } from '../../../helper/axios'
 import { useNavigate } from 'react-router-dom'
@@ -42,6 +44,12 @@ export default function IpdAllList() {
   const navigate = useNavigate();
   const [dateFrom1, setDateFrom1] = useState(null);
   const [dateTo1, setDateTo1] = useState(null);
+  const [filters, setFilters] = useState({
+  search: "",
+  from: null,
+  to: null,
+});
+
 
   function formatDate(dateStr) {
     const d = new Date(dateStr)
@@ -136,13 +144,30 @@ export default function IpdAllList() {
   }, [fetchIPD])
 
   /* -------------------- UPDATED FILTER (DATE + SEARCH) -------------------- */
-  const filteredFeedback = rows
-    .filter((f) => {
-      const matchText = f.patient?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchDate = isWithinDateRange(f.createdAt);
-      return matchText && matchDate;
-    })
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+const filteredFeedback = rows
+  .filter((f) => {
+    const s = (filters.search || "").toLowerCase();
+
+    const matchText =
+      f.patient?.toLowerCase().includes(s) ||
+      f.contact?.toLowerCase().includes(s) ||
+      String(f.consultantDoctorName || "").toLowerCase().includes(s) ||
+      String(f.comments || "").toLowerCase().includes(s);
+
+    const entryDate = new Date(f.createdAt);
+
+    const matchFrom =
+      !filters.from ||
+      entryDate >= new Date(filters.from.setHours(0, 0, 0, 0));
+
+    const matchTo =
+      !filters.to ||
+      entryDate <= new Date(filters.to.setHours(23, 59, 59, 999));
+
+    return matchText && matchFrom && matchTo;
+  })
+  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
 
   /* -------------------- EXPORT TO EXCEL -------------------- */
   const exportToExcel = async () => {
@@ -180,7 +205,7 @@ export default function IpdAllList() {
     <>
       <section className="flex w-[100%] h-[100%] select-none md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Ipd Feedback List" />
+          <Header pageName="Ipd Feedback List" onFilterChange={setFilters} />
           <div className="flex w-[100%] h-[100%]">
             <CubaSidebar />
             <div className="flex flex-col w-[100%] relative max-h-[93%] md34:!pb-[120px] md11:!pb-[30px] py-[10px] pr-[10px] overflow-y-auto gap-[10px] ">
@@ -188,69 +213,32 @@ export default function IpdAllList() {
               <div>
 
                 <div className="bg-white w-[98%] mx-auto rounded-xl border shadow-sm overflow-hidden">
-                  <div className="p-[13px] border-b flex flex-col sm:flex-row justify-between sm:items-center">
-
-                    {/* Date Filters */}
-                    <div className="flex gap-[20px]">
-                      <NewDatePicker
-                        label="From Date"
-                        selectedDate={dateFrom1}
-                        setSelectedDate={setDateFrom1}
-                      />
-                      <NewDatePicker
-                        label="To Date"
-                        selectedDate={dateTo1}
-                        setSelectedDate={setDateTo1}
-                      />
-                    </div>
-
-                    {/* Search + Export */}
-                    <div className="flex flex-row justify-between gap-2">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-[15px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <input
-                          type="text"
-                          placeholder="Search feedback..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-8 pr-[6px] py-1 w-[200px] border border-gray-300 rounded-md focus:outline-none"
-                        />
-                      </div>
-{/* 
-                      <button
-                        onClick={exportToExcel}
-                        className="flex items-center flex-shrink-0 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export to Excel
-                      </button> */}
-                    </div>
-                  </div>
+                
 
                   {/* Table */}
                   <div className="overflow-x-auto">
                     <table className="min-w-[1200px] md11:!min-w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                          <th className="px-3 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r">
                             Date & Time
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                          <th className="px-3 py-[10px] text-left text-[12px] w-[220px] font-medium text-gray-500 uppercase border-r">
                             Patient Name
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                          <th className="px-3 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase border-r">
                             Contact
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                          <th className="px-3 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase border-r">
                             Bed No
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                          <th className="px-3 py-[10px] text-left text-[12px] w-[200px]  font-medium text-gray-500 uppercase border-r">
                             Doctor Name
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase border-r">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase border-r">
                             Rating
                           </th>
-                          <th className="px-6 py-[10px] text-left text-xs font-medium text-gray-500 uppercase">
+                          <th className="px-6 py-[10px] text-left text-[12px] font-medium text-gray-500 uppercase">
                             Comment
                           </th>
                         </tr>
@@ -264,42 +252,42 @@ export default function IpdAllList() {
                             className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 cursor-pointer`}
                           >
 
-                            <td className="px-4 py-2 text-sm border-r">
+                            <td className="px-3 py-2 text-sm border-r">
                               <div className="flex items-center">
-                                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                                <CalendarClock className="w-4 h-4 text-gray-400 mr-2" />
                                 {formatDate(feedback.createdAt)}
                               </div>
                             </td>
 
-                            <td className="px-6 py-[10px] text-sm border-r">
+                            <td className="px-3 py-[10px] text-sm border-r">
                               <div className="flex items-center">
                                 <User className="w-4 h-4 text-gray-400 mr-2" />
                                 {feedback.patient}
                               </div>
                             </td>
 
-                            <td className="px-4 py-2 text-sm border-r">
+                            <td className="px-3 py-2 text-sm border-r">
                               <div className="flex items-center">
                                 <Phone className="w-4 h-4 text-gray-400 mr-2" />
                                 {feedback.contact}
                               </div>
                             </td>
 
-                            <td className="px-4 py-2 text-sm border-r">
+                            <td className="px-3 py-2 text-sm border-r">
                               <div className="flex items-center">
                                 <Bed className="w-4 h-4 text-gray-400 mr-2" />
                                 {feedback.bedNo}
                               </div>
                             </td>
 
-                            <td className="px-4 py-2 text-sm border-r">
+                            <td className="px-3 py-2 text-sm border-r">
                               <div className="flex items-center">
-                                <User className="w-4 h-4 text-gray-400 mr-2" />
+                                <Stethoscope className="w-4 h-4 text-gray-400 mr-2" />
                                 {feedback.consultantDoctorName}
                               </div>
                             </td>
 
-                            <td className="px-4 py-2 text-sm border-r">
+                            <td className="px-3 py-2 text-sm border-r">
                               <div className="flex items-center">
                                 {getRatingStars(feedback.rating)}
                                 <span className="ml-2 text-sm">{feedback.rating}/5</span>
