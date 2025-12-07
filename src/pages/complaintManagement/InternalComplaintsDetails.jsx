@@ -649,21 +649,21 @@ const currentNote =
             return;
         }
 
-        // const currentNote =
-        //     selectedType === "RCA" ? rcaNote :
-        //     selectedType === "CA"  ? caNotes :
-        //     selectedType === "PA"  ? paNotes : "";
+        const currentNote =
+            selectedType === "RCA" ? rcaNote :
+            selectedType === "CA"  ? caNote :
+            selectedType === "PA"  ? paNote : "";
 
-        // if (!currentNote.trim()) {
-        //     alert(`Please enter ${selectedType} note`);
-        //     return;
-        // }
+        if (!currentNote.trim()) {
+            alert(`Please enter ${selectedType} note`);
+            return;
+        }
 
-        // // ⭐ Internal system requires ALL THREE notes
-        // if (!rcaNote.trim() || !caNotes.trim() || !paNotes.trim()) {
-        //     alert("RCA, CA and PA notes are all required.");
-        //     return;
-        // }
+        // ⭐ Internal system requires ALL THREE notes
+        if (!rcaNote.trim() || !caNote.trim() || !paNote.trim()) {
+            alert("RCA, CA and PA notes are all required.");
+            return;
+        }
 
         try {
             // 2️⃣ Upload proof if any
@@ -685,19 +685,19 @@ const currentNote =
             // 5️⃣ Determine department user can resolve
             let deptKey = null;
 
-            // if (activeDepartments.length === 1) {
-            //     deptKey = activeDepartments[0];
-            // } else {
-            //     deptKey = internalDepartmentKeys.find(
-            //         (k) => INTERNAL_DEPT_LABEL[k] === selectedDepartment
-            //     );
-            // }
+            if (activeDepartments.length === 1) {
+                deptKey = activeDepartments[0];
+            } else {
+                deptKey = internalDepartmentKeys.find(
+                    (k) => INTERNAL_DEPT_LABEL[k] === selectedDepartment
+                );
+            }
 
-            if (selectedDepartment) {
-            deptKey = Object.keys(DEPT_LABEL).find(
-                (k) => DEPT_LABEL[k] === selectedDepartment
-            );
-        }
+        //     if (selectedDepartment) {
+        //     deptKey = Object.keys(DEPT_LABEL).find(
+        //         (k) => DEPT_LABEL[k] === selectedDepartment
+        //     );
+        // }
 
             if (!deptKey) {
                 alert("Please select a valid department.");
@@ -705,23 +705,23 @@ const currentNote =
             }
 
             // 6️⃣ Build payload for INTERNAL complaint
-            // const payload = {
-            //     rcaNote,
-            //     caNotes,
-            //     paNotes,
-            //     actionTypeForDept: selectedType,
-            //     department: deptKey,
-            //     proof: proofUrl ? [proofUrl] : [],
-            //     userId: localStorage.getItem("userId"),
-            // };
-
             const payload = {
-                actionType: selectedType,
-                note,
+                rcaNote,
+                caNote,
+                paNote,
+                actionTypeForDept: selectedType,
                 department: deptKey,
                 proof: proofUrl ? [proofUrl] : [],
-                userId: localStorage.getItem("userId") || "",
+                userId: localStorage.getItem("userId"),
             };
+
+            // const payload = {
+            //     actionType: selectedType,
+            //     note,
+            //     department: deptKey,
+            //     proof: proofUrl ? [proofUrl] : [],
+            //     userId: localStorage.getItem("userId") || "",
+            // };
 
             console.log("INTERNAL PAYLOAD:", payload);
 
@@ -1471,7 +1471,7 @@ const currentNote =
 
                                     {/* Modal 2: Resolve Complaint */}
                                     <AnimatePresence>
-                                        {/* {isResolveModalOpen && (
+                                        {isResolveModalOpen && (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -1549,14 +1549,14 @@ const currentNote =
                         selectedType === "RCA"
                           ? rcaNote
                           : selectedType === "CA"
-                          ? caNotes
-                          : paNotes
+                          ? caNote
+                          : paNote
                       }
                       onChange={(e) => {
                         const v = e.target.value;
                         if (selectedType === "RCA") setRcaNote(v);
-                        if (selectedType === "CA") setCaNotes(v);
-                        if (selectedType === "PA") setPaNotes(v);
+                        if (selectedType === "CA") setCaNote(v);
+                        if (selectedType === "PA") setPaNote(v);
                       }}
                       rows={4}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg 
@@ -1618,8 +1618,8 @@ const currentNote =
               disabled={
                 !selectedType ||
                 (selectedType === "RCA" && !rcaNote.trim()) ||
-                (selectedType === "CA" && !caNotes.trim()) ||
-                (selectedType === "PA" && !paNotes.trim())
+                (selectedType === "CA" && !caNote.trim()) ||
+                (selectedType === "PA" && !paNote.trim())
               }
               className="px-6 py-2 bg-green-600 text-white rounded-lg 
                         hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -1631,9 +1631,9 @@ const currentNote =
         </motion.div>
       </div>
     </motion.div>
-  )} */}
+  )}
 
-                                        {isResolveModalOpen && (
+                                        {/* {isResolveModalOpen && (
                                             <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
@@ -1778,7 +1778,7 @@ const currentNote =
                                                     </motion.div>
                                                 </div>
                                             </motion.div>
-                                        )}
+                                        )} */}
                                     </AnimatePresence>
 
 
