@@ -119,20 +119,20 @@ const CubaSidebar = () => {
       "/internal-complaint-details",
     ],
 
-        "/employee-feedback": [
+    "/employee-feedback": [
       "/employee-all-list",
       "/employee-feedback-details",
 
     ],
 
 
-    
 
 
-        "/consultant-feedback": [
+
+    "/consultant-feedback": [
       "/consultant-all-list",
- "/consultant-feedback-details",
-     
+      "/consultant-feedback-details",
+
     ],
   };
 
@@ -148,28 +148,28 @@ const CubaSidebar = () => {
           icon: React.createElement(HomeIcon),
           hasSubmenu: true,
           href: "/dashboards",
-submenu: [
-  { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-  { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
-  { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-  { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
-  { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
+          submenu: [
+            { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+            { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
+            { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+            { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
+            { id: "complaintsintern", label: "Internal Comps.. ", href: "/internal-complint-list", icon: faExclamationTriangle },
 
-  // ADMIN-ONLY
-  isAdmin && {
-    id: "employeeDashboard",
-    label: "Employee Dash.. ",
-    href: "/employee-feedback",
-    icon: faUsersCog,
-  },
+            // ADMIN-ONLY
+            isAdmin && {
+              id: "employeeDashboard",
+              label: "Employee Dash.. ",
+              href: "/employee-feedback",
+              icon: faUsersCog,
+            },
 
-  isAdmin && {
-    id: "consultantDashboard",
-    label: "Consultant Dash.. ",
-    href: "/consultant-feedback",
-    icon: faUserMd,
-  },
-].filter(Boolean),   
+            isAdmin && {
+              id: "consultantDashboard",
+              label: "Consultant Dash.. ",
+              href: "/consultant-feedback",
+              icon: faUserMd,
+            },
+          ].filter(Boolean),
         },
 
         {
@@ -560,7 +560,7 @@ submenu: [
         </div> */}
       </div>
 
-{/* 
+      {/* 
       <div className=" md11:!hidden  md34:!flex fixed gap-[20px] w-[93%] px-[20px] profile-box1 overflow-x-auto  bottom-2 z-[10000] h-[70px] rounded-[10px] mx-auto left-0 right-0 bg-white shadow-lg justify-around items-center">
         {navItems.map((item) => (
           <NavLink
@@ -576,36 +576,36 @@ submenu: [
           </NavLink>
         ))}
       </div> */}
-<div className="fixed bottom-3 left-1/2 -translate-x-1/2
-    w-[98%] bg-white shadow-xl overflow-y-auto rounded-[50px] h-[60px]
-    flex justify-around items-center px-2 z-[10000] border border-gray-200">
+      <div className="fixed md34:!flex md11:!hidden bottom-3 left-1/2 -translate-x-1/2
+    w-[95%] bg-[#ffffffc2] shadow-xl overflow-y-auto rounded-[20px] blur-4 h-[60px]
+     justify-around items-center px-2 z-[10000] border border-gray-500">
 
-  {navItems.map((item) => (
-    <NavLink
-      key={item.id}
-      to={item.href}
-      className={({ isActive }) =>
-        `relative flex flex-col items-center justify-center px-2 py-1
+        {navItems.map((item) => (
+          <NavLink
+            key={item.id}
+            to={item.href}
+            className={({ isActive }) =>
+              `relative flex flex-col items-center justify-center px-2 py-1
         transition-all duration-300 text-[10px]
         ${isActive ? "text-blue-600 font-semibold" : "text-gray-400"}`
-      }
-    >
-      {({ isActive }) => (
-        <>
-          {isActive && (
-            <span className="absolute -bottom-1 w-6 h-1 bg-blue-600 rounded-full"></span>
-          )}
-          
-          <FontAwesomeIcon 
-            icon={item.icon} 
-            className="text-[16px] mb-[8px]"
-          />
-          <span className="leading-[10px]">{item.label}</span>
-        </>
-      )}
-    </NavLink>
-  ))}
-</div>
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute -bottom-1 w-6 h-1 bg-blue-600 rounded-full"></span>
+                )}
+
+                <FontAwesomeIcon
+                  icon={item.icon}
+                  className="text-[18px] mb-[8px]"
+                />
+                <span className="leading-[10px] text-[9px]">{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
 
 
 

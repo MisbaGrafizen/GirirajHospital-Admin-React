@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import AnimatedDropdown from "../MainInputFolder/AnimatedDropdown";
 import AnimatedDropdownNavigate from "../MainInputFolder/AnimatedDropdownNavigate";
 import comming from "../../../public/imges/comming.png"
-import { faTachometerAlt, faUserDoctor, faHospitalUser, faListCheck, faSmile } from "@fortawesome/free-solid-svg-icons";
+import { faTachometerAlt, faUserDoctor, faHospitalUser, faListCheck,faUserTie, faSmile,faShieldHalved ,faUserMd} from "@fortawesome/free-solid-svg-icons";
 import {
   Gauge,
   Wallet,
@@ -795,7 +795,7 @@ function Header({
           </div>
 
         </section>
-        {["/dashboard", "/opd-feedback", "/ipd-feedback", "/complaint-dashboard", "/reports/nps-reports"].includes(location.pathname) && (
+        {["/dashboard", "/opd-feedback", "/ipd-feedback", "/complaint-dashboard", "/reports/nps-reports","/internal-complint-list","/employee-feedback","/consultant-feedback",].includes(location.pathname) && (
           <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
 
             <div className="flex h-[50px] px-[10px]  items-center justify-center w-[100%]">
@@ -808,6 +808,12 @@ function Header({
                   { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
                   { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListCheck },
                   { id: "nps", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faSmile },
+                  { id: "internal", label: "Internal Complaints ", href: "/internal-complint-list", icon: faShieldHalved },
+                  { id: "employee", label: "Employee Dashboard ", href: "/employee-feedback", icon: faUserTie },
+                  { id: "employee", label: "Consultant Dashboard ", href: "/consultant-feedback", icon: faUserMd },
+
+
+
                 ]}
               />
             </div>

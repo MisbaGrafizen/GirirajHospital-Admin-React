@@ -509,13 +509,13 @@ useEffect(() => {
         />
         <div className="flex w-full h-full">
           <CubaSidebar />
-          <div className="flex flex-col w-full relative max-h-[90%] py-[10px] overflow-y-auto gap-[10px]">
+          <div className="flex flex-col w-full relative max-h-[90%] md34:!pb-[200px] md:!py-[10px] md34:!px-[10px] md11:!px-0 md11:!overflow-y-auto gap-[10px]">
             {loading && <Preloader />}
 
-            <div className="bg-white w-[98%] mx-auto rounded-lg border shadow-sm ">
+            <div className="bg-white w-[98%] overflow-y-auto  mx-auto rounded-lg border shadow-sm ">
 
-              <div className="overflow-x-auto">
-                <table className="min-w-full border-separate border-spacing-0">
+              <div className="overflow-x-auto ">
+                <table className="min-w-[1100px] border-separate border-spacing-0">
                   <thead>
                     <tr className="bg-gray-100 text-gray-600 text-[12px] font-semibold uppercase tracking-wider">
                       {[

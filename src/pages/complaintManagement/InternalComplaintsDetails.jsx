@@ -18,6 +18,7 @@ import {
     Paperclip,
     Clock,
     ArrowLeft,
+    Hospital,
 } from "lucide-react"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiGet, ApiPost, ApiPut } from '../../helper/axios'
@@ -1145,7 +1146,7 @@ const handleEscalateSubmit = async () => {
                     }} />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
-                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px] pb-[30px] px-[10px] bg-[#fff] overflow-y-auto   gap-[10px] rounded-[10px]">
+                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px] md11:!pb-[30px]  md34:!pb-[100px]  px-[10px] bg-[#fff] overflow-y-auto   gap-[10px] rounded-[10px]">
                             <Preloader />
                             <div className="">
                                 <div className="">
@@ -1187,29 +1188,29 @@ const handleEscalateSubmit = async () => {
                                             {/* Patient Information */}
                                             <div className="bg-white  border rounded-xl shadow-sm p-3">
                                                 {/* <h2 className="text-xl font-semibold text-gray-900 mb-3">Patient Information</h2> */}
-                                                <div className="grid grid-cols-3 gap-x-3">
-                                                    <div className="flex  shadow-sm mb-[10px] border !border-[#eaeaea] md11:!p-2 md13:!p-3 bg-gray-50 rounded-lg">
+                                                <div className="grid md11:!grid-cols-3 gap-x-3">
+                                                    <div className="flex  shadow-sm mb-[10px] border !border-[#eaeaea] md34:!p-[10px] md11:!p-2 md13:!p-3 bg-gray-50 rounded-lg">
                                                         <User className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Employee Name</p>
                                                             <p className="font-medium text-gray-900">{complaint.patient}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex mb-[10px] md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex mb-[10px] md11:!p-2 md13:!p-3 flex-shrink-0 md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Phone className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Contact</p>
                                                             <p className="font-medium text-gray-900">{complaint.contact}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg mb-[10px]  shadow-sm border !border-[#eaeaea] ">
-                                                        <Bed className="w-5 h-5 text-gray-400 mr-3" />
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 md34:!p-[10px] rounded-lg mb-[10px]  shadow-sm border !border-[#eaeaea] ">
+                                                        <Hospital className="w-5 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Floor Number</p>
                                                             <p className="font-medium text-gray-900">{complaint.bedNo}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 md34:!p-[10px] rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Employee Id</p>
@@ -1217,7 +1218,7 @@ const handleEscalateSubmit = async () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Department</p>
@@ -1225,7 +1226,7 @@ const handleEscalateSubmit = async () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
