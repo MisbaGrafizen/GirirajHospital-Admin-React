@@ -349,10 +349,10 @@ export default function LogDetails() {
   .map((log) => (
       <div
         key={log.id}
-        className=" bg-gradient-to-r from-blue-100  to-blue-50 rounded-sm shadow-sm px-4   flex   pt-[10px] pb-[5px] gap-[10px] hover:shadow-md transition-all"
+        className=" bg-gradient-to-r from-blue-100  to-blue-50 md34:!rounded-[12px] md11:!rounded-sm shadow-sm px-4   flex  md11:!flex-row md34:!flex-col  pt-[10px] md34:!pb-[15px] md11:!pb-[5px] gap-[10px] hover:shadow-md transition-all"
       >
         {/* TOP ICON + ACTION */}
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 md11:!mb-1">
           {getIcon(log.action)}
           <h3 className="text-[14px] font-semibold capitalize">
             {log.action.replace(/_/g, " ")}

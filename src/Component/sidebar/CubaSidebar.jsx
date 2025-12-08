@@ -358,11 +358,8 @@ submenu: [
 
   const navItems = [
     { id: "Super Admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-    // { id: "ecommerce", label: "Opd Feedback", href: "/opd-feedback", icon: faUserMd },
-    // { id: "online-course", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-    // { id: "social", label: "Complaint List", href: "/complaint-dashboard", icon: faListAlt },
-    // { id: "crypto", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faChartLine },
-    { id: "nft", label: "Executive Report", href: "/reports/executive-report", icon: faFileAlt },
+
+    { id: "nft", label: "Exe. Report", href: "/reports/executive-report", icon: faFileAlt },
     { id: "school-management", label: "Role Mana..", href: "/settings/role-manage", icon: faUserShield },
     { id: "pos", label: "User Mana..", href: "/settings/user-manage", icon: faUsersCog },
   ]
@@ -563,7 +560,7 @@ submenu: [
         </div> */}
       </div>
 
-
+{/* 
       <div className=" md11:!hidden  md34:!flex fixed gap-[20px] w-[93%] px-[20px] profile-box1 overflow-x-auto  bottom-2 z-[10000] h-[70px] rounded-[10px] mx-auto left-0 right-0 bg-white shadow-lg justify-around items-center">
         {navItems.map((item) => (
           <NavLink
@@ -578,7 +575,49 @@ submenu: [
             {item.label}
           </NavLink>
         ))}
-      </div>
+      </div> */}
+<div className="fixed bottom-3 left-1/2 -translate-x-1/2
+    w-[98%] bg-white shadow-xl overflow-y-auto rounded-[50px] h-[60px]
+    flex justify-around items-center px-2 z-[10000] border border-gray-200">
+
+  {navItems.map((item) => (
+    <NavLink
+      key={item.id}
+      to={item.href}
+      className={({ isActive }) =>
+        `relative flex flex-col items-center justify-center px-2 py-1
+        transition-all duration-300 text-[10px]
+        ${isActive ? "text-blue-600 font-semibold" : "text-gray-400"}`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span className="absolute -bottom-1 w-6 h-1 bg-blue-600 rounded-full"></span>
+          )}
+          
+          <FontAwesomeIcon 
+            icon={item.icon} 
+            className="text-[16px] mb-[8px]"
+          />
+          <span className="leading-[10px]">{item.label}</span>
+        </>
+      )}
+    </NavLink>
+  ))}
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
     </>
   );
 };

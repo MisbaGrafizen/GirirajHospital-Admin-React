@@ -169,6 +169,9 @@ export default function ComplaintViewPage() {
 const [rcaNote, setRcaNote] = useState("");
 const [caNote, setCaNote] = useState("");
 const [paNote, setPaNote] = useState("");
+const [fromDepartment, setFromDepartment] = useState("");
+const [isFromDeptDropdownOpen, setIsFromDeptDropdownOpen] = useState(false);
+
 
 
 // return the correct note value based on type
@@ -227,6 +230,24 @@ const allowedForwardDepartments = activeDepartments.filter((deptKey) =>
 const allowedEscalateDepartments = activeDepartments.filter((deptKey) =>
     permissionsByBlock[deptKey]?.includes("escalate")
 );
+
+// 1️⃣ Departments in complaint
+const activeForwardDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+    blockHasContent(fullDocState[deptKey])
+);
+
+// 2️⃣ User allowed to forward from these departments
+const userForwardableDepartments = activeForwardDepartments.filter(
+    (deptKey) => permissionsByBlock[deptKey]?.includes("forward")
+);
+
+// 3️⃣ Auto-select FROM department if only one
+useEffect(() => {
+    if (userForwardableDepartments.length === 1) {
+        setFromDepartment(DEPT_LABEL[userForwardableDepartments[0]]);
+    }
+}, [fullDocState]);
+
 
 // 3️⃣ Auto-select department when only one is allowed
 useEffect(() => {
@@ -369,47 +390,50 @@ const handleForwardSubmit = async () => {
         const loginType = localStorage.getItem("loginType");
         const isAdmin = loginType === "admin";
 
-        // 1️⃣ Determine which departments have content (same as resolve)
+        // Active departments
         const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
             blockHasContent(fullDocState[deptKey])
         );
 
-        // 2️⃣ User allowed departments
-        const userForwardable = activeDepartments.filter((deptKey) =>
-            permissionsByBlock[deptKey]?.includes("forward")
-        );
+        // User allowed forward departments
+        const userForwardable = userForwardableDepartments;
 
-        // 3️⃣ Determine FROM department (actionable department)
-        const fromDeptKey = userForwardable[0]; 
+        // ----------------------------- FROM Department -----------------------------
+        const fromDeptKey = 
+            userForwardable.length === 1
+                ? userForwardable[0]
+                : Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === fromDepartment);
+
         if (!fromDeptKey) {
-            alert("No department available to forward from.");
+            alert("Please select a valid FROM Department.");
             return;
         }
 
-        // 4️⃣ Determine TO department
+        // ----------------------------- TO Department -----------------------------
         const toDeptKey = Object.keys(DEPT_LABEL).find(
             (k) => DEPT_LABEL[k] === forwardDepartment
         );
+
         if (!toDeptKey) {
-            alert("Invalid target department");
+            alert("Invalid target department selected.");
             return;
         }
 
-        // 5️⃣ Upload attachment if needed
+        // ----------------------------- Attachment Upload -----------------------------
         let uploadedURL = "";
         if (uploadedFile) {
             const uploadRes = await uploadToHPanel(uploadedFile);
             uploadedURL = uploadRes.url;
         }
 
-        // 6️⃣ Build payloads (FULL vs PARTIAL)
+        // ----------------------------- PAYLOADS -----------------------------
         const fullForwardPayload = {
             department: toDeptKey,
             topic: "Forwarded Complaint",
             text: forwardReason.trim(),
             attachments: uploadedURL ? [uploadedURL] : [],
             mode: "text",
-            note: forwardReason.trim()
+            note: forwardReason.trim(),
         };
 
         const partialForwardPayload = {
@@ -418,41 +442,34 @@ const handleForwardSubmit = async () => {
             note: forwardReason.trim(),
         };
 
-        // 7️⃣ Select endpoint exactly like resolve
+        // ----------------------------- SELECT ENDPOINT -----------------------------
         let endpoint = "";
         let body = {};
 
+        const isSingleDept = activeDepartments.length === 1;
+
         if (isAdmin) {
-            if (activeDepartments.length === 1) {
-                // FULL ADMIN FORWARD
-                endpoint = `/admin/${complaint.id}/admin-forward`;
-                body = fullForwardPayload;
-            } else {
-                // PARTIAL ADMIN FORWARD
-                endpoint = `/admin/${complaint.id}/admin-partial-forward`;
-                body = partialForwardPayload;
-            }
+            endpoint = isSingleDept
+                ? `/admin/${complaint.id}/admin-forward`
+                : `/admin/${complaint.id}/admin-partial-forward`;
+
+            body = isSingleDept ? fullForwardPayload : partialForwardPayload;
         } else {
-            if (activeDepartments.length === 1) {
-                // FULL STAFF FORWARD
-                endpoint = `/admin/${complaint.id}/forward`;
-                body = fullForwardPayload;
-            } else {
-                // PARTIAL STAFF FORWARD
-                endpoint = `/admin/${complaint.id}/partial-forward`;
-                body = partialForwardPayload;
-            }
+            endpoint = isSingleDept
+                ? `/admin/${complaint.id}/forward`
+                : `/admin/${complaint.id}/partial-forward`;
+
+            body = isSingleDept ? fullForwardPayload : partialForwardPayload;
         }
 
-        // 8️⃣ Call API
+        // ----------------------------- API CALL -----------------------------
         const res = await ApiPost(endpoint, body);
 
-        alert(res.message || "Complaint forwarded successfully");
+        alert(res.message || "Complaint forwarded successfully.");
 
-        // 9️⃣ Refresh UI
         await refreshComplaint();
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
+        const history = await fetchConcernHistory(complaint.id);
+        setHistoryData(history);
 
         closeAllModals();
 
@@ -461,6 +478,7 @@ const handleForwardSubmit = async () => {
         alert(err?.response?.data?.error || "Something went wrong.");
     }
 };
+
 
     async function escalateComplaint(complaintId, { level, note, userId }) {
         try {
@@ -592,11 +610,11 @@ const handleResolveSubmit = async () => {
         return;
     }
 
-    // // ⭐ NEW: Validate all 3 notes BEFORE sending to API
-    // if (!rcaNote.trim() || !caNote.trim() || !paNote.trim()) {
-    //     alert("Please enter RCA, CA, and PA — all three notes are required.");
-    //     return;
-    // }
+    // ⭐ NEW: Validate all 3 notes BEFORE sending to API
+    if (!rcaNote.trim() || !caNote.trim() || !paNote.trim()) {
+        alert("Please enter RCA, CA, and PA — all three notes are required.");
+        return;
+    }
 
     try {
         // 1️⃣ Upload file
@@ -638,9 +656,9 @@ const handleResolveSubmit = async () => {
 
         // 6️⃣ Build payload — ⭐ UPDATED TO MATCH BACKEND ⭐
         const payload = {
-            // rcaNote,
-            // caNote,
-            // paNote,
+            rcaNote,
+            caNote,
+            paNote,
             actionType: selectedType,
             note: currentNote,
             proof: proofUrl ? [proofUrl] : [],
@@ -950,7 +968,7 @@ async function refreshComplaint() {
                     }} />
                     <div className="flex w-[100%] h-[100%]">
                         <SideBar />
-                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px] pb-[80px] md:!pb-[30px] px-[10px] bg-[#fff] overflow-y-auto   gap-[10px] rounded-[10px]">
+                        <div className="flex  relative flex-col w-[100%] max-h-[94%]  pt-[10px] pb-[110px] md:!pb-[30px] px-[10px] bg-[#fff] overflow-y-auto   gap-[10px] rounded-[10px]">
                             <Preloader />
                             <div className="">
                                 <div className="">
@@ -1343,92 +1361,109 @@ async function refreshComplaint() {
                                     </div>
 
                                     {/* Modal 1: Forward to Another Department */}
-                                    {/* Modal: Forward to Another Department */}
                                     <AnimatePresence>
-                                        {isForwardModalOpen && (
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-                                                onClick={closeAllModals}
-                                            >
-                                                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                                                    <motion.div
-                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                                        className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <div className="bg-white px-6 pt-6 pb-4">
-                                                            <>
-                                                                <div className="flex justify-between items-center mb-6">
-                                                                    <h3 className="text-xl font-bold text-gray-900">
-                                                                        Forward to Another Department
-                                                                    </h3>
-                                                                    <button
-                                                                        onClick={closeAllModals}
-                                                                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                                                                    >
-                                                                        <X className="w-6 h-6" />
-                                                                    </button>
-                                                                </div>
+{isForwardModalOpen && (
+<motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 bg-black bg-opacity-50"
+    onClick={closeAllModals}
+>
+    <div className="flex items-center justify-center min-h-screen px-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-white rounded-xl shadow-xl sm:max-w-lg w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Forward Complaint</h3>
+                <button onClick={closeAllModals}>
+                    <X className="w-6 h-6 text-gray-500 hover:text-gray-700" />
+                </button>
+            </div>
 
-                                                                <div className="space-y-6">
-                                                                    {/* Select Department */}
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Select Department <span className="text-red-500">*</span>
-                                                                        </label>
-                                                                        <AnimatedDropdown
-                                                                            isOpen={isForwardDeptDropdownOpen}
-                                                                            setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                            selected={forwardDepartment || "Select Department"}
-                                                                            setSelected={setForwardDepartment}
-                                                                            options={forwardDepartments}
-                                                                            placeholder="Select Department"
-                                                                            icon={MapPin}
-                                                                        />
-                                                                    </div>
+            <div className="space-y-6">
 
-                                                                    {/* Reason for Forwarding */}
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Reason for Forwarding <span className="text-red-500">*</span>
-                                                                        </label>
-                                                                        <textarea
-                                                                            value={forwardReason}
-                                                                            onChange={(e) => setForwardReason(e.target.value)}
-                                                                            rows={4}
-                                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                                                            placeholder="Please provide reason for forwarding this complaint..."
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </>
-                                                        </div>
+                {/* From Department - only when >1 available */}
+                {userForwardableDepartments.length > 1 && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            From Department <span className="text-red-500">*</span>
+                        </label>
 
-                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                                                            <button
-                                                                onClick={closeAllModals}
-                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                            <button
-                                                                onClick={handleForwardSubmit}
-                                                                disabled={!forwardDepartment || !forwardReason}
-                                                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                            >
-                                                                Forward Complaint
-                                                            </button>
-                                                        </div>
-                                                    </motion.div>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                        <AnimatedDropdown
+                            isOpen={isFromDeptDropdownOpen}
+                            setIsOpen={setIsFromDeptDropdownOpen}
+                            selected={fromDepartment || "Select Department"}
+                            setSelected={setFromDepartment}
+                            options={userForwardableDepartments.map((k) => DEPT_LABEL[k])}
+                            icon={MapPin}
+                        />
+                    </div>
+                )}
+
+                {/* Hidden input when auto-selected */}
+                {userForwardableDepartments.length === 1 && (
+                    <input type="hidden" value={fromDepartment} />
+                )}
+
+                {/* To Department */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        To Department <span className="text-red-500">*</span>
+                    </label>
+
+                    <AnimatedDropdown
+                        isOpen={isForwardDeptDropdownOpen}
+                        setIsOpen={setIsForwardDeptDropdownOpen}
+                        selected={forwardDepartment || "Select Department"}
+                        setSelected={setForwardDepartment}
+                        options={Object.values(DEPT_LABEL).filter(
+                            (d) => d !== fromDepartment
+                        )}
+                        icon={MapPin}
+                    />
+                </div>
+
+                {/* Forward Reason */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Forwarding <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                        value={forwardReason}
+                        onChange={(e) => setForwardReason(e.target.value)}
+                        rows={4}
+                        className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                        placeholder="Explain why you're forwarding this complaint..."
+                    />
+                </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+                <button
+                    onClick={closeAllModals}
+                    className="px-6 py-2 border rounded-lg"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    onClick={handleForwardSubmit}
+                    disabled={!forwardDepartment || !forwardReason.trim()}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                >
+                    Forward Complaint
+                </button>
+            </div>
+        </motion.div>
+    </div>
+</motion.div>
+)}
+</AnimatePresence>
 
 
                                     {/* Modal 2: Resolve Complaint */}
@@ -1441,7 +1476,7 @@ async function refreshComplaint() {
       className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
       onClick={closeAllModals}
     >
-      {/* <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1449,10 +1484,10 @@ async function refreshComplaint() {
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
           onClick={(e) => e.stopPropagation()}
-        > */}
+        >
 
           {/* HEADER */}
-          {/* <div className="bg-white px-6 pt-6 pb-4">
+          <div className="bg-white px-6 pt-6 pb-4">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
               <button
@@ -1568,8 +1603,8 @@ async function refreshComplaint() {
               </div>
 
             </div>
-          </div> */}
-           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+          </div>
+           {/* <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1589,7 +1624,6 @@ async function refreshComplaint() {
 
                         <div className="space-y-5">
 
-                            {/* Select Department */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Select Department <span className="text-red-500">*</span>
@@ -1612,7 +1646,6 @@ async function refreshComplaint() {
                                 )}
                             </div>
 
-                            {/* RCA / CA / PA Buttons */}
                             <div>
                                 <div className="flex gap-3 mb-2">
                                     <button
@@ -1640,7 +1673,6 @@ async function refreshComplaint() {
                                     </button>
                                 </div>
 
-                                {/* TYPE SPECIFIC NOTE FIELD */}
                                 {selectedType && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1659,7 +1691,6 @@ async function refreshComplaint() {
                                 )}
                             </div>
 
-                            {/* Upload Proof */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Upload Proof (Optional)
@@ -1734,7 +1765,7 @@ async function refreshComplaint() {
                         </button>
                     </div>
                 </motion.div>
-            </div>
+            </div> 
 
         </motion.div>
     //   </div>

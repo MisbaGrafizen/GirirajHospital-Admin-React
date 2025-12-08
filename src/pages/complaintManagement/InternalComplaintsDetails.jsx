@@ -231,26 +231,29 @@ export default function InternalComplaintsDetails() {
     // const [rcaNote, setRcaNote] = useState("");
     // const [paNotes, setPaNotes] = useState("");
     const [note, setNote] = useState("");
-const [rcaNote, setRcaNote] = useState("");
-const [caNote, setCaNote] = useState("");
-const [paNote, setPaNote] = useState("");
+    const [rcaNote, setRcaNote] = useState("");
+    const [caNote, setCaNote] = useState("");
+    const [paNote, setPaNote] = useState("");
+    const [isFromDeptDropdownOpen, setIsFromDeptDropdownOpen] = useState(false);
+const [selectedFromDepartment, setSelectedFromDepartment] = useState("");
 
+const [isEscalateDeptDropdownOpen,setIsEscalateDeptDropdownOpen]= useState(false)
 
-const currentNote =
-  selectedType === "RCA"
-    ? rcaNote
-    : selectedType === "CA"
-    ? caNote
-    : selectedType === "PA"
-    ? paNote
-    : "";
+    const currentNote =
+        selectedType === "RCA"
+            ? rcaNote
+            : selectedType === "CA"
+                ? caNote
+                : selectedType === "PA"
+                    ? paNote
+                    : "";
 
 
     const handleNoteChange = (value) => {
-  if (selectedType === "RCA") setRcaNote(value);
-  if (selectedType === "CA") setCaNote(value);
-  if (selectedType === "PA") setPaNote(value);
-};
+        if (selectedType === "RCA") setRcaNote(value);
+        if (selectedType === "CA") setCaNote(value);
+        if (selectedType === "PA") setPaNote(value);
+    };
 
 
 
@@ -322,6 +325,58 @@ const currentNote =
     useEffect(() => {
         setFullDocState(fullDoc);
     }, [fullDoc]);
+
+    /* -------------------------------------------------------------
+   ⭐ FIND ACTIVE + ALLOWED + ACTIONABLE INTERNAL DEPARTMENTS
+-------------------------------------------------------------- */
+
+// 1️⃣ All internal dept keys → requested by you
+const INTERNAL_KEYS = Object.keys(DEPT_LABEL);
+
+// 2️⃣ ACTIVE Departments = Dept has text or attachments
+const activeInternalDepartments = INTERNAL_KEYS.filter(
+    (deptKey) => blockHasContent(fullDocState[deptKey])
+);
+
+// 3️⃣ ALLOWED Departments = User permissions allow these
+const allowedInternalDepartments = activeInternalDepartments.filter(
+    (deptKey) => permissionsByBlock[deptKey]
+);
+
+// 4️⃣ Allowed FORWARD departments
+const allowedForwardDepartments = activeInternalDepartments.filter(
+    (deptKey) => permissionsByBlock[deptKey]?.includes("forward")
+);
+
+// 5️⃣ Allowed ESCALATE departments
+const allowedEscalateDepartments = activeInternalDepartments.filter(
+    (deptKey) => permissionsByBlock[deptKey]?.includes("escalate")
+);
+
+// 6️⃣ Allowed RESOLVE departments
+const allowedResolveDepartments = activeInternalDepartments.filter(
+    (deptKey) => permissionsByBlock[deptKey]?.includes("resolve")
+);
+
+// 7️⃣ ACTIONABLE department (must not be resolved)
+const actionableInternalDepartment = allowedForwardDepartments.find((deptKey) => {
+    const status = fullDocState[deptKey]?.status?.toLowerCase();
+    return status !== "resolved" && status !== "resolved_by_admin";
+});
+
+// Auto-select FROM dept (Forward)
+const autoFromDepartment =
+    allowedForwardDepartments.length === 1
+        ? DEPT_LABEL[allowedForwardDepartments[0]]
+        : null;
+
+// Auto-select FROM dept (Escalate)
+const autoEscalateDepartment =
+    allowedEscalateDepartments.length === 1
+        ? DEPT_LABEL[allowedEscalateDepartments[0]]
+        : null;
+
+
 
     async function refreshComplaint() {
         try {
@@ -471,49 +526,118 @@ const currentNote =
     }
 
 
-
     // in handleForwardSubmit
-    const handleForwardSubmit = async () => {
-        if (!forwardDepartment || !forwardReason) {
-            alert("Please select a department and provide a reason.");
+const handleForwardSubmit = async () => {
+    if (!forwardDepartment || !forwardReason.trim()) {
+        alert("Please select department and enter reason");
+        return;
+    }
+
+    try {
+        const loginType = localStorage.getItem("loginType");
+        const isAdmin = loginType === "admin";
+        const userId = localStorage.getItem("userId");
+
+        const isSingleDept = activeInternalDepartments.length === 1;
+
+        /* -----------------------------
+           ⭐ DETERMINE FROM Department
+        ----------------------------- */
+        let fromDeptKey = null;
+
+        if (allowedForwardDepartments.length === 1) {
+            fromDeptKey = allowedForwardDepartments[0];
+        } else if (selectedFromDepartment) {
+            fromDeptKey = DEPT_KEY[selectedFromDepartment];
+        } else if (actionableInternalDepartment) {
+            fromDeptKey = actionableInternalDepartment;
+        } else {
+            alert("Please select FROM department");
             return;
         }
 
-        try {
-            const departmentKey = DEPT_KEY[forwardDepartment];
-            if (!departmentKey) {
-                alert("Invalid department selected");
-                return;
-            }
-
-            const payload = {
-                department: departmentKey,
-                topic: "Forwarded Complaint",
-                text: forwardReason,
-                attachments: uploadedFile ? [uploadedFile.name] : [],
-                mode: "text",
-            };
-
-            const res = await ApiPost(`/admin/internal/${complaint.id}/forward`, payload);
-            alert(res.message || `Complaint forwarded to ${forwardDepartment}`);
-
-            // ✅ Re-fetch complaint & history to update UI
-            // const updated = await fetchComplaintDetails(complaint.id);
-            // if (updated) {
-            //     setStatus(updated.status || updated.data?.status);
-            // }
-            await refreshComplaint();
-
-
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Forward Error:", error);
-            alert(error.message || "Something went wrong while forwarding");
+        /* ----------------------------
+           ⭐ DETERMINE TO Department
+        ---------------------------- */
+        const toDeptKey = DEPT_KEY[forwardDepartment];
+        if (!toDeptKey) {
+            alert("Invalid TO department");
+            return;
         }
-    };
+
+        if (toDeptKey === fromDeptKey) {
+            alert("Cannot forward to same department");
+            return;
+        }
+
+        /* ----------------------------
+           ⭐ UPLOAD FILE
+        ---------------------------- */
+        let uploadedURL = "";
+        if (uploadedFile) {
+            const uploadRes = await uploadToHPanel(uploadedFile);
+            uploadedURL = uploadRes.url;
+        }
+
+        /* ----------------------------
+           ⭐ BUILD PAYLOAD
+        ---------------------------- */
+        const fullPayload = {
+            department: toDeptKey,
+            text: forwardReason.trim(),
+            note: forwardReason.trim(),
+            attachments: uploadedURL ? [uploadedURL] : [],
+        };
+
+        const partialPayload = {
+            fromDepartment: fromDeptKey,
+            toDepartment: toDeptKey,
+            note: forwardReason.trim(),
+            attachments: uploadedURL ? [uploadedURL] : [],
+            userId,
+        };
+
+        /* ----------------------------
+           ⭐ SELECT ENDPOINT
+        ---------------------------- */
+        let endpoint = "";
+        let body = {};
+
+        if (isAdmin) {
+            if (isSingleDept) {
+                endpoint = `/admin/internal/${complaint.id}/admin-forward`;
+                body = fullPayload;
+            } else {
+                endpoint = `/admin/internal/${complaint.id}/admin-partial-forward`;
+                body = partialPayload;
+            }
+        } else {
+            if (isSingleDept) {
+                endpoint = `/admin/internal/${complaint.id}/forward`;
+                body = fullPayload;
+            } else {
+                endpoint = `/admin/internal/${complaint.id}/partial-forward`;
+                body = partialPayload;
+            }
+        }
+
+        console.log("FORWARD →", endpoint, body);
+
+        const res = await ApiPost(endpoint, body);
+        alert(res.message || "Forwarded successfully");
+
+        await refreshComplaint();
+
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+    } catch (err) {
+        console.error("Forward Error:", err);
+        alert(err?.response?.data?.message || "Something went wrong.");
+    }
+};
+
 
 
 
@@ -546,61 +670,76 @@ const currentNote =
         }
     }
 
-    const handleEscalateSubmit = async () => {
-        if (!escalationLevel || !escalationNote) {
-            alert("Please select escalation level and provide a note.");
+const handleEscalateSubmit = async () => {
+    if (!escalationLevel || !escalationNote.trim()) {
+        alert("Please select level and write note");
+        return;
+    }
+
+    try {
+        const loginType = localStorage.getItem("loginType");
+        const userId = localStorage.getItem("userId");
+
+        const isSingleDept = activeInternalDepartments.length === 1;
+
+        /* ---------------------------
+           ⭐ FIND FROM department
+        --------------------------- */
+        let fromDeptKey = null;
+
+        if (allowedEscalateDepartments.length === 1) {
+            fromDeptKey = allowedEscalateDepartments[0];
+        } else if (selectedDepartment) {
+            fromDeptKey = DEPT_KEY[selectedDepartment];
+        } else if (actionableInternalDepartment) {
+            fromDeptKey = actionableInternalDepartment;
+        } else {
+            alert("Please select department");
             return;
         }
 
-        try {
-            const currentUserId = localStorage.getItem("userId") || "12345";
-            const targetUser = ESCALATION_USER_MAP[escalationLevel] || null;
+        /* ---------------------------
+           ⭐ BUILD PAYLOAD
+        --------------------------- */
+        const payload = {
+            department: fromDeptKey,
+            level: escalationLevel,
+            note: escalationNote.trim(),
+            userId,
+        };
 
-            const payload = {
-                level: escalationLevel,
-                note: escalationNote,
-                userId: currentUserId,
-                userModel: getUserModel(), // ✅ added
-                escalatedTo: targetUser?._id || null,
-            };
+        /* ---------------------------
+           ⭐ SELECT ENDPOINT
+        --------------------------- */
+        let endpoint = "";
 
-
-            let response;
-
-            if (selectedDepartment) {
-                const deptKey = Object.keys(DEPT_LABEL).find(
-                    (k) => DEPT_LABEL[k] === selectedDepartment
-                );
-
-                if (!deptKey) {
-                    alert("Invalid department selected.");
-                    return;
-                }
-
-                response = await escalateDepartmentComplaint(complaint.id, deptKey, payload);
-                alert(`Complaint for ${selectedDepartment} escalated to ${escalationLevel}`);
-            } else {
-                response = await escalateComplaint(complaint.id, payload);
-                alert(`Complaint escalated to ${escalationLevel}`);
-            }
-
-            // ✅ Determine and set status
-            // const newStatus =
-            //     response?.data?.status || response?.data?.data?.status || "escalated";
-            // setStatus(mapStatusUI(newStatus));
-            await refreshComplaint();
-
-
-            // ✅ Re-fetch history for timeline
-            const newHistory = await fetchConcernHistory(complaint.id);
-            setHistoryData(newHistory);
-
-            closeAllModals();
-        } catch (error) {
-            console.error("Escalation Error:", error);
-            alert(error.message || "Something went wrong while escalating complaint");
+        if (loginType === "admin") {
+            endpoint = isSingleDept
+                ? `/admin/internal/${complaint.id}/admin-escalate`
+                : `/admin/internal/${complaint.id}/admin-partial-escalate`;
+        } else {
+            endpoint = isSingleDept
+                ? `/admin/internal/${complaint.id}/escalate`
+                : `/admin/internal/${complaint.id}/partial-escalate`;
         }
-    };
+
+        console.log("ESCALATE →", endpoint, payload);
+
+        const res = await ApiPost(endpoint, payload);
+        alert(`Escalated to ${escalationLevel}`);
+
+        await refreshComplaint();
+
+        const newHistory = await fetchConcernHistory(complaint.id);
+        setHistoryData(newHistory);
+
+        closeAllModals();
+    } catch (error) {
+        console.error("Escalate Error:", error);
+        alert(error?.response?.data?.message || "Something went wrong.");
+    }
+};
+
 
     const filteredHistory = useMemo(() => {
         if (!Array.isArray(historyData)) return [];
@@ -651,8 +790,8 @@ const currentNote =
 
         const currentNote =
             selectedType === "RCA" ? rcaNote :
-            selectedType === "CA"  ? caNote :
-            selectedType === "PA"  ? paNote : "";
+                selectedType === "CA" ? caNote :
+                    selectedType === "PA" ? paNote : "";
 
         if (!currentNote.trim()) {
             alert(`Please enter ${selectedType} note`);
@@ -693,11 +832,11 @@ const currentNote =
                 );
             }
 
-        //     if (selectedDepartment) {
-        //     deptKey = Object.keys(DEPT_LABEL).find(
-        //         (k) => DEPT_LABEL[k] === selectedDepartment
-        //     );
-        // }
+            //     if (selectedDepartment) {
+            //     deptKey = Object.keys(DEPT_LABEL).find(
+            //         (k) => DEPT_LABEL[k] === selectedDepartment
+            //     );
+            // }
 
             if (!deptKey) {
                 alert("Please select a valid department.");
@@ -739,38 +878,38 @@ const currentNote =
                         ? `/admin/internal/${complaint.id}/resolve`
                         : `/admin/internal/${complaint.id}/partial-resolve`;
             }
-        const res = await ApiPost(endpoint, payload);
+            const res = await ApiPost(endpoint, payload);
 
-        const newStatus =
-            res?.data?.status ||
-            res?.data?.data?.status ||
-            "resolved";
+            const newStatus =
+                res?.data?.status ||
+                res?.data?.data?.status ||
+                "resolved";
 
-        setStatus(mapStatusUI(newStatus));
+            setStatus(mapStatusUI(newStatus));
 
-        alert(
-            newStatus === "partial"
-                ? "Complaint partially resolved."
-                : "Complaint fully resolved."
-        );
+            alert(
+                newStatus === "partial"
+                    ? "Complaint partially resolved."
+                    : "Complaint fully resolved."
+            );
 
-        // -------------------------------
-        // 7️⃣ REFRESH updated complaint
-        // -------------------------------
-        await refreshComplaint();
+            // -------------------------------
+            // 7️⃣ REFRESH updated complaint
+            // -------------------------------
+            await refreshComplaint();
 
-        // -------------------------------
-        // 8️⃣ REFRESH history
-        // -------------------------------
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
+            // -------------------------------
+            // 8️⃣ REFRESH history
+            // -------------------------------
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
 
-        closeAllModals();
-    } catch (err) {
-        console.error("Resolve Error:", err);
-        alert(err?.response?.data?.message || "Something went wrong.");
-    }
-};
+            closeAllModals();
+        } catch (err) {
+            console.error("Resolve Error:", err);
+            alert(err?.response?.data?.message || "Something went wrong.");
+        }
+    };
 
 
     async function fetchConcernHistory(complaintId) {
@@ -1382,8 +1521,126 @@ const currentNote =
                                     </div>
 
                                     {/* Modal: Forward to Another Department */}
+<AnimatePresence>
+    {isForwardModalOpen && (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black bg-opacity-50 overflow-y-auto"
+            onClick={closeAllModals}
+        >
+            <div className="flex items-center justify-center min-h-screen px-4 py-6">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-white rounded-xl shadow-xl p-6 sm:max-w-lg w-full"
+                >
+                    {/* ---------- HEADER ---------- */}
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-900">
+                            Forward Complaint
+                        </h3>
+                        <button onClick={closeAllModals}>
+                            <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                        </button>
+                    </div>
+
+                    {/* ---------- BODY ---------- */}
+                    <div className="space-y-6">
+
+                        {/* ⭐ FROM Department only if multiple allowed */}
+                        {allowedForwardDepartments.length > 1 && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    From Department <span className="text-red-500">*</span>
+                                </label>
+
+                                <AnimatedDropdown
+                                    isOpen={isFromDeptDropdownOpen}
+                                    setIsOpen={setIsFromDeptDropdownOpen}
+                                    selected={
+                                        selectedFromDepartment || "Select Department"
+                                    }
+                                    setSelected={setSelectedFromDepartment}
+                                    options={allowedForwardDepartments.map(
+                                        (key) => DEPT_LABEL[key]
+                                    )}
+                                    placeholder="Select From Department"
+                                    icon={MapPin}
+                                />
+                            </div>
+                        )}
+
+                        {/* ⭐ TO Department */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Forward To <span className="text-red-500">*</span>
+                            </label>
+
+                            <AnimatedDropdown
+                                isOpen={isForwardDeptDropdownOpen}
+                                setIsOpen={setIsForwardDeptDropdownOpen}
+                                selected={forwardDepartment || "Select Department"}
+                                setSelected={setForwardDepartment}
+                                options={Object.values(DEPT_LABEL).filter(
+                                    (label) => label !== selectedFromDepartment
+                                )}
+                                placeholder="Select Department"
+                                icon={MapPin}
+                            />
+                        </div>
+
+                        {/* ⭐ REASON */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Reason for Forwarding <span className="text-red-500">*</span>
+                            </label>
+
+                            <textarea
+                                value={forwardReason}
+                                onChange={(e) => setForwardReason(e.target.value)}
+                                rows={4}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none 
+                                           focus:ring-2 focus:ring-blue-500 resize-none"
+                                placeholder="Enter forward reason..."
+                            />
+                        </div>
+
+                    </div>
+
+                    {/* ---------- FOOTER ---------- */}
+                    <div className="flex justify-end mt-6 space-x-3">
+                        <button
+                            onClick={closeAllModals}
+                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 
+                                       hover:bg-gray-100 transition-colors"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            onClick={handleForwardSubmit}
+                            disabled={!forwardDepartment || !forwardReason.trim()}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+                                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Forward Complaint
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        </motion.div>
+    )}
+</AnimatePresence>
+
+
+
+                                    {/* Modal 2: Resolve Complaint */}
                                     <AnimatePresence>
-                                        {isForwardModalOpen && (
+                                        {isResolveModalOpen && (
                                             <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
@@ -1392,6 +1649,7 @@ const currentNote =
                                                 onClick={closeAllModals}
                                             >
                                                 <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+
                                                     <motion.div
                                                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                                                         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1400,51 +1658,120 @@ const currentNote =
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <div className="bg-white px-6 pt-6 pb-4">
-                                                            <>
-                                                                <div className="flex justify-between items-center mb-6">
-                                                                    <h3 className="text-xl font-bold text-gray-900">
-                                                                        Forward to Another Department
-                                                                    </h3>
-                                                                    <button
-                                                                        onClick={closeAllModals}
-                                                                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                                                                    >
-                                                                        <X className="w-6 h-6" />
-                                                                    </button>
-                                                                </div>
 
-                                                                <div className="space-y-6">
-                                                                    {/* Select Department */}
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Select Department <span className="text-red-500">*</span>
-                                                                        </label>
+                                                            <div className="flex justify-between items-center mb-6">
+                                                                <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
+                                                                <button
+                                                                    onClick={closeAllModals}
+                                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                                >
+                                                                    <X className="w-6 h-6" />
+                                                                </button>
+                                                            </div>
+
+                                                            <div className="space-y-6">
+
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Select Department <span className="text-red-500">*</span>
+                                                                    </label>
+
+                                                                    {resolveDepartments.length > 1 ? (
                                                                         <AnimatedDropdown
                                                                             isOpen={isForwardDeptDropdownOpen}
                                                                             setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                            selected={forwardDepartment || "Select Department"}
-                                                                            setSelected={setForwardDepartment}
-                                                                            options={forwardDepartments}
+                                                                            selected={selectedDepartment || "Select Department"}
+                                                                            setSelected={setSelectedDepartment}
+                                                                            options={resolveDepartments.map((k) => DEPT_LABEL[k])}
                                                                             placeholder="Select Department"
                                                                             icon={MapPin}
                                                                         />
+                                                                    ) : (
+                                                                        <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
+                                                                            {autoResolveDepartment}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div>
+                                                                    <div className="flex gap-3 mb-2">
+                                                                        {["RCA", "CA", "PA"].map((type) => (
+                                                                            <button
+                                                                                key={type}
+                                                                                className={getBtnStyles(type)}
+                                                                                onClick={() => setSelectedType(type)}
+                                                                                type="button"
+                                                                            >
+                                                                                {type}
+                                                                            </button>
+                                                                        ))}
                                                                     </div>
 
-                                                                    {/* Reason for Forwarding */}
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Reason for Forwarding <span className="text-red-500">*</span>
-                                                                        </label>
-                                                                        <textarea
-                                                                            value={forwardReason}
-                                                                            onChange={(e) => setForwardReason(e.target.value)}
-                                                                            rows={4}
-                                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                                                            placeholder="Please provide reason for forwarding this complaint..."
+                                                                    {selectedType && (
+                                                                        <div>
+                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                                {selectedType} Note <span className="text-red-500">*</span>
+                                                                            </label>
+
+                                                                            <textarea
+                                                                                value={
+                                                                                    selectedType === "RCA"
+                                                                                        ? rcaNote
+                                                                                        : selectedType === "CA"
+                                                                                            ? caNote
+                                                                                            : paNote
+                                                                                }
+                                                                                onChange={(e) => {
+                                                                                    const v = e.target.value;
+                                                                                    if (selectedType === "RCA") setRcaNote(v);
+                                                                                    if (selectedType === "CA") setCaNote(v);
+                                                                                    if (selectedType === "PA") setPaNote(v);
+                                                                                }}
+                                                                                rows={4}
+                                                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                                                                placeholder={`Enter ${selectedType} details...`}
+                                                                            />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Upload Proof (Optional)
+                                                                    </label>
+
+                                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                                                                        <input
+                                                                            type="file"
+                                                                            onChange={handleFileUpload}
+                                                                            className="hidden"
+                                                                            id="file-upload"
+                                                                            accept="image/*,.pdf,.doc,.docx"
                                                                         />
+                                                                        <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                                                                            <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                                                                            <span className="text-sm text-gray-600 mb-1">Click to upload</span>
+                                                                            <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
+                                                                            {uploadedFile && (
+                                                                                <span className="text-sm text-green-600 mt-2 font-medium">
+                                                                                    File: {uploadedFile.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </label>
                                                                     </div>
                                                                 </div>
-                                                            </>
+
+                                                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                                                    <div className="flex items-center">
+                                                                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                                                                        <span className="text-sm text-green-800">
+                                                                            Patient will receive an SMS notification about the resolution.
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
                                                         </div>
 
                                                         <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
@@ -1454,184 +1781,26 @@ const currentNote =
                                                             >
                                                                 Cancel
                                                             </button>
+
                                                             <button
-                                                                onClick={handleForwardSubmit}
-                                                                disabled={!forwardDepartment || !forwardReason}
-                                                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                                onClick={handleResolveSubmit}
+                                                                disabled={
+                                                                    !selectedType ||
+                                                                    (selectedType === "RCA" && !rcaNote.trim()) ||
+                                                                    (selectedType === "CA" && !caNote.trim()) ||
+                                                                    (selectedType === "PA" && !paNote.trim())
+                                                                }
+                                                                className="px-6 py-2 bg-green-600 text-white rounded-lg 
+                        hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                             >
-                                                                Forward Complaint
+                                                                Resolve Complaint
                                                             </button>
                                                         </div>
+
                                                     </motion.div>
                                                 </div>
                                             </motion.div>
                                         )}
-                                    </AnimatePresence>
-
-
-                                    {/* Modal 2: Resolve Complaint */}
-                                    <AnimatePresence>
-                                        {isResolveModalOpen && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-      onClick={closeAllModals}
-    >
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="bg-white px-6 pt-6 pb-4">
-
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
-              <button
-                onClick={closeAllModals}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Department <span className="text-red-500">*</span>
-                </label>
-
-                {resolveDepartments.length > 1 ? (
-                  <AnimatedDropdown
-                    isOpen={isForwardDeptDropdownOpen}
-                    setIsOpen={setIsForwardDeptDropdownOpen}
-                    selected={selectedDepartment || "Select Department"}
-                    setSelected={setSelectedDepartment}
-                    options={resolveDepartments.map((k) => DEPT_LABEL[k])}
-                    placeholder="Select Department"
-                    icon={MapPin}
-                  />
-                ) : (
-                  <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
-                    {autoResolveDepartment}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div className="flex gap-3 mb-2">
-                  {["RCA", "CA", "PA"].map((type) => (
-                    <button
-                      key={type}
-                      className={getBtnStyles(type)}
-                      onClick={() => setSelectedType(type)}
-                      type="button"
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-
-                {selectedType && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {selectedType} Note <span className="text-red-500">*</span>
-                    </label>
-
-                    <textarea
-                      value={
-                        selectedType === "RCA"
-                          ? rcaNote
-                          : selectedType === "CA"
-                          ? caNote
-                          : paNote
-                      }
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (selectedType === "RCA") setRcaNote(v);
-                        if (selectedType === "CA") setCaNote(v);
-                        if (selectedType === "PA") setPaNote(v);
-                      }}
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                                 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                      placeholder={`Enter ${selectedType} details...`}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Proof (Optional)
-                </label>
-
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                    accept="image/*,.pdf,.doc,.docx"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center">
-                    <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                    <span className="text-sm text-gray-600 mb-1">Click to upload</span>
-                    <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
-                    {uploadedFile && (
-                      <span className="text-sm text-green-600 mt-2 font-medium">
-                        File: {uploadedFile.name}
-                      </span>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                  <span className="text-sm text-green-800">
-                    Patient will receive an SMS notification about the resolution.
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-            <button
-              onClick={closeAllModals}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleResolveSubmit}
-              disabled={
-                !selectedType ||
-                (selectedType === "RCA" && !rcaNote.trim()) ||
-                (selectedType === "CA" && !caNote.trim()) ||
-                (selectedType === "PA" && !paNote.trim())
-              }
-              className="px-6 py-2 bg-green-600 text-white rounded-lg 
-                        hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Resolve Complaint
-            </button>
-          </div>
-
-        </motion.div>
-      </div>
-    </motion.div>
-  )}
 
                                         {/* {isResolveModalOpen && (
                                             <motion.div
@@ -1784,99 +1953,125 @@ const currentNote =
 
                                     {/* Modal 3: Escalate to Higher Authority */}
                                     <AnimatePresence>
-                                        {isEscalateModalOpen && (
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-                                                onClick={closeAllModals}
-                                            >
-                                                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                                                    <motion.div
-                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                                        className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <div className="bg-white px-6 pt-6 pb-4">
-                                                            <div className="flex justify-between items-center mb-6">
-                                                                <h3 className="text-xl font-bold text-gray-900">Escalate to Higher Authority</h3>
-                                                                <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                                                    <X className="w-6 h-6" />
-                                                                </button>
-                                                            </div>
+    {isEscalateModalOpen && (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+            onClick={closeAllModals}
+        >
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-block  overflow-hidden  bg-white !rounded-xl text-left shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                >
 
-                                                            <div className="space-y-6">
-                                                                <AnimatedDropdown
-                                                                    isOpen={isForwardDeptDropdownOpen}
-                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                    selected={selectedDepartment || "Select Department"}
-                                                                    setSelected={setSelectedDepartment}
-                                                                    options={forwardDepartments}
-                                                                    placeholder="Select Department"
-                                                                    icon={MapPin}
-                                                                />
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                        Select Escalation Level <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <AnimatedDropdown
-                                                                        isOpen={isEscalationDropdownOpen}
-                                                                        setIsOpen={setIsEscalationDropdownOpen}
-                                                                        selected={escalationLevel || "Select Escalation Level"}
-                                                                        setSelected={setEscalationLevel}
-                                                                        options={escalationLevels}
-                                                                        placeholder="Select Escalation Level"
-                                                                        icon={TrendingUp}
-                                                                    />
-                                                                </div>
+                    {/* -------- HEADER -------- */}
+                    <div className=" rounded-[10px]  px-6  pt-6 pb-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">Escalate Complaint</h3>
+                            <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
 
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                        Escalation Note <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <textarea
-                                                                        value={escalationNote}
-                                                                        onChange={(e) => setEscalationNote(e.target.value)}
-                                                                        rows={4}
-                                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                                                                        placeholder="Please provide reason for escalation and any additional context..."
-                                                                    />
-                                                                </div>
+                        <div className="space-y-6">
 
-                                                                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                                                                    <div className="flex items-center">
-                                                                        <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
-                                                                        <span className="text-sm text-red-800">
-                                                                            Higher authority will be notified via email and system notification.
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                            {/* ⭐ FROM Department — Only if multiple allowed */}
+                            {allowedEscalateDepartments.length > 1 && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Select Department <span className="text-red-500">*</span>
+                                    </label>
 
-                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                                                            <button
-                                                                onClick={closeAllModals}
-                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                            <button
-                                                                onClick={handleEscalateSubmit}
-                                                                disabled={!escalationLevel || !escalationNote}
-                                                                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                            >
-                                                                Escalate Complaint
-                                                            </button>
-                                                        </div>
-                                                    </motion.div>
-                                                </div>
-                                            </motion.div>
+                                    <AnimatedDropdown
+                                        isOpen={isEscalateDeptDropdownOpen}
+                                        setIsOpen={setIsEscalateDeptDropdownOpen}
+                                        selected={selectedDepartment || "Select Department"}
+                                        setSelected={setSelectedDepartment}
+                                        options={allowedEscalateDepartments.map(
+                                            (key) => DEPT_LABEL[key]
                                         )}
-                                    </AnimatePresence>
+                                        placeholder="Select Department"
+                                        icon={MapPin}
+                                    />
+                                </div>
+                            )}
+
+                            {/* ⭐ ESCALATION LEVEL */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Select Escalation Level <span className="text-red-500">*</span>
+                                </label>
+
+                                <AnimatedDropdown
+                                    isOpen={isEscalationDropdownOpen}
+                                    setIsOpen={setIsEscalationDropdownOpen}
+                                    selected={escalationLevel || "Select Escalation Level"}
+                                    setSelected={setEscalationLevel}
+                                    options={escalationLevels}
+                                    placeholder="Select Level"
+                                    icon={TrendingUp}
+                                />
+                            </div>
+
+                            {/* ⭐ ESCALATION NOTE */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Escalation Note <span className="text-red-500">*</span>
+                                </label>
+
+                                <textarea
+                                    value={escalationNote}
+                                    onChange={(e) => setEscalationNote(e.target.value)}
+                                    rows={4}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                                    placeholder="Provide escalation reason..."
+                                />
+                            </div>
+
+                            {/* ⚠️ WARNING BOX */}
+                            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                                <div className="flex items-center">
+                                    <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
+                                    <span className="text-sm text-red-800">
+                                        Higher authority will receive system + email notification.
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {/* -------- FOOTER -------- */}
+                    <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                        <button
+                            onClick={closeAllModals}
+                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            onClick={handleEscalateSubmit}
+                            disabled={!escalationLevel || !escalationNote.trim()}
+                            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                            Escalate Complaint
+                        </button>
+                    </div>
+
+                </motion.div>
+            </div>
+        </motion.div>
+    )}
+</AnimatePresence>
+
 
                                     {/* Modal 4: Full History */}
                                     <AnimatePresence>

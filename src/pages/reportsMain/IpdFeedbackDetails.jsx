@@ -158,7 +158,7 @@ export default function IpdFeedbackDetails() {
           <Header pageName="Ipd Feedback Details" />
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
-            <div className="flex flex-col w-[100%] max-h-[95%] pb-[50px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
+            <div className="flex flex-col w-[100%] max-h-[95%] md11:!pb-[50px] md34:!pb-[120px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] ">
           
               <section className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-4">

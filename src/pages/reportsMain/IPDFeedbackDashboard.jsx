@@ -1031,7 +1031,7 @@ export default function IPDFeedbackDashboard() {
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
 
-            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[70px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
               <Preloader />
 
               <div className="mx-auto w-full overflow-x-hidden">

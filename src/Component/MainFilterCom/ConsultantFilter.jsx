@@ -4,7 +4,7 @@ import NewDatePicker from '../MainInputFolder/NewDatePicker'
 import { Download, Search } from 'lucide-react'
 import ModernDatePicker from '../MainInputFolder/ModernDatePicker'
 
-export default function ConsultantFilter({ onFilterChange }) {
+export default function ConsultantFilter({ onFilterChange, onExportExcel }) {
   const [dateFrom1, setDateFrom1] = useState(null);
   const [dateTo1, setDateTo1] = useState(null);
   const [search, setSearch] = useState("");
@@ -50,7 +50,9 @@ export default function ConsultantFilter({ onFilterChange }) {
           </div>
         </div>
 
-        <button className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        <button 
+        onClick={onExportExcel}
+        className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700">
           <Download className="w-4 h-4 mr-2" />
           Excel
         </button>

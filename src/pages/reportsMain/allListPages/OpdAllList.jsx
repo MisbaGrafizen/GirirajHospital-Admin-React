@@ -227,6 +227,7 @@ const matchTo =
           <Header
   pageName="Opd Feedback List"
   onFilterChange={(f) => setFilters(f)}
+  onExportChange={exportToExcel} 
 />
           <div className="flex w-full h-full">
             <CubaSidebar />

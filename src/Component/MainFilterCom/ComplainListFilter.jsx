@@ -3,7 +3,7 @@ import NewDatePicker from '../MainInputFolder/NewDatePicker'
 import { Download, Search } from 'lucide-react'
 import ModernDatePicker from '../MainInputFolder/ModernDatePicker'
 
-export default function ComplainListFilter({ onFilterChange }) {
+export default function ComplainListFilter({ onFilterChange, onExportExcel, onExportCapa }) {
     const [from, setFrom] = useState(null);
     const [to, setTo] = useState(null);
     const [search, setSearch] = useState("");
@@ -21,7 +21,7 @@ export default function ComplainListFilter({ onFilterChange }) {
 
     return (
         <>
-            <div className="px-3 py-2  w-[] min-w-[670px] gap-[10px] flex justify-between  items-center">
+            <div className="px-3 py-2  w-[] min-w-[700px] gap-[10px] flex justify-between  items-center">
 
                 {/* Date Range */}
                 <div className="flex gap-2 ">
@@ -46,7 +46,7 @@ export default function ComplainListFilter({ onFilterChange }) {
 
 
                 <button
-                    //   onClick={exportToExcel}
+                      onClick={onExportExcel}
                     className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                     <Download className="w-4 h-4 mr-2" />
@@ -54,7 +54,7 @@ export default function ComplainListFilter({ onFilterChange }) {
                 </button>
 
                      <button
-                    //   onClick={exportToExcel}
+                      onClick={onExportCapa}
                     className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                     <Download className="w-4 h-4 mr-2" />

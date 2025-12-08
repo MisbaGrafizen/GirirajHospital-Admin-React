@@ -177,7 +177,7 @@ const handleRowClick = useCallback(
         <Header pageName="IPD / OPD List" />
         <div className="flex w-full h-full">
           <CubaSidebar />
-          <div className="flex flex-col w-full bg-white  relative max-h-[93%]  gap-2 ">
+          <div className="flex flex-col md34:!pr-[14px] md11:!pr-[0px] w-full bg-white  relative max-h-[93%]  gap-2 ">
             {loading && <Preloader />}
 
 
@@ -210,9 +210,9 @@ const handleRowClick = useCallback(
             </div>
 
         
-            <div className="bg-white rounded-xl border shadow-sm w-[98%] mx-[10px] overflow-y-auto md11:!max-h-[86%] 2xl:!max-h-[89%]">
-              <div className="w-[100%]">
-                <table className="w-[100%]">
+            <div className="bg-white rounded-xl border shadow-sm w-[98%] mx-[10px] overflow-y-auto md11:!max-h-[86%] 2xl:!max-h-[89%] ">
+              <div className="w-[100%] ">
+                <table className="w-[100%] min-w-[1200px]">
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-3 py-[7px] text-left border-r text-[11px] font-medium text-gray-500 w-[180px] uppercase border-r">

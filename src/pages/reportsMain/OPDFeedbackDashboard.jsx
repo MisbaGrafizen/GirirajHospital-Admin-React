@@ -86,20 +86,6 @@ function round1(n) {
   return Math.round((Number(n) || 0) * 10) / 10
 }
 
-const RATING_KEYS = [
-  "overallExperience",
-  "consultantDoctorServices",
-  "medicalAdminDoctorService",
-  "billingServices",
-  "housekeeping",
-  "maintenance",
-  "radiologyDiagnosticServices",
-  "pathologyDiagnosticServices",
-  "dietitianServices",
-  "security",
-  "nursing",
-]
-
 function calcRowAverage(ratings = {}) {
   const values = Object.values(ratings || {})
     .map((v) => Number(v))
@@ -457,9 +443,6 @@ export default function OPDFeedbackDashboard() {
     '#8b5cf6',
     '#ec4899',
   ]
-
-  const { canViewFeedback, canExportFeedback } = resolvePermissions()
-
   // ---------------- Service summary helpers ----------------
   function prettyKey(key = "") {
     return key
@@ -489,41 +472,58 @@ export default function OPDFeedbackDashboard() {
     return [];
   }
 
-  function buildServiceSummary(raw) {
-    const items = toArray(raw);
-    const rows = [];
+function buildServiceSummary(rows = [], selectedDepartment = "Both") {
+  // ⭐ MAP FRONTEND LABELS → BACKEND RATING KEYS
+  const SERVICE_MAP = {
+    "Appointment": "appointment",
+    "Reception Staff": "receptionStaff",
+    "Doctor Services": "doctorServices",
+    "Diagnostic Services (Pathology)": "pathologyDiagnosticServices",
+    "Diagnostic Services (Radiology)": "radiologyDiagnosticServices",
+    "Cleanliness": "cleanliness",
+    "Security": "security",
+  };
 
-    for (const [service, keys] of Object.entries(SERVICE_GROUPS)) {
-      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      let total = 0;
-      const usedKeySet = new Set();
+  // ⭐ Filter rows by department (if required)
+  const filteredRows =
+    selectedDepartment === "Both"
+      ? rows
+      : rows.filter(
+          (item) =>
+            (item?.ratings?.department || "OPD") === selectedDepartment
+        );
 
-      for (const item of items) {
-        const r = item?.ratings || {};
-        for (const k of keys) {
-          const v = Number(r?.[k]);
-          if (v >= 1 && v <= 5) {
-            counts[Math.round(v)] += 1;
-            total += 1;
-            usedKeySet.add(k);
-          }
-        }
+  const result = [];
+
+  Object.entries(SERVICE_MAP).forEach(([label, key]) => {
+    let total = 0;
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    filteredRows.forEach((item) => {
+      const v = item?.ratings?.[key];
+      const num = Number(v);
+
+      if (num >= 1 && num <= 5) {
+        counts[num]++;
+        total++;
       }
+    });
 
-      const denom = total || 1;
-      rows.push({
-        service,
-        usedFields: Array.from(usedKeySet).map(prettyKey),
-        excellent: Math.round((counts[5] / denom) * 100),
-        good: Math.round((counts[4] / denom) * 100),
-        average: Math.round((counts[3] / denom) * 100),
-        poor: Math.round((counts[2] / denom) * 100),
-        veryPoor: Math.round((counts[1] / denom) * 100),
-      });
-    }
+    const denom = total || 1;
 
-    return rows;
-  }
+    result.push({
+      service: label,
+      excellent: Math.round((counts[5] / denom) * 100),
+      good: Math.round((counts[4] / denom) * 100),
+      average: Math.round((counts[3] / denom) * 100),
+      poor: Math.round((counts[2] / denom) * 100),
+      veryPoor: Math.round((counts[1] / denom) * 100),
+    });
+  });
+
+  return result;
+}
+
 
   // ---------------- Trend helpers ----------------
   function pad2(n) { return String(n).padStart(2, "0"); }
@@ -1408,13 +1408,7 @@ const filteredFeedback = rows
                       {/* Export only if permitted */}
                       <div className=' flex gap-[10px]'>
 
-                        <button
-                          onClick={exportToExcel}
-                          className=" flex md77:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                          <Download className="w-5 h-5 " />
-
-                        </button>
+                 
                         <button
 
                           className="flex items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

@@ -169,15 +169,12 @@ function App() {
            <Route path="/dashboard/open-issues" element={<PrivateRoute><OpenIssues /></PrivateRoute>} />
                  <Route path="/dashboard/user-all-list" element={<PrivateRoute><UserAllList /></PrivateRoute>} />
                  <Route path="/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
-                                  <Route path="/dashboard/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
+           <Route path="/dashboard/complain-list" element={<PrivateRoute><AllComplaintPage /></PrivateRoute>} />
                  <Route path="/internal-complint-list" element={<PrivateRoute><InternalComplaintsList /></PrivateRoute>} />
-                 <Route path="/internal-complaint-details" element={<PrivateRoute><InternalComplaintsDetails /></PrivateRoute>} />
-
+             <Route path="/internal-complaint-details" element={<PrivateRoute><InternalComplaintsDetails /></PrivateRoute>} />
           {/* <Route path="/chat" element={<PrivateRoute><InternalChat/></PrivateRoute>}/> */}
           <Route path="/push-notification" element={<PrivateRoute><PushNotification /></PrivateRoute>} />
           <Route path="/log-details" element={<PrivateRoute><LogDetails /></PrivateRoute>} />
-
-          {/* NewModule  */}
 
           <Route path="/employee-feedback" element={<PrivateRoute><EmployeeFeedbackDashBoard /></PrivateRoute>} />
           <Route path="/consultant-feedback" element={<PrivateRoute><ConsultantFeedBackDashBord /></PrivateRoute>} />

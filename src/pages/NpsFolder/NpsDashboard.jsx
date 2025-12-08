@@ -633,7 +633,7 @@ export default function NpsDashboard() {
 
 
                   {/* Table */}
-                  <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] md11:!mb-[0px] border-gray-100 overflow-hidden">
+                  <div className="bg-white rounded-lg shadow-sm border md34:!mb-[140px] md11:!mb-[0px] border-gray-100 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
                         <thead className="bg-gray-50">

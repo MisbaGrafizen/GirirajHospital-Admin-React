@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Download, Search } from 'lucide-react'
 import ModernDatePicker from '../MainInputFolder/ModernDatePicker'
 
-export default function EmployeeListFilter({ onFilterChange }) {
+export default function EmployeeListFilter({ onFilterChange, onExportExcel }) {
   const [dateFrom1, setDateFrom1] = useState(null)
   const [dateTo1, setDateTo1] = useState(null)
   const [search, setSearch] = useState("")
@@ -49,6 +49,7 @@ export default function EmployeeListFilter({ onFilterChange }) {
 
         {/* Excel Button */}
         <button
+        onClick={onExportExcel}
           className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
           <Download className="w-4 h-4 mr-2" />

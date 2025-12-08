@@ -223,6 +223,7 @@ const exportToExcel = async () => {
     setDateTo1(data.to);
     setSearchTerm(data.search || "");
   }}
+  onExportExcel={exportToExcel}
 />
 
           <div className="flex  w-[100%] h-[100%]">

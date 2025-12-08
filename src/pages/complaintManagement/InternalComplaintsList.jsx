@@ -504,6 +504,8 @@ useEffect(() => {
         <Header
           pageName="Internal"
           onFilterChange={(data) => setFilters(data)}
+          onExportExcel={exportToExcel}
+          onExportCapa={exportCAPA}
         />
         <div className="flex w-full h-full">
           <CubaSidebar />

@@ -200,126 +200,118 @@ export default function ComplainAllList() {
 
     /* ------------------ EXPORT TO EXCEL ------------------ */
     const exportToExcel = async () => {
-        const XLSX = await import("xlsx");
+    const XLSX = await import("xlsx");
 
-        const excelRows = filteredComplaints.map((c) => {
-            const fullDoc = rawConcerns.find((d) => d._id === c.id);
+    if (!filteredComplaints.length) {
+        alert("No complaints found for selected filters");
+        return;
+    }
 
-            return {
+    const excelRows = filteredComplaints.map((c) => {
+        const fullDoc = rawConcerns.find((d) => d._id === c.id);
+
+        return {
+            "Complaint ID": c.complaintId,
+            "Date & Time": c.date,
+            "Patient Name": c.patient,
+            "Doctor Name": c.doctor,
+            "Bed No": c.bedNo,
+            "Departments": getDepartmentsString(fullDoc, allowedBlocks),
+            "Status": c.status,
+        };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(excelRows);
+
+    ws["!cols"] = Object.keys(excelRows[0]).map((key) => ({
+        wch: key.length + 8,
+    }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Complaints");
+
+    XLSX.writeFile(
+        wb,
+        `IPD_Complaints_${filters.from || "ALL"}_${filters.to || "ALL"}.xlsx`
+    );
+};
+
+
+    /* ------------------ EXPORT CAPA TO EXCEL (FINAL LOGIC) ------------------ */
+    const exportCAPA = async () => {
+        console.log("function triggered")
+    const XLSX = await import("xlsx");
+
+    const excelRows = [];
+
+    filteredComplaints.forEach((c) => {
+        const doc = rawConcerns.find((d) => d._id === c.id);
+        if (!doc) return;
+
+        const deptBlocks = [
+            "doctorServices",
+            "billingServices",
+            "housekeeping",
+            "maintenance",
+            "diagnosticServices",
+            "dietitianServices",
+            "security",
+            "nursing",
+        ];
+
+        deptBlocks.forEach((block) => {
+            const dep = doc?.[block];
+            if (!dep) return;
+
+            const hasText = dep?.text?.trim();
+            const hasFiles =
+                Array.isArray(dep?.attachments) && dep.attachments.length > 0;
+
+            // skip inactive
+            if (!hasText && !hasFiles) return;
+
+            const status = dep?.status?.toLowerCase();
+            if (status !== "resolved" && status !== "resolved_by_admin") return;
+
+            const resObj = dep?.resolution;
+            if (!resObj) return;
+
+            excelRows.push({
                 "Complaint ID": c.complaintId,
                 "Date & Time": c.date,
                 "Patient Name": c.patient,
                 "Doctor Name": c.doctor,
                 "Bed No": c.bedNo,
-                "Departments": getDepartmentsString(fullDoc, allowedBlocks),
-                "Status": c.status,
+                "Department": DEPT_LABEL[block] || block,
 
-                // NEW
-                // "Resolved Department": c.resolvedDepartment,
-                // "Resolution Note": c.resolutionNote,
-            };
-        });
+                "Complaint Text": dep.text || "-",
 
-        const ws = XLSX.utils.json_to_sheet(excelRows);
-
-        ws["!cols"] = Object.keys(excelRows[0] || {}).map((key) => ({
-            wch: Math.max(15, key.length + 5)
-        }));
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Complaints");
-
-        XLSX.writeFile(
-            wb,
-            `IPD_Complaints_${new Date().toISOString().slice(0, 10)}.xlsx`
-        );
-    };
-
-    /* ------------------ EXPORT CAPA TO EXCEL (FINAL LOGIC) ------------------ */
-    const exportCAPA = async () => {
-        const XLSX = await import("xlsx");
-
-        const excelRows = [];
-
-        filteredComplaints.forEach((c) => {
-            const doc = rawConcerns.find((d) => d._id === c.id);
-            if (!doc) return;
-
-            const deptBlocks = [
-                "doctorServices",
-                "billingServices",
-                "housekeeping",
-                "maintenance",
-                "diagnosticServices",
-                "dietitianServices",
-                "security",
-                "nursing",
-            ];
-
-            deptBlocks.forEach((block) => {
-                const dep = doc?.[block];
-                if (!dep) return;
-
-                const hasText = dep?.text?.trim();
-                const hasFiles =
-                    Array.isArray(dep?.attachments) && dep.attachments.length > 0;
-
-                // ❌ Skip inactive department (no text or attachments)
-                if (!hasText && !hasFiles) return;
-
-                // ❌ Skip if not resolved
-                const status = dep?.status?.toLowerCase();
-                if (status !== "resolved" && status !== "resolved_by_admin") return;
-
-                // ❌ Skip if no resolution object
-                const resObj = dep?.resolution;
-                if (!resObj) return;
-
-                // Extract actionType / note (fallback)
-                const action = resObj.actionType || "";
-                const note = resObj.note || "-";
-
-                // NEW — SMART RCA/CA/PA EXTRACTION
-                const rca = resObj.rcaNote || (action === "RCA" ? note : "NA");
-                const ca = resObj.caNote || (action === "CA" ? note : "NA");
-                const pa = resObj.paNote || (action === "PA" ? note : "NA");
-
-                excelRows.push({
-                    "Complaint ID": c.complaintId,
-                    "Date & Time": c.date,
-                    "Patient Name": c.patient,
-                    "Doctor Name": c.doctor,
-                    "Bed No": c.bedNo,
-                    "Department": DEPT_LABEL[block] || block,
-                    "Complaint Text": dep.text || "-",
-
-                    // FINAL SMART FIELDS
-                    "RCA": rca || "NA",
-                    "CA": ca || "NA",
-                    "PA": pa || "NA",
-                });
+                "RCA": resObj.rcaNote || "NA",
+                "CA": resObj.caNote || "NA",
+                "PA": resObj.paNote || "NA",
             });
         });
+    });
 
-        // ❗ If still empty, alert user
-        if (excelRows.length === 0) {
-            alert("No CAPA data found for export.");
-            return;
-        }
+    if (!excelRows.length) {
+        alert("No CAPA data found for selected filters.");
+        return;
+    }
 
-        const ws = XLSX.utils.json_to_sheet(excelRows);
-        ws["!cols"] = Object.keys(excelRows[0]).map((k) => ({
-            wch: Math.max(15, k.length + 6),
-        }));
+    const ws = XLSX.utils.json_to_sheet(excelRows);
+    ws["!cols"] = Object.keys(excelRows[0]).map((k) => ({
+        wch: k.length + 8,
+    }));
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
 
-        XLSX.writeFile(
-            wb,
-            `CAPA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
-        );
-    };
+    XLSX.writeFile(
+        wb,
+        `CAPA_Report_${filters.from || "ALL"}_${filters.to || "ALL"}.xlsx`
+    );
+};
+
 
 
     /* ======================================================
@@ -329,7 +321,7 @@ export default function ComplainAllList() {
         <>
             <section className="flex w-[100%] h-[100%] select-none md11:pr-[0px] overflow-hidden">
                 <div className="flex w-[100%] flex-col h-[100vh]">
-                    <Header pageName="Complaint List" onFilterChange={setFilters} />
+                    <Header pageName="Complaint List" onFilterChange={setFilters} onExportExcel={exportToExcel} onExportCapa={exportCAPA} />
                     <div className="flex w-[100%] h-[100%]">
                         <CubaSidebar />
                         <div className="flex flex-col w-[100%]  pl-[10px] relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[20px] py-[10px] pr-[10px]  overflow-y-auto gap-[10px] ">

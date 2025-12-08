@@ -77,6 +77,30 @@ function getAllowedAndActiveDepartments(issue = {}, allowedBlocks = []) {
   return readable.length > 0 ? readable.join(", ") : "-";
 }
 
+function getDepartmentsString(doc, allowedBlocks) {
+  if (!doc) return "-";
+
+  const SERVICE_LABELS = {
+    doctorServices: "Doctor Service",
+    billingServices: "Billing Service",
+    housekeeping: "Housekeeping",
+    maintenance: "Maintenance",
+    diagnosticServices: "Diagnostic Service",
+    dietitianServices: "Dietitian Service",
+    nursing: "Nursing",
+    security: "Security",
+  };
+
+  return allowedBlocks
+    .filter((key) => {
+      const d = doc[key];
+      return d && (d.text?.trim() || (d.attachments?.length > 0));
+    })
+    .map((key) => SERVICE_LABELS[key] || key)
+    .join(", ") || "-";
+}
+
+
 /* ---------------- Main Component ---------------- */
 export default function AllComplaintPage() {
   const location = useLocation();
@@ -86,6 +110,24 @@ export default function AllComplaintPage() {
   const [loading, setLoading] = useState(true);
   const [complaints, setComplaints] = useState([]);
   const [error, setError] = useState("");
+  const [rawConcerns, setRawConcerns] = useState([]);
+const [filteredComplaints, setFilteredComplaints] = useState([]);
+const [filters, setFilters] = useState({
+  search: "",
+  from: null,
+  to: null,
+  status: "All Status",
+});
+
+/* 🔹 Update filters when Header → ComplainListFilter sends data */
+const onFilterChange = (f) => {
+  setFilters((prev) => ({
+    ...prev,
+    ...f
+  }));
+};
+
+console.log('filters', filters)
 
   const filterType = location.state?.filter || "All";
   const { isAdmin, permsArray } = resolvePermissions();
@@ -140,9 +182,12 @@ export default function AllComplaintPage() {
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
-        setComplaints(sorted);
+        setRawConcerns(allComplaints);
+setComplaints(sorted);
+setFilteredComplaints(sorted);
+
       } catch (err) {
-        console.error("❌ Fetch complaints failed:", err);
+        console.error("Fetch complaints failed:", err);
         setError("Unable to load complaints.");
       } finally {
         setLoading(false);
@@ -151,6 +196,127 @@ export default function AllComplaintPage() {
 
     fetchComplaints();
   }, [filterType, isAdmin, allowedBlocks.join(",")]);
+
+useEffect(() => {
+  const term = (filters.search || "").toLowerCase();
+
+  const from = filters.from ? new Date(filters.from) : null;
+  const to = filters.to ? new Date(filters.to) : null;
+  if (to) to.setHours(23, 59, 59, 999);
+
+  
+  const result = complaints.filter((c) => {
+    const created = new Date(c.createdAt);
+
+    // DATE FILTER
+    if (from && created < from) return false;
+    if (to && created > to) return false;
+
+    // SEARCH FILTER
+    return (
+      c.patient?.toLowerCase().includes(term) ||
+      c.complaintId?.toLowerCase().includes(term) ||
+      c.doctor?.toLowerCase().includes(term)
+    );
+  });
+
+  setFilteredComplaints(result);
+}, [filters, complaints]);
+
+
+
+const exportToExcel = async () => {
+  const XLSX = await import("xlsx");
+
+  if (!filteredComplaints.length) {
+    alert("No complaints found for selected filters.");
+    return;
+  }
+
+  const excelRows = filteredComplaints.map((c) => {
+    const fullDoc = rawConcerns.find((d) => d._id === c._id);
+
+    return {
+      "Complaint ID": c.complaintId,
+      "Date & Time": new Date(c.createdAt).toLocaleString(),
+      "Patient Name": c.patientName,
+      "Doctor Name": c.consultantDoctorName?.name || "-",
+      "Bed No": c.bedNo || "-",
+      Departments: getDepartmentsString(fullDoc, allowedBlocks),
+      Status: c.status,
+    };
+  });
+
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Complaints");
+
+  XLSX.writeFile(wb, "IPD_Complaints.xlsx");
+};
+
+/* ------------------ EXPORT CAPA TO EXCEL (FINAL LOGIC) ------------------ */
+const exportCAPA = async () => {
+  const XLSX = await import("xlsx");
+  const excelRows = [];
+
+  filteredComplaints.forEach((c) => {
+    const doc = rawConcerns.find((d) => d._id === c._id);
+    if (!doc) return;
+
+    const deptBlocks = [
+      "doctorServices",
+      "billingServices",
+      "housekeeping",
+      "maintenance",
+      "diagnosticServices",
+      "dietitianServices",
+      "security",
+      "nursing",
+    ];
+
+    deptBlocks.forEach((block) => {
+      const dep = doc[block];
+      if (!dep) return;
+
+      const hasContent =
+        dep.text?.trim() ||
+        (Array.isArray(dep.attachments) && dep.attachments.length > 0);
+
+      if (!hasContent) return;
+
+      const status = dep.status?.toLowerCase();
+      if (status !== "resolved" && status !== "resolved_by_admin") return;
+
+      const r = dep.resolution || {};
+
+      excelRows.push({
+        "Complaint ID": c.complaintId,
+        "Date & Time": new Date(c.createdAt).toLocaleString(),
+        "Patient Name": c.patientName,
+        "Doctor Name": c.consultantDoctorName?.name || "-",
+        "Bed No": c.bedNo || "-",
+        Department: block,
+        "Complaint Text": dep.text || "-",
+        RCA: r.rcaNote || "NA",
+        CA: r.caNote || "NA",
+        PA: r.paNote || "NA",
+      });
+    });
+  });
+
+  if (!excelRows.length) {
+    alert("No CAPA data found.");
+    return;
+  }
+
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "CAPA_Report");
+
+  XLSX.writeFile(wb, "IPD_CAPA_Report.xlsx");
+};
+
+
 
   /* ---------------- Search Filter ---------------- */
   const filtered = useMemo(() => {
@@ -165,18 +331,23 @@ export default function AllComplaintPage() {
   return (
     <section className="flex w-full h-full select-none overflow-hidden">
       <div className="flex w-full flex-col h-screen">
-        <Header pageName={`${filterType} Complaints`} />
+        <Header pageName={`${filterType} Complaints`}   
+           onFilterChange={(data) => {
+        setFilters((prev) => ({ ...prev, ...data }));
+    }}
+  onExportExcel={exportToExcel}
+  onExportCapa={exportCAPA}/>
         <div className="flex w-full h-full">
           <CubaSidebar />
 
-          <div className="flex flex-col w-full bg-white relative pt-[10px]  max-h-[92%] overflow-y-auto gap-1 ">
+          <div className="flex flex-col w-full bg-white relative pt-[10px] md34:!pb-[100px]  max-h-[100%] pr-[10px] md11:!overflow-y-auto gap-1 ">
             {loading && <Preloader />}
 
        
 
             {/* 📋 Complaint Table */}
-            <div className="bg-white mx-[10px] rounded-xl border shadow-sm w-[98.2%]  max-h-[88%] overflow-y-auto">
-              <table className="w-full">
+            <div className="bg-white mx-[10px] rounded-xl border shadow-sm w-[98.2%] max-h-[88%] overflow-y-auto">
+              <table className="w-full  min-w-[1200px] ">
                 <thead className="bg-gray-100 !text-xs !font-[500] text-gray-600 uppercase tracking-wide">
                   <tr>
                     <th className="px-3 py-[12px] text-left text-[12px] font-[500] border-r w-[100px]">Comp. ID</th>
@@ -191,7 +362,7 @@ export default function AllComplaintPage() {
                 </thead>
 
                 <tbody className="text-sm text-gray-700">
-                  {filtered.map((issue, idx) => (
+                  {filteredComplaints.map((issue, idx) => (
                     <tr
                       key={issue._id || `${issue.complaintId}-${idx}`}
                       className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
@@ -292,7 +463,7 @@ export default function AllComplaintPage() {
                     </tr>
                   ))}
 
-                  {!loading && filtered.length === 0 && (
+                  {!loading && filteredComplaints.length === 0 && (
                     <tr>
                       <td
                         colSpan="8"

@@ -38,7 +38,7 @@
         {/* Input display */}
         <div
           onClick={() => setOpen(!open)}
-          className="flex items-center px-3 py-[3px] border border-gray-300 rounded-md bg-white cursor-pointer"
+          className="flex items-center px-3 py-[3px] border border-gray-300 min-w-[160px] rounded-md bg-white cursor-pointer"
         >
           <CalendarIcon className="w-3 h-3 text-gray-400 mr-2" />
           <span className="text-[13px] text-gray-700">

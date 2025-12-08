@@ -525,21 +525,21 @@ export default function EmailManagement() {
 
 
   useEffect(() => {
-  const handleMobileBack = (e) => {
-    // If mobile detail view is open → BLOCK default browser back
-    if (isMobileDetail) {
-      e.preventDefault();
-      setIsMobileDetail(false);
-      return;
-    }
-  };
+    const handleMobileBack = (e) => {
+      // If mobile detail view is open → BLOCK default browser back
+      if (isMobileDetail) {
+        e.preventDefault();
+        setIsMobileDetail(false);
+        return;
+      }
+    };
 
-  window.addEventListener("popstate", handleMobileBack);
+    window.addEventListener("popstate", handleMobileBack);
 
-  return () => {
-    window.removeEventListener("popstate", handleMobileBack);
-  };
-}, [isMobileDetail]);
+    return () => {
+      window.removeEventListener("popstate", handleMobileBack);
+    };
+  }, [isMobileDetail]);
 
   return (
     <>
@@ -805,10 +805,10 @@ export default function EmailManagement() {
                       <div className="text-center">
                         <Mail className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          No Email Selected
+                          No Notification Selected
                         </h3>
                         <p className="text-gray-500">
-                          Select an email from the list to view its contents
+                          Select an Notification from the list to view its contents
                         </p>
                       </div>
                     </div>
@@ -879,10 +879,10 @@ export default function EmailManagement() {
                       {filteredEmails.map((email) => (
                         <div
                           key={email.id}
-                   onClick={() => {
-  handleEmailClick(email);
-  setIsMobileDetail(true);
-}}
+                          onClick={() => {
+                            handleEmailClick(email);
+                            setIsMobileDetail(true);
+                          }}
                           className={`
                 p-3 border-b border-gray-100 relative cursor-pointer transition-all mb-[8px]   shadow-sm rounded-[10px] duration-200
                 ${selectedEmail?.id === email.id
@@ -940,7 +940,7 @@ export default function EmailManagement() {
                               : "font-medium text-gray-800"
                               }`}
                           >
-  
+
 
                             {email.data?.type && (
                               <span className="ml-2 text-xs text-blue-500">[{email.data.type}]</span>

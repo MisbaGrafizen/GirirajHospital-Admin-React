@@ -230,7 +230,8 @@ const finalFilteredRecords = useMemo(() => {
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
         <Header 
   pageName="Nps All Record"
-  onFilterChange={(data) => setFilters(data)} 
+  onFilterChange={(data) => setFilters(data)}
+  onExportExcel={exportToExcel} 
 />
 
           <div className="flex  w-[100%] h-[100%]">

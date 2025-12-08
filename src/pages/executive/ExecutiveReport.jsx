@@ -286,93 +286,87 @@ const { opdFiltered, ipdFiltered, opdPrev, ipdPrev } = useMemo(() => {
 
 
   // Build table rows with trends + statuses
-  const metrics = useMemo(() => {
-    const rows = []
-    function pctChange(current, previous) {
-      if (!previous || previous === 0) return "—"
-      const diff = ((current - previous) / previous) * 100
-      return diff
-    }
+const metrics = useMemo(() => {
+  const rows = [];
 
-    function statusFromChange(diff) {
-      if (diff > 5) return { type: "improving", label: "Improving" }
-      if (diff >= -5 && diff <= 5) return { type: "stable", label: "Stable" }
-      if (diff < -10) return { type: "attention", label: "Needs Attention" }
-      return { type: "declining", label: "Declining" }
-    }
+  // Safe % change
+  const pctChange = (current, previous) => {
+    if (previous === 0 || previous == null) return 0;
+    return ((current - previous) / previous) * 100;
+  };
 
+  const trendObj = (current, previous, isPercent = false) => {
+    const diff = current - previous;
 
-    // Overall OPD
-    const diffOPD = pctChange(cur.opdPct, prev.opdPct)
+    return {
+      value: isPercent
+        ? `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%`
+        : `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}`,
+      direction: diff < 0 ? "down" : "up",
+    };
+  };
+
+  /* ---------------- 1) OPD FEEDBACK ---------------- */
+  rows.push({
+    metric: "Overall OPD Feedback",
+    value: `${cur.opdPct}%`,
+    trend: trendObj(cur.opdPct, prev.opdPct, true),
+    status: statusForPercent(cur.opdPct),
+  });
+
+  /* ---------------- 2) IPD FEEDBACK ---------------- */
+  rows.push({
+    metric: "Overall IPD Feedback",
+    value: `${cur.ipdPct}%`,
+    trend: trendObj(cur.ipdPct, prev.ipdPct, true),
+    status: statusForPercent(cur.ipdPct),
+  });
+
+  /* ---------------- 3) NPS (OPD) ---------------- */
+  rows.push({
+    metric: "NPS (OPD)",
+    value: `${cur.npsOPD}`,
+    trend: trendObj(cur.npsOPD, prev.npsOPD),
+    status: statusForNPS(cur.npsOPD),
+  });
+
+  /* ---------------- 4) NPS (IPD) ---------------- */
+  rows.push({
+    metric: "NPS (IPD)",
+    value: `${cur.npsIPD}`,
+    trend: trendObj(cur.npsIPD, prev.npsIPD),
+    status: statusForNPS(cur.npsIPD),
+  });
+
+  /* ---------------- 5) COMPLAINTS ---------------- */
+  rows.push({
+    metric: "Complaints (Detractors)",
+    value: `${cur.complaints}`,
+    trend: trendObj(cur.complaints, prev.complaints),
+    status: statusForComplaints(cur.complaints),
+  });
+
+  /* ---------------- 6) AVG DOCTOR RATING ---------------- */
+  rows.push({
+    metric: "Avg Doctor Rating",
+    value: `${cur.docAvg.toFixed(1)}/5`,
+    trend: trendObj(cur.docAvg, prev.docAvg),
+    status: statusForDoctor(cur.docAvg),
+  });
+
+  /* ---------------- 7) HOUSEKEEPING / CLEANLINESS ---------------- */
+  if (cur.hkPct != null) {
     rows.push({
-      metric: "Overall OPD Feedback",
-      value: `${cur.opdPct}%`,
-      trend: {
-        value: `${diffOPD === "—" ? "—" : diffOPD.toFixed(1) + "%"}`,
-        direction: diffOPD < 0 ? "down" : "up"
-      },
-      status: statusFromChange(diffOPD === "—" ? 0 : diffOPD),
-    })
+      metric: "Cleanliness (Housekeeping) Score",
+      value: `${cur.hkPct}%`,
+      trend: trendObj(cur.hkPct, prev.hkPct, true),
+      status: statusForPercent(cur.hkPct),
+    });
+  }
 
+  return rows;
+}, [cur, prev]);
 
-    // Overall IPD
-    const diffIPD = cur.ipdPct - (prev.ipdPct ?? 0)
-    rows.push({
-      metric: "Overall IPD Feedback",
-      value: `${cur.ipdPct}%`,
-      trend: { value: `${diffIPD >= 0 ? "+" : ""}${diffIPD.toFixed(1)}%`, direction: diffIPD < 0 ? "down" : "up" },
-      status: statusForPercent(cur.ipdPct),
-    })
-
-    // NPS (OPD)
-    const dNpsOPD = (cur.npsOPD ?? 0) - (prev.npsOPD ?? 0)
-    rows.push({
-      metric: "NPS (OPD)",
-      value: `${cur.npsOPD ?? 0}`,
-      trend: { value: `${dNpsOPD >= 0 ? "+" : ""}${dNpsOPD}`, direction: dNpsOPD < 0 ? "down" : "up" },
-      status: statusForNPS(cur.npsOPD ?? 0),
-    })
-
-    // NPS (IPD)
-    const dNpsIPD = (cur.npsIPD ?? 0) - (prev.npsIPD ?? 0)
-    rows.push({
-      metric: "NPS (IPD)",
-      value: `${cur.npsIPD ?? 0}`,
-      trend: { value: `${dNpsIPD >= 0 ? "+" : ""}${dNpsIPD}`, direction: dNpsIPD < 0 ? "down" : "up" },
-      status: statusForNPS(cur.npsIPD ?? 0),
-    })
-
-    // Complaints (detractors)
-    const dComplaints = (cur.complaints ?? 0) - (prev.complaints ?? 0)
-    rows.push({
-      metric: "Complaints (Detractors)",
-      value: `${cur.complaints ?? 0}`,
-      trend: { value: `${dComplaints >= 0 ? "+" : ""}${dComplaints}`, direction: dComplaints > 0 ? "down" : "up" },
-      status: statusForComplaints(cur.complaints ?? 0),
-    })
-
-    // Avg Doctor Rating
-    const dDoc = (cur.docAvg ?? 0) - (prev.docAvg ?? 0)
-    rows.push({
-      metric: "Avg Doctor Rating",
-      value: `${cur.docAvg.toFixed(1)}/5`,
-      trend: { value: `${dDoc >= 0 ? "+" : ""}${dDoc.toFixed(1)}`, direction: dDoc < 0 ? "down" : "up" },
-      status: statusForDoctor(cur.docAvg ?? 0),
-    })
-
-    // Cleanliness (Housekeeping) Score
-    if (cur.hkPct != null) {
-      const dHk = (cur.hkPct ?? 0) - (prev.hkPct ?? 0)
-      rows.push({
-        metric: "Cleanliness (Housekeeping) Score",
-        value: `${cur.hkPct}%`,
-        trend: { value: `${dHk >= 0 ? "+" : ""}${dHk.toFixed(1)}%`, direction: dHk < 0 ? "down" : "up" },
-        status: statusForPercent(cur.hkPct ?? 0),
-      })
-    }
-
-    return rows
-  }, [cur, prev])
 
   const handleFilter = (e) => {
     e.preventDefault()
@@ -461,6 +455,7 @@ const reportTo = uiToISO || toDate;
         setDateFrom1(from);
         setDateTo1(to);
     }}
+    onExportExcel={exportToExcel}
           />
 
           <div className="flex w-[100%] h-[100%]">

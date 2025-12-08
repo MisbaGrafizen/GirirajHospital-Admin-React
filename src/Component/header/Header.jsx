@@ -49,6 +49,8 @@ function Header({
   onDateRangeChange,
   onFilterChange,       // ADD THIS
   onCreateWard,
+  onExportExcel,
+  onExportCapa,
   onCreateDoctor,
   onCreateRoleUser,
   onCreateNewRole,
@@ -188,6 +190,8 @@ function Header({
   const handleLogDetails = () => {
     navigate("/log-details")
   }
+
+  
   return (
     <>
 
@@ -216,7 +220,7 @@ function Header({
               </h1>
             </div>
 
-            <div className=" md:!flex md34:!hidden w-[600px]">
+            <div className=" md:!flex md34:!hidden w-[650px]">
 
 
               {location.pathname === "/dashboard" && (
@@ -311,7 +315,7 @@ function Header({
 
               {location.pathname === "/reports/nps-reports" && (
                 <>
-                  <div className="grid grid-cols-2 md77:!grid-cols-3 md11:!grid-cols-5 h-fit gap-x-3">
+                  <div className="grid min-w-[900px] grid-cols-2 md77:!grid-cols-3 md11:!grid-cols-5 h-fit gap-x-3">
                     {/* From Date */}
                     <div className="relative md11:!mb-[0px] md34:!mb-[14px]">
                       <ModernDatePicker
@@ -409,30 +413,30 @@ function Header({
               )}
 
 
-
-
-
-
-
-
               {location.pathname === "/reports/executive-report" && (
 
-                <>
 
-                  <ExcutiveFilter
-                    onFilterChange={({ from, to }) => {
-                      setDateFrom(from);
-                      setDateTo(to);
+<>
+     {/*  <ExcutiveFilter
+      onFilterChange={({ from, to }) => {
+        
+        // ✅ Ensure ISO strings go into ExecutiveReport
+        setDateFrom(from || null);
+        setDateTo(to || null);
 
-                      if (onDateRangeChange) {
-                        onDateRangeChange({ from, to });
-                      }
-                    }}
-                  />
+        // If parent component needs the same dates
+        if (onDateRangeChange) {
+          onDateRangeChange({
+            from: from || null,
+            to: to || null,
+          });
+        }
+      }}
+      onExportExcel={onExportExcel}
+    />*/}
+  </> 
+)}
 
-
-                </>
-              )}
 
 
 
@@ -448,6 +452,7 @@ function Header({
                       setFilterFrom(f.from);
                       setFilterTo(f.to);
                     }}
+                    onExport={onExportExcel}
                   />
 
                 </>
@@ -458,7 +463,7 @@ function Header({
 
                 <>
 
-                  <IpdListFilter onFilterChange={onFilterChange} />
+                  <IpdListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} />
                 </>
 
               )}
@@ -477,7 +482,7 @@ function Header({
 
                 <>
 
-                  <ComplainListFilter onFilterChange={onFilterChange} />
+                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
                 </>
 
               )}
@@ -487,7 +492,7 @@ function Header({
 
                 <>
 
-                  <NpsListFilter onFilterChange={onFilterChange} />
+                  <NpsListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel}/>
                 </>
 
               )}
@@ -496,7 +501,7 @@ function Header({
 
                 <>
 
-                  <ComplainListFilter />
+                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
                 </>
 
               )}
@@ -507,11 +512,11 @@ function Header({
 
                 <>
 
-                  <ComplainListFilter />
+                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
                 </>
 
               )}
-                           {location.pathname === "/dashboard/complain-list" && (
+              {location.pathname === "/dashboard/complain-list" && (
 
                 <>
 
@@ -531,20 +536,12 @@ function Header({
               )}
 
 
-              {location.pathname === "/dashboards/tat-view" && (
-
-                <>
-
-                  <TatListFilter />
-                </>
-
-              )}
 
               {location.pathname === "/internal-complint-list" && (
 
                 <>
 
-                  <InternalComFilter onFilterChange={onFilterChange} />
+                  <InternalComFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
                 </>
 
               )}
@@ -564,7 +561,7 @@ function Header({
 
                 <>
 
-                  <EmployeeListFilter onFilterChange={onFilterChange} />
+                  <EmployeeListFilter onFilterChange={onFilterChange}  onExportExcel={onExportExcel} />
                 </>
 
               )}
@@ -573,7 +570,7 @@ function Header({
 
                 <>
 
-                  <ConsultantFilter onFilterChange={onFilterChange} />
+                  <ConsultantFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel}/>
                 </>
 
               )}

@@ -3,20 +3,34 @@ import React, { useState, useEffect } from 'react'
 import { Download, Search } from 'lucide-react'
 import ModernDatePicker from '../MainInputFolder/ModernDatePicker'
 
-export default function ExcutiveFilter({ onFilterChange }) {
+export default function ExcutiveFilter({ onFilterChange, onExportExcel }) {
     const [dateFrom1, setDateFrom1] = useState(null)
     const [dateTo1, setDateTo1] = useState(null)
     const [search, setSearch] = useState("")
 
-    // 🔥 Send filter data to parent (Header → page)
+    // Send filter data to parent (Header → page)
 useEffect(() => {
+    const normalizeISO = (d) => {
+        if (!d) return null;
+        const dd = new Date(d);
+        if (isNaN(dd)) return null;
+
+        const y = dd.getFullYear();
+        const m = String(dd.getMonth() + 1).padStart(2, "0");
+        const da = String(dd.getDate()).padStart(2, "0");
+
+        return `${y}-${m}-${da}`;
+    };
+
     onFilterChange &&
         onFilterChange({
-            from: dateFrom1 ? new Date(dateFrom1) : null,
-            to: dateTo1 ? new Date(dateTo1) : null,
+            from: normalizeISO(dateFrom1),
+            to: normalizeISO(dateTo1),
             search,
         });
 }, [dateFrom1, dateTo1, search]);
+
+
 
     return (
         <>
@@ -40,6 +54,7 @@ useEffect(() => {
 
                 {/* Excel Button */}
                 <button
+                    onClick={onExportExcel}
                     className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                     <Download className="w-4 h-4 mr-2" />

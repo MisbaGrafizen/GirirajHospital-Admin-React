@@ -96,6 +96,35 @@ function getDepartmentsString(doc, allowedBlocks = []) {
   return departments.length > 0 ? departments.join(", ") : "-";
 }
 
+function complaintMatchesAllowedDept(complaint, allowedBlocks) {
+  if (!allowedBlocks || allowedBlocks.length === 0) return false;
+
+  for (const block of allowedBlocks) {
+    const snake = block.replace(/([A-Z])/g, "_$1").toLowerCase();
+
+    const possibleKeys = [
+      block,            // doctorServices
+      snake,            // doctor_services
+      snake.replace("_services", ""),
+      snake.replace("_service", "")
+    ];
+
+    for (const key of possibleKeys) {
+      const section = complaint[key];
+      if (!section) continue;
+
+      const hasText = section.text && section.text.trim();
+      const hasFiles =
+        Array.isArray(section.attachments) &&
+        section.attachments.length > 0;
+
+      if (hasText || hasFiles) return true;
+    }
+  }
+
+  return false;
+}
+
 
 export default function ComplaintsListDash() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,25 +135,43 @@ export default function ComplaintsListDash() {
   const navigate = useNavigate();
 
   // 🔹 Fetch Complaints
-  useEffect(() => {
-    const fetchComplaints = async () => {
-      try {
-        setLoading(true);
-        const res = await ApiGet("/admin/ipd-concern");
-        const allComplaints = res?.data || [];
-        const sorted = allComplaints.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+useEffect(() => {
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+
+      const res = await ApiGet("/admin/ipd-concern");
+      const allComplaints = res?.data || [];
+
+      let filtered = [];
+
+      if (allowedBlocks.length === 0) {
+        // If somehow no rights → show none
+        filtered = [];
+      } else {
+        filtered = allComplaints.filter((c) =>
+          isAdmin ? true : complaintMatchesAllowedDept(c, allowedBlocks)
         );
-        setComplaints(sorted.slice(0, 5));
-      } catch (err) {
-        console.error("Failed to fetch complaints:", err);
-        setError("Failed to fetch complaints");
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchComplaints();
-  }, []);
+
+      const sorted = filtered.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setComplaints(sorted.slice(0, 5)); // ⭐ Latest 5 only
+
+    } catch (err) {
+      console.error("Failed to fetch complaints:", err);
+      setError("Failed to fetch complaints");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const { isAdmin, allowedBlocks } = resolvePermissions();
+  fetchComplaints();
+}, []);
+
 
 // 🔍 Filter by search
 const filteredComplaints = complaints.filter((c) => {
@@ -209,7 +256,7 @@ const getStatusBadge = (status) => {
   }
 };
   const handlenavigate = () => {
-      navigate("/dashboards/complain-all-list")
+      navigate("/complain-list")
   };
 
   return (

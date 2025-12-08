@@ -355,13 +355,12 @@ if (data.kpis || data.totals) {
 
           const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : [];
 
-          // ✅ Convert backend array into quick lookup for existing departments
+          // Convert backend array into quick lookup for existing departments
           const backendDeptMap = Object.fromEntries(
             dept.map((d) => [d.department, d])
           );
 
-
-           // ✅ Build final list — include *all known departments* from DEPT_LABEL
+           // Build final list — include *all known departments* from DEPT_LABEL
           const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
             const match = backendDeptMap[label] || {};
             return {
@@ -372,7 +371,7 @@ if (data.kpis || data.totals) {
             };
           });
 
-                    setDepartmentData(fullDeptList);
+          setDepartmentData(fullDeptList);
           // ----- Recent feedbacks -----
           const rec = Array.isArray(data?.recentFeedbacks) ? data.recentFeedbacks : []
           setRecentFeedbacks(

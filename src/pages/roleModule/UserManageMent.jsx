@@ -609,7 +609,7 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
                       )}
 
                       <div className="border-t-[1.6px]  border-red-600 border-dashed w-[100%] my-[15px] "></div>
-                      <div className="flex justify-between  mb-4">
+                      <div className="flex justify-between  md11:!mb-4">
                         <div>
                           <h1 className="text-[24px] font-[600]">Manage User</h1>
                         </div>
@@ -640,7 +640,7 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
 
                         {/* User Cards Grid */}
                         {!isLoading && (
-                          <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-cente gap-[15px]">
+                          <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-center md34:!mb-[100px] md11:!mb-[0px] gap-[15px]">
                             {users.map((user) => (
                               <div
                                 key={user._id || user.id}

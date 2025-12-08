@@ -146,66 +146,80 @@ export default function IpdAllList() {
   /* -------------------- UPDATED FILTER (DATE + SEARCH) -------------------- */
 const filteredFeedback = rows
   .filter((f) => {
-    const s = (filters.search || "").toLowerCase();
+    const term = (filters.search || "").toLowerCase();
 
+    // Text search filter
     const matchText =
-      f.patient?.toLowerCase().includes(s) ||
-      f.contact?.toLowerCase().includes(s) ||
-      String(f.consultantDoctorName || "").toLowerCase().includes(s) ||
-      String(f.comments || "").toLowerCase().includes(s);
+      f.patient?.toLowerCase().includes(term) ||
+      f.contact?.toLowerCase().includes(term) ||
+      String(f.consultantDoctorName || "").toLowerCase().includes(term) ||
+      String(f.comments || "").toLowerCase().includes(term);
 
     const entryDate = new Date(f.createdAt);
 
-    const matchFrom =
-      !filters.from ||
-      entryDate >= new Date(filters.from.setHours(0, 0, 0, 0));
+    // Date filtering without mutating state
+    let matchFrom = true;
+    let matchTo = true;
 
-    const matchTo =
-      !filters.to ||
-      entryDate <= new Date(filters.to.setHours(23, 59, 59, 999));
+    if (filters.from) {
+      const fromDate = new Date(filters.from);
+      fromDate.setHours(0, 0, 0, 0);
+      matchFrom = entryDate >= fromDate;
+    }
+
+    if (filters.to) {
+      const toDate = new Date(filters.to);
+      toDate.setHours(23, 59, 59, 999);
+      matchTo = entryDate <= toDate;
+    }
 
     return matchText && matchFrom && matchTo;
   })
   .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
 
+
   /* -------------------- EXPORT TO EXCEL -------------------- */
-  const exportToExcel = async () => {
-    const XLSX = await import("xlsx");
+const exportToExcel = async () => {
+  const XLSX = await import("xlsx");
 
-    const feedbackRows = filteredFeedback.map((f) => ({
-      Date: formatDate(f.createdAt),
-      "Patient Name": f.patient,
-      Contact: f.contact,
-      "Bed No": f.bedNo,
-      "Doctor Name": f.consultantDoctorName,
-      "Average Rating (/5)": f.rating,
-      ...(typeof f.overallRecommendation === "number"
-        ? { "Overall Recommendation (NPS)": f.overallRecommendation }
-        : {}),
-      comments: f.comments,
-    }));
+  if (!filteredFeedback.length) {
+    alert("No feedback found for selected date range");
+    return;
+  }
 
-    const ws = XLSX.utils.json_to_sheet(feedbackRows);
+  const feedbackRows = filteredFeedback.map((f) => ({
+    Date: formatDate(f.createdAt),
+    "Patient Name": f.patient,
+    Contact: f.contact,
+    "Bed No": f.bedNo,
+    "Doctor Name": f.consultantDoctorName,
+    "Average Rating (/5)": f.rating,
+    comments: f.comments || "-",
+  }));
 
-    ws["!cols"] = Object.keys(feedbackRows[0] || {}).map((key) => ({
-      wch: Math.max(15, key.length + 5),
-    }));
+  const ws = XLSX.utils.json_to_sheet(feedbackRows);
+  ws["!cols"] = Object.keys(feedbackRows[0]).map((key) => ({ wch: 20 }));
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Filtered IPD Feedback");
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "IPD Feedback");
 
-    XLSX.writeFile(
-      wb,
-      `IPD_Feedback_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
-  };
+  XLSX.writeFile(
+    wb,
+    `IPD_Feedback_${filters.from || "ALL"}_${filters.to || "ALL"}.xlsx`
+  );
+};
+
 
   return (
     <>
       <section className="flex w-[100%] h-[100%] select-none md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-          <Header pageName="Ipd Feedback List" onFilterChange={setFilters} />
+          <Header
+  pageName="Ipd Feedback List"
+  onFilterChange={setFilters}
+  onExportExcel={exportToExcel}
+/>
           <div className="flex w-[100%] h-[100%]">
             <CubaSidebar />
             <div className="flex flex-col w-[100%] relative max-h-[93%] md34:!pb-[120px] md11:!pb-[30px] py-[10px] pr-[10px] overflow-y-auto gap-[10px] ">
