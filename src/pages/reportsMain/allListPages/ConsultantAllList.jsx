@@ -237,7 +237,7 @@ const exportToExcel = async () => {
          
 
                       <div className="overflow-x-auto">
-                        <table className=" md34:!min-w-[1200px] md11:!min-w-full">
+                        <table className=" md34:!min-w-[800px] md11:!min-w-full">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-6 py-[7px] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Date & Time</th>

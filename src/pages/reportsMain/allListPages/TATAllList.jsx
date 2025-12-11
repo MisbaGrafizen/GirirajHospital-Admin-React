@@ -3,7 +3,7 @@ import Header from '../../../Component/header/Header'
 import CubaSidebar from '../../../Component/sidebar/CubaSidebar'
 import Preloader from '../../../Component/loader/Preloader'
 import React, { useState, useEffect } from "react"
-import { Eye, Search, Download } from "lucide-react"
+import { Eye, Search, Download, User, Bed, ClockArrowDown, ClockArrowUp, AlarmClockCheck } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 import { ApiGet } from '../../../helper/axios'
 import NewDatePicker from '../../../Component/MainInputFolder/NewDatePicker'
@@ -441,10 +441,10 @@ export default function TATAllList() {
 
             <div className="bg-white border rounded-lg shadow-sm overflow-hidden ">
 
- 
 
 
-            
+
+
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead className="bg-gray-100">
@@ -464,20 +464,50 @@ export default function TATAllList() {
                       .sort((a, b) => {
                         const aTime = new Date(a.resolvedAt || a.createdAt).getTime();
                         const bTime = new Date(b.resolvedAt || b.createdAt).getTime();
-                        return bTime - aTime; 
+                        return bTime - aTime;
                       })
                       .map((r, idx) => (
                         <tr key={r.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                          <td className="px-3 py-2 border-r">{r.complaintId}</td>
-                          <td className="px-3 py-2 border-r">{r.patient}</td>
-                          <td className="px-3 py-2 border-r">{r.departments}</td>
                           <td className="px-3 py-2 border-r">
-                            {r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : "-"}
+                            <div className=" flex  items-center gap-[8px]">
+                              <i className="fa-regular fa-ticket text-[14px] text-blue-500"></i>{r.complaintId}
+                            </div>
                           </td>
                           <td className="px-3 py-2 border-r">
+                            <div className="flex items-center">
+                              <User className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                              {r.patient}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 border-r">
+                            <div className="flex items-center">
+                              {r.departments}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 border-r">
+                            <div className="flex items-center">
+                              <ClockArrowDown className="w-4 h-4 text-gray-400 mr-2" />
+
+
+                              {r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : "-"}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 border-r">
+                                                      <div className="flex items-center">
+                              <ClockArrowUp className="w-4 h-4 text-gray-400 mr-2" />
                             {r.resolvedAt ? new Date(r.resolvedAt).toLocaleString("en-GB") : "-"}
+                                      </div>
                           </td>
-                          <td className="px-3 py-2 border-r">{r.totalTimeTaken}</td>
+                          <td className="px-3 py-2 border-r">
+                                                                                                
+                                                                               <div className={`flex items-center min-w-[130px]  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
+
+                                                                            >
+
+                                                                      <AlarmClockCheck className="w-4 h-4 text-gray-400 mr-2" />
+                          {r.totalTimeTaken}
+                          </div>
+                          </td>
                         </tr>
                       ))}
                   </tbody>

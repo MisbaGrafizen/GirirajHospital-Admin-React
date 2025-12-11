@@ -21,6 +21,10 @@ import {
   TestTube2,
 
   IndianRupee,
+  CalendarPlus2,
+  Users,
+  Cross,
+  Paintbrush,
 } from "lucide-react"
 import {
   Stethoscope,
@@ -46,6 +50,14 @@ const serviceIcons = {
   "Dietitian Services": Utensils,
   "Security": ShieldCheck,
   "Nursing": ClipboardPlus,
+  "Appointment": CalendarPlus2,
+  "Reception Staff": Users,
+  "Doctor Services": Stethoscope,
+  "Diagnostic Services (Pathology)": Cross,
+    "Diagnostic Services (Radiology)": HeartPulse ,
+    "Cleanliness": Paintbrush
+
+
 
 };
 import { ApiGet } from '../../helper/axios'

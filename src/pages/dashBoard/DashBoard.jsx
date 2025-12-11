@@ -104,14 +104,14 @@ const CONCERN_COLORS = { Open: "#ef4444", "In Progress": "#f59e0b", Resolved: "#
 export default function DashBoard() {
 
   const [dashboardData, setDashboardData] = useState(null);
-// ✅ Normalize date range to be inclusive of "7 full days" (same as Header dropdown)
-const today = dayjs().endOf("day");
-const [dateRange, setDateRange] = useState({
-  from: today.subtract(6, "day").format("YYYY-MM-DD"),
-  to: today.format("YYYY-MM-DD"),
-  range: "7 Days",
-  isDefault: true, // ✅ mark as default
-});
+  // ✅ Normalize date range to be inclusive of "7 full days" (same as Header dropdown)
+  const today = dayjs().endOf("day");
+  const [dateRange, setDateRange] = useState({
+    from: today.subtract(6, "day").format("YYYY-MM-DD"),
+    to: today.format("YYYY-MM-DD"),
+    range: "7 Days",
+    isDefault: true, // ✅ mark as default
+  });
 
 
   const [ipdFeedbackTrend, setIpdFeedbackTrend] = useState([])
@@ -154,18 +154,18 @@ const [dateRange, setDateRange] = useState({
     let mounted = true
       ; (async () => {
         // ✅ Always fetch if default (7 days) or user applied filter
-if (!dateRange.from || !dateRange.to) {
-  // fallback to last 7 days if missing
-  const fallbackTo = dayjs().endOf("day");
-  const fallbackFrom = fallbackTo.subtract(6, "day");
-  setDateRange({
-    from: fallbackFrom.format("YYYY-MM-DD"),
-    to: fallbackTo.format("YYYY-MM-DD"),
-    range: "7 Days",
-    isDefault: true,
-  });
-  return;
-}
+        if (!dateRange.from || !dateRange.to) {
+          // fallback to last 7 days if missing
+          const fallbackTo = dayjs().endOf("day");
+          const fallbackFrom = fallbackTo.subtract(6, "day");
+          setDateRange({
+            from: fallbackFrom.format("YYYY-MM-DD"),
+            to: fallbackTo.format("YYYY-MM-DD"),
+            range: "7 Days",
+            isDefault: true,
+          });
+          return;
+        }
         try {
           setLoading(true)
           setError(null)
@@ -191,64 +191,64 @@ if (!dateRange.from || !dateRange.to) {
           console.log('qs', qs)
 
           const [res] = await Promise.all([
-  ApiGet(`/admin/dashboard${qs}`),
-  new Promise((resolve) => setTimeout(resolve, 0)),
-]);
+            ApiGet(`/admin/dashboard${qs}`),
+            new Promise((resolve) => setTimeout(resolve, 0)),
+          ]);
 
-const data = res?.data?.data || res.data || {};
+          const data = res?.data?.data || res.data || {};
 
-// 🏎️ free JS thread before heavy calculations
-await new Promise((resolve) => setTimeout(resolve, 0))
-          
+          // 🏎️ free JS thread before heavy calculations
+          await new Promise((resolve) => setTimeout(resolve, 0))
+
 
           if (!mounted) return
 
-if (data.kpis || data.totals) {
-  const kpiData = data.kpis || {};
-  console.log('kpiData', kpiData)
-  const totalsData = data.totals || {};
+          if (data.kpis || data.totals) {
+            const kpiData = data.kpis || {};
+            console.log('kpiData', kpiData)
+            const totalsData = data.totals || {};
 
-  // ✅ Earnings and Expense Safety
-  const earning = {
-    weeklyAverage: kpiData.earning?.weeklyAverage ?? 0,
-    series: Array.isArray(kpiData.earning?.series) ? kpiData.earning.series : [],
-    labels: Array.isArray(kpiData.earning?.labels) ? kpiData.earning.labels : [],
-  };
+            // ✅ Earnings and Expense Safety
+            const earning = {
+              weeklyAverage: kpiData.earning?.weeklyAverage ?? 0,
+              series: Array.isArray(kpiData.earning?.series) ? kpiData.earning.series : [],
+              labels: Array.isArray(kpiData.earning?.labels) ? kpiData.earning.labels : [],
+            };
 
-  const expense = {
-    weeklyAverage: kpiData.expense?.weeklyAverage ?? 0,
-    series: Array.isArray(kpiData.expense?.series) ? kpiData.expense.series : [],
-    labels: Array.isArray(kpiData.expense?.labels) ? kpiData.expense.labels : [],
-  };
+            const expense = {
+              weeklyAverage: kpiData.expense?.weeklyAverage ?? 0,
+              series: Array.isArray(kpiData.expense?.series) ? kpiData.expense.series : [],
+              labels: Array.isArray(kpiData.expense?.labels) ? kpiData.expense.labels : [],
+            };
 
-  // ✅ Handle latest totalResolvedTAT object
-  const tatData = kpiData.totalResolvedTAT || {};
-  const totalResolvedTAT = {
-    hours: tatData.hours ?? 0,
-    display: tatData.display || `${tatData.hours ?? 0}h`,
-  };
+            // ✅ Handle latest totalResolvedTAT object
+            const tatData = kpiData.totalResolvedTAT || {};
+            const totalResolvedTAT = {
+              hours: tatData.hours ?? 0,
+              display: tatData.display || `${tatData.hours ?? 0}h`,
+            };
 
-  // ✅ Final KPI Mapping
-  setKpis({
-    totalFeedback: kpiData.totalFeedback ?? 0,
-    averageRating: { value: kpiData.averageRating?.value ?? 0 },
-    npsRating: { value: kpiData.npsRating?.value ?? 0 },
-    openIssues: kpiData.openIssues ?? 0,
-    resolvedIssues: kpiData.resolvedIssues ?? 0,
-    totalConcern: kpiData.totalConcern ?? 0,
-    totalResolvedTAT,
-    earning,
-    expense,
-  });
+            // ✅ Final KPI Mapping
+            setKpis({
+              totalFeedback: kpiData.totalFeedback ?? 0,
+              averageRating: { value: kpiData.averageRating?.value ?? 0 },
+              npsRating: { value: kpiData.npsRating?.value ?? 0 },
+              openIssues: kpiData.openIssues ?? 0,
+              resolvedIssues: kpiData.resolvedIssues ?? 0,
+              totalConcern: kpiData.totalConcern ?? 0,
+              totalResolvedTAT,
+              earning,
+              expense,
+            });
 
-  // ✅ Totals Section (used for top widgets)
-  setTotals({
-    totalUsers: totalsData.totalUsers ?? 0,
-    totalRoleUsers: totalsData.totalRoleUsers ?? 0,
-    totalAdmins: totalsData.totalAdmins ?? 0,
-    totalTAT: totalResolvedTAT.display ?? "—",
-  });
-}
+            // ✅ Totals Section (used for top widgets)
+            setTotals({
+              totalUsers: totalsData.totalUsers ?? 0,
+              totalRoleUsers: totalsData.totalRoleUsers ?? 0,
+              totalAdmins: totalsData.totalAdmins ?? 0,
+              totalTAT: totalResolvedTAT.display ?? "—",
+            });
+          }
 
           const series = Array.isArray(data?.ipdTrends?.series) ? data.ipdTrends.series : []
           const ipdTrendMapped = series.map((row) => {
@@ -313,7 +313,7 @@ if (data.kpis || data.totals) {
               // ✅ use in_progress if present, fallback to "In Progress"
               statusCounts["In Progress"] += mod.in_progress || mod["In Progress"] || 0;
               statusCounts.Resolved += mod.Resolved || 0;
-            }); 
+            });
 
             // normalize to backend's deduped total
             if (totalForThisWeek > 0) {
@@ -342,63 +342,63 @@ if (data.kpis || data.totals) {
           }));
 
 
-         const DEPT_LABEL = {
-  doctorServices: "Doctor",
-  billingServices: "Front Desk",
-  housekeeping: "Housekeeping",
-  maintenance: "Maintenance",
-  diagnosticServices: "Diagnostic",
-  dietitianServices: "Dietitian",
-  security: "Security",
-  nursing: "Nursing",
-};
+          const DEPT_LABEL = {
+            doctorServices: "Doctor",
+            billingServices: "Front Desk",
+            housekeeping: "Housekeeping",
+            maintenance: "Maintenance",
+            diagnosticServices: "Diagnostic",
+            dietitianServices: "Dietitian",
+            security: "Security",
+            nursing: "Nursing",
+          };
 
-// ⭐ Normalize backend value before matching
-const normalizeDept = (name = "") => {
-  const n = name.toLowerCase().trim();
+          // ⭐ Normalize backend value before matching
+          const normalizeDept = (name = "") => {
+            const n = name.toLowerCase().trim();
 
-  if (n.includes("doctor")) return "Doctor";
-  if (n.includes("billing")) return "Front Desk";
-  if (n.includes("front")) return "Front Desk";
-  if (n.includes("house")) return "Housekeeping";
-  if (n.includes("maint")) return "Maintenance";
-  if (n.includes("diag")) return "Diagnostic";
-  if (n.includes("diet")) return "Dietitian";
-  if (n.includes("secur")) return "Security";
-  if (n.includes("nurs")) return "Nursing";
+            if (n.includes("doctor")) return "Doctor";
+            if (n.includes("billing")) return "Front Desk";
+            if (n.includes("front")) return "Front Desk";
+            if (n.includes("house")) return "Housekeeping";
+            if (n.includes("maint")) return "Maintenance";
+            if (n.includes("diag")) return "Diagnostic";
+            if (n.includes("diet")) return "Dietitian";
+            if (n.includes("secur")) return "Security";
+            if (n.includes("nurs")) return "Nursing";
 
-  return name; // fallback
-};
+            return name; // fallback
+          };
 
-const dept = Array.isArray(data?.departmentAnalysis)
-  ? data.departmentAnalysis
-  : [];
+          const dept = Array.isArray(data?.departmentAnalysis)
+            ? data.departmentAnalysis
+            : [];
 
-// 🔥 Convert backend array into normalized lookup
-const backendDeptMap = {};
+          // 🔥 Convert backend array into normalized lookup
+          const backendDeptMap = {};
 
-dept.forEach((d) => {
-  const cleanName = normalizeDept(d.department);
-  backendDeptMap[cleanName] = {
-    concerns: d.concerns || 0,
-    resolved: d.resolved || 0,
-    pending: d.pending || 0,
-  };
-});
+          dept.forEach((d) => {
+            const cleanName = normalizeDept(d.department);
+            backendDeptMap[cleanName] = {
+              concerns: d.concerns || 0,
+              resolved: d.resolved || 0,
+              pending: d.pending || 0,
+            };
+          });
 
-// 🔥 Build final unified list
-const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
-  const match = backendDeptMap[label] || {};
+          // 🔥 Build final unified list
+          const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
+            const match = backendDeptMap[label] || {};
 
-  return {
-    department: label,
-    concerns: Number(match.concerns || 0),
-    resolved: Number(match.resolved || 0),
-    pending: Number(match.pending || 0),
-  };
-});
+            return {
+              department: label,
+              concerns: Number(match.concerns || 0),
+              resolved: Number(match.resolved || 0),
+              pending: Number(match.pending || 0),
+            };
+          });
 
-setDepartmentData(fullDeptList);
+          setDepartmentData(fullDeptList);
           // ----- Recent feedbacks -----
           const rec = Array.isArray(data?.recentFeedbacks) ? data.recentFeedbacks : []
           setRecentFeedbacks(
@@ -441,10 +441,10 @@ setDepartmentData(fullDeptList);
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
 
           <Header
-  pageName="Dashboard"
-  onDateRangeChange={setDateRange}
-  selectedRange={dateRange.range} 
-/>
+            pageName="Dashboard"
+            onDateRangeChange={setDateRange}
+            selectedRange={dateRange.range}
+          />
 
           <div className="flex  w-[100%] h-[100%]">
             <SideBar />
@@ -504,23 +504,25 @@ setDepartmentData(fullDeptList);
                                 </div>
                               </div>
                             </div>
-                            <div className="  md11:!ml-[0px] w-[100%]  h-[250px]">
-                              <ResponsiveContainer className=" " width="100%" height="100%">
-                                {/* keep your original 'concerns' key */}
-                                <BarChart data={departmentData} margin={{ top: 10, right: 0, left: -30, bottom: 30 }}>
-                                  <defs>
-                                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9} />
-                                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9} />
-                                    </linearGradient>
-                                  </defs>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                  <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#6b7280" }} angle={-25} textAnchor="end" height={20} />
-                                  <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
-                                  <Tooltip />
-                                  <Bar dataKey="concerns" fill="url(#barGradient)" radius={[6, 6, 0, 0]} animationDuration={800} />
-                                </BarChart>
-                              </ResponsiveContainer>
+                            <div className=" w-[100%] overflow-x-auto">
+                              <div className="  md11:!ml-[0px] w-[100%] min-w-[500px]  h-[250px]">
+                                <ResponsiveContainer className=" " width="100%" height="100%">
+                                  {/* keep your original 'concerns' key */}
+                                  <BarChart data={departmentData} margin={{ top: 10, right: 0, left: -30, bottom: 30 }}>
+                                    <defs>
+                                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9} />
+                                      </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                    <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#6b7280" }} angle={-25} textAnchor="end" height={20} />
+                                    <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
+                                    <Tooltip />
+                                    <Bar dataKey="concerns" fill="url(#barGradient)" radius={[6, 6, 0, 0]} animationDuration={800} />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
                             </div>
                           </motion.div>
                         </motion.div>
@@ -549,8 +551,8 @@ setDepartmentData(fullDeptList);
           </div>
         </div>
       </section>
-      <AutoPopup 
-        title="Last 7 Days Summary" 
+      <AutoPopup
+        title="Last 7 Days Summary"
         message="Your dashboard data has been refreshed and shows the latest 7-day insights."
       />
 

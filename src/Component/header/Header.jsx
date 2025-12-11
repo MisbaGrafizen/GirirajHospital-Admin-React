@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import AnimatedDropdown from "../MainInputFolder/AnimatedDropdown";
 import AnimatedDropdownNavigate from "../MainInputFolder/AnimatedDropdownNavigate";
 import comming from "../../../public/imges/comming.png"
-import { faTachometerAlt, faUserDoctor, faHospitalUser, faListCheck,faUserTie, faSmile,faShieldHalved ,faUserMd} from "@fortawesome/free-solid-svg-icons";
+import { faTachometerAlt, faUserDoctor, faHospitalUser, faListCheck, faUserTie, faSmile, faShieldHalved, faUserMd } from "@fortawesome/free-solid-svg-icons";
 import {
   Gauge,
   Wallet,
@@ -191,7 +191,7 @@ function Header({
     navigate("/log-details")
   }
 
-  
+
   return (
     <>
 
@@ -416,8 +416,8 @@ function Header({
               {location.pathname === "/reports/executive-report" && (
 
 
-<>
-     {/*  <ExcutiveFilter
+                <>
+                  {/*  <ExcutiveFilter
       onFilterChange={({ from, to }) => {
         
         // ✅ Ensure ISO strings go into ExecutiveReport
@@ -434,8 +434,8 @@ function Header({
       }}
       onExportExcel={onExportExcel}
     />*/}
-  </> 
-)}
+                </>
+              )}
 
 
 
@@ -482,7 +482,7 @@ function Header({
 
                 <>
 
-                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
+                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa} />
                 </>
 
               )}
@@ -492,7 +492,7 @@ function Header({
 
                 <>
 
-                  <NpsListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel}/>
+                  <NpsListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} />
                 </>
 
               )}
@@ -501,7 +501,7 @@ function Header({
 
                 <>
 
-                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
+                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa} />
                 </>
 
               )}
@@ -512,7 +512,7 @@ function Header({
 
                 <>
 
-                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
+                  <ComplainListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa} />
                 </>
 
               )}
@@ -541,7 +541,7 @@ function Header({
 
                 <>
 
-                  <InternalComFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa}/>
+                  <InternalComFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} onExportCapa={onExportCapa} />
                 </>
 
               )}
@@ -561,7 +561,7 @@ function Header({
 
                 <>
 
-                  <EmployeeListFilter onFilterChange={onFilterChange}  onExportExcel={onExportExcel} />
+                  <EmployeeListFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} />
                 </>
 
               )}
@@ -570,7 +570,7 @@ function Header({
 
                 <>
 
-                  <ConsultantFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel}/>
+                  <ConsultantFilter onFilterChange={onFilterChange} onExportExcel={onExportExcel} />
                 </>
 
               )}
@@ -580,7 +580,7 @@ function Header({
 
                 <>
 
-                  <ConsultantDashFilter  />
+                  <ConsultantDashFilter />
                 </>
 
               )}
@@ -656,14 +656,14 @@ function Header({
 
 
 
-          <div className="relative   mr-[30px] gap-[15px] flex items-center">
+          <div className="relative   gap-[15px] flex items-center">
             {location.pathname === "/settings/user-manage" && (
               <div className=" md:!flex md34:!hidden gap-[10px]">
 
 
                 <button
                   onClick={onCreateDoctor}
-                  className="px-3  flex  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
+                  className="px-3  flex  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700  flex-shrink-0 transition"
                 >
                   <i className="fa-solid fa-plus"></i>
                   Create Doctors
@@ -672,7 +672,7 @@ function Header({
 
                 <button
                   onClick={onCreateRoleUser}
-                  className="px-3  flex  items-center gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
+                  className="px-3  flex  items-center  flex-shrink-0 gap-[10px] py-[6px] bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition"
                 >
                   <UserPlus className="w-5 h-5" />
                   Create Role User
@@ -722,14 +722,14 @@ function Header({
                 <i className="fa-light fa-bell text-gray-700 text-[20px]"></i>
               </button>
 
-              {unreadCount > 0 && (
-                <span
-                  onClick={handleMail}
-                  className="absolute top-[-10px] right-[-9px] flex items-center pt-[px] justify-center w-[16px] h-[16px] text-[9px] font-[500] text-white bg-red-600 rounded-full  border-white shadow"
-                >
-                  {unreadCount}
-                </span>
-              )}
+
+              <span
+                onClick={handleMail}
+                className="absolute top-[-10px] right-[-9px] flex items-center  justify-center w-[16px] h-[16px] text-[9px] font-[500] text-white bg-red-600 rounded-full  border-white shadow"
+              >
+                <i className="fa-regular text-[16px] mt-[0.4px] fa-circle-exclamation"></i>
+              </span>
+
             </div>
             <div className="relative" ref={dropdownRef}>
               {/* Profile Avatar */}
@@ -795,32 +795,32 @@ function Header({
           </div>
 
         </section>
-        {["/dashboard", "/opd-feedback", "/ipd-feedback", "/complaint-dashboard", "/reports/nps-reports","/internal-complint-list","/employee-feedback","/consultant-feedback",].includes(location.pathname) && (
+        {["/dashboard", "/opd-feedback", "/ipd-feedback", "/complaint-dashboard", "/reports/nps-reports", "/internal-complint-list", "/employee-feedback", "/consultant-feedback",].includes(location.pathname) && (
           <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
 
-           <div className="flex h-[50px] px-[10px] items-center justify-center w-[100%]">
+            <div className="flex h-[50px] px-[10px] items-center justify-center w-[100%]">
 
-  <AnimatedDropdownNavigate
-    label="Go to Page"
-    options={[
-      { id: "super-admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-      { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserDoctor },
-      { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-      { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListCheck },
-      { id: "nps", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faSmile },
-      { id: "internal", label: "Internal Complaints ", href: "/internal-complint-list", icon: faShieldHalved },
+              <AnimatedDropdownNavigate
+                label="Go to Page"
+                options={[
+                  { id: "super-admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+                  { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserDoctor },
+                  { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+                  { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListCheck },
+                  { id: "nps", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faSmile },
+                  { id: "internal", label: "Internal Complaints ", href: "/internal-complint-list", icon: faShieldHalved },
 
-      // ⭐ SHOW ONLY IF USER IS ADMIN ⭐
-      ...(localStorage.getItem("loginType") === "admin"
-        ? [
-            { id: "employee", label: "Employee Dashboard", href: "/employee-feedback", icon: faUserTie },
-            { id: "consultant", label: "Consultant Dashboard", href: "/consultant-feedback", icon: faUserMd },
-          ]
-        : []),
-    ]}
-  />
+                  // ⭐ SHOW ONLY IF USER IS ADMIN ⭐
+                  ...(localStorage.getItem("loginType") === "admin"
+                    ? [
+                      { id: "employee", label: "Employee Dashboard", href: "/employee-feedback", icon: faUserTie },
+                      { id: "consultant", label: "Consultant Dashboard", href: "/consultant-feedback", icon: faUserMd },
+                    ]
+                    : []),
+                ]}
+              />
 
-</div>
+            </div>
           </div>
         )}
       </div>

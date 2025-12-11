@@ -481,7 +481,7 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
       <section className="flex font-Poppins w-[100%] h-[100%] select-none overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
           <Header
-            pageName="User Management"
+            pageName="User Manage"
             onCreateDoctor={handleOpenDoctorModal}
             onCreateRoleUser={handleOpenUserModal}
           />
@@ -640,7 +640,7 @@ if (response?.forceLogout && editingUser?._id === currentUser?._id) {
 
                         {/* User Cards Grid */}
                         {!isLoading && (
-                          <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-center md34:!mb-[100px] md11:!mb-[0px] gap-[15px]">
+                          <div className="flex flex-wrap  mx-auto md11:!justify-start md34:!justify-center md34:!mb-[100px] md11:!mb-[15px] gap-[15px]">
                             {users.map((user) => (
                               <div
                                 key={user._id || user.id}

@@ -1,8 +1,8 @@
 import axios from "axios";
 import Cookies from 'js-cookie';
 
-export const BaseURL = "http://localhost:4001/api/v2/giriraj";
-// export const BaseURL = "https://server.grafizen.in/api/v2/giriraj";
+// export const BaseURL = "http://localhost:4001/api/v2/giriraj";
+export const BaseURL = "https://server.grafizen.in/api/v2/giriraj";
 // export const BaseURL = "https://dev.feedbacks.live/api/v2/giriraj";
 
 

@@ -1078,10 +1078,10 @@ function getDisplayComment(comments, finalComment) {
                         <div className="flex  w-[100%] h-[100%]">
                             <SideBar />
 
-                            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+                            <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] overflow-x-hidden md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
                                 <Preloader />
 
-                                <div className="mx-auto w-full">
+                                <div className="mx-auto  w-full">
                                     {/* KPI Cards */}
                                     <div className="grid md34:!grid-cols-2 md11:!grid-cols-4 gap-x-[10px] w-[100%]">
                                         {/* 📨 Total Feedback (Navigate) */}
@@ -1219,7 +1219,7 @@ function getDisplayComment(comments, finalComment) {
                                     {/* Charts Row */}
                                     <div className="flex  md11:!flex-row flex-col  justify-start  gap-[15px] mb-2  ">
                                         {/* Rating Distribution Donut Chart */}
-                                        <div className="bg-white rounded-xl h-fit dashShadow w-[300px]  p-[13px]">
+                                        <div className="bg-white rounded-xl h-fit dashShadow md11:!w-[300px]  p-[13px]">
                                             <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
@@ -1275,7 +1275,7 @@ function getDisplayComment(comments, finalComment) {
 
                                         </div>
 
-                                        <div className="bg-white  dashShadow  w-[400px] rounded-xl p-[13px]  ">
+                                        <div className="bg-white  dashShadow  md11:!w-[400px] rounded-xl p-[13px]  ">
                                             <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
                                                 <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1330,7 +1330,7 @@ function getDisplayComment(comments, finalComment) {
                                                 <h3 className="text-[13px] font-[500] text-gray-900 ">Service-Wise Summary</h3>
                                             </div>
                                             <div className="overflow-x-auto border  rounded-[10px]">
-                                                <table className=" min-w-[800px] md11:!min-w-full">
+                                                <table className=" min-w-[900px] md11:!min-w-full">
                                                     <thead className="bg-gray-100">
                                                         <tr>
                                                             <th className="px-6 py-[13px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
@@ -1399,7 +1399,7 @@ function getDisplayComment(comments, finalComment) {
                                     {/* Patient-Wise Feedback Table */}
                                     <div className="rounded-xl e md34:!mb-[100px] md11:!mb-0    overflow-hidden">
                                         <div className="px-2  pt-[5px] pb-[13px]   border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
-                                            <div className=' flex gap-[10px] items-center    justify-start '>
+                                            <div className=' flex gap-[10px] items-center   md34:!mb-[10px] md11:!mb-[0px]  justify-start '>
 
 
                                                 <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">

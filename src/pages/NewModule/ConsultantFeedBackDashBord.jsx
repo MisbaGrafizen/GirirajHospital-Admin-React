@@ -62,32 +62,32 @@ import ModernDatePicker from '../../Component/MainInputFolder/ModernDatePicker'
 const API_URL = "/admin/consultant-feedback"
 
 const serviceIcons = {
-  "OPD Services – Overall performance": Star,       // ⭐
-  "Front Desk – Admission, discharge, billing": FileText, 
-  "ER Team – Coordination and response": Activity, 
-  "Medical Officers – Support and efficiency": User,
-  "CMO – Clinical coordination": Stethoscope,
-  "Patient Documentation – Accuracy and upkeep": FileText,
-  "Lab – Report speed and quality": TestTube2,
-  "Radiology – Timely and effective support": Building2,
-  "OT Team – Skill and coordination (Surgeons-Anaesthetists)": Stethoscope,
-  "Pharmacy – Availability of medicines": Pill,
-  "Dietary – Food quality and hygiene": Utensils,
-  "Security – Professionalism and vigilance": ShieldCheck,
-  "Nursing – Care, medication, coordination": HeartPulse,
-  "Maintenance/IT – Quick and reliable support": Wrench,
-  "Housekeeping – Cleanliness and standards": SprayCan,
+    "OPD Services – Overall performance": Star,       // ⭐
+    "Front Desk – Admission, discharge, billing": FileText,
+    "ER Team – Coordination and response": Activity,
+    "Medical Officers – Support and efficiency": User,
+    "CMO – Clinical coordination": Stethoscope,
+    "Patient Documentation – Accuracy and upkeep": FileText,
+    "Lab – Report speed and quality": TestTube2,
+    "Radiology – Timely and effective support": Building2,
+    "OT Team – Skill and coordination (Surgeons-Anaesthetists)": Stethoscope,
+    "Pharmacy – Availability of medicines": Pill,
+    "Dietary – Food quality and hygiene": Utensils,
+    "Security – Professionalism and vigilance": ShieldCheck,
+    "Nursing – Care, medication, coordination": HeartPulse,
+    "Maintenance/IT – Quick and reliable support": Wrench,
+    "Housekeeping – Cleanliness and standards": SprayCan,
 
-  // BD Ratings
-  "BD Team – Cooperation and support": User,
-  "BD – Any extra help needed": HelpingHand,
+    // BD Ratings
+    "BD Team – Cooperation and support": User,
+    "BD – Any extra help needed": HelpingHand,
 
-  // Management Feedback
-  "Major challenges this month": AlertTriangle,
-  "Suggestions for process improvement": Lightbulb,
-  "Extra administrative support needed": UserPlus,
-  "Staff attitude and teamwork": UserPlus,
-  "Training needs for staff": GraduationCap,
+    // Management Feedback
+    "Major challenges this month": AlertTriangle,
+    "Suggestions for process improvement": Lightbulb,
+    "Extra administrative support needed": UserPlus,
+    "Staff attitude and teamwork": UserPlus,
+    "Training needs for staff": GraduationCap,
 };
 
 
@@ -147,17 +147,17 @@ function calcRowAverage(feedback = {}) {
 
 
 function getEnglishOnly(name = "") {
-  if (!name) return "";
+    if (!name) return "";
 
-  // Split by slash if backend sends multiple languages
-  const parts = name.split("/").map((p) => p.trim());
+    // Split by slash if backend sends multiple languages
+    const parts = name.split("/").map((p) => p.trim());
 
-  // English = no Gujarati (઼-૿) and no Hindi (ँ-॰)
-  const english = parts.find(
-    (p) => !/[\u0A80-\u0AFF]/.test(p) && !/[\u0900-\u097F]/.test(p)
-  );
+    // English = no Gujarati (઼-૿) and no Hindi (ँ-॰)
+    const english = parts.find(
+        (p) => !/[\u0A80-\u0AFF]/.test(p) && !/[\u0900-\u097F]/.test(p)
+    );
 
-  return english || name;
+    return english || name;
 }
 
 
@@ -516,34 +516,34 @@ export default function ConsultantFeedBackDashBord() {
             .replace(/^./, (c) => c.toUpperCase());
     }
 
-   const SERVICE_GROUPS = {
-  "OPD Services – Overall performance": ["OPD Services – Overall performance"],
-  "Front Desk – Admission, discharge, billing": ["Front Desk – Admission, discharge, billing"],
-  "ER Team – Coordination and response": ["ER Team – Coordination and response"],
-  "Medical Officers – Support and efficiency": ["Medical Officers – Support and efficiency"],
-  "CMO – Clinical coordination": ["CMO – Clinical coordination"],
-  "Patient Documentation – Accuracy and upkeep": ["Patient Documentation – Accuracy and upkeep"],
-  "Lab – Report speed and quality": ["Lab – Report speed and quality"],
-  "Radiology – Timely and effective support": ["Radiology – Timely and effective support"],
-  "OT Team – Skill and coordination (Surgeons-Anaesthetists)": ["OT Team – Skill and coordination (Surgeons-Anaesthetists)"],
-  "Pharmacy – Availability of medicines": ["Pharmacy – Availability of medicines"],
-  "Dietary – Food quality and hygiene": ["Dietary – Food quality and hygiene"],
-  "Security – Professionalism and vigilance": ["Security – Professionalism and vigilance"],
-  "Nursing – Care, medication, coordination": ["Nursing – Care, medication, coordination"],
-  "Maintenance/IT – Quick and reliable support": ["Maintenance/IT – Quick and reliable support"],
-  "Housekeeping – Cleanliness and standards": ["Housekeeping – Cleanliness and standards"],
+    const SERVICE_GROUPS = {
+        "OPD Services – Overall performance": ["OPD Services – Overall performance"],
+        "Front Desk – Admission, discharge, billing": ["Front Desk – Admission, discharge, billing"],
+        "ER Team – Coordination and response": ["ER Team – Coordination and response"],
+        "Medical Officers – Support and efficiency": ["Medical Officers – Support and efficiency"],
+        "CMO – Clinical coordination": ["CMO – Clinical coordination"],
+        "Patient Documentation – Accuracy and upkeep": ["Patient Documentation – Accuracy and upkeep"],
+        "Lab – Report speed and quality": ["Lab – Report speed and quality"],
+        "Radiology – Timely and effective support": ["Radiology – Timely and effective support"],
+        "OT Team – Skill and coordination (Surgeons-Anaesthetists)": ["OT Team – Skill and coordination (Surgeons-Anaesthetists)"],
+        "Pharmacy – Availability of medicines": ["Pharmacy – Availability of medicines"],
+        "Dietary – Food quality and hygiene": ["Dietary – Food quality and hygiene"],
+        "Security – Professionalism and vigilance": ["Security – Professionalism and vigilance"],
+        "Nursing – Care, medication, coordination": ["Nursing – Care, medication, coordination"],
+        "Maintenance/IT – Quick and reliable support": ["Maintenance/IT – Quick and reliable support"],
+        "Housekeeping – Cleanliness and standards": ["Housekeeping – Cleanliness and standards"],
 
-  // BD
-  "BD Team – Cooperation and support": ["BD Team – Cooperation and support"],
-  "BD – Any extra help needed": ["BD – Any extra help needed"],
+        // BD
+        "BD Team – Cooperation and support": ["BD Team – Cooperation and support"],
+        "BD – Any extra help needed": ["BD – Any extra help needed"],
 
-  // Management
-  "Major challenges this month": ["Major challenges this month"],
-  "Suggestions for process improvement": ["Suggestions for process improvement"],
-  "Extra administrative support needed": ["Extra administrative support needed"],
-  "Staff attitude and teamwork": ["Staff attitude and teamwork"],
-  "Training needs for staff": ["Training needs for staff"]
-};
+        // Management
+        "Major challenges this month": ["Major challenges this month"],
+        "Suggestions for process improvement": ["Suggestions for process improvement"],
+        "Extra administrative support needed": ["Extra administrative support needed"],
+        "Staff attitude and teamwork": ["Staff attitude and teamwork"],
+        "Training needs for staff": ["Training needs for staff"]
+    };
 
 
     function toArray(maybeArray) {
@@ -551,38 +551,38 @@ export default function ConsultantFeedBackDashBord() {
         return [];
     }
 
-   function buildServiceSummary(raw = []) {
-  const rows = [];
+    function buildServiceSummary(raw = []) {
+        const rows = [];
 
-  for (const [serviceLabel, keys] of Object.entries(SERVICE_GROUPS)) {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let total = 0;
+        for (const [serviceLabel, keys] of Object.entries(SERVICE_GROUPS)) {
+            const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            let total = 0;
 
-    raw.forEach((fb) => {
-      const ratings = fb?.serviceRatings || [];
+            raw.forEach((fb) => {
+                const ratings = fb?.serviceRatings || [];
 
-      ratings.forEach((r) => {
-        if (keys.includes(r.label) && r.rating >= 1 && r.rating <= 5) {
-          counts[r.rating] += 1;
-          total += 1;
+                ratings.forEach((r) => {
+                    if (keys.includes(r.label) && r.rating >= 1 && r.rating <= 5) {
+                        counts[r.rating] += 1;
+                        total += 1;
+                    }
+                });
+            });
+
+            const denom = total || 1;
+
+            rows.push({
+                service: serviceLabel,      // 👈 Always English
+                excellent: Math.round((counts[5] / denom) * 100),
+                good: Math.round((counts[4] / denom) * 100),
+                average: Math.round((counts[3] / denom) * 100),
+                poor: Math.round((counts[2] / denom) * 100),
+                veryPoor: Math.round((counts[1] / denom) * 100),
+            });
         }
-      });
-    });
 
-    const denom = total || 1;
-
-    rows.push({
-      service: serviceLabel,      // 👈 Always English
-      excellent: Math.round((counts[5] / denom) * 100),
-      good: Math.round((counts[4] / denom) * 100),
-      average: Math.round((counts[3] / denom) * 100),
-      poor: Math.round((counts[2] / denom) * 100),
-      veryPoor: Math.round((counts[1] / denom) * 100),
-    });
-  }
-
-  return rows;
-}
+        return rows;
+    }
 
 
 
@@ -1120,7 +1120,7 @@ export default function ConsultantFeedBackDashBord() {
                     <div className="flex  w-[100%] h-[100%]">
                         <SideBar />
 
-                        <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] rounded-[10px]">
+                        <div className="flex flex-col w-[100%]  relative max-h-[93%]  md34:!pb-[120px] m md11:!pb-[30px] py-[10px] px-[10px]  overflow-y-auto gap-[10px] overflow-x-hidden rounded-[10px]">
                             <Preloader />
 
                             <div className="mx-auto w-full">
@@ -1249,7 +1249,7 @@ export default function ConsultantFeedBackDashBord() {
                                 {/* Charts Row */}
                                 <div className="flex  md11:!flex-row flex-col  justify-start  gap-[15px] mb-2  ">
                                     {/* Rating Distribution Donut Chart */}
-                                    <div className="bg-white rounded-xl h-fit dashShadow w-[300px]  p-[13px]">
+                                    <div className="bg-white rounded-xl h-fit dashShadow md11:!w-[300px]  p-[13px]">
                                         <div className=' flex  mb-[10px] items-center gap-[10px]'>
 
 
@@ -1305,7 +1305,7 @@ export default function ConsultantFeedBackDashBord() {
 
                                     </div>
 
-                                    <div className="bg-white  dashShadow  w-[400px] rounded-xl p-[13px]  ">
+                                    <div className="bg-white  dashShadow  md11:!w-[400px] rounded-xl p-[13px]  ">
                                         <div className=' flex  mb-[17px] items-center gap-[10px]'>
 
                                             <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1360,10 +1360,10 @@ export default function ConsultantFeedBackDashBord() {
                                             <h3 className="text-[13px] font-[500] text-gray-900 ">Service-Wise Summary</h3>
                                         </div>
                                         <div className="overflow-x-auto border  rounded-[10px]">
-                                            <table className=" min-w-[800px] md11:!min-w-full">
+                                            <table className=" min-w-[1100px] md11:!min-w-full">
                                                 <thead className="bg-gray-100">
                                                     <tr>
-                                                        <th className="px-6 py-[13px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                                        <th className="px-6 py-[13px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r  border-gray-200">
                                                             Service
                                                         </th>
                                                         <th className="px-6 py-[13px] text-center text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
@@ -1429,7 +1429,7 @@ export default function ConsultantFeedBackDashBord() {
                                 {/* Patient-Wise Feedback Table */}
                                 <div className="rounded-xl e md34:!mb-[100px] md11:!mb-0    overflow-hidden">
                                     <div className="px-2  pt-[5px] pb-[13px]   border-gray-200 flex flex-col sm:flex-row justify-between md77:!items-center">
-                                        <div className=' flex gap-[10px] items-center    justify-start '>
+                                        <div className=' flex gap-[10px] items-center md11:!mb-0 md34:!mb-[10px]   justify-start '>
 
 
                                             <div className="w-[35px] h-[35px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md flex items-center justify-center">
@@ -1453,7 +1453,7 @@ export default function ConsultantFeedBackDashBord() {
                                             <div className=' flex gap-[10px]'>
 
 
-                                       
+
                                                 <button
 
                                                     className="flex items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -1467,7 +1467,7 @@ export default function ConsultantFeedBackDashBord() {
                                     </div>
 
                                     <div className="overflow-x-auto border  rounded-[10px]">
-                                        <table className=" min-w-[1200px] md11:!min-w-full">
+                                        <table className=" min-w-[900px] md11:!min-w-full">
                                             <thead className="bg-gray-50">
                                                 <tr>
                                                     {/* Date & Time */}
@@ -1571,7 +1571,6 @@ export default function ConsultantFeedBackDashBord() {
                                                         {/* <td className="px-2 py-2 text-sm text-gray-900 border-r">
         {feedback.staffAttitude || "-"}
       </td> */}
-
                                                         {/* Q22: Training Needs */}
                                                         {/* <td className="px-2 py-2 text-sm text-gray-900">
         {feedback.trainingNeeds || "-"}

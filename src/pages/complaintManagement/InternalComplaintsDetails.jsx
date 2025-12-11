@@ -19,6 +19,7 @@ import {
     Clock,
     ArrowLeft,
     Hospital,
+    IdCard,
 } from "lucide-react"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiGet, ApiPost, ApiPut } from '../../helper/axios'
@@ -1407,15 +1408,15 @@ const normalizeDept = (label) => {
                                                             <p className="font-medium text-gray-900">{complaint.bedNo}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 bg-gray-50 md34:!p-[10px] rounded-lg shadow-sm border !border-[#eaeaea] ">
-                                                        <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!mb-[10px] md11:!mb-[0px] bg-gray-50 md34:!p-[10px] rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                        <IdCard className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Employee Id</p>
                                                             <p className="font-medium text-gray-900">{complaint.doctorName}</p>
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!mb-[10px] md11:!mb-[0px] md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
                                                         <MapPin className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Department</p>
@@ -1423,7 +1424,7 @@ const normalizeDept = (label) => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
+                                                    <div className="flex md11:!p-2 md13:!p-3 flex-shrink-0 md34:!p-[10px] bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] md34:!mb-[10px] md11:!mb-[0px] ">
                                                         <Calendar className="w-5 h-5 flex-shrink-0 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Date & Time</p>
@@ -1871,7 +1872,7 @@ const normalizeDept = (label) => {
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0 }}
-                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+                                                className="fixed inset-0 z-[100000] overflow-y-auto bg-black bg-opacity-50"
                                                 onClick={closeAllModals}
                                             >
                                                 <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -1989,8 +1990,8 @@ const normalizeDept = (label) => {
                                                                 </div>
 
                                                                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                                                    <div className="flex items-center">
-                                                                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                                                                    <div className="flex   items-start">
+                                                                        <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-500 mr-3" />
                                                                         <span className="text-sm text-green-800">
                                                                             Patient will receive an SMS notification about the resolution.
                                                                         </span>
@@ -2266,8 +2267,8 @@ const normalizeDept = (label) => {
 
                                                                 {/* ⚠️ WARNING BOX */}
                                                                 <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                                                                    <div className="flex items-center">
-                                                                        <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
+                                                                    <div className="flex items-start">
+                                                                        <AlertTriangle className="w-5 h-5  flex-shrink-0 text-red-500 mr-3" />
                                                                         <span className="text-sm text-red-800">
                                                                             Higher authority will receive system + email notification.
                                                                         </span>
@@ -2278,7 +2279,7 @@ const normalizeDept = (label) => {
                                                         </div>
 
                                                         {/* -------- FOOTER -------- */}
-                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                                                        <div className="bg-gray-50 px-6 py-4 flex justify-between md11:!justify-end gap-3">
                                                             <button
                                                                 onClick={closeAllModals}
                                                                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
@@ -2289,7 +2290,7 @@ const normalizeDept = (label) => {
                                                             <button
                                                                 onClick={handleEscalateSubmit}
                                                                 disabled={!escalationLevel || !escalationNote.trim()}
-                                                                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                                                className="md11:!px-6 py-2 md34:!px-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                                                             >
                                                                 Escalate Complaint
                                                             </button>
@@ -2508,7 +2509,7 @@ const normalizeDept = (label) => {
                                                     animate={{ opacity: 1 }}
                                                     exit={{ opacity: 0 }}
                                                     onClick={() => setIsOpen(false)}
-                                                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                                                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000000] flex items-center justify-center p-4"
                                                 >
                                                     {/* Modal */}
                                                     <motion.div
@@ -2520,45 +2521,31 @@ const normalizeDept = (label) => {
                                                         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
                                                     >
                                                         {/* Header */}
-                                                        <motion.div
-                                                            initial={{ opacity: 0, y: -20 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            transition={{ delay: 0.1 }}
-                                                            className="px-6 pt-4 border-b border-gray-100 flex items-center justify-between"
-                                                        >
-                                                            <div>
-                                                                <h2 className="text-2xl font-bold text-gray-900">Progress Remark  </h2>
-                                                                <div className="flex items-center gap-4 mt-2   text-sm text-gray-600">
-                                                                    <span className="flex items-center gap-1">
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={2}
-                                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                                                            />
-                                                                        </svg>
-                                                                        Complaint ID: {complaint.complaintId}
-                                                                    </span>
-                                                                    <span className="flex items-center gap-1">
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={2}
-                                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                                            />
-                                                                        </svg>
-                                                                        {complaint.date}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                                                <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
-                                                        </motion.div>
+                                                           <motion.div
+                                                                                                                  initial={{ opacity: 0, y: -20 }}
+                                                                                                                  animate={{ opacity: 1, y: 0 }}
+                                                                                                                  transition={{ delay: 0.1 }}
+                                                                                                                  className="px-6 pt-4 relative border-b border-gray-100 flex items-center justify-between"
+                                                                                                              >
+                                                                                                                  <div>
+                                                                                                                      <h2 className="text-2xl font-bold text-gray-900">Progress Remark  </h2>
+                                                                                                                      <div className="flex md11:items-center md11:!gap-4 md34:gap-[10px] mt-3 md11:!flex-row md34:!flex-col  text-sm text-gray-600">
+                                                                                                                          <span className="flex   items-center gap-1">
+                                                                                                                              <User className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                                                                                                                              Complaint ID: {complaint.complaintId}
+                                                                                                                          </span>
+                                                                                                                          <span className="flex items-center gap-1">
+                                                                                                                              <Clock className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                                                                                                                              {complaint.date}
+                                                                                                                          </span>
+                                                                                                                      </div>
+                                                                                                                  </div>
+                                                                                                                  <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 absolute top-[10px] right-2 rounded-full transition-colors">
+                                                                                                                      <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                                                                      </svg>
+                                                                                                                  </button>
+                                                                                                              </motion.div>
 
                                                         {/* Content */}
                                                         <div className="px-6 py-4 mb-4 max-h-[calc(90vh-120px)] overflow-y-auto">
@@ -2624,7 +2611,7 @@ const normalizeDept = (label) => {
                                                                 transition={{ delay: 0.3 }}
                                                                 className="mb-6"
                                                             >
-                                                                <div className="flex items-center justify-between mb-3">
+                                                                <div className="flex  items-start justify-between mb-3">
                                                                     <div className="flex items-center gap-2">
 
                                                                         <h3 className="text-lg font-semibold text-gray-900">Update about the complaint / action taken</h3>

@@ -18,6 +18,7 @@ import {
     Paperclip,
     Clock,
     ArrowLeft,
+    Stethoscope,
 } from "lucide-react"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiGet, ApiPost, ApiPut } from '../../helper/axios'
@@ -171,10 +172,10 @@ export default function ComplaintViewPage() {
     const [paNote, setPaNote] = useState("");
     const [fromDepartment, setFromDepartment] = useState("");
     const [isFromDeptDropdownOpen, setIsFromDeptDropdownOpen] = useState(false);
-const [previewImage, setPreviewImage] = useState(null);
+    const [previewImage, setPreviewImage] = useState(null);
 
-const openImage = (src) => setPreviewImage(src);
-const closeImage = () => setPreviewImage(null);
+    const openImage = (src) => setPreviewImage(src);
+    const closeImage = () => setPreviewImage(null);
 
 
 
@@ -1036,7 +1037,7 @@ const closeImage = () => setPreviewImage(null);
                                                         </div>
                                                     </div>
                                                     <div className="flex md11:!p-2 md13:!p-3 p-2 flex-shrink-0 bg-gray-50 rounded-lg shadow-sm border !border-[#eaeaea] ">
-                                                        <User className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
+                                                        <Stethoscope className="w-5 flex-shrink-0 h-5 text-gray-400 mr-3" />
                                                         <div>
                                                             <p className="text-sm text-gray-600">Doctor</p>
                                                             <p className="font-medium text-gray-900">{complaint.doctorName}</p>
@@ -1474,7 +1475,7 @@ const closeImage = () => setPreviewImage(null);
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex justify-end gap-3 mt-6">
+                                                        <div className="flex md11:!justify-end md34:!justify-between gap-3 mt-6">
                                                             <button
                                                                 onClick={closeAllModals}
                                                                 className="px-6 py-2 border rounded-lg"
@@ -1485,7 +1486,7 @@ const closeImage = () => setPreviewImage(null);
                                                             <button
                                                                 onClick={handleForwardSubmit}
                                                                 disabled={!forwardDepartment || !forwardReason.trim()}
-                                                                className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                                                                className="md11:!px-6 md34:!px-3 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
                                                             >
                                                                 Forward Complaint
                                                             </button>
@@ -1504,7 +1505,7 @@ const closeImage = () => setPreviewImage(null);
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0 }}
-                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+                                                className="fixed inset-0 z-[100000] overflow-y-auto bg-black bg-opacity-50"
                                                 onClick={closeAllModals}
                                             >
                                                 <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -2113,7 +2114,7 @@ const closeImage = () => setPreviewImage(null);
                                                     animate={{ opacity: 1 }}
                                                     exit={{ opacity: 0 }}
                                                     onClick={() => setIsOpen(false)}
-                                                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                                                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000000] flex items-center justify-center p-4"
                                                 >
                                                     {/* Modal */}
                                                     <motion.div
@@ -2122,43 +2123,29 @@ const closeImage = () => setPreviewImage(null);
                                                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                                                         transition={{ type: "spring", duration: 0.5 }}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+                                                        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] md34:!overflow-y-auto md11:!overflow-hidden"
                                                     >
                                                         {/* Header */}
                                                         <motion.div
                                                             initial={{ opacity: 0, y: -20 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ delay: 0.1 }}
-                                                            className="px-6 pt-4 border-b border-gray-100 flex items-center justify-between"
+                                                            className="px-6 pt-4 relative border-b border-gray-100 flex items-center justify-between"
                                                         >
                                                             <div>
                                                                 <h2 className="text-2xl font-bold text-gray-900">Progress Remark  </h2>
-                                                                <div className="flex items-center gap-4 mt-2   text-sm text-gray-600">
-                                                                    <span className="flex items-center gap-1">
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={2}
-                                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                                                            />
-                                                                        </svg>
+                                                                <div className="flex md11:items-center md11:!gap-4 md34:gap-[10px] mt-3 md11:!flex-row md34:!flex-col  text-sm text-gray-600">
+                                                                    <span className="flex   items-center gap-1">
+                                                                        <User className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
                                                                         Complaint ID: {complaint.complaintId}
                                                                     </span>
                                                                     <span className="flex items-center gap-1">
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={2}
-                                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                                            />
-                                                                        </svg>
+                                                                        <Clock className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
                                                                         {complaint.date}
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 absolute top-[10px] right-2 rounded-full transition-colors">
                                                                 <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                                                 </svg>
@@ -2221,7 +2208,7 @@ const closeImage = () => setPreviewImage(null);
                                                                 transition={{ delay: 0.3 }}
                                                                 className="mb-6"
                                                             >
-                                                                <div className="flex items-center justify-between mb-3">
+                                                                <div className="flex  justify-between items-start mb-3">
                                                                     <div className="flex items-center gap-2">
 
                                                                         <h3 className="text-lg font-semibold text-gray-900">Update about the complaint / action taken</h3>
@@ -2233,7 +2220,7 @@ const closeImage = () => setPreviewImage(null);
                                                                                 setIsEditing(true)
                                                                                 setTempText(complaintText)
                                                                             }}
-                                                                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
+                                                                            className="p-2 text-gray-500  hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 group"
                                                                             title="Edit complaint details"
                                                                         >
                                                                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

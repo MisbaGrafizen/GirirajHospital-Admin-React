@@ -57,10 +57,10 @@ export default function NpsAllList() {
   const [dateFrom1, setDateFrom1] = useState(null);
   const [dateTo1, setDateTo1] = useState(null);
   const [filters, setFilters] = useState({
-  from: null,
-  to: null,
-  search: "",
-});
+    from: null,
+    to: null,
+    search: "",
+  });
 
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
@@ -147,44 +147,44 @@ export default function NpsAllList() {
 
 
   // 🔥 Apply selectedDate filter on top of existing filters (UI date filter)
-const finalFilteredRecords = useMemo(() => {
-  let list = [...filteredRecords];
+  const finalFilteredRecords = useMemo(() => {
+    let list = [...filteredRecords];
 
-  const { from, to, search } = filters;
+    const { from, to, search } = filters;
 
-  // 🔥 SEARCH FILTER
-  if (search) {
-    const q = search.toLowerCase();
-    list = list.filter((r) =>
-      r.patient.toLowerCase().includes(q) ||
-      r.doctor.toLowerCase().includes(q) ||
-      r.comment.toLowerCase().includes(q)
-    );
-  }
+    // 🔥 SEARCH FILTER
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((r) =>
+        r.patient.toLowerCase().includes(q) ||
+        r.doctor.toLowerCase().includes(q) ||
+        r.comment.toLowerCase().includes(q)
+      );
+    }
 
-  // 🔥 DATE FILTER (Header based)
-  if (from || to) {
-    list = list.filter((r) => {
-      const dt = new Date(r.date);
+    // 🔥 DATE FILTER (Header based)
+    if (from || to) {
+      list = list.filter((r) => {
+        const dt = new Date(r.date);
 
-      if (from) {
-        const f = new Date(from);
-        f.setHours(0, 0, 0, 0);
-        if (dt < f) return false;
-      }
+        if (from) {
+          const f = new Date(from);
+          f.setHours(0, 0, 0, 0);
+          if (dt < f) return false;
+        }
 
-      if (to) {
-        const t = new Date(to);
-        t.setHours(23, 59, 59, 999);
-        if (dt > t) return false;
-      }
+        if (to) {
+          const t = new Date(to);
+          t.setHours(23, 59, 59, 999);
+          if (dt > t) return false;
+        }
 
-      return true;
-    });
-  }
+        return true;
+      });
+    }
 
-  return list;
-}, [filteredRecords, filters]);
+    return list;
+  }, [filteredRecords, filters]);
 
 
 
@@ -228,11 +228,11 @@ const finalFilteredRecords = useMemo(() => {
 
       <section className="flex w-[100%] h-[100%] select-none   md11:pr-[0px] overflow-hidden">
         <div className="flex w-[100%] flex-col gap-[0px] h-[100vh]">
-        <Header 
-  pageName="Nps All Record"
-  onFilterChange={(data) => setFilters(data)}
-  onExportExcel={exportToExcel} 
-/>
+          <Header
+            pageName="Nps All Record"
+            onFilterChange={(data) => setFilters(data)}
+            onExportExcel={exportToExcel}
+          />
 
           <div className="flex  w-[100%] h-[100%]">
             <CubaSidebar />
@@ -240,7 +240,7 @@ const finalFilteredRecords = useMemo(() => {
               <Preloader />
               <div>
 
-    
+
 
 
                 <div className="bg-white rounded-lg shadow-sm border md34:!mb-[100px] w-[100%] mx-auto md11:!mb-[0px] border-gray-100 overflow-hidden">
@@ -248,22 +248,22 @@ const finalFilteredRecords = useMemo(() => {
                     <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[100px]">SR No</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[220px]">Date & Time</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[250px]">Patient Name</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">Room No</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[230px]">Doctor Name</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r w-[140px]">NPS Rating</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
-                          <th className="px-3 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[70px]">SR No</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[180px]">Date & Time</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[290px]">Patient Name</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[140px]">Room No</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Doctor Name</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[100px]">NPS Rating</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider ">Category</th>
+                          <th className="px-2 py-[12px] text-left text-[12px] font-medium text-gray-500 uppercase tracking-wider  w-[230px]">Comment</th>
                         </tr>
                       </thead>
 
                       <tbody className="bg-white divide-y divide-gray-100">
                         {finalFilteredRecords.map((rec, idx) => (
                           <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-700">{idx + 1}</td>
-                            <td className="px-2 py-[12px] text-[13px] border-r text-gray-900">
+                            <td className="px-2 py-[12px] text-[13px]  text-center text-gray-700">{idx + 1}</td>
+                            <td className="px-2 py-[12px] text-[13px]  text-center text-gray-900">
                               <div className=' flex gap-[9px]'>
 
 
@@ -275,7 +275,7 @@ const finalFilteredRecords = useMemo(() => {
                             </td>
 
                             {/* 👤 Patient Name with icon */}
-                            <td className="px-3 py-[12px] text-[13px] border-r font-[400] text-gray-900">
+                            <td className="px-2 py-[12px] text-[13px]  text-center font-[400] text-gray-900">
                               <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-gray-400" />
                                 <span>{rec.patient || "-"}</span>
@@ -283,7 +283,7 @@ const finalFilteredRecords = useMemo(() => {
                             </td>
 
                             {/* 🛏️ Room / Bed No with icon */}
-                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
+                            <td className="px-2 py-[12px] text-[13px]  text-center text-gray-900">
                               <div className="flex items-center gap-2">
                                 <Bed className="w-4 h-4 text-gray-400" />
                                 <span>{rec.room || "-"}</span>
@@ -291,7 +291,7 @@ const finalFilteredRecords = useMemo(() => {
                             </td>
 
                             {/* 🩺 Doctor Name with icon */}
-                            <td className="px-3 py-[12px] text-[13px] border-r text-gray-900">
+                            <td className="px-2 py-[12px] text-[13px]  text-center text-gray-900">
                               <div className="flex items-center gap-2">
                                 <Stethoscope className="w-4 h-4 text-gray-400" />
                                 <span>{rec.doctor || "-"}</span>
@@ -299,7 +299,7 @@ const finalFilteredRecords = useMemo(() => {
                             </td>
 
                             {/* 😄😐😞 NPS Rating with icon */}
-                            <td className="px-3 py-[12px] text-[13px] border-r font-[]500 text-gray-900">
+                            <td className="px-2 py-[12px] text-[13px]  text-center font-[]500 text-gray-900">
                               <div className="flex items-center gap-2">
                                 {rec.category === "Promoter" && <Smile className="w-4 h-4 text-emerald-600" />}
                                 {rec.category === "Passive" && <Meh className="w-4 h-4 text-amber-500" />}
@@ -309,7 +309,7 @@ const finalFilteredRecords = useMemo(() => {
                             </td>
 
                             {/* 🟢🟡🔴 Category Badge */}
-                            <td className="px-3 py-[12px] text-[13px] border-r">
+                            <td className="px-2 py-[12px] text-[13px]  text-center">
                               <span
                                 className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
                                   ? "bg-emerald-100 text-emerald-800"
@@ -323,7 +323,7 @@ const finalFilteredRecords = useMemo(() => {
                             </td>
 
                             {/* 💬 Comment with truncation */}
-                            <td className="px-3 py-[12px] text-[12px] border-r text-gray-700  ">
+                            <td className="px-2 py-[12px] text-[12px]  text-left text-gray-700  ">
                               {rec.comment ? rec.comment.split(" ").slice(0, 15).join(" ") + "" : ""}
                             </td>
                           </tr>

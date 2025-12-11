@@ -24,6 +24,9 @@ import {
     Ticket,
     CalendarClock,
     Stethoscope,
+    ClockArrowDown,
+    ClockArrowUpIcon,
+    AlarmClockCheck,
 } from "lucide-react"
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -229,7 +232,7 @@ function getDoctorName(doc) {
     if (!doc.consultantDoctorName) return "-";
 
     const { name, gujName, hindiName } = doc.consultantDoctorName;
-    const lang = doc.language || "en"; 
+    const lang = doc.language || "en";
 
     let doctorName = name;
     if (lang === "gu") doctorName = gujName || name;
@@ -890,46 +893,46 @@ export default function ComplaintManagementDashboard() {
         // Top-5 departments
         // ===================== TOP 5 DEPARTMENTS (FILTERED BY ALLOWED DEPARTMENTS) =====================
 
-const deptStats = {};
+        const deptStats = {};
 
-statsDocs.forEach((d) => {
-    const deptKey = LABEL_TO_KEY[d.department];
+        statsDocs.forEach((d) => {
+            const deptKey = LABEL_TO_KEY[d.department];
 
-    // Skip if no mapping found
-    if (!deptKey) return;
+            // Skip if no mapping found
+            if (!deptKey) return;
 
-    // Skip if user is NOT allowed to see this department
-    if (!allowedBlocks.includes(deptKey)) return;
+            // Skip if user is NOT allowed to see this department
+            if (!allowedBlocks.includes(deptKey)) return;
 
-    // Continue normal aggregation
-    if (!deptStats[d.department]) {
-        deptStats[d.department] = {
-            complaints: 0,
-            totalResolution: 0,
-            escalations: 0,
-        };
-    }
+            // Continue normal aggregation
+            if (!deptStats[d.department]) {
+                deptStats[d.department] = {
+                    complaints: 0,
+                    totalResolution: 0,
+                    escalations: 0,
+                };
+            }
 
-    deptStats[d.department].complaints += 1;
-    deptStats[d.department].totalResolution += d.resolutionTime || 0;
-    if (d.escalated) deptStats[d.department].escalations += 1;
-});
+            deptStats[d.department].complaints += 1;
+            deptStats[d.department].totalResolution += d.resolutionTime || 0;
+            if (d.escalated) deptStats[d.department].escalations += 1;
+        });
 
-// Sort and take TOP 5
-const top = Object.entries(deptStats)
-    .map(([department, s]) => ({
-        department,
-        complaints: s.complaints,
-        avgResolution: s.complaints
-            ? (s.totalResolution / s.complaints).toFixed(1) + " days"
-            : "-",
-        escalations: s.escalations,
-    }))
-    .sort((a, b) => b.complaints - a.complaints)
-    .slice(0, 5)
-    .map((x, i) => ({ rank: i + 1, ...x }));
+        // Sort and take TOP 5
+        const top = Object.entries(deptStats)
+            .map(([department, s]) => ({
+                department,
+                complaints: s.complaints,
+                avgResolution: s.complaints
+                    ? (s.totalResolution / s.complaints).toFixed(1) + " days"
+                    : "-",
+                escalations: s.escalations,
+            }))
+            .sort((a, b) => b.complaints - a.complaints)
+            .slice(0, 5)
+            .map((x, i) => ({ rank: i + 1, ...x }));
 
-setTop5Departments(top);
+        setTop5Departments(top);
 
     }, [rawConcerns, allowedBlocks, filters, selectedStatus, searchTerm]);
 
@@ -1538,13 +1541,7 @@ setTop5Departments(top);
                                                         <Eye className="w-4 h-4" />
 
                                                     </button>
-                                                    <button
-
-                                                        className=" md34:!flex md11:!hidden items-center px-2 py-[6px] w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                    >
-                                                        <Download className="w-5 h-5 " />
-
-                                                    </button>
+              
                                                     <button
 
                                                         className=" md34:! md11:!hidden items-center px-2 py-[6px] h-[35px] w-[37px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -1654,7 +1651,7 @@ setTop5Departments(top);
                                                                         </td> */}
                                                                         <td className="px-3 py-2 border-r min-w-[170px] text-[13px] text-gray-900">
                                                                             <div className="flex items-center">
-
+                                                                                <ClockArrowDown className="w-4 h-4 text-gray-400 mr-2" />
                                                                                 {formatDateTime(complaint.stampIn)}
                                                                             </div>
                                                                         </td>
@@ -1665,6 +1662,7 @@ setTop5Departments(top);
                                                                                 className={`flex items-center px-2 py-1   !flex-shrink-0  rounded-full text-[13px] `}
 
                                                                             >
+                                                                                <ClockArrowUpIcon className="w-4 h-4 text-gray-400 mr-2" />
                                                                                 {complaint.stampOut ? formatDateTime(complaint.stampOut) : "-"}
 
                                                                             </span>
@@ -1674,6 +1672,8 @@ setTop5Departments(top);
                                                                                 className={`flex items-center min-w-[130px]  !flex-shrink-0  rounded-full text-[13px] font-[500]`}
 
                                                                             >
+
+                                                                      <AlarmClockCheck className="w-4 h-4 text-gray-400 mr-2" />
                                                                                 {computeTATTime(complaint.stampIn, complaint.stampOut)}
 
                                                                             </span>

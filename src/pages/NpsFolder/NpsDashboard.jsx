@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye } from "lucide-react"
+import { Calendar, ChevronDown, Hospital, User, Activity, HeartPulse, Frown, Minus, Search, Eye, CalendarClock, Bed, Stethoscope } from "lucide-react"
 import {
   ResponsiveContainer,
   AreaChart,
@@ -292,41 +292,41 @@ export default function NpsDashboard() {
     const doctorFilter = doctor !== "All Doctors" ? doctor.toLowerCase() : null;
 
     const project = (list, dept) => {
-  if (!Array.isArray(list)) return [];
+      if (!Array.isArray(list)) return [];
 
-  return list
-    .map((d) => {
-      const nps = toNps(d.overallRecommendation);
-      if (nps === null) return null;
+      return list
+        .map((d) => {
+          const nps = toNps(d.overallRecommendation);
+          if (nps === null) return null;
 
-      // ⛔ DO NOT FILTER BY DATE
-      const when = pickCreatedAt(d);
+          // ⛔ DO NOT FILTER BY DATE
+          const when = pickCreatedAt(d);
 
-      const docName = pickDoctor(d);
-      if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null;
+          const docName = pickDoctor(d);
+          if (doctorFilter && docName.toLowerCase() !== doctorFilter) return null;
 
-      const bed = pickRoom(d, dept);
+          const bed = pickRoom(d, dept);
 
-      return {
-        date: when.toISOString().slice(0, 10),
-        datetime: when.toLocaleString(),
-        patient: pickPatient(d),
-        room: bed,
-        doctor: docName,
-        department: dept,
-        rating: nps,
-        category: categoryFromRating(nps),
-        comment: pick(d.comments, d.comment, ""),
-      };
-    })
-    .filter(Boolean);
-};
+          return {
+            date: when.toISOString().slice(0, 10),
+            datetime: when.toLocaleString(),
+            patient: pickPatient(d),
+            room: bed,
+            doctor: docName,
+            department: dept,
+            rating: nps,
+            category: categoryFromRating(nps),
+            comment: pick(d.comments, d.comment, ""),
+          };
+        })
+        .filter(Boolean);
+    };
 
 
     let recs = [];
     if (wantOPD) recs = recs.concat(project(rawOpd, "OPD"));
     if (wantIPD) recs = recs.concat(project(rawIpd, "IPD"));
-    
+
 
     return recs.sort((a, b) => a.date.localeCompare(b.date) || a.datetime.localeCompare(b.datetime));
   }, [rawOpd, rawIpd, department, doctor, dateFrom, dateTo]);
@@ -638,14 +638,14 @@ export default function NpsDashboard() {
                       <table className="md34:!min-w-[1200px] md11:!min-w-full table-auto divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR No</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[180px]">Date & Time</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room No</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Name</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NPS Rating</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-100">
@@ -655,13 +655,33 @@ export default function NpsDashboard() {
                             .slice(0, 5) // ✅ latest 5
                             .map((rec, idx) => (
                               <tr key={`${rec.datetime}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{rec.datetime}</td>
-                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rec.patient}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{rec.room}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{rec.doctor}</td>
-                                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
-                                <td className="px-4 py-3 text-sm">
+                                <td className="px-2 py-3 text-sm text-center text-gray-700">{idx + 1}</td>
+                                <td className="px-2 py-3 text-sm text-gray-900">
+                                  <div className=' flex gap-[9px]'>
+                                    <CalendarClock className="w-4 h-4 text-gray-400" />
+
+                                    {rec.datetime}
+                                  </div>
+
+                                </td>
+                                <td className="px-2 py-3 text-sm font-medium text-gray-900">
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-gray-400" />
+                                    <span>{rec.patient || "-"}</span>
+                                  </div></td>
+                                <td className="px-2 py-3 text-sm text-gray-900">
+                                  <div className="flex items-center gap-2">
+                                    <Bed className="w-4 h-4 text-gray-400" />
+                                    <span>{rec.room || "-"}</span>
+                                  </div></td>
+                                <td className="px-2 py-3 text-sm text-gray-900">
+                                  <div className="flex items-center gap-2">
+                                    <Stethoscope className="w-4 h-4 text-gray-400" />
+                                    <span>{rec.doctor || "-"}</span>
+                                  </div>
+                                </td>
+                                <td className="px-2 py-3 text-sm font-semibold text-gray-900">{rec.rating}</td>
+                                <td className="px-2 py-3 text-sm">
                                   <span
                                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rec.category === "Promoter"
                                       ? "bg-emerald-100 text-emerald-800"
@@ -673,12 +693,12 @@ export default function NpsDashboard() {
                                     {rec.category}
                                   </span>
                                 </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
+                                <td className="px-2 py-3 text-sm text-gray-700 max-w-sm truncate">{rec.comment || "-"}</td>
                               </tr>
                             ))}
                           {filteredRecords.length === 0 && (
                             <tr>
-                              <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
+                              <td colSpan={8} className="px-2 py-10 text-center text-gray-500">
                                 No records match your filters.
                               </td>
                             </tr>
@@ -686,7 +706,7 @@ export default function NpsDashboard() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
+                    <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 flex items-center justify-between">
                       <div></div>
                       <button
 

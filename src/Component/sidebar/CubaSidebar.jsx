@@ -27,6 +27,7 @@ import {
   faChartLine,
   faFileAlt,
   faUsersCog,
+  faBedPulse,
   faUserShield, faBed, faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons"
 
@@ -362,6 +363,8 @@ const CubaSidebar = () => {
     { id: "nft", label: "Exe. Report", href: "/reports/executive-report", icon: faFileAlt },
     { id: "school-management", label: "Role Mana..", href: "/settings/role-manage", icon: faUserShield },
     { id: "pos", label: "User Mana..", href: "/settings/user-manage", icon: faUsersCog },
+    { id: "pos", label: "Bed Mana..", href: "/settings/bed-manage", icon: faBedPulse },
+
   ]
 
   const handleLogout = () => {
@@ -576,36 +579,36 @@ const CubaSidebar = () => {
           </NavLink>
         ))}
       </div> */}
-      <div className="fixed md34:!flex md11:!hidden bottom-3 left-1/2 -translate-x-1/2
-    w-[95%] bg-[#ffffffc2] shadow-xl overflow-y-auto rounded-[20px] blur-4 h-[60px]
+<div className="fixed md34:!flex md11:!hidden bottom-3 left-1/2 -translate-x-1/2
+    w-[95%] bg-[#ffffffc2] shadow-xl overflow-x-auto rounded-[20px] blur-4 h-[60px]
      justify-around items-center px-2 z-[10000] border border-gray-500">
 
-        {navItems.map((item) => (
-          <NavLink
-            key={item.id}
-            to={item.href}
-            className={({ isActive }) =>
-              `relative flex flex-col items-center justify-center px-2 py-1
-        transition-all duration-300 text-[10px]
-        ${isActive ? "text-blue-600 font-semibold" : "text-gray-400"}`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <span className="absolute -bottom-1 w-6 h-1 bg-blue-600 rounded-full"></span>
-                )}
+  {navItems.map((item) => {
+    const active = location.pathname.startsWith(item.href);
 
-                <FontAwesomeIcon
-                  icon={item.icon}
-                  className="text-[18px] mb-[8px]"
-                />
-                <span className="leading-[10px] text-[9px]">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+    return (
+      <div
+        key={item.id}
+        onClick={() => navigate(item.href)}
+        className={`relative flex flex-col flex-shrink-0 items-center justify-center px-2 py-1
+          transition-all duration-300 text-[10px] cursor-pointer
+          ${active ? "text-blue-600 font-semibold" : "text-gray-400"}`}
+      >
+        {active && (
+          <span className="absolute -bottom-1 w-6 h-1 bg-blue-600 rounded-full"></span>
+        )}
+
+        <FontAwesomeIcon
+          icon={item.icon}
+          className="text-[18px] mb-[8px]"
+        />
+
+        <span className="leading-[10px] text-[9px]">{item.label}</span>
       </div>
+    );
+  })}
+
+</div>
 
 
 

@@ -593,7 +593,7 @@ useEffect(() => {
                               {row.employeeId}
                             </div>
                           </td>
-                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100">
+                          <td className="px-2 text-[12px] border-r py-[9px] border-gray-100 w-[120px]">
                             <div className=" flex gap-[7px] items-center">
                               <Hospital className="w-4 h-4 text-gray-400" />
                               {row.floorNo}
