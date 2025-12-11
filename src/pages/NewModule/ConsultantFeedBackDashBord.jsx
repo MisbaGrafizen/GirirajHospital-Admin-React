@@ -70,7 +70,7 @@ const serviceIcons = {
   "Patient Documentation – Accuracy and upkeep": FileText,
   "Lab – Report speed and quality": TestTube2,
   "Radiology – Timely and effective support": Building2,
-  "OT Team – Skill and coordination (Surgeons/Anaesthetists)": Stethoscope,
+  "OT Team – Skill and coordination (Surgeons-Anaesthetists)": Stethoscope,
   "Pharmacy – Availability of medicines": Pill,
   "Dietary – Food quality and hygiene": Utensils,
   "Security – Professionalism and vigilance": ShieldCheck,
@@ -422,7 +422,7 @@ export default function ConsultantFeedBackDashBord() {
             try {
                 const res = await ApiGet("/admin/frequent-consultant-keywords");
                 console.log('rexfdgss', res)
-                setFrequentRatings(res?.keywords || []);
+                setFrequentRatings(res?.keywords?.keywords || []);
             } catch (err) {
                 console.error("Failed to fetch frequent ratings:", err);
             }
@@ -525,7 +525,7 @@ export default function ConsultantFeedBackDashBord() {
   "Patient Documentation – Accuracy and upkeep": ["Patient Documentation – Accuracy and upkeep"],
   "Lab – Report speed and quality": ["Lab – Report speed and quality"],
   "Radiology – Timely and effective support": ["Radiology – Timely and effective support"],
-  "OT Team – Skill and coordination (Surgeons/Anaesthetists)": ["OT Team – Skill and coordination (Surgeons/Anaesthetists)"],
+  "OT Team – Skill and coordination (Surgeons-Anaesthetists)": ["OT Team – Skill and coordination (Surgeons-Anaesthetists)"],
   "Pharmacy – Availability of medicines": ["Pharmacy – Availability of medicines"],
   "Dietary – Food quality and hygiene": ["Dietary – Food quality and hygiene"],
   "Security – Professionalism and vigilance": ["Security – Professionalism and vigilance"],

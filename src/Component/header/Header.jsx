@@ -798,27 +798,29 @@ function Header({
         {["/dashboard", "/opd-feedback", "/ipd-feedback", "/complaint-dashboard", "/reports/nps-reports","/internal-complint-list","/employee-feedback","/consultant-feedback",].includes(location.pathname) && (
           <div className="  md34:!flex md11:!hidden w-[100%]  mt-[10px] ">
 
-            <div className="flex h-[50px] px-[10px]  items-center justify-center w-[100%]">
-              <AnimatedDropdownNavigate
-                label="Go to Page"
-                // icon={Menu}
-                options={[
-                  { id: "super-admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
-                  { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserDoctor },
-                  { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
-                  { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListCheck },
-                  { id: "nps", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faSmile },
-                  { id: "internal", label: "Internal Complaints ", href: "/internal-complint-list", icon: faShieldHalved },
-                  { id: "employee", label: "Employee Dashboard ", href: "/employee-feedback", icon: faUserTie },
-                  { id: "employee", label: "Consultant Dashboard ", href: "/consultant-feedback", icon: faUserMd },
+           <div className="flex h-[50px] px-[10px] items-center justify-center w-[100%]">
 
+  <AnimatedDropdownNavigate
+    label="Go to Page"
+    options={[
+      { id: "super-admin", label: "Dashboard", href: "/dashboard", icon: faTachometerAlt },
+      { id: "opd", label: "Opd Feedback", href: "/opd-feedback", icon: faUserDoctor },
+      { id: "ipd", label: "Ipd Feedback", href: "/ipd-feedback", icon: faHospitalUser },
+      { id: "complaints", label: "Complaint List", href: "/complaint-dashboard", icon: faListCheck },
+      { id: "nps", label: "Nps Dashboard", href: "/reports/nps-reports", icon: faSmile },
+      { id: "internal", label: "Internal Complaints ", href: "/internal-complint-list", icon: faShieldHalved },
 
+      // ⭐ SHOW ONLY IF USER IS ADMIN ⭐
+      ...(localStorage.getItem("loginType") === "admin"
+        ? [
+            { id: "employee", label: "Employee Dashboard", href: "/employee-feedback", icon: faUserTie },
+            { id: "consultant", label: "Consultant Dashboard", href: "/consultant-feedback", icon: faUserMd },
+          ]
+        : []),
+    ]}
+  />
 
-                ]}
-              />
-            </div>
-
-
+</div>
           </div>
         )}
       </div>

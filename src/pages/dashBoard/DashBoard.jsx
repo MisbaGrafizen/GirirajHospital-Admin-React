@@ -343,35 +343,62 @@ if (data.kpis || data.totals) {
 
 
          const DEPT_LABEL = {
-            doctorServices: "Doctor",
-            billingServices: "Front Desk",
-            housekeeping: "Housekeeping",
-            maintenance: "Maintenance",
-            diagnosticServices: "Diagnostic",
-            dietitianServices: "Dietitian",
-            security: "Security",
-            nursing: "Nursing",
-          };
+  doctorServices: "Doctor",
+  billingServices: "Front Desk",
+  housekeeping: "Housekeeping",
+  maintenance: "Maintenance",
+  diagnosticServices: "Diagnostic",
+  dietitianServices: "Dietitian",
+  security: "Security",
+  nursing: "Nursing",
+};
 
-          const dept = Array.isArray(data?.departmentAnalysis) ? data.departmentAnalysis : [];
+// ⭐ Normalize backend value before matching
+const normalizeDept = (name = "") => {
+  const n = name.toLowerCase().trim();
 
-          // Convert backend array into quick lookup for existing departments
-          const backendDeptMap = Object.fromEntries(
-            dept.map((d) => [d.department, d])
-          );
+  if (n.includes("doctor")) return "Doctor";
+  if (n.includes("billing")) return "Front Desk";
+  if (n.includes("front")) return "Front Desk";
+  if (n.includes("house")) return "Housekeeping";
+  if (n.includes("maint")) return "Maintenance";
+  if (n.includes("diag")) return "Diagnostic";
+  if (n.includes("diet")) return "Dietitian";
+  if (n.includes("secur")) return "Security";
+  if (n.includes("nurs")) return "Nursing";
 
-           // Build final list — include *all known departments* from DEPT_LABEL
-          const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
-            const match = backendDeptMap[label] || {};
-            return {
-              department: label,
-              concerns: Number(match.concerns || 0),
-              resolved: Number(match.resolved || 0),
-              pending: Number(match.pending || 0),
-            };
-          });
+  return name; // fallback
+};
 
-          setDepartmentData(fullDeptList);
+const dept = Array.isArray(data?.departmentAnalysis)
+  ? data.departmentAnalysis
+  : [];
+
+// 🔥 Convert backend array into normalized lookup
+const backendDeptMap = {};
+
+dept.forEach((d) => {
+  const cleanName = normalizeDept(d.department);
+  backendDeptMap[cleanName] = {
+    concerns: d.concerns || 0,
+    resolved: d.resolved || 0,
+    pending: d.pending || 0,
+  };
+});
+
+// 🔥 Build final unified list
+const fullDeptList = Object.values(DEPT_LABEL).map((label) => {
+  const match = backendDeptMap[label] || {};
+
+  return {
+    department: label,
+    concerns: Number(match.concerns || 0),
+    resolved: Number(match.resolved || 0),
+    pending: Number(match.pending || 0),
+  };
+});
+
+setDepartmentData(fullDeptList);
           // ----- Recent feedbacks -----
           const rec = Array.isArray(data?.recentFeedbacks) ? data.recentFeedbacks : []
           setRecentFeedbacks(

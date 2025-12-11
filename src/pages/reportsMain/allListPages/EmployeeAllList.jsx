@@ -72,6 +72,16 @@ const normId = (v) =>
 const normDate = (v) =>
   typeof v === 'object' && v !== null && '$date' in v ? v.$date : v;
 
+function safeComment(obj) {
+  if (!obj || typeof obj !== "object") return "";
+
+  const vals = Object.entries(obj)
+    .filter(([k, v]) => typeof v === "string" && v.trim() !== "")
+    .map(([k, v]) => v.trim());
+
+  return vals.length ? vals.join(" | ") : "";
+}
+
 
 export default function EmployeeAllList() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -378,7 +388,11 @@ const exportToExcel = async () => {
                                 </div>
                               </td>
                               <td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">
-                                <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
+<td className="px-6 py-[7px] text-sm text-gray-900 max-w-xs">
+  <div className="truncate" title={safeComment(feedback.comment)}>
+    {safeComment(feedback.comment)}
+  </div>
+</td>
                               </td>
                             </tr>
                           ))}

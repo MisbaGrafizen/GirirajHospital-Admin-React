@@ -56,16 +56,15 @@ function getAllowedAndActiveDepartments(issue = {}, allowedBlocks = []) {
     security: "Security",
   };
 
-  const normalizedAllowed = allowedBlocks.map((b) => b.toLowerCase());
+  // ❌ Removed .toLowerCase() 
+  const normalizedAllowed = allowedBlocks;
 
   const activeAllowed = normalizedAllowed.filter((key) => {
     const block = issue[key];
     if (!block || typeof block !== "object") return false;
 
-    const hasText =
-      typeof block.text === "string" && block.text.trim().length > 0;
-    const hasAttachments =
-      Array.isArray(block.attachments) && block.attachments.length > 0;
+    const hasText = block.text?.trim().length > 0;
+    const hasAttachments = block.attachments?.length > 0;
 
     return hasText || hasAttachments;
   });
@@ -76,6 +75,7 @@ function getAllowedAndActiveDepartments(issue = {}, allowedBlocks = []) {
 
   return readable.length > 0 ? readable.join(", ") : "-";
 }
+
 
 function getDepartmentsString(doc, allowedBlocks) {
   if (!doc) return "-";
@@ -163,21 +163,24 @@ console.log('filters', filters)
 
         // 🔹 Filter by complaint status based on dashboard selection
         const filteredByStatus = filteredByDept.filter((c) => {
-          const status = String(c.status || "").toLowerCase();
+  const status = String(c.status || "").toLowerCase();
 
-          if (filterType === "All") return true;
+  if (filterType === "All") return true;
 
-          if (filterType === "Open") return status === "open";
-          if (filterType === "Pending") return status === "open";
-          if (filterType === "Resolved") return status === "resolved";
-          if (filterType === "Escalated") return status === "escalated";
-          if (filterType === "In Progress") return status === "in_progress";
+  if (filterType === "Open") return status === "open";
 
-          return true;
-        });
+  if (filterType === "Pending") 
+    return status === "open" || status === "partial";
 
+  if (filterType === "Resolved") return status === "resolved";
 
-        // 🔹 Sort by latest
+  if (filterType === "Escalated") return status === "escalated";
+
+  if (filterType === "In Progress") return status === "in_progress";
+
+  return true;
+});
+        // Sort by latest
         const sorted = filteredByStatus.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
@@ -340,13 +343,11 @@ const exportCAPA = async () => {
         <div className="flex w-full h-full">
           <CubaSidebar />
 
-          <div className="flex flex-col w-full bg-white relative pt-[10px] md34:!pb-[100px]  max-h-[100%] pr-[10px] md11:!overflow-y-auto gap-1 ">
+          <div className="flex flex-col w-full bg-white relative pt-[10px] md34:!pb-[100px] md11:!pb-[100px]   max-h-[100%] pr-[10px] md11:!overflow-y-auto gap-1 ">
             {loading && <Preloader />}
 
-       
-
             {/* 📋 Complaint Table */}
-            <div className="bg-white mx-[10px] rounded-xl border shadow-sm w-[98.2%] max-h-[88%] overflow-y-auto">
+            <div className="bg-white mx-[10px] rounded-xl border shadow-sm w-[98.2%] max-h-[100%] overflow-y-auto">
               <table className="w-full  min-w-[1200px] ">
                 <thead className="bg-gray-100 !text-xs !font-[500] text-gray-600 uppercase tracking-wide">
                   <tr>

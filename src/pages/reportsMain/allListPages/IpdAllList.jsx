@@ -114,6 +114,7 @@ export default function IpdAllList() {
     try {
       const res = await ApiGet(`${API_URL}`);
       const data = Array.isArray(res?.data?.patients) ? res.data?.patients : [];
+      console.log('daat', data)
 
       const list = data.map((d) => {
         const rating = calcRowAverage(d.ratings);

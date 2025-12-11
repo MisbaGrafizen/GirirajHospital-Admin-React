@@ -121,6 +121,8 @@ export default function ConsultantFeedbackDetails() {
         };
     }, [doc]);
 
+    console.log("model", model);
+
 
 
     if (!id) return <div className="p-6 text-red-600">{error || 'No feedback selected.'}</div>
@@ -164,15 +166,9 @@ export default function ConsultantFeedbackDetails() {
                                         {model.serviceRatings.map((item, i) => (
                                             <>
                                                 <div key={i} className=' flex flex-col '>
-
-
                                                     <div className="flex flex-col sm:flex-row sm:justify-between">
                                                         <p className="font-medium">{item.label}</p>
                                                         <StarRating score={item.rating} />
-
-
-
-
                                                     </div>
 
                                                     {item.comment &&
@@ -203,8 +199,6 @@ export default function ConsultantFeedbackDetails() {
                                                         {item.comment}
                                                     </p>
                                                 )}
-
-
                                         </div>
                                     ))}
                                 </div>

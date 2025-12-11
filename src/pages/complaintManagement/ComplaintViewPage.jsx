@@ -13,7 +13,7 @@ import {
     Upload,
     ChevronDown,
     Forward,
-    TrendingUp, 
+    TrendingUp,
     MapPin,
     Paperclip,
     Clock,
@@ -126,17 +126,17 @@ const formatDate = (dateString) => {
 };
 
 const formatDepartment = (str = "") => {
-  // Convert camelCase → words with space
-  const spaced = str.replace(/([a-z])([A-Z])/g, "$1 $2");
+    // Convert camelCase → words with space
+    const spaced = str.replace(/([a-z])([A-Z])/g, "$1 $2");
 
-  // Capitalize every word
-  return spaced
-    .split(" ")
-    .map(word => word.toUpperCase().length <= 3 
-        ? word.toUpperCase()            // IT, HR, QA
-        : word.charAt(0).toUpperCase() + word.slice(1)
-    )
-    .join(" "); 
+    // Capitalize every word
+    return spaced
+        .split(" ")
+        .map(word => word.toUpperCase().length <= 3
+            ? word.toUpperCase()            // IT, HR, QA
+            : word.charAt(0).toUpperCase() + word.slice(1)
+        )
+        .join(" ");
 };
 
 
@@ -166,28 +166,32 @@ export default function ComplaintViewPage() {
     const [selectedType, setSelectedType] = useState("CA");
     const [note, setNote] = useState("");
     // NOTES for each type
-const [rcaNote, setRcaNote] = useState("");
-const [caNote, setCaNote] = useState("");
-const [paNote, setPaNote] = useState("");
-const [fromDepartment, setFromDepartment] = useState("");
-const [isFromDeptDropdownOpen, setIsFromDeptDropdownOpen] = useState(false);
+    const [rcaNote, setRcaNote] = useState("");
+    const [caNote, setCaNote] = useState("");
+    const [paNote, setPaNote] = useState("");
+    const [fromDepartment, setFromDepartment] = useState("");
+    const [isFromDeptDropdownOpen, setIsFromDeptDropdownOpen] = useState(false);
+const [previewImage, setPreviewImage] = useState(null);
+
+const openImage = (src) => setPreviewImage(src);
+const closeImage = () => setPreviewImage(null);
 
 
 
-// return the correct note value based on type
-const getCurrentNote = () => {
-  if (selectedType === "RCA") return rcaNote;
-  if (selectedType === "CA") return caNote;
-  if (selectedType === "PA") return paNote;
-  return "";
-};
+    // return the correct note value based on type
+    const getCurrentNote = () => {
+        if (selectedType === "RCA") return rcaNote;
+        if (selectedType === "CA") return caNote;
+        if (selectedType === "PA") return paNote;
+        return "";
+    };
 
-// change the correct note value based on type
-const handleNoteChange = (value) => {
-  if (selectedType === "RCA") setRcaNote(value);
-  if (selectedType === "CA") setCaNote(value);
-  if (selectedType === "PA") setPaNote(value);
-};
+    // change the correct note value based on type
+    const handleNoteChange = (value) => {
+        if (selectedType === "RCA") setRcaNote(value);
+        if (selectedType === "CA") setCaNote(value);
+        if (selectedType === "PA") setPaNote(value);
+    };
 
 
 
@@ -204,7 +208,7 @@ const handleNoteChange = (value) => {
 
     const escalationLevels = ["PGRO", "CEO", "Board of Directors", "Medical Director"]
 
-const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
+    const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
 
     const { state } = useLocation();
     const row = state?.complaint || {};
@@ -215,62 +219,62 @@ const { isAdmin, permissionsByBlock, allowedBlocks } = resolvePermissions();
 
     console.log('CONCERN_KEYS', fullDoc)
 
-        const [fullDocState, setFullDocState] = useState(fullDoc);
+    const [fullDocState, setFullDocState] = useState(fullDoc);
 
-// 1️⃣ Departments present in this complaint (text or attachments exist)
-const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-    blockHasContent(fullDocState[deptKey])
-);
+    // 1️⃣ Departments present in this complaint (text or attachments exist)
+    const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+        blockHasContent(fullDocState[deptKey])
+    );
 
-// 2️⃣ Departments user has rights for
-const allowedForwardDepartments = activeDepartments.filter((deptKey) =>
-    permissionsByBlock[deptKey]?.includes("forward")
-);
+    // 2️⃣ Departments user has rights for
+    const allowedForwardDepartments = activeDepartments.filter((deptKey) =>
+        permissionsByBlock[deptKey]?.includes("forward")
+    );
 
-const allowedEscalateDepartments = activeDepartments.filter((deptKey) =>
-    permissionsByBlock[deptKey]?.includes("escalate")
-);
+    const allowedEscalateDepartments = activeDepartments.filter((deptKey) =>
+        permissionsByBlock[deptKey]?.includes("escalate")
+    );
 
-// 1️⃣ Departments in complaint
-const activeForwardDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-    blockHasContent(fullDocState[deptKey])
-);
+    // 1️⃣ Departments in complaint
+    const activeForwardDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+        blockHasContent(fullDocState[deptKey])
+    );
 
-// 2️⃣ User allowed to forward from these departments
-const userForwardableDepartments = activeForwardDepartments.filter(
-    (deptKey) => permissionsByBlock[deptKey]?.includes("forward")
-);
+    // 2️⃣ User allowed to forward from these departments
+    const userForwardableDepartments = activeForwardDepartments.filter(
+        (deptKey) => permissionsByBlock[deptKey]?.includes("forward")
+    );
 
-// 3️⃣ Auto-select FROM department if only one
-useEffect(() => {
-    if (userForwardableDepartments.length === 1) {
-        setFromDepartment(DEPT_LABEL[userForwardableDepartments[0]]);
-    }
-}, [fullDocState]);
-
-
-// 3️⃣ Auto-select department when only one is allowed
-useEffect(() => {
-    if (allowedEscalateDepartments.length === 1) {
-        setSelectedDepartment(DEPT_LABEL[allowedEscalateDepartments[0]]);
-    }
-}, [fullDocState]);
+    // 3️⃣ Auto-select FROM department if only one
+    useEffect(() => {
+        if (userForwardableDepartments.length === 1) {
+            setFromDepartment(DEPT_LABEL[userForwardableDepartments[0]]);
+        }
+    }, [fullDocState]);
 
 
-        // 🔹 Departments allowed for resolve only
-const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
-    const hasContent = blockHasContent(fullDocState[deptKey]); // Complaint exists for this department
-    const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
-    return hasContent && canResolve;
-});
+    // 3️⃣ Auto-select department when only one is allowed
+    useEffect(() => {
+        if (allowedEscalateDepartments.length === 1) {
+            setSelectedDepartment(DEPT_LABEL[allowedEscalateDepartments[0]]);
+        }
+    }, [fullDocState]);
+
+
+    // 🔹 Departments allowed for resolve only
+    const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
+        const hasContent = blockHasContent(fullDocState[deptKey]); // Complaint exists for this department
+        const canResolve = permissionsByBlock[deptKey]?.includes("resolve"); // User has resolve permission
+        return hasContent && canResolve;
+    });
 
     const CONCERN_KEYS = React.useMemo(() => {
-    if (!fullDocState || typeof fullDocState !== "object") return [];
-    return Object.keys(fullDocState).filter((key) => {
-        const block = fullDocState[key];
-        return blockHasContent(block);
-    });
-}, [fullDocState]);
+        if (!fullDocState || typeof fullDocState !== "object") return [];
+        return Object.keys(fullDocState).filter((key) => {
+            const block = fullDocState[key];
+            return blockHasContent(block);
+        });
+    }, [fullDocState]);
 
 
     function collectPresentModuleLabels(src) {
@@ -293,9 +297,9 @@ const resolveDepartments = Object.keys(DEPT_LABEL).filter((deptKey) => {
     }
 
 
-// 🔹 Auto-select if only one
-const autoResolveDepartment =
-    resolveDepartments.length === 1 ? DEPT_LABEL[resolveDepartments[0]] : null;
+    // 🔹 Auto-select if only one
+    const autoResolveDepartment =
+        resolveDepartments.length === 1 ? DEPT_LABEL[resolveDepartments[0]] : null;
 
     const presentLabels = collectPresentModuleLabels(fullDocState);
     const categoryText =
@@ -361,123 +365,123 @@ const autoResolveDepartment =
 
     // ---------------- ACTIONABLE DEPARTMENT LOGIC ----------------
 
-// 1️⃣ Departments included in this complaint (have text/attachments)
-const complaintDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-    blockHasContent(fullDocState[deptKey])
-);
+    // 1️⃣ Departments included in this complaint (have text/attachments)
+    const complaintDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+        blockHasContent(fullDocState[deptKey])
+    );
 
-// 2️⃣ User only has access to these departments
-const userDepartments = complaintDepartments.filter(
-    (deptKey) => permissionsByBlock[deptKey]
-);
+    // 2️⃣ User only has access to these departments
+    const userDepartments = complaintDepartments.filter(
+        (deptKey) => permissionsByBlock[deptKey]
+    );
 
-// 3️⃣ A department is actionable ONLY when status is NOT resolved or resolved_by_admin
-const actionableDepartment = userDepartments.find((deptKey) => {
-    const status = fullDocState[deptKey]?.status?.toLowerCase();
-    return status !== "resolved" && status !== "resolved_by_admin";
-});
+    // 3️⃣ A department is actionable ONLY when status is NOT resolved or resolved_by_admin
+    const actionableDepartment = userDepartments.find((deptKey) => {
+        const status = fullDocState[deptKey]?.status?.toLowerCase();
+        return status !== "resolved" && status !== "resolved_by_admin";
+    });
 
-console.log("actionableDepartment FIXED:", actionableDepartment);
+    console.log("actionableDepartment FIXED:", actionableDepartment);
 
     // in handleForwardSubmit
-const handleForwardSubmit = async () => {
-    if (!forwardDepartment || !forwardReason.trim()) {
-        alert("Please select a department and enter forward reason.");
-        return;
-    }
-
-    try {
-        const loginType = localStorage.getItem("loginType");
-        const isAdmin = loginType === "admin";
-
-        // Active departments
-        const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-            blockHasContent(fullDocState[deptKey])
-        );
-
-        // User allowed forward departments
-        const userForwardable = userForwardableDepartments;
-
-        // ----------------------------- FROM Department -----------------------------
-        const fromDeptKey = 
-            userForwardable.length === 1
-                ? userForwardable[0]
-                : Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === fromDepartment);
-
-        if (!fromDeptKey) {
-            alert("Please select a valid FROM Department.");
+    const handleForwardSubmit = async () => {
+        if (!forwardDepartment || !forwardReason.trim()) {
+            alert("Please select a department and enter forward reason.");
             return;
         }
 
-        // ----------------------------- TO Department -----------------------------
-        const toDeptKey = Object.keys(DEPT_LABEL).find(
-            (k) => DEPT_LABEL[k] === forwardDepartment
-        );
+        try {
+            const loginType = localStorage.getItem("loginType");
+            const isAdmin = loginType === "admin";
 
-        if (!toDeptKey) {
-            alert("Invalid target department selected.");
-            return;
+            // Active departments
+            const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+                blockHasContent(fullDocState[deptKey])
+            );
+
+            // User allowed forward departments
+            const userForwardable = userForwardableDepartments;
+
+            // ----------------------------- FROM Department -----------------------------
+            const fromDeptKey =
+                userForwardable.length === 1
+                    ? userForwardable[0]
+                    : Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === fromDepartment);
+
+            if (!fromDeptKey) {
+                alert("Please select a valid FROM Department.");
+                return;
+            }
+
+            // ----------------------------- TO Department -----------------------------
+            const toDeptKey = Object.keys(DEPT_LABEL).find(
+                (k) => DEPT_LABEL[k] === forwardDepartment
+            );
+
+            if (!toDeptKey) {
+                alert("Invalid target department selected.");
+                return;
+            }
+
+            // ----------------------------- Attachment Upload -----------------------------
+            let uploadedURL = "";
+            if (uploadedFile) {
+                const uploadRes = await uploadToHPanel(uploadedFile);
+                uploadedURL = uploadRes.url;
+            }
+
+            // ----------------------------- PAYLOADS -----------------------------
+            const fullForwardPayload = {
+                department: toDeptKey,
+                topic: "Forwarded Complaint",
+                text: forwardReason.trim(),
+                attachments: uploadedURL ? [uploadedURL] : [],
+                mode: "text",
+                note: forwardReason.trim(),
+            };
+
+            const partialForwardPayload = {
+                fromDepartment: fromDeptKey,
+                toDepartment: toDeptKey,
+                note: forwardReason.trim(),
+            };
+
+            // ----------------------------- SELECT ENDPOINT -----------------------------
+            let endpoint = "";
+            let body = {};
+
+            const isSingleDept = activeDepartments.length === 1;
+
+            if (isAdmin) {
+                endpoint = isSingleDept
+                    ? `/admin/${complaint.id}/admin-forward`
+                    : `/admin/${complaint.id}/admin-partial-forward`;
+
+                body = isSingleDept ? fullForwardPayload : partialForwardPayload;
+            } else {
+                endpoint = isSingleDept
+                    ? `/admin/${complaint.id}/forward`
+                    : `/admin/${complaint.id}/partial-forward`;
+
+                body = isSingleDept ? fullForwardPayload : partialForwardPayload;
+            }
+
+            // ----------------------------- API CALL -----------------------------
+            const res = await ApiPost(endpoint, body);
+
+            alert(res.message || "Complaint forwarded successfully.");
+
+            await refreshComplaint();
+            const history = await fetchConcernHistory(complaint.id);
+            setHistoryData(history);
+
+            closeAllModals();
+
+        } catch (err) {
+            console.error("Forward Error:", err);
+            alert(err?.response?.data?.error || "Something went wrong.");
         }
-
-        // ----------------------------- Attachment Upload -----------------------------
-        let uploadedURL = "";
-        if (uploadedFile) {
-            const uploadRes = await uploadToHPanel(uploadedFile);
-            uploadedURL = uploadRes.url;
-        }
-
-        // ----------------------------- PAYLOADS -----------------------------
-        const fullForwardPayload = {
-            department: toDeptKey,
-            topic: "Forwarded Complaint",
-            text: forwardReason.trim(),
-            attachments: uploadedURL ? [uploadedURL] : [],
-            mode: "text",
-            note: forwardReason.trim(),
-        };
-
-        const partialForwardPayload = {
-            fromDepartment: fromDeptKey,
-            toDepartment: toDeptKey,
-            note: forwardReason.trim(),
-        };
-
-        // ----------------------------- SELECT ENDPOINT -----------------------------
-        let endpoint = "";
-        let body = {};
-
-        const isSingleDept = activeDepartments.length === 1;
-
-        if (isAdmin) {
-            endpoint = isSingleDept
-                ? `/admin/${complaint.id}/admin-forward`
-                : `/admin/${complaint.id}/admin-partial-forward`;
-
-            body = isSingleDept ? fullForwardPayload : partialForwardPayload;
-        } else {
-            endpoint = isSingleDept
-                ? `/admin/${complaint.id}/forward`
-                : `/admin/${complaint.id}/partial-forward`;
-
-            body = isSingleDept ? fullForwardPayload : partialForwardPayload;
-        }
-
-        // ----------------------------- API CALL -----------------------------
-        const res = await ApiPost(endpoint, body);
-
-        alert(res.message || "Complaint forwarded successfully.");
-
-        await refreshComplaint();
-        const history = await fetchConcernHistory(complaint.id);
-        setHistoryData(history);
-
-        closeAllModals();
-
-    } catch (err) {
-        console.error("Forward Error:", err);
-        alert(err?.response?.data?.error || "Something went wrong.");
-    }
-};
+    };
 
 
     async function escalateComplaint(complaintId, { level, note, userId }) {
@@ -509,196 +513,195 @@ const handleForwardSubmit = async () => {
         }
     }
 
-const handleEscalateSubmit = async () => {
-    if (!escalationLevel || !escalationNote.trim()) {
-        alert("Please select escalation level and provide a note.");
-        return;
-    }
-
-    try {
-        const loginType = localStorage.getItem("loginType"); // admin / staff
-        const userId = localStorage.getItem("userId");
-
-        // Decide FROM department
-        const fromDeptKey =
-            selectedDepartment
-                ? Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === selectedDepartment)
-                : allowedEscalateDepartments[0]; // auto-select
-
-        if (!fromDeptKey) {
-            alert("No valid department for escalation.");
+    const handleEscalateSubmit = async () => {
+        if (!escalationLevel || !escalationNote.trim()) {
+            alert("Please select escalation level and provide a note.");
             return;
         }
 
-        const isSingleDept = activeDepartments.length === 1;
+        try {
+            const loginType = localStorage.getItem("loginType"); // admin / staff
+            const userId = localStorage.getItem("userId");
 
-        // Build payload used by all 4 APIs
-        const payload = {
-            department: fromDeptKey,
-            level: escalationLevel,
-            note: escalationNote.trim(),
-            userId
-        };
+            // Decide FROM department
+            const fromDeptKey =
+                selectedDepartment
+                    ? Object.keys(DEPT_LABEL).find((k) => DEPT_LABEL[k] === selectedDepartment)
+                    : allowedEscalateDepartments[0]; // auto-select
 
-        // FINAL endpoint selection (IDENTICAL to forward logic)
-        let endpoint = "";
+            if (!fromDeptKey) {
+                alert("No valid department for escalation.");
+                return;
+            }
 
-        if (loginType === "admin") {
-            endpoint = isSingleDept
-                ? `/admin/${complaint.id}/admin-escalate`
-                : `/admin/${complaint.id}/admin-partial-escalate`;
-        } else {
-            endpoint = isSingleDept
-                ? `/admin/${complaint.id}/escalate`
-                : `/admin/${complaint.id}/partial-escalate`;
+            const isSingleDept = activeDepartments.length === 1;
+
+            // Build payload used by all 4 APIs
+            const payload = {
+                department: fromDeptKey,
+                level: escalationLevel,
+                note: escalationNote.trim(),
+                userId
+            };
+
+            // FINAL endpoint selection (IDENTICAL to forward logic)
+            let endpoint = "";
+
+            if (loginType === "admin") {
+                endpoint = isSingleDept
+                    ? `/admin/${complaint.id}/admin-escalate`
+                    : `/admin/${complaint.id}/admin-partial-escalate`;
+            } else {
+                endpoint = isSingleDept
+                    ? `/admin/${complaint.id}/escalate`
+                    : `/admin/${complaint.id}/partial-escalate`;
+            }
+
+            console.log("➡ Escalate API:", endpoint);
+            console.log("➡ Payload:", payload);
+
+            const res = await ApiPost(endpoint, payload);
+
+            alert(
+                `Complaint ${selectedDepartment ? `(${selectedDepartment}) ` : ""
+                }escalated to ${escalationLevel}`
+            );
+
+            await refreshComplaint();
+
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+        } catch (error) {
+            console.error("Escalation Error:", error);
+            alert(error?.response?.data?.message || "Escalation failed.");
         }
-
-        console.log("➡ Escalate API:", endpoint);
-        console.log("➡ Payload:", payload);
-
-        const res = await ApiPost(endpoint, payload);
-
-        alert(
-            `Complaint ${
-                selectedDepartment ? `(${selectedDepartment}) ` : ""
-            }escalated to ${escalationLevel}`
-        );
-
-        await refreshComplaint();
-
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
-
-        closeAllModals();
-    } catch (error) {
-        console.error("Escalation Error:", error);
-        alert(error?.response?.data?.message || "Escalation failed.");
-    }
-};
+    };
 
 
 
     // 🔹 Allowed departments based on permissions & blocks with content
-const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
-    // Must have block content (text or attachments)
-    const hasContent = blockHasContent(fullDocState[deptKey]);
+    const allowedDepartmentsList = Object.keys(DEPT_LABEL).filter((deptKey) => {
+        // Must have block content (text or attachments)
+        const hasContent = blockHasContent(fullDocState[deptKey]);
 
-    // Must be permitted for this user
-    const hasPermission = permissionsByBlock[deptKey]?.includes("resolve");
+        // Must be permitted for this user
+        const hasPermission = permissionsByBlock[deptKey]?.includes("resolve");
 
-    return hasContent && hasPermission;
-});
+        return hasContent && hasPermission;
+    });
 
-// 🔹 Auto-select if only ONE permitted department
-const autoDepartment =
-    allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
+    // 🔹 Auto-select if only ONE permitted department
+    const autoDepartment =
+        allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
 
-const handleResolveSubmit = async () => {
-    if (!selectedType) {
-        alert("Please select RCA / CA / PA");
-        return;
-    }
-
-    // Selected note validation
-    const currentNote =
-        selectedType === "RCA" ? rcaNote :
-        selectedType === "CA"  ? caNote :
-        selectedType === "PA"  ? paNote : "";
-
-    if (!currentNote.trim()) {
-        alert(`Please enter a note for ${selectedType}`);
-        return;
-    }
-
-    // ⭐ NEW: Validate all 3 notes BEFORE sending to API
-    if (!rcaNote.trim() || !caNote.trim() || !paNote.trim()) {
-        alert("Please enter RCA, CA, and PA — all three notes are required.");
-        return;
-    }
-
-    try {
-        // 1️⃣ Upload file
-        let proofUrl = "";
-        if (uploadedFile) {
-            const uploadRes = await uploadToHPanel(uploadedFile);
-            proofUrl = uploadRes.url;
-        }
-
-        // 2️⃣ User type
-        const loginType = localStorage.getItem("loginType");
-        const isAdmin = loginType === "admin";
-
-        // 3️⃣ Active departments
-        const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
-            blockHasContent(fullDocState[deptKey])
-        );
-
-        // 4️⃣ Determine departments the user can resolve
-        const userResolvable = activeDepartments.filter((deptKey) =>
-            permissionsByBlock[deptKey]?.includes("resolve")
-        );
-
-        // 5️⃣ Determine selected department
-        let deptKey = null;
-
-        if (userResolvable.length === 1) {
-            deptKey = userResolvable[0];
-        } else {
-            deptKey = Object.keys(DEPT_LABEL).find(
-                (k) => DEPT_LABEL[k] === selectedDepartment
-            );
-        }
-
-        if (!deptKey) {
-            alert("Please select department");
+    const handleResolveSubmit = async () => {
+        if (!selectedType) {
+            alert("Please select RCA / CA / PA");
             return;
         }
 
-        // 6️⃣ Build payload — ⭐ UPDATED TO MATCH BACKEND ⭐
-        const payload = {
-            rcaNote,
-            caNote,
-            paNote,
-            actionType: selectedType,
-            note: currentNote,
-            proof: proofUrl ? [proofUrl] : [],
-            department: deptKey,
-            userId: localStorage.getItem("userId"),
-        };
-        console.log('payload', payload)
+        // Selected note validation
+        const currentNote =
+            selectedType === "RCA" ? rcaNote :
+                selectedType === "CA" ? caNote :
+                    selectedType === "PA" ? paNote : "";
 
-        // 7️⃣ Decide API endpoint (admin / staff + full / partial)
-        let endpoint = "";
-
-        if (isAdmin) {
-            endpoint =
-                activeDepartments.length === 1
-                    ? `/admin/${complaint.id}/admin-resolve`
-                    : `/admin/${complaint.id}/admin-partial-resolve`;
-        } else {
-            endpoint =
-                activeDepartments.length === 1
-                    ? `/admin/${complaint.id}/resolve`
-                    : `/admin/${complaint.id}/partial-resolve`;
+        if (!currentNote.trim()) {
+            alert(`Please enter a note for ${selectedType}`);
+            return;
         }
 
-        // 8️⃣ Submit request
-        const res = await ApiPost(endpoint, payload);
-        console.log("Resolve Result:", res);
+        // ⭐ NEW: Validate all 3 notes BEFORE sending to API
+        if (!rcaNote.trim() || !caNote.trim() || !paNote.trim()) {
+            alert("Please enter RCA, CA, and PA — all three notes are required.");
+            return;
+        }
 
-        await refreshComplaint();
+        try {
+            // 1️⃣ Upload file
+            let proofUrl = "";
+            if (uploadedFile) {
+                const uploadRes = await uploadToHPanel(uploadedFile);
+                proofUrl = uploadRes.url;
+            }
 
-        // Refresh history too
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
+            // 2️⃣ User type
+            const loginType = localStorage.getItem("loginType");
+            const isAdmin = loginType === "admin";
 
-        closeAllModals();
-        
-    } catch (err) {
-        console.error("Resolve Error:", err);
-        alert(err?.response?.data?.message || "Something went wrong.");
-    }
-};
+            // 3️⃣ Active departments
+            const activeDepartments = Object.keys(DEPT_LABEL).filter((deptKey) =>
+                blockHasContent(fullDocState[deptKey])
+            );
+
+            // 4️⃣ Determine departments the user can resolve
+            const userResolvable = activeDepartments.filter((deptKey) =>
+                permissionsByBlock[deptKey]?.includes("resolve")
+            );
+
+            // 5️⃣ Determine selected department
+            let deptKey = null;
+
+            if (userResolvable.length === 1) {
+                deptKey = userResolvable[0];
+            } else {
+                deptKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+            }
+
+            if (!deptKey) {
+                alert("Please select department");
+                return;
+            }
+
+            // 6️⃣ Build payload — ⭐ UPDATED TO MATCH BACKEND ⭐
+            const payload = {
+                rcaNote,
+                caNote,
+                paNote,
+                actionType: selectedType,
+                note: currentNote,
+                proof: proofUrl ? [proofUrl] : [],
+                department: deptKey,
+                userId: localStorage.getItem("userId"),
+            };
+            console.log('payload', payload)
+
+            // 7️⃣ Decide API endpoint (admin / staff + full / partial)
+            let endpoint = "";
+
+            if (isAdmin) {
+                endpoint =
+                    activeDepartments.length === 1
+                        ? `/admin/${complaint.id}/admin-resolve`
+                        : `/admin/${complaint.id}/admin-partial-resolve`;
+            } else {
+                endpoint =
+                    activeDepartments.length === 1
+                        ? `/admin/${complaint.id}/resolve`
+                        : `/admin/${complaint.id}/partial-resolve`;
+            }
+
+            // 8️⃣ Submit request
+            const res = await ApiPost(endpoint, payload);
+            console.log("Resolve Result:", res);
+
+            await refreshComplaint();
+
+            // Refresh history too
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+
+        } catch (err) {
+            console.error("Resolve Error:", err);
+            alert(err?.response?.data?.message || "Something went wrong.");
+        }
+    };
 
 
     async function fetchConcernHistory(complaintId) {
@@ -802,9 +805,9 @@ const handleResolveSubmit = async () => {
                 setIsForwardModalOpen(true);
                 break;
             case "resolve":
-    setIsResolveModalOpen(true);
-    setSelectedDepartment(autoResolveDepartment || "");
-    break;
+                setIsResolveModalOpen(true);
+                setSelectedDepartment(autoResolveDepartment || "");
+                break;
 
             case "escalate":
                 setIsEscalateModalOpen(true);
@@ -847,57 +850,57 @@ const handleResolveSubmit = async () => {
         })();
     }, [complaint.id]);
 
-// FILTER HISTORY BASED ON USER PERMISSIONS
-const filteredHistory = useMemo(() => {
-    if (!Array.isArray(historyData)) return [];
+    // FILTER HISTORY BASED ON USER PERMISSIONS
+    const filteredHistory = useMemo(() => {
+        if (!Array.isArray(historyData)) return [];
 
-    // Admin sees everything
-    if (isAdmin) return historyData;
+        // Admin sees everything
+        if (isAdmin) return historyData;
 
-    return historyData.filter((h) => {
-        // ⭐ Always show "created" event
-        if (h.type === "created") return true;
+        return historyData.filter((h) => {
+            // ⭐ Always show "created" event
+            if (h.type === "created") return true;
 
-        // Detect department key variations
-        let deptKey = "";
+            // Detect department key variations
+            let deptKey = "";
 
-        if (h.department) deptKey = h.department;
-        else if (h.label) deptKey = h.label;
-        else if (h.module) deptKey = h.module;
-        else if (h.details?.department) deptKey = h.details.department;
+            if (h.department) deptKey = h.department;
+            else if (h.label) deptKey = h.label;
+            else if (h.module) deptKey = h.module;
+            else if (h.details?.department) deptKey = h.details.department;
 
-        deptKey = String(deptKey).toLowerCase();
+            deptKey = String(deptKey).toLowerCase();
 
-        // ⭐ Only allow if matches permitted blocks
-        return allowedBlocks.some((allowed) =>
-            deptKey.includes(String(allowed).toLowerCase())
-        );
-    });
-}, [historyData, allowedBlocks, isAdmin]);
+            // ⭐ Only allow if matches permitted blocks
+            return allowedBlocks.some((allowed) =>
+                deptKey.includes(String(allowed).toLowerCase())
+            );
+        });
+    }, [historyData, allowedBlocks, isAdmin]);
 
 
-console.log('filteredHistory', filteredHistory)
+    console.log('filteredHistory', filteredHistory)
 
-useEffect(() => {
-    setFullDocState(fullDoc);
-}, [fullDoc]);
+    useEffect(() => {
+        setFullDocState(fullDoc);
+    }, [fullDoc]);
 
-async function refreshComplaint() {
-    try {
-        const updatedDoc = await ApiGet(`/admin/ipd-concern/${complaint.id}`);
-        console.log('updatedDoc', updatedDoc)
+    async function refreshComplaint() {
+        try {
+            const updatedDoc = await ApiGet(`/admin/ipd-concern/${complaint.id}`);
+            console.log('updatedDoc', updatedDoc)
 
-        if (updatedDoc?.data) {
-            // normalize structure
-            const doc = updatedDoc.data;
+            if (updatedDoc?.data) {
+                // normalize structure
+                const doc = updatedDoc.data;
 
-            setFullDocState(doc);                                // 🔥 UI updates department status
-            setStatus(doc.status || doc.data?.status || "");     // Update main status
+                setFullDocState(doc);                                // 🔥 UI updates department status
+                setStatus(doc.status || doc.data?.status || "");     // Update main status
+            }
+        } catch (err) {
+            console.error("Refresh error:", err);
         }
-    } catch (err) {
-        console.error("Refresh error:", err);
     }
-}
 
 
     const handleFileUpload = (event) => {
@@ -1109,7 +1112,12 @@ async function refreshComplaint() {
                                                                                 return (
                                                                                     <div key={i} className="p-2 bg-white border rounded-md">
                                                                                         {isImage ? (
-                                                                                            <img src={att} alt="attachment" className="w-48 h-auto rounded-md border" />
+                                                                                            <img
+                                                                                                src={att}
+                                                                                                alt="attachment"
+                                                                                                onClick={() => openImage(att)}
+                                                                                                className="w-48 h-auto rounded-md border cursor-pointer hover:opacity-80"
+                                                                                            />
                                                                                         ) : isAudio ? (
                                                                                             <audio controls className="w-full">
                                                                                                 <source src={att} type="audio/mpeg" />
@@ -1188,45 +1196,45 @@ async function refreshComplaint() {
                                                                     )}
 
                                                                     {h.type === "resolved" && (
-    <>
-        <p className="text-sm font-medium text-green-700">
-            {formatDepartment(h.department || h.label)}
-        </p>
+                                                                        <>
+                                                                            <p className="text-sm font-medium text-green-700">
+                                                                                {formatDepartment(h.department || h.label)}
+                                                                            </p>
 
-        <p className="text-xs text-gray-600">
-            Resolution Note: {h.note || "—"}
-        </p>
+                                                                            <p className="text-xs text-gray-600">
+                                                                                Resolution Note: {h.note || "—"}
+                                                                            </p>
 
-        {/* Show proof if exists */}
-        {Array.isArray(h.proof) && h.proof.length > 0 && (
-            <div className="mt-1 space-y-1">
-                {h.proof.map((url, idx) => (
-                    <a
-                        key={idx}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-blue-600 underline"
-                    >
-                        View Proof
-                    </a>
-                ))}
-            </div>
-        )}
+                                                                            {/* Show proof if exists */}
+                                                                            {Array.isArray(h.proof) && h.proof.length > 0 && (
+                                                                                <div className="mt-1 space-y-1">
+                                                                                    {h.proof.map((url, idx) => (
+                                                                                        <a
+                                                                                            key={idx}
+                                                                                            href={url}
+                                                                                            target="_blank"
+                                                                                            rel="noreferrer"
+                                                                                            className="text-xs text-blue-600 underline"
+                                                                                        >
+                                                                                            View Proof
+                                                                                        </a>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
 
-        <p className="text-xs text-gray-500">
-            {new Date(h.at).toLocaleString()}
-        </p>
-    </>
-)}
+                                                                            <p className="text-xs text-gray-500">
+                                                                                {new Date(h.at).toLocaleString()}
+                                                                            </p>
+                                                                        </>
+                                                                    )}
 
 
                                                                     {h.type === "created" && (
                                                                         <>
-                                                                        <p className="text-sm text-gray-700">{h.label}</p>
-                                                                         <p className="text-xs text-gray-600">{h.details?.patientName} - {h.details?.complaintId}</p>
-                                                                         </>
-                                                                        
+                                                                            <p className="text-sm text-gray-700">{h.label}</p>
+                                                                            <p className="text-xs text-gray-600">{h.details?.patientName} - {h.details?.complaintId}</p>
+                                                                        </>
+
                                                                     )}
 
                                                                     <p className="text-xs text-gray-500">
@@ -1244,367 +1252,389 @@ async function refreshComplaint() {
                                             )}
 
 
-<div className="bg-white border rounded-xl shadow-sm p-3">
+                                            <div className="bg-white border rounded-xl shadow-sm p-3">
 
-    {/* CASE 1: Complaint fully resolved → show only history */}
-    {complaint.status === "resolved" ? (
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-            {loadingHistory ? (
-                <p className="text-center text-gray-500">Loading history...</p>
-            ) : filteredHistory.length === 0 ? (
-                <p className="text-center text-gray-500">No history found.</p>
-            ) : (
-                Array.isArray(filteredHistory) &&
-                filteredHistory.map((h, index) => (
-                    <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
-                    >
-                        <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
-                        <div className="flex-1">
-                            {h.type === "resolved" && (
-                                <>
-                                    <p className="text-sm font-medium text-green-700">
-                                        {formatDepartment(h.label)}
-                                    </p>
-                                    <p className="text-xs text-gray-600">Note: {h.note}</p>
+                                                {/* CASE 1: Complaint fully resolved → show only history */}
+                                                {complaint.status === "resolved" ? (
+                                                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                                                        {loadingHistory ? (
+                                                            <p className="text-center text-gray-500">Loading history...</p>
+                                                        ) : filteredHistory.length === 0 ? (
+                                                            <p className="text-center text-gray-500">No history found.</p>
+                                                        ) : (
+                                                            Array.isArray(filteredHistory) &&
+                                                            filteredHistory.map((h, index) => (
+                                                                <motion.div
+                                                                    key={index}
+                                                                    initial={{ opacity: 0, x: -20 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: index * 0.05 }}
+                                                                    className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
+                                                                >
+                                                                    <div className="flex-shrink-0 w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
+                                                                    <div className="flex-1">
+                                                                        {h.type === "resolved" && (
+                                                                            <>
+                                                                                <p className="text-sm font-medium text-green-700">
+                                                                                    {formatDepartment(h.label)}
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-600">Note: {h.note}</p>
 
-                                    {h.proof &&
-                                        /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
-                                            <a
-                                                href={h.proof}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-xs text-blue-600 underline"
-                                            >
-                                                View Proof
-                                            </a>
-                                        )}
+                                                                                {h.proof &&
+                                                                                    /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(h.proof) && (
+                                                                                        <a
+                                                                                            href={h.proof}
+                                                                                            target="_blank"
+                                                                                            rel="noreferrer"
+                                                                                            className="text-xs text-blue-600 underline"
+                                                                                        >
+                                                                                            View Proof
+                                                                                        </a>
+                                                                                    )}
 
-                                    <p className="text-xs text-gray-500">
-                                        {new Date(h.at).toLocaleString()}
-                                    </p>
-                                </>
-                            )}
-                        </div>
-                    </motion.div>
-                ))
-            )}
-        </div>
-    ) : (
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {new Date(h.at).toLocaleString()}
+                                                                                </p>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </motion.div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                ) : (
 
-        /* CASE 2: User has NO actionable department → show ONLY full history + history button */
-        !actionableDepartment ? (
-            <div className="space-y-3">
-                <button
-                    onClick={() => openModal("history")}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                    <Clock className="w-5 h-5 mr-2" />
-                    View Full History
-                </button>
-            </div>
-        ) : (
+                                                    /* CASE 2: User has NO actionable department → show ONLY full history + history button */
+                                                    !actionableDepartment ? (
+                                                        <div className="space-y-3">
+                                                            <button
+                                                                onClick={() => openModal("history")}
+                                                                className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                                            >
+                                                                <Clock className="w-5 h-5 mr-2" />
+                                                                View Full History
+                                                            </button>
+                                                        </div>
+                                                    ) : (
 
-            /* CASE 3: User CAN take action → show all action buttons */
-            <div className="space-y-3">
+                                                        /* CASE 3: User CAN take action → show all action buttons */
+                                                        <div className="space-y-3">
 
-                <button
-                    onClick={() => openModal("resolve")}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Mark as Resolved
-                </button>
+                                                            <button
+                                                                onClick={() => openModal("resolve")}
+                                                                className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                                            >
+                                                                <CheckCircle className="w-5 h-5 mr-2" />
+                                                                Mark as Resolved
+                                                            </button>
 
-                <button
-                    onClick={() => openModal("in_progress")}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
-                >
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Progress Remark
-                </button>
+                                                            <button
+                                                                onClick={() => openModal("in_progress")}
+                                                                className="w-full flex items-center justify-center px-4 py-3 bg-[#ff8000] text-white rounded-lg hover:bg-[#df7204] transition-colors"
+                                                            >
+                                                                <TrendingUp className="w-5 h-5 mr-2" />
+                                                                Progress Remark
+                                                            </button>
 
-                <button
-                    onClick={() => openModal("forward")}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    <Forward className="w-5 h-5 mr-2" />
-                    Forward to Another Department
-                </button>
+                                                            <button
+                                                                onClick={() => openModal("forward")}
+                                                                className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                            >
+                                                                <Forward className="w-5 h-5 mr-2" />
+                                                                Forward to Another Department
+                                                            </button>
 
-                <button
-                    onClick={() => openModal("escalate")}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Escalate to Higher Authority
-                </button>
+                                                            <button
+                                                                onClick={() => openModal("escalate")}
+                                                                className="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                                            >
+                                                                <TrendingUp className="w-5 h-5 mr-2" />
+                                                                Escalate to Higher Authority
+                                                            </button>
 
-                {/* Always show history button */}
-                <button
-                    onClick={() => openModal("history")}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                    <Clock className="w-5 h-5 mr-2" />
-                    View Full History
-                </button>
-            </div>
-        )
-    )}
-</div>
+                                                            {/* Always show history button */}
+                                                            <button
+                                                                onClick={() => openModal("history")}
+                                                                className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                                            >
+                                                                <Clock className="w-5 h-5 mr-2" />
+                                                                View Full History
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
 
                                         </motion.div>
                                     </div>
 
+
+                                    {previewImage && (
+                                        <div
+                                            className="fixed inset-0 bg-[#000000b9] bg-opacity-70 flex items-center top- justify-center z-[9999]"
+                                            onClick={closeImage}
+                                        >
+                                            <div className="relative max-w-[90%]  h-[70vh]">
+                                                <img
+                                                    src={previewImage}
+                                                    className="max-w-full max-h-full rounded-lg shadow-xl"
+                                                    alt="Preview"
+                                                />
+
+                                                {/* Close Button */}
+                                                <button
+                                                    className="absolute top-2 right-2 bg-white text-black rounded-full px-3 py-1 text-sm font-semibold shadow"
+                                                    onClick={closeImage}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                     {/* Modal 1: Forward to Another Department */}
                                     <AnimatePresence>
-{isForwardModalOpen && (
-<motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 bg-black bg-opacity-50"
-    onClick={closeAllModals}
->
-    <div className="flex items-center justify-center min-h-screen px-4">
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="bg-white rounded-xl shadow-xl sm:max-w-lg w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-        >
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Forward Complaint</h3>
-                <button onClick={closeAllModals}>
-                    <X className="w-6 h-6 text-gray-500 hover:text-gray-700" />
-                </button>
-            </div>
+                                        {isForwardModalOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 bg-black bg-opacity-50"
+                                                onClick={closeAllModals}
+                                            >
+                                                <div className="flex items-center justify-center min-h-screen px-4">
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        className="bg-white rounded-xl shadow-xl sm:max-w-lg w-full p-6"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <div className="flex justify-between items-center mb-6">
+                                                            <h3 className="text-xl font-bold text-gray-900">Forward Complaint</h3>
+                                                            <button onClick={closeAllModals}>
+                                                                <X className="w-6 h-6 text-gray-500 hover:text-gray-700" />
+                                                            </button>
+                                                        </div>
 
-            <div className="space-y-6">
+                                                        <div className="space-y-6">
 
-                {/* From Department - only when >1 available */}
-                {userForwardableDepartments.length > 1 && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            From Department <span className="text-red-500">*</span>
-                        </label>
+                                                            {/* From Department - only when >1 available */}
+                                                            {userForwardableDepartments.length > 1 && (
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        From Department <span className="text-red-500">*</span>
+                                                                    </label>
 
-                        <AnimatedDropdown
-                            isOpen={isFromDeptDropdownOpen}
-                            setIsOpen={setIsFromDeptDropdownOpen}
-                            selected={fromDepartment || "Select Department"}
-                            setSelected={setFromDepartment}
-                            options={userForwardableDepartments.map((k) => DEPT_LABEL[k])}
-                            icon={MapPin}
-                        />
-                    </div>
-                )}
+                                                                    <AnimatedDropdown
+                                                                        isOpen={isFromDeptDropdownOpen}
+                                                                        setIsOpen={setIsFromDeptDropdownOpen}
+                                                                        selected={fromDepartment || "Select Department"}
+                                                                        setSelected={setFromDepartment}
+                                                                        options={userForwardableDepartments.map((k) => DEPT_LABEL[k])}
+                                                                        icon={MapPin}
+                                                                    />
+                                                                </div>
+                                                            )}
 
-                {/* Hidden input when auto-selected */}
-                {userForwardableDepartments.length === 1 && (
-                    <input type="hidden" value={fromDepartment} />
-                )}
+                                                            {/* Hidden input when auto-selected */}
+                                                            {userForwardableDepartments.length === 1 && (
+                                                                <input type="hidden" value={fromDepartment} />
+                                                            )}
 
-                {/* To Department */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        To Department <span className="text-red-500">*</span>
-                    </label>
+                                                            {/* To Department */}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    To Department <span className="text-red-500">*</span>
+                                                                </label>
 
-                    <AnimatedDropdown
-                        isOpen={isForwardDeptDropdownOpen}
-                        setIsOpen={setIsForwardDeptDropdownOpen}
-                        selected={forwardDepartment || "Select Department"}
-                        setSelected={setForwardDepartment}
-                        options={Object.values(DEPT_LABEL).filter(
-                            (d) => d !== fromDepartment
-                        )}
-                        icon={MapPin}
-                    />
-                </div>
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={forwardDepartment || "Select Department"}
+                                                                    setSelected={setForwardDepartment}
+                                                                    options={Object.values(DEPT_LABEL).filter(
+                                                                        (d) => d !== fromDepartment
+                                                                    )}
+                                                                    icon={MapPin}
+                                                                />
+                                                            </div>
 
-                {/* Forward Reason */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason for Forwarding <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                        value={forwardReason}
-                        onChange={(e) => setForwardReason(e.target.value)}
-                        rows={4}
-                        className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        placeholder="Explain why you're forwarding this complaint..."
-                    />
-                </div>
-            </div>
+                                                            {/* Forward Reason */}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Reason for Forwarding <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <textarea
+                                                                    value={forwardReason}
+                                                                    onChange={(e) => setForwardReason(e.target.value)}
+                                                                    rows={4}
+                                                                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                                                    placeholder="Explain why you're forwarding this complaint..."
+                                                                />
+                                                            </div>
+                                                        </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-                <button
-                    onClick={closeAllModals}
-                    className="px-6 py-2 border rounded-lg"
-                >
-                    Cancel
-                </button>
+                                                        <div className="flex justify-end gap-3 mt-6">
+                                                            <button
+                                                                onClick={closeAllModals}
+                                                                className="px-6 py-2 border rounded-lg"
+                                                            >
+                                                                Cancel
+                                                            </button>
 
-                <button
-                    onClick={handleForwardSubmit}
-                    disabled={!forwardDepartment || !forwardReason.trim()}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
-                >
-                    Forward Complaint
-                </button>
-            </div>
-        </motion.div>
-    </div>
-</motion.div>
-)}
-</AnimatePresence>
+                                                            <button
+                                                                onClick={handleForwardSubmit}
+                                                                disabled={!forwardDepartment || !forwardReason.trim()}
+                                                                className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                                                            >
+                                                                Forward Complaint
+                                                            </button>
+                                                        </div>
+                                                    </motion.div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
 
                                     {/* Modal 2: Resolve Complaint */}
-<AnimatePresence>
-  {isResolveModalOpen && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-      onClick={closeAllModals}
-    >
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                    <AnimatePresence>
+                                        {isResolveModalOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+                                                onClick={closeAllModals}
+                                            >
+                                                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
 
-          {/* HEADER */}
-          <div className="bg-white px-6 pt-6 pb-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
-              <button
-                onClick={closeAllModals}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+                                                        {/* HEADER */}
+                                                        <div className="bg-white px-6 pt-6 pb-4">
+                                                            <div className="flex justify-between items-center mb-6">
+                                                                <h3 className="text-xl font-bold text-gray-900">Resolve Complaint</h3>
+                                                                <button
+                                                                    onClick={closeAllModals}
+                                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                                >
+                                                                    <X className="w-6 h-6" />
+                                                                </button>
+                                                            </div>
 
-            <div className="space-y-6">
+                                                            <div className="space-y-6">
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Department <span className="text-red-500">*</span>
-                </label>
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Select Department <span className="text-red-500">*</span>
+                                                                    </label>
 
-                {resolveDepartments.length > 1 ? (
-                  <AnimatedDropdown
-                    isOpen={isForwardDeptDropdownOpen}
-                    setIsOpen={setIsForwardDeptDropdownOpen}
-                    selected={selectedDepartment || "Select Department"}
-                    setSelected={setSelectedDepartment}
-                    options={resolveDepartments.map((k) => DEPT_LABEL[k])}
-                    placeholder="Select Department"
-                    icon={MapPin}
-                  />
-                ) : (
-                  <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
-                    {autoResolveDepartment}
-                  </div>
-                )}
-              </div>
+                                                                    {resolveDepartments.length > 1 ? (
+                                                                        <AnimatedDropdown
+                                                                            isOpen={isForwardDeptDropdownOpen}
+                                                                            setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                            selected={selectedDepartment || "Select Department"}
+                                                                            setSelected={setSelectedDepartment}
+                                                                            options={resolveDepartments.map((k) => DEPT_LABEL[k])}
+                                                                            placeholder="Select Department"
+                                                                            icon={MapPin}
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
+                                                                            {autoResolveDepartment}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
 
-              <div>
-                <div className="flex gap-3 mb-2">
-                  {["RCA", "CA", "PA"].map((type) => (
-                    <button
-                      key={type}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg border transition
-                        ${
-                          selectedType === type
-                            ? "bg-green-100 text-green-700 border-green-500"
-                            : "bg-gray-100 text-gray-700 border-gray-300"
-                        }`}
-                      onClick={() => setSelectedType(type)}
-                      type="button"
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
+                                                                <div>
+                                                                    <div className="flex gap-3 mb-2">
+                                                                        {["RCA", "CA", "PA"].map((type) => (
+                                                                            <button
+                                                                                key={type}
+                                                                                className={`px-4 py-2 text-sm font-medium rounded-lg border transition
+                        ${selectedType === type
+                                                                                        ? "bg-green-100 text-green-700 border-green-500"
+                                                                                        : "bg-gray-100 text-gray-700 border-gray-300"
+                                                                                    }`}
+                                                                                onClick={() => setSelectedType(type)}
+                                                                                type="button"
+                                                                            >
+                                                                                {type}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {selectedType} Note <span className="text-red-500">*</span>
-                  </label>
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            {selectedType} Note <span className="text-red-500">*</span>
+                                                                        </label>
 
-                  <textarea
-                    value={
-                      selectedType === "RCA"
-                        ? rcaNote
-                        : selectedType === "CA"
-                        ? caNote
-                        : paNote
-                    }
-                    onChange={(e) => {
-                      if (selectedType === "RCA") setRcaNote(e.target.value);
-                      if (selectedType === "CA") setCaNote(e.target.value);
-                      if (selectedType === "PA") setPaNote(e.target.value);
-                    }}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                                                        <textarea
+                                                                            value={
+                                                                                selectedType === "RCA"
+                                                                                    ? rcaNote
+                                                                                    : selectedType === "CA"
+                                                                                        ? caNote
+                                                                                        : paNote
+                                                                            }
+                                                                            onChange={(e) => {
+                                                                                if (selectedType === "RCA") setRcaNote(e.target.value);
+                                                                                if (selectedType === "CA") setCaNote(e.target.value);
+                                                                                if (selectedType === "PA") setPaNote(e.target.value);
+                                                                            }}
+                                                                            rows={4}
+                                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
                                focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                    placeholder={`Enter ${selectedType} details...`}
-                  />
-                </div>
-              </div>
+                                                                            placeholder={`Enter ${selectedType} details...`}
+                                                                        />
+                                                                    </div>
+                                                                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Proof (Optional)
-                </label>
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Upload Proof (Optional)
+                                                                    </label>
 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                    accept="image/*,.pdf,.doc,.docx"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center">
-                    <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                    <span className="text-sm text-gray-600 mb-1">Click to upload</span>
-                    <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
-                    {uploadedFile && (
-                      <span className="text-sm text-green-600 mt-2 font-medium">
-                        File: {uploadedFile.name}
-                      </span>
-                    )}
-                  </label>
-                </div>
-              </div>
+                                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                                                                        <input
+                                                                            type="file"
+                                                                            onChange={handleFileUpload}
+                                                                            className="hidden"
+                                                                            id="file-upload"
+                                                                            accept="image/*,.pdf,.doc,.docx"
+                                                                        />
+                                                                        <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                                                                            <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                                                                            <span className="text-sm text-gray-600 mb-1">Click to upload</span>
+                                                                            <span className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</span>
+                                                                            {uploadedFile && (
+                                                                                <span className="text-sm text-green-600 mt-2 font-medium">
+                                                                                    File: {uploadedFile.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
 
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                  <span className="text-sm text-green-800">
-                    Employee will receive an SMS on resolution.
-                  </span>
-                </div>
-              </div>
+                                                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                                                    <div className="flex items-center">
+                                                                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                                                                        <span className="text-sm text-green-800">
+                                                                            Employee will receive an SMS on resolution.
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
 
-            </div>
-          </div>
-           {/* <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                                            </div>
+                                                        </div>
+                                                        {/* <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1726,7 +1756,7 @@ async function refreshComplaint() {
                             
 
           {/* FOOTER BUTTONS */}
-          {/* <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                                                        {/* <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
             <button
               onClick={closeAllModals}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
@@ -1747,31 +1777,31 @@ async function refreshComplaint() {
               Resolve Complaint
             </button>
           </div> */}
-             <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                        <button
-                            onClick={closeAllModals}
-                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Cancel
-                        </button>
+                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                                                            <button
+                                                                onClick={closeAllModals}
+                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            >
+                                                                Cancel
+                                                            </button>
 
-                        <button
-                            onClick={handleResolveSubmit}
-                            disabled={!selectedType || !getCurrentNote()}
-                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 
+                                                            <button
+                                                                onClick={handleResolveSubmit}
+                                                                disabled={!selectedType || !getCurrentNote()}
+                                                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 
                                 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Resolve Complaint
-                        </button>
-                    </div>
-                </motion.div>
-            </div> 
+                                                            >
+                                                                Resolve Complaint
+                                                            </button>
+                                                        </div>
+                                                    </motion.div>
+                                                </div>
 
-        </motion.div>
-    //   </div>
-    // </motion.div>
-  )}
-</AnimatePresence>
+                                            </motion.div>
+                                            //   </div>
+                                            // </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
 
 
@@ -1805,17 +1835,17 @@ async function refreshComplaint() {
 
                                                             <div className="space-y-6">
                                                                 {/* Show dropdown ONLY if multiple departments available */}
-{allowedEscalateDepartments.length > 1 && (
-    <AnimatedDropdown
-        isOpen={isForwardDeptDropdownOpen}
-        setIsOpen={setIsForwardDeptDropdownOpen}
-        selected={selectedDepartment || "Select Department"}
-        setSelected={setSelectedDepartment}
-        options={allowedEscalateDepartments.map((d) => DEPT_LABEL[d])}
-        placeholder="Select Department"
-        icon={MapPin}
-    />
-)}
+                                                                {allowedEscalateDepartments.length > 1 && (
+                                                                    <AnimatedDropdown
+                                                                        isOpen={isForwardDeptDropdownOpen}
+                                                                        setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                        selected={selectedDepartment || "Select Department"}
+                                                                        setSelected={setSelectedDepartment}
+                                                                        options={allowedEscalateDepartments.map((d) => DEPT_LABEL[d])}
+                                                                        placeholder="Select Department"
+                                                                        icon={MapPin}
+                                                                    />
+                                                                )}
 
                                                                 <div>
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">

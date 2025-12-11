@@ -204,6 +204,8 @@ const getStatusColor = (status) => {
             return "bg-blue-100 text-blue-800"
         case "partial":
             return "bg-blue-100 text-blue-800"
+        case "forwarded":
+            return "bg-blue-100 text-blue-800"
         default:
             return "bg-gray-100 text-gray-800"
     }
@@ -227,13 +229,13 @@ function getDoctorName(doc) {
     if (!doc.consultantDoctorName) return "-";
 
     const { name, gujName, hindiName } = doc.consultantDoctorName;
-    const lang = doc.language || "en";  // use complaint language
+    const lang = doc.language || "en"; 
 
     let doctorName = name;
     if (lang === "gu") doctorName = gujName || name;
     else if (lang === "hi") doctorName = hindiName || name;
 
-    // ✅ append qualification
+    // append qualification
     return doctorName;
 }
 
@@ -316,20 +318,31 @@ function getDepartmentsString(doc, allowedBlocks) {
 
 
 // Build multi-line chart series from rows
-function buildTrendData(rows) {
+function buildTrendData(rows, allowedBlocks) {
     const byDay = {};
-    // ✅ ensure all departments always exist in chart
-    const presentDepartments = new Set(CONCERN_KEYS.map((k) => DEPT_LABEL[k]));
+
+    // Convert allowedBlocks → visible department labels
+    const allowedDeptLabels = allowedBlocks
+        .map((key) => DEPT_LABEL[key])
+        .filter(Boolean);
+
+    // Only these departments should appear in the trend chart
+    const presentDepartments = new Set(allowedDeptLabels);
 
     rows.forEach((r) => {
         const day = fmtDateLabel(r.createdAt || r.date);
-        byDay[day] ||= {};
+
+        // Skip departments user cannot see
+        if (!presentDepartments.has(r.department)) return;
+
+        if (!byDay[day]) byDay[day] = {};
         byDay[day][r.department] = (byDay[day][r.department] || 0) + 1;
     });
 
     let days = Object.keys(byDay);
     days.sort((a, b) => Date.parse(a + " 2020") - Date.parse(b + " 2020"));
 
+    // If only 1 day available → add a previous empty day
     if (days.length === 1) {
         const d = new Date();
         d.setDate(d.getDate() - 1);
@@ -340,15 +353,19 @@ function buildTrendData(rows) {
 
     const result = days.map((day) => {
         const obj = { date: day };
+
+        // Fill only allowed departments
         presentDepartments.forEach((dept) => {
             obj[dept] = byDay[day]?.[dept] || 0;
         });
+
         return obj;
     });
 
+    // Department color mapping (only allowed)
     const colors = {};
-    presentDepartments.forEach((d) => {
-        colors[d] = DEPT_COLORS[d] || "#6B7280";
+    presentDepartments.forEach((dept) => {
+        colors[dept] = DEPT_COLORS[dept] || "#6B7280";
     });
 
     return { data: result, colors };
@@ -358,7 +375,7 @@ function buildTrendData(rows) {
 // KPIs from rows
 function computeKpis(rows) {
     const total = rows.length
-    const pending = rows.filter((r) => r.status === "Open").length
+    const pending = rows.filter((r) => r.status === "Open" || r.status === "Partial").length
     const inProgress = rows.filter((r) => r.status === "In Progress").length
     const resolved = rows.filter((r) => r.status === "Resolved").length
     const escalated = rows.filter((r) => r.status === "Escalated").length
@@ -866,33 +883,54 @@ export default function ComplaintManagementDashboard() {
         setKpiData(computeKpis(list));
 
         // Trend chart
-        const { data: tData, colors } = buildTrendData(statsDocs);
+        const { data: tData, colors } = buildTrendData(statsDocs, allowedBlocks);
         setTrendData(tData);
         setDepartmentColors(colors);
 
         // Top-5 departments
-        const deptStats = {};
-        statsDocs.forEach((d) => {
-            if (!deptStats[d.department]) {
-                deptStats[d.department] = { complaints: 0, totalResolution: 0, escalations: 0 };
-            }
-            deptStats[d.department].complaints += 1;
-            deptStats[d.department].totalResolution += d.resolutionTime || 0;
-            if (d.escalated) deptStats[d.department].escalations += 1;
-        });
+        // ===================== TOP 5 DEPARTMENTS (FILTERED BY ALLOWED DEPARTMENTS) =====================
 
-        const top = Object.entries(deptStats)
-            .map(([department, s]) => ({
-                department,
-                complaints: s.complaints,
-                avgResolution: s.complaints ? (s.totalResolution / s.complaints).toFixed(1) + " days" : "-",
-                escalations: s.escalations,
-            }))
-            .sort((a, b) => b.complaints - a.complaints)
-            .slice(0, 5)
-            .map((x, i) => ({ rank: i + 1, ...x }));
+const deptStats = {};
 
-        setTop5Departments(top);
+statsDocs.forEach((d) => {
+    const deptKey = LABEL_TO_KEY[d.department];
+
+    // Skip if no mapping found
+    if (!deptKey) return;
+
+    // Skip if user is NOT allowed to see this department
+    if (!allowedBlocks.includes(deptKey)) return;
+
+    // Continue normal aggregation
+    if (!deptStats[d.department]) {
+        deptStats[d.department] = {
+            complaints: 0,
+            totalResolution: 0,
+            escalations: 0,
+        };
+    }
+
+    deptStats[d.department].complaints += 1;
+    deptStats[d.department].totalResolution += d.resolutionTime || 0;
+    if (d.escalated) deptStats[d.department].escalations += 1;
+});
+
+// Sort and take TOP 5
+const top = Object.entries(deptStats)
+    .map(([department, s]) => ({
+        department,
+        complaints: s.complaints,
+        avgResolution: s.complaints
+            ? (s.totalResolution / s.complaints).toFixed(1) + " days"
+            : "-",
+        escalations: s.escalations,
+    }))
+    .sort((a, b) => b.complaints - a.complaints)
+    .slice(0, 5)
+    .map((x, i) => ({ rank: i + 1, ...x }));
+
+setTop5Departments(top);
+
     }, [rawConcerns, allowedBlocks, filters, selectedStatus, searchTerm]);
 
 

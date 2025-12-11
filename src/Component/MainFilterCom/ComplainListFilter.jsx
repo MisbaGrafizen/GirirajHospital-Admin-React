@@ -45,7 +45,7 @@ export default function ComplainListFilter({ onFilterChange, onExportExcel, onEx
 
 
 
-                <button
+                {/* <button
                       onClick={onExportExcel}
                     className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
@@ -53,13 +53,15 @@ export default function ComplainListFilter({ onFilterChange, onExportExcel, onEx
                     Excel
                 </button>
 
-                     <button
-                      onClick={onExportCapa}
-                    className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <Download className="w-4 h-4 mr-2" />
-                    CAPA
-                </button>
+                {localStorage.getItem("loginType") === "admin" && (
+    <button
+        onClick={onExportCapa}
+        className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
+    >
+        <Download className="w-4 h-4 mr-2" />
+        CAPA
+    </button>
+)} */}
 
             </div>
 

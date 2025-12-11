@@ -48,13 +48,13 @@ export default function EmployeeListFilter({ onFilterChange, onExportExcel }) {
         </div>
 
         {/* Excel Button */}
-        <button
+        {/* <button
         onClick={onExportExcel}
           className="flex items-center px-2 py-[4px] ml-auto w-fit bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
           <Download className="w-4 h-4 mr-2" />
           Excel
-        </button>
+        </button> */}
 
       </div>
     </>

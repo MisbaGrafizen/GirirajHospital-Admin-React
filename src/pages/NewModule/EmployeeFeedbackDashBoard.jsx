@@ -512,6 +512,25 @@ const SERVICE_GROUPS = {
   return rows;
 }
 
+function getDisplayComment(comments, finalComment) {
+  // 1️⃣ If final comment exists → use it
+  if (typeof finalComment === "string" && finalComment.trim()) {
+    return finalComment.trim();
+  }
+
+  // 2️⃣ If comments object exists → extract meaningful values
+  if (comments && typeof comments === "object") {
+    const list = Object.values(comments).filter(
+      (v) => typeof v === "string" && v.trim()
+    );
+    if (list.length) return list.join(" | ");
+  }
+
+  // 3️⃣ Otherwise → show nothing
+  return "";
+}
+
+
 
         // ---------------- Trend helpers ----------------
         function pad2(n) { return String(n).padStart(2, "0"); }
@@ -1486,14 +1505,17 @@ const SERVICE_GROUPS = {
                                                                     {/* <span className="ml-2 text-sm font-medium">{feedback.rating}/5</span> */}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-4 py-2 text-sm text-gray-900  border-gray-200">
+                                                            <td className="px-4 py-2 text-sm text-gray-900 border-gray-200">
+  <div className="flex text-[12px] items-center">
+    {
+      getDisplayComment(
+        feedback.comments,
+        feedback.finalComment // use only if you store finalComment
+      ) || ""
+    }
+  </div>
+</td>
 
-                                                                <div className="flex text-[12px] items-center">
-                                                                    {feedback.comments || "-"}
-
-
-                                                                </div>
-                                                            </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>

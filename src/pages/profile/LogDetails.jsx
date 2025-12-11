@@ -384,7 +384,23 @@ export default function LogDetails() {
             {/* =============== BOARD VIEW (CURRENT DESIGN) =============== */}
             {viewMode === "board" && (
               <div className="flex gap-[20px] overflow-x-auto h-[100%] pb-3 pt-1">
-                {sections.map((sectionName) => {
+                {/* 🔥 Sort sections based on most recent activity */}
+{[...sections]
+  .sort((a, b) => {
+    const latestA = logs.filter(l => l.action.includes(a))
+                        .sort((x, y) => new Date(y.dateRaw) - new Date(x.dateRaw))[0];
+
+    const latestB = logs.filter(l => l.action.includes(b))
+                        .sort((x, y) => new Date(y.dateRaw) - new Date(x.dateRaw))[0];
+
+    if (!latestA && !latestB) return 0;
+    if (!latestA) return 1;
+    if (!latestB) return -1;
+
+    return new Date(latestB.dateRaw) - new Date(latestA.dateRaw);
+  })
+  .map((sectionName) => {
+
                   const sectionLogs = logs
   .filter((l) => l.action.includes(sectionName))
   .sort((a, b) => new Date(b.dateRaw) - new Date(a.dateRaw)); // latest first

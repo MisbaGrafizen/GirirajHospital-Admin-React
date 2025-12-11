@@ -59,6 +59,13 @@ function InfoRow({ icon: Icon, label, value }) {
   )
 }
 
+const COMMENT_SERVICE_LABELS = {
+  trainingNeeded: "Training Needed",
+  challengesSupportNeeded: "Challenges & Support Needed",
+  suggestions: "Suggestions"
+};
+
+
 // ----------------- page -----------------
 export default function EmployeeFeedbackDetails() {
   const { state } = useLocation()
@@ -217,43 +224,42 @@ function RatingRow({ label, score, comment }) {
 
               <div className="my-6 h-px bg-gray-100" />
 
-              {/* Comments */}
-             {/* Final Comments Section */}
-{model.comments &&
-  typeof model.comments === "object" &&
-  Object.values(model.comments).some(
-    (c) =>
-      typeof c === "string" &&
-      c.trim() !== "" &&
-      c.trim().toLowerCase() !== "nothing"
+  {/* Final Comments Section
+  {Object.entries(model.comments).some(
+    ([key, val]) => val && val.trim() !== "" && val.trim().toLowerCase() !== "nothing"
   ) && (
     <div className="mt-6">
       <h3 className="text-base font-semibold text-gray-900 mb-2">
-        Comments (if any)
+        Comments (service-wise)
       </h3>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
+
         {Object.entries(model.comments).map(([key, val]) => {
           if (!val || typeof val !== "string") return null;
 
           const text = val.trim();
           if (!text || text.toLowerCase() === "nothing") return null;
 
+          const label = COMMENT_SERVICE_LABELS[key] || key;
+
           return (
-            <p
+            <div
               key={key}
-              className="text-gray-700 leading-relaxed whitespace-pre-wrap"
+              className="bg-gray-50 border border-gray-200 rounded-lg p-3"
             >
-              • <span className="font-medium capitalize">
-                {key.replace(/([A-Z])/g, " $1")}
-              </span>
-              : {text}
-            </p>
+              <p className="text-sm font-semibold text-gray-900">
+                {label}
+              </p>
+              <p className="text-sm text-gray-700 mt-1">{text}</p>
+            </div>
           );
         })}
+
       </div>
     </div>
-  )}
+  )} */}
+
 
           </div>
         </section>

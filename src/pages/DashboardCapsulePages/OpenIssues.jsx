@@ -117,11 +117,12 @@ export default function OpenIssues() {
           );
 
 
-        // 🔹 Filter by complaint status based on dashboard selection
         // 🔹 Always show only open complaints
-        const filteredByStatus = filteredByDept.filter(
-          (c) => c.status?.toLowerCase() === "open"
-        );
+        const filteredByStatus = filteredByDept.filter((c) => {
+  const status = (c.status || "").toLowerCase();
+  return status === "open" || status === "partial";
+});
+
 
 
         // 🔹 Sort by latest
@@ -154,7 +155,7 @@ export default function OpenIssues() {
   return (
     <section className="flex w-full h-full select-none overflow-hidden">
       <div className="flex w-full flex-col h-screen">
-        <Header pageName={`${filterType} Complaints`} />
+        <Header pageName={`Open/Partial  Complaints`} />
         <div className="flex w-full h-full">
           <CubaSidebar />
 

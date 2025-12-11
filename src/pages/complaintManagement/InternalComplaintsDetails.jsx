@@ -30,7 +30,7 @@ const MODULE_TO_BLOCK = {
     doctor_service: "doctorServices",
     diagnostic_service: "diagnosticServices",
     nursing: "nursing",
-    dietitian: "dietitianServices",
+    dietitian: "dietitian",
     maintenance: "maintenance",
     security: "security",
     billing_service: "billingServices",
@@ -38,6 +38,7 @@ const MODULE_TO_BLOCK = {
     it_department: "itDepartment",
     bio_medical: "bioMedicalDepartment",
     medical_admin: "medicalAdmin",
+    front_desk: "frontDesk",
     pharmacy: "pharmacy",
     accounts: "accounts",
     hr: "hr",
@@ -82,26 +83,23 @@ function resolvePermissions() {
     return { isAdmin, permissionsByBlock, allowedBlocks };
 }
 
-
-
 const DEPT_LABEL = {
-    doctorServices: "Doctor Services",
-    billingServices: "Billing Services",
-    housekeeping: "Housekeeping",
     maintenance: "Maintenance",
-    diagnosticServices: "Diagnostic Services",
-    dietitianServices: "Dietitian Services",
-    security: "Security",
-    nursing: "Nursing",
     itDepartment: "IT Department",
-    bioMedicalDepartment: "Bio Medical",
+    bioMedicalDepartment: "Bio-Medical",
+    nursing: "Nursing",
     medicalAdmin: "Medical Admin",
-    hr: "HR",
+    frontDesk: "Front Desk",
+    housekeeping: "Housekeeping",
+    dietitian: "Dietitian",
     pharmacy: "Pharmacy",
+    security: "Security",
+    hr: "HR",
     icn: "ICN",
     mrd: "MRD",
     accounts: "Accounts",
 };
+
 
 // INTERNAL COMPLAINT DEPARTMENT KEYS (must match backend schema)
 const internalDepartmentKeys = [
@@ -214,6 +212,8 @@ export default function InternalComplaintsDetails() {
     // Dropdown states
     const [isForwardDeptDropdownOpen, setIsForwardDeptDropdownOpen] = useState(false)
     const [isEscalationDropdownOpen, setIsEscalationDropdownOpen] = useState(false)
+    const [isResolveDeptDropdownOpen, setIsResolveDeptDropdownOpen] = useState(false);
+
 
     // Form states
     const [forwardDepartment, setForwardDepartment] = useState("")
@@ -236,9 +236,13 @@ export default function InternalComplaintsDetails() {
     const [caNote, setCaNote] = useState("");
     const [paNote, setPaNote] = useState("");
     const [isFromDeptDropdownOpen, setIsFromDeptDropdownOpen] = useState(false);
-const [selectedFromDepartment, setSelectedFromDepartment] = useState("");
+    const [selectedFromDepartment, setSelectedFromDepartment] = useState("");
 
-const [isEscalateDeptDropdownOpen,setIsEscalateDeptDropdownOpen]= useState(false)
+    const [isEscalateDeptDropdownOpen, setIsEscalateDeptDropdownOpen] = useState(false)
+const [previewImage, setPreviewImage] = useState(null);
+
+const openImage = (src) => setPreviewImage(src);
+const closeImage = () => setPreviewImage(null);
 
     const currentNote =
         selectedType === "RCA"
@@ -278,44 +282,6 @@ const [isEscalateDeptDropdownOpen,setIsEscalateDeptDropdownOpen]= useState(false
 
     const escalationLevels = ["PGRO", "CEO", "Board of Directors", "Medical Director"]
 
-    // 🔹 FIXED ESCALATION USER MAP
-    const ESCALATION_USER_MAP = {
-        "CEO": {
-            _id: "68ef88c724a8a2a8317e0cb3",
-            name: "Jalpa Raichura",
-            email: "jr.grj@feedbacks.live",
-            mobileNumber: "9924022922",
-            fcmTokens: [
-                "eUviBDD32z_4IwQ8IZCnVy:APA91bHiaUvm_fG86tZ6IbQnW6RHGxV-O5sAolZAxpfDUP0zOcnDnoDokG2kJkZWk5SH-OUEV0N0EoSULOEPpMY2hynjEdPjBiYFPDzhgFZT-hme8lTDQr4"
-            ],
-        },
-        "Board of Directors": {
-            _id: "68ef884624a8a2a8317e0cab",
-            name: "Mayank Thakkar",
-            email: "mt.grj@feedbacks.live",
-            mobileNumber: "9924022911",
-            fcmTokens: [
-                "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8",
-                "c06WC1uMbylI6YjNx0qRU7:APA91bFOgOALzusK1HWR_rpZ_NbGFkT10q-NeOg-5034YhdYr65JCz7o1f1IUYTpQ9ulL7unXVerGReU5Z6J3kcwUuJjIaFu737Y6glhcTO0YTh2B9sTB-s",
-                "cNScS4yueulGgnV7j9fcsr:APA91bE4suE86YiiTnPfpLcbGfwMBS4u1adPHA3aFrvyVb_cjPl4eQBh5IY5LklAFM7hN-k7_wMob1PQZUqiUqbTs6nE9XidMHcMH3-5yQonaqV9o032e4E",
-                "c4aaNywdDZj6TRmX90qn6g:APA91bF2RGN3f3JVYqvQm3gpwIyMDqpxoX7TE4KCrEWfte-q3O_aAJrf_8sfDNyMjVrovJuOJEyqj8ILxE9ad_3693ijFE-4MxJix-M28UZyLBmOdPYFfuw",
-                "dO9oS8NgqH3fU_b__GQPwb:APA91bH-rUW8e8vdUYGexL2U9r45Nt1aspKgNqpXD4E_9CcL8HOQMSx3jsZph1MtzBwh2wygpuMFIfzbfUPfs0-XRGT1kihhiXIsywQRf3l-3-caXsBc-2k",
-                "eKxt4jNeMDk5akRGDE_hss:APA91bGDvdxE5awm0ImycsvRF9yPse7_c1la-wGz828OiatqcAe3_tDUCk35Q1fCwYOdedzPZguc8C5x8rpHg80DtPv4s4uAvZnArCQJul2rGS24oN8Frzs",
-                "eKxt4jNeMDk5akRGDE_hss:APA91bHEJcMWaCOG1X3j5Zl8O2HExS3kEqPOlLoHrJgZDMpuIq55l41FiPWnpkrlDWF0LH7FYyxbJ5mhyCH7BSkEp4thz1s62tHObHl4tuAorVIaFCNy-UA"
-            ],
-        },
-        "Medical Director": {
-            _id: "68ef88b124a8a2a8317e0caf",
-            name: "Shivani Kathrotiya",
-            email: "sk.grj@feedbacks.live",
-            mobileNumber: "9924022912",
-            fcmTokens: [
-                "eKxt4jNeMDk5akRGDE_hss:APA91bE0y_7-b6Tl1Xa5o6A1fQwnAT05ZHKmVjMdTTTIwvBKFN_geXjVQb20RgUABqPLDIUilflmyl1Ip5c7-ODZ4IEcvXfItJ9g2KDqqIiSNfx7w99tID8"
-            ],
-        },
-    };
-
-
     const { state } = useLocation();
     const row = state?.complaint || {};
     const fullDoc = state?.doc || row;
@@ -331,51 +297,63 @@ const [isEscalateDeptDropdownOpen,setIsEscalateDeptDropdownOpen]= useState(false
    ⭐ FIND ACTIVE + ALLOWED + ACTIONABLE INTERNAL DEPARTMENTS
 -------------------------------------------------------------- */
 
-// 1️⃣ All internal dept keys → requested by you
-const INTERNAL_KEYS = Object.keys(DEPT_LABEL);
+    // 1️⃣ All internal dept keys → requested by you
+    const INTERNAL_KEYS = Object.keys(DEPT_LABEL);
 
-// 2️⃣ ACTIVE Departments = Dept has text or attachments
-const activeInternalDepartments = INTERNAL_KEYS.filter(
-    (deptKey) => blockHasContent(fullDocState[deptKey])
-);
+    // 2️⃣ ACTIVE Departments = Dept has text or attachments
+    const activeInternalDepartments = internalDepartmentKeys.filter(
+        (deptKey) => blockHasContent(fullDocState[deptKey])
+    );
 
-// 3️⃣ ALLOWED Departments = User permissions allow these
-const allowedInternalDepartments = activeInternalDepartments.filter(
-    (deptKey) => permissionsByBlock[deptKey]
-);
+    // 2️⃣ USER ALLOWED INTERNAL DEPARTMENTS
+    const allowedInternalDepartments = activeInternalDepartments.filter(
+        (deptKey) => permissionsByBlock[deptKey]?.includes("in_progress") ||
+            permissionsByBlock[deptKey]?.includes("update") ||
+            permissionsByBlock[deptKey]
+    );
 
-// 4️⃣ Allowed FORWARD departments
-const allowedForwardDepartments = activeInternalDepartments.filter(
-    (deptKey) => permissionsByBlock[deptKey]?.includes("forward")
-);
+    // 3️⃣ AUTO-SELECT if only ONE department is valid
+    const singleDept =
+        allowedInternalDepartments.length === 1
+            ? allowedInternalDepartments[0]
+            : null;
 
-// 5️⃣ Allowed ESCALATE departments
-const allowedEscalateDepartments = activeInternalDepartments.filter(
-    (deptKey) => permissionsByBlock[deptKey]?.includes("escalate")
-);
+    // 4️⃣ LABEL for displaying
+    const singleDeptLabel = singleDept ? DEPT_LABEL[singleDept] : null;
 
-// 6️⃣ Allowed RESOLVE departments
-const allowedResolveDepartments = activeInternalDepartments.filter(
-    (deptKey) => permissionsByBlock[deptKey]?.includes("resolve")
-);
 
-// 7️⃣ ACTIONABLE department (must not be resolved)
-const actionableInternalDepartment = allowedForwardDepartments.find((deptKey) => {
-    const status = fullDocState[deptKey]?.status?.toLowerCase();
-    return status !== "resolved" && status !== "resolved_by_admin";
-});
+    // 4️⃣ Allowed FORWARD departments
+    const allowedForwardDepartments = activeInternalDepartments.filter(
+        (deptKey) => permissionsByBlock[deptKey]?.includes("forward")
+    );
 
-// Auto-select FROM dept (Forward)
-const autoFromDepartment =
-    allowedForwardDepartments.length === 1
-        ? DEPT_LABEL[allowedForwardDepartments[0]]
-        : null;
+    // 5️⃣ Allowed ESCALATE departments
+    const allowedEscalateDepartments = activeInternalDepartments.filter(
+        (deptKey) => permissionsByBlock[deptKey]?.includes("escalate")
+    );
 
-// Auto-select FROM dept (Escalate)
-const autoEscalateDepartment =
-    allowedEscalateDepartments.length === 1
-        ? DEPT_LABEL[allowedEscalateDepartments[0]]
-        : null;
+    // 6️⃣ Allowed RESOLVE departments
+    const allowedResolveDepartments = activeInternalDepartments.filter(
+        (deptKey) => permissionsByBlock[deptKey]?.includes("resolve")
+    );
+
+    // 7️⃣ ACTIONABLE department (must not be resolved)
+    const actionableInternalDepartment = allowedForwardDepartments.find((deptKey) => {
+        const status = fullDocState[deptKey]?.status?.toLowerCase();
+        return status !== "resolved" && status !== "resolved_by_admin";
+    });
+
+    // Auto-select FROM dept (Forward)
+    const autoFromDepartment =
+        allowedForwardDepartments.length === 1
+            ? DEPT_LABEL[allowedForwardDepartments[0]]
+            : null;
+
+    // Auto-select FROM dept (Escalate)
+    const autoEscalateDepartment =
+        allowedEscalateDepartments.length === 1
+            ? DEPT_LABEL[allowedEscalateDepartments[0]]
+            : null;
 
 
 
@@ -515,6 +493,15 @@ const autoEscalateDepartment =
 
     console.log("actionableDepartment INTERNAL:", actionableDepartment);
 
+    useEffect(() => {
+    if (isResolveModalOpen) {
+        if (resolveDepartments.length === 1) {
+            const onlyDept = resolveDepartments[0];
+            setSelectedDepartment(DEPT_LABEL[onlyDept]);  // Auto-select
+        }
+    }
+}, [isResolveModalOpen, resolveDepartments]);
+
 
     async function fetchComplaintDetails(id) {
         try {
@@ -526,118 +513,184 @@ const autoEscalateDepartment =
         }
     }
 
+    const handleInProgressSubmit = async () => {
+        try {
+            let finalDeptKey = null;
+
+            // CASE 1: Auto-detected single department
+            if (singleDept) {
+                finalDeptKey = singleDept;
+            }
+            // CASE 2: User-selected department
+            else if (selectedDepartment) {
+                finalDeptKey = Object.keys(DEPT_LABEL).find(
+                    (k) => DEPT_LABEL[k] === selectedDepartment
+                );
+            }
+
+            if (!finalDeptKey) {
+                alert("Please select a department.");
+                return;
+            }
+
+            let response;
+
+            // CASE A: Only ONE active internal department → FULL IN-PROGRESS API
+            if (activeInternalDepartments.length === 1) {
+                response = await updateProgressRemarkAPI(
+                    complaint.id,
+                    tempText
+                );
+            }
+
+            // CASE B: MULTI-DEPARTMENT → PARTIAL IN-PROGRESS ENDPOINT
+            else {
+                response = await updateDepartmentProgressAPI(
+                    complaint.id,
+                    finalDeptKey,
+                    tempText,
+                    uploadedFile
+                );
+            }
+
+            // UI Update
+            setComplaintText(tempText);
+
+            const newStatus =
+                response?.data?.status ||
+                response?.data?.data?.status ||
+                "in_progress";
+
+            setStatus(mapStatusUI(newStatus));
+
+            // Refresh complaint + history
+            await refreshComplaint();
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            alert("Progress updated successfully.");
+            setIsEditing(false);
+            setIsOpen(false);
+
+        } catch (error) {
+            console.error("In-Progress Error:", error);
+            alert(error.message || "Failed to update progress.");
+        }
+    };
+
+
 
     // in handleForwardSubmit
-const handleForwardSubmit = async () => {
-    if (!forwardDepartment || !forwardReason.trim()) {
-        alert("Please select department and enter reason");
-        return;
-    }
-
-    try {
-        const loginType = localStorage.getItem("loginType");
-        const isAdmin = loginType === "admin";
-        const userId = localStorage.getItem("userId");
-
-        const isSingleDept = activeInternalDepartments.length === 1;
-
-        /* -----------------------------
-           ⭐ DETERMINE FROM Department
-        ----------------------------- */
-        let fromDeptKey = null;
-
-        if (allowedForwardDepartments.length === 1) {
-            fromDeptKey = allowedForwardDepartments[0];
-        } else if (selectedFromDepartment) {
-            fromDeptKey = DEPT_KEY[selectedFromDepartment];
-        } else if (actionableInternalDepartment) {
-            fromDeptKey = actionableInternalDepartment;
-        } else {
-            alert("Please select FROM department");
+    const handleForwardSubmit = async () => {
+        if (!forwardDepartment || !forwardReason.trim()) {
+            alert("Please select department and enter reason");
             return;
         }
 
-        /* ----------------------------
-           ⭐ DETERMINE TO Department
-        ---------------------------- */
-        const toDeptKey = DEPT_KEY[forwardDepartment];
-        if (!toDeptKey) {
-            alert("Invalid TO department");
-            return;
-        }
+        try {
+            const loginType = localStorage.getItem("loginType");
+            const isAdmin = loginType === "admin";
+            const userId = localStorage.getItem("userId");
 
-        if (toDeptKey === fromDeptKey) {
-            alert("Cannot forward to same department");
-            return;
-        }
+            const isSingleDept = activeInternalDepartments.length === 1;
 
-        /* ----------------------------
-           ⭐ UPLOAD FILE
-        ---------------------------- */
-        let uploadedURL = "";
-        if (uploadedFile) {
-            const uploadRes = await uploadToHPanel(uploadedFile);
-            uploadedURL = uploadRes.url;
-        }
+            /* -----------------------------
+               ⭐ DETERMINE FROM Department
+            ----------------------------- */
+            let fromDeptKey = null;
 
-        /* ----------------------------
-           ⭐ BUILD PAYLOAD
-        ---------------------------- */
-        const fullPayload = {
-            department: toDeptKey,
-            text: forwardReason.trim(),
-            note: forwardReason.trim(),
-            attachments: uploadedURL ? [uploadedURL] : [],
-        };
-
-        const partialPayload = {
-            fromDepartment: fromDeptKey,
-            toDepartment: toDeptKey,
-            note: forwardReason.trim(),
-            attachments: uploadedURL ? [uploadedURL] : [],
-            userId,
-        };
-
-        /* ----------------------------
-           ⭐ SELECT ENDPOINT
-        ---------------------------- */
-        let endpoint = "";
-        let body = {};
-
-        if (isAdmin) {
-            if (isSingleDept) {
-                endpoint = `/admin/internal/${complaint.id}/admin-forward`;
-                body = fullPayload;
+            if (allowedForwardDepartments.length === 1) {
+                fromDeptKey = allowedForwardDepartments[0];
+            } else if (selectedFromDepartment) {
+                fromDeptKey = DEPT_KEY[selectedFromDepartment];
+            } else if (actionableInternalDepartment) {
+                fromDeptKey = actionableInternalDepartment;
             } else {
-                endpoint = `/admin/internal/${complaint.id}/admin-partial-forward`;
-                body = partialPayload;
+                alert("Please select FROM department");
+                return;
             }
-        } else {
-            if (isSingleDept) {
-                endpoint = `/admin/internal/${complaint.id}/forward`;
-                body = fullPayload;
+
+            /* ----------------------------
+               ⭐ DETERMINE TO Department
+            ---------------------------- */
+            const toDeptKey = DEPT_KEY[forwardDepartment];
+            if (!toDeptKey) {
+                alert("Invalid TO department");
+                return;
+            }
+
+            if (toDeptKey === fromDeptKey) {
+                alert("Cannot forward to same department");
+                return;
+            }
+
+            /* ----------------------------
+               ⭐ UPLOAD FILE
+            ---------------------------- */
+            let uploadedURL = "";
+            if (uploadedFile) {
+                const uploadRes = await uploadToHPanel(uploadedFile);
+                uploadedURL = uploadRes.url;
+            }
+
+            /* ----------------------------
+               ⭐ BUILD PAYLOAD
+            ---------------------------- */
+            const fullPayload = {
+                department: toDeptKey,
+                text: forwardReason.trim(),
+                note: forwardReason.trim(),
+                attachments: uploadedURL ? [uploadedURL] : [],
+            };
+
+            const partialPayload = {
+                fromDepartment: fromDeptKey,
+                toDepartment: toDeptKey,
+                note: forwardReason.trim(),
+                attachments: uploadedURL ? [uploadedURL] : [],
+                userId,
+            };
+
+            /* ----------------------------
+               ⭐ SELECT ENDPOINT
+            ---------------------------- */
+            let endpoint = "";
+            let body = {};
+
+            if (isAdmin) {
+                if (isSingleDept) {
+                    endpoint = `/admin/internal/${complaint.id}/admin-forward`;
+                    body = fullPayload;
+                } else {
+                    endpoint = `/admin/internal/${complaint.id}/admin-partial-forward`;
+                    body = partialPayload;
+                }
             } else {
-                endpoint = `/admin/internal/${complaint.id}/partial-forward`;
-                body = partialPayload;
+                if (isSingleDept) {
+                    endpoint = `/admin/internal/${complaint.id}/forward`;
+                    body = fullPayload;
+                } else {
+                    endpoint = `/admin/internal/${complaint.id}/partial-forward`;
+                    body = partialPayload;
+                }
             }
+
+            console.log("FORWARD →", endpoint, body);
+
+            const res = await ApiPost(endpoint, body);
+            alert(res.message || "Forwarded successfully");
+
+            await refreshComplaint();
+
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+        } catch (err) {
+            console.error("Forward Error:", err);
+            alert(err?.response?.data?.message || "Something went wrong.");
         }
-
-        console.log("FORWARD →", endpoint, body);
-
-        const res = await ApiPost(endpoint, body);
-        alert(res.message || "Forwarded successfully");
-
-        await refreshComplaint();
-
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
-
-        closeAllModals();
-    } catch (err) {
-        console.error("Forward Error:", err);
-        alert(err?.response?.data?.message || "Something went wrong.");
-    }
-};
+    };
 
 
 
@@ -671,75 +724,75 @@ const handleForwardSubmit = async () => {
         }
     }
 
-const handleEscalateSubmit = async () => {
-    if (!escalationLevel || !escalationNote.trim()) {
-        alert("Please select level and write note");
-        return;
-    }
-
-    try {
-        const loginType = localStorage.getItem("loginType");
-        const userId = localStorage.getItem("userId");
-
-        const isSingleDept = activeInternalDepartments.length === 1;
-
-        /* ---------------------------
-           ⭐ FIND FROM department
-        --------------------------- */
-        let fromDeptKey = null;
-
-        if (allowedEscalateDepartments.length === 1) {
-            fromDeptKey = allowedEscalateDepartments[0];
-        } else if (selectedDepartment) {
-            fromDeptKey = DEPT_KEY[selectedDepartment];
-        } else if (actionableInternalDepartment) {
-            fromDeptKey = actionableInternalDepartment;
-        } else {
-            alert("Please select department");
+    const handleEscalateSubmit = async () => {
+        if (!escalationLevel || !escalationNote.trim()) {
+            alert("Please select level and write note");
             return;
         }
 
-        /* ---------------------------
-           ⭐ BUILD PAYLOAD
-        --------------------------- */
-        const payload = {
-            department: fromDeptKey,
-            level: escalationLevel,
-            note: escalationNote.trim(),
-            userId,
-        };
+        try {
+            const loginType = localStorage.getItem("loginType");
+            const userId = localStorage.getItem("userId");
 
-        /* ---------------------------
-           ⭐ SELECT ENDPOINT
-        --------------------------- */
-        let endpoint = "";
+            const isSingleDept = activeInternalDepartments.length === 1;
 
-        if (loginType === "admin") {
-            endpoint = isSingleDept
-                ? `/admin/internal/${complaint.id}/admin-escalate`
-                : `/admin/internal/${complaint.id}/admin-partial-escalate`;
-        } else {
-            endpoint = isSingleDept
-                ? `/admin/internal/${complaint.id}/escalate`
-                : `/admin/internal/${complaint.id}/partial-escalate`;
+            /* ---------------------------
+               ⭐ FIND FROM department
+            --------------------------- */
+            let fromDeptKey = null;
+
+            if (allowedEscalateDepartments.length === 1) {
+                fromDeptKey = allowedEscalateDepartments[0];
+            } else if (selectedDepartment) {
+                fromDeptKey = DEPT_KEY[selectedDepartment];
+            } else if (actionableInternalDepartment) {
+                fromDeptKey = actionableInternalDepartment;
+            } else {
+                alert("Please select department");
+                return;
+            }
+
+            /* ---------------------------
+               ⭐ BUILD PAYLOAD
+            --------------------------- */
+            const payload = {
+                department: fromDeptKey,
+                level: escalationLevel,
+                note: escalationNote.trim(),
+                userId,
+            };
+
+            /* ---------------------------
+               ⭐ SELECT ENDPOINT
+            --------------------------- */
+            let endpoint = "";
+
+            if (loginType === "admin") {
+                endpoint = isSingleDept
+                    ? `/admin/internal/${complaint.id}/admin-escalate`
+                    : `/admin/internal/${complaint.id}/admin-partial-escalate`;
+            } else {
+                endpoint = isSingleDept
+                    ? `/admin/internal/${complaint.id}/escalate`
+                    : `/admin/internal/${complaint.id}/partial-escalate`;
+            }
+
+            console.log("ESCALATE →", endpoint, payload);
+
+            const res = await ApiPost(endpoint, payload);
+            alert(`Escalated to ${escalationLevel}`);
+
+            await refreshComplaint();
+
+            const newHistory = await fetchConcernHistory(complaint.id);
+            setHistoryData(newHistory);
+
+            closeAllModals();
+        } catch (error) {
+            console.error("Escalate Error:", error);
+            alert(error?.response?.data?.message || "Something went wrong.");
         }
-
-        console.log("ESCALATE →", endpoint, payload);
-
-        const res = await ApiPost(endpoint, payload);
-        alert(`Escalated to ${escalationLevel}`);
-
-        await refreshComplaint();
-
-        const newHistory = await fetchConcernHistory(complaint.id);
-        setHistoryData(newHistory);
-
-        closeAllModals();
-    } catch (error) {
-        console.error("Escalate Error:", error);
-        alert(error?.response?.data?.message || "Something went wrong.");
-    }
-};
+    };
 
 
     const filteredHistory = useMemo(() => {
@@ -781,6 +834,15 @@ const handleEscalateSubmit = async () => {
     // 🔹 Auto-select if only ONE permitted department
     const autoDepartment =
         allowedDepartmentsList.length === 1 ? DEPT_LABEL[allowedDepartmentsList[0]] : null;
+
+        // Convert UI label → backend dept key safely
+const normalizeDept = (label) => {
+  if (!label) return null;
+  return Object.keys(DEPT_LABEL).find(
+    (key) => DEPT_LABEL[key].toLowerCase() === label.toLowerCase()
+  );
+};
+
 
     const handleResolveSubmit = async () => {
         // 1️⃣ Validation
@@ -912,6 +974,141 @@ const handleEscalateSubmit = async () => {
         }
     };
 
+// const handleResolveSubmit = async () => {
+//     try {
+//         // 1️⃣ Validate selected RCA / CA / PA
+//         if (!selectedType) {
+//             alert("Please select RCA / CA / PA");
+//             return;
+//         }
+
+//         const currentNote =
+//             selectedType === "RCA" ? rcaNote :
+//             selectedType === "CA" ? caNote :
+//             selectedType === "PA" ? paNote : "";
+
+//         if (!currentNote.trim()) {
+//             alert(`Please enter ${selectedType} note`);
+//             return;
+//         }
+
+//         // 2️⃣ Determine backend department key
+//         let deptKey = null;
+//         console.log('selectedDepartment', selectedDepartment)
+
+//         // If user selected manually → normalize
+//         if (selectedDepartment) {
+//             deptKey = normalizeDept(selectedDepartment);
+//         }
+
+//         // Auto-select if only one active dept
+//         if (!deptKey) {
+//             const activeDepartments = internalDepartmentKeys.filter((d) =>
+//                 blockHasContent(fullDocState[d])
+//             );
+
+//             if (activeDepartments.length === 1) {
+//                 deptKey = activeDepartments[0];
+//             }
+//         }
+
+//         // 3️⃣ Final validation
+//         if (!deptKey || !internalDepartmentKeys.includes(deptKey)) {
+//             alert("⚠️ Please select a valid department.");
+//             return;
+//         }
+
+//         // 4️⃣ Upload proof if needed
+//         let proofUrl = "";
+//         if (uploadedFile) {
+//             try {
+//                 const uploadRes = await uploadToHPanel(uploadedFile);
+//                 proofUrl = uploadRes?.url || "";
+//             } catch (e) {
+//                 console.error("Upload Error:", e);
+//                 alert("Failed to upload proof. Try again.");
+//                 return;
+//             }
+//         }
+
+//         // 5️⃣ Determine admin / staff
+//         const isAdmin = localStorage.getItem("loginType") === "admin";
+
+//         // 6️⃣ Count active departments (text or attachments)
+//         const activeDepartments = internalDepartmentKeys.filter((d) =>
+//             blockHasContent(fullDocState[d])
+//         );
+
+//         // 7️⃣ Build backend payload
+//         const payload = {
+//             actionType: selectedType,
+//             note: currentNote.trim(),
+//             department: deptKey,
+//             proof: proofUrl ? [proofUrl] : [],
+//             userId: localStorage.getItem("userId") || "",
+//         };
+
+//         console.log("🟢 RESOLVE PAYLOAD:", payload);
+
+//         // 8️⃣ Select API endpoint
+//         let endpoint = "";
+
+//         if (isAdmin) {
+//             endpoint =
+//                 activeDepartments.length === 1
+//                     ? `/admin/internal/${complaint.id}/admin-resolve`
+//                     : `/admin/internal/${complaint.id}/admin-partial-resolve`;
+//         } else {
+//             endpoint =
+//                 activeDepartments.length === 1
+//                     ? `/admin/internal/${complaint.id}/resolve`
+//                     : `/admin/internal/${complaint.id}/partial-resolve`;
+//         }
+
+//         console.log("🟢 RESOLVE ENDPOINT:", endpoint);
+
+//         // 9️⃣ API call
+//         const res = await ApiPost(endpoint, payload);
+
+//         const newStatus =
+//             res?.data?.status ||
+//             res?.data?.data?.status ||
+//             "resolved";
+
+//         setStatus(mapStatusUI(newStatus));
+
+//         alert(
+//             newStatus === "partial"
+//                 ? "Complaint partially resolved."
+//                 : "Complaint fully resolved."
+//         );
+
+//         // 🔁 Refresh UI & history
+//         await refreshComplaint();
+//         setHistoryData(await fetchConcernHistory(complaint.id));
+
+//         closeAllModals();
+
+//     } catch (err) {
+//         console.error("Resolve Error:", err);
+
+//         const backendMsg =
+//             err?.response?.data?.message ||
+//             err?.response?.data?.error ||
+//             err?.message ||
+//             "";
+
+//         if (
+//             backendMsg.toLowerCase().includes("invalid department") ||
+//             backendMsg.toLowerCase().includes("select a valid department")
+//         ) {
+//             alert("⚠️ Please select a valid department.");
+//             return;
+//         }
+
+//         alert(backendMsg || "Something went wrong while resolving.");
+//     }
+// };
 
     async function fetchConcernHistory(complaintId) {
         try {
@@ -1299,7 +1496,13 @@ const handleEscalateSubmit = async () => {
                                                                                 return (
                                                                                     <div key={i} className="p-2 bg-white border rounded-md">
                                                                                         {isImage ? (
-                                                                                            <img src={att} alt="attachment" className="w-48 h-auto rounded-md border" />
+<img
+    src={att}
+    alt="attachment"
+    onClick={() => openImage(att)}
+    className="w-48 h-auto rounded-md border cursor-pointer hover:opacity-80"
+/>
+
                                                                                         ) : isAudio ? (
                                                                                             <audio controls className="w-full">
                                                                                                 <source src={att} type="audio/mpeg" />
@@ -1520,128 +1723,150 @@ const handleEscalateSubmit = async () => {
 
                                         </motion.div>
                                     </div>
+{previewImage && (
+    <div
+        className="fixed inset-0 bg-[#000000b9] bg-opacity-70 flex items-center top- justify-center z-[9999]"
+        onClick={closeImage}
+    >
+        <div className="relative max-w-[90%]  h-[70vh]">
+            <img
+                src={previewImage}
+                className="max-w-full max-h-full rounded-lg shadow-xl"
+                alt="Preview"
+            />
+
+            {/* Close Button */}
+            <button
+                className="absolute top-2 right-2 bg-white text-black rounded-full px-3 py-1 text-sm font-semibold shadow"
+                onClick={closeImage}
+            >
+                ✕
+            </button>
+        </div>
+    </div>
+)}
 
                                     {/* Modal: Forward to Another Department */}
-<AnimatePresence>
-    {isForwardModalOpen && (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black bg-opacity-50 overflow-y-auto"
-            onClick={closeAllModals}
-        >
-            <div className="flex items-center justify-center min-h-screen px-4 py-6">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-white rounded-xl shadow-xl p-6 sm:max-w-lg w-full"
-                >
-                    {/* ---------- HEADER ---------- */}
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">
-                            Forward Complaint
-                        </h3>
-                        <button onClick={closeAllModals}>
-                            <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
-                        </button>
-                    </div>
+                                    <AnimatePresence>
+                                        {isForwardModalOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 bg-black bg-opacity-50 overflow-y-auto"
+                                                onClick={closeAllModals}
+                                            >
+                                                <div className="flex items-center justify-center min-h-screen px-4 py-6">
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="bg-white rounded-xl shadow-xl p-6 sm:max-w-lg w-full"
+                                                    >
+                                                        {/* ---------- HEADER ---------- */}
+                                                        <div className="flex justify-between items-center mb-6">
+                                                            <h3 className="text-xl font-bold text-gray-900">
+                                                                Forward Complaint
+                                                            </h3>
+                                                            <button onClick={closeAllModals}>
+                                                                <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                                                            </button>
+                                                        </div>
 
-                    {/* ---------- BODY ---------- */}
-                    <div className="space-y-6">
+                                                        {/* ---------- BODY ---------- */}
+                                                        <div className="space-y-6">
 
-                        {/* ⭐ FROM Department only if multiple allowed */}
-                        {allowedForwardDepartments.length > 1 && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    From Department <span className="text-red-500">*</span>
-                                </label>
+                                                            {/* ⭐ FROM Department only if multiple allowed */}
+                                                            {allowedForwardDepartments.length > 1 && (
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        From Department <span className="text-red-500">*</span>
+                                                                    </label>
 
-                                <AnimatedDropdown
-                                    isOpen={isFromDeptDropdownOpen}
-                                    setIsOpen={setIsFromDeptDropdownOpen}
-                                    selected={
-                                        selectedFromDepartment || "Select Department"
-                                    }
-                                    setSelected={setSelectedFromDepartment}
-                                    options={allowedForwardDepartments.map(
-                                        (key) => DEPT_LABEL[key]
-                                    )}
-                                    placeholder="Select From Department"
-                                    icon={MapPin}
-                                />
-                            </div>
-                        )}
+                                                                    <AnimatedDropdown
+                                                                        isOpen={isFromDeptDropdownOpen}
+                                                                        setIsOpen={setIsFromDeptDropdownOpen}
+                                                                        selected={
+                                                                            selectedFromDepartment || "Select Department"
+                                                                        }
+                                                                        setSelected={setSelectedFromDepartment}
+                                                                        options={allowedForwardDepartments.map(
+                                                                            (key) => DEPT_LABEL[key]
+                                                                        )}
+                                                                        placeholder="Select From Department"
+                                                                        icon={MapPin}
+                                                                    />
+                                                                </div>
+                                                            )}
 
-                        {/* ⭐ TO Department */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Forward To <span className="text-red-500">*</span>
-                            </label>
+                                                            {/* ⭐ TO Department */}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Forward To <span className="text-red-500">*</span>
+                                                                </label>
 
-                            <AnimatedDropdown
-                                isOpen={isForwardDeptDropdownOpen}
-                                setIsOpen={setIsForwardDeptDropdownOpen}
-                                selected={forwardDepartment || "Select Department"}
-                                setSelected={setForwardDepartment}
-                                options={Object.values(DEPT_LABEL).filter(
-                                    (label) => label !== selectedFromDepartment
-                                )}
-                                placeholder="Select Department"
-                                icon={MapPin}
-                            />
-                        </div>
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={forwardDepartment || "Select Department"}
+                                                                    setSelected={setForwardDepartment}
+                                                                    options={Object.values(DEPT_LABEL).filter(
+                                                                        (label) => label !== selectedFromDepartment
+                                                                    )}
+                                                                    placeholder="Select Department"
+                                                                    icon={MapPin}
+                                                                />
+                                                            </div>
 
-                        {/* ⭐ REASON */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Reason for Forwarding <span className="text-red-500">*</span>
-                            </label>
+                                                            {/* ⭐ REASON */}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Reason for Forwarding <span className="text-red-500">*</span>
+                                                                </label>
 
-                            <textarea
-                                value={forwardReason}
-                                onChange={(e) => setForwardReason(e.target.value)}
-                                rows={4}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none 
+                                                                <textarea
+                                                                    value={forwardReason}
+                                                                    onChange={(e) => setForwardReason(e.target.value)}
+                                                                    rows={4}
+                                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none 
                                            focus:ring-2 focus:ring-blue-500 resize-none"
-                                placeholder="Enter forward reason..."
-                            />
-                        </div>
+                                                                    placeholder="Enter forward reason..."
+                                                                />
+                                                            </div>
 
-                    </div>
+                                                        </div>
 
-                    {/* ---------- FOOTER ---------- */}
-                    <div className="flex justify-end mt-6 space-x-3">
-                        <button
-                            onClick={closeAllModals}
-                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 
+                                                        {/* ---------- FOOTER ---------- */}
+                                                        <div className="flex justify-end mt-6 space-x-3">
+                                                            <button
+                                                                onClick={closeAllModals}
+                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 
                                        hover:bg-gray-100 transition-colors"
-                        >
-                            Cancel
-                        </button>
+                                                            >
+                                                                Cancel
+                                                            </button>
 
-                        <button
-                            onClick={handleForwardSubmit}
-                            disabled={!forwardDepartment || !forwardReason.trim()}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+                                                            <button
+                                                                onClick={handleForwardSubmit}
+                                                                disabled={!forwardDepartment || !forwardReason.trim()}
+                                                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
                                        disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Forward Complaint
-                        </button>
-                    </div>
-                </motion.div>
-            </div>
-        </motion.div>
-    )}
-</AnimatePresence>
+                                                            >
+                                                                Forward Complaint
+                                                            </button>
+                                                        </div>
+                                                    </motion.div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
 
 
                                     {/* Modal 2: Resolve Complaint */}
                                     <AnimatePresence>
-                                        {isResolveModalOpen && (
+                                       {isResolveModalOpen && (
                                             <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
@@ -1803,7 +2028,7 @@ const handleEscalateSubmit = async () => {
                                             </motion.div>
                                         )}
 
-                                        {/* {isResolveModalOpen && (
+                                         {/* {isResolveModalOpen && (
                                             <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
@@ -1836,14 +2061,17 @@ const handleEscalateSubmit = async () => {
 
                                                                     {resolveDepartments.length > 1 ? (
                                                                         <AnimatedDropdown
-                                                                            isOpen={isForwardDeptDropdownOpen}
-                                                                            setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                            selected={selectedDepartment || "Select Department"}
-                                                                            setSelected={setSelectedDepartment}
-                                                                            options={resolveDepartments.map((k) => DEPT_LABEL[k])}
-                                                                            placeholder="Select Department"
-                                                                            icon={MapPin}
-                                                                        />
+    isOpen={isResolveDeptDropdownOpen}
+    setIsOpen={setIsResolveDeptDropdownOpen}
+    selected={selectedDepartment || "Select Department"}
+    setSelected={(val) => {
+        setSelectedDepartment(val);
+    }}
+    options={resolveDepartments.map((k) => DEPT_LABEL[k])}
+    placeholder="Select Department"
+    icon={MapPin}
+/>
+
                                                                     ) : (
                                                                         <div className="px-4 py-3 bg-gray-100 border rounded-lg text-gray-700">
                                                                             {autoResolveDepartment}
@@ -1939,7 +2167,7 @@ const handleEscalateSubmit = async () => {
                                                             </button>
                                                             <button
                                                                 onClick={handleResolveSubmit}
-                                                                disabled={!note || !selectedType}
+                                                                disabled={!currentNote || !selectedType}
                                                                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                             >
                                                                 Resolve Complaint
@@ -1948,130 +2176,130 @@ const handleEscalateSubmit = async () => {
                                                     </motion.div>
                                                 </div>
                                             </motion.div>
-                                        )} */}
+                                        )}  */}
                                     </AnimatePresence>
 
 
                                     {/* Modal 3: Escalate to Higher Authority */}
                                     <AnimatePresence>
-    {isEscalateModalOpen && (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-            onClick={closeAllModals}
-        >
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-block  overflow-hidden  bg-white !rounded-xl text-left shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-                >
+                                        {isEscalateModalOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+                                                onClick={closeAllModals}
+                                            >
+                                                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 
-                    {/* -------- HEADER -------- */}
-                    <div className=" rounded-[10px]  px-6  pt-6 pb-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-gray-900">Escalate Complaint</h3>
-                            <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="inline-block  overflow-hidden  bg-white !rounded-xl text-left shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                                                    >
 
-                        <div className="space-y-6">
+                                                        {/* -------- HEADER -------- */}
+                                                        <div className=" rounded-[10px]  px-6  pt-6 pb-4">
+                                                            <div className="flex justify-between items-center mb-6">
+                                                                <h3 className="text-xl font-bold text-gray-900">Escalate Complaint</h3>
+                                                                <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600">
+                                                                    <X className="w-6 h-6" />
+                                                                </button>
+                                                            </div>
 
-                            {/* ⭐ FROM Department — Only if multiple allowed */}
-                            {allowedEscalateDepartments.length > 1 && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Select Department <span className="text-red-500">*</span>
-                                    </label>
+                                                            <div className="space-y-6">
 
-                                    <AnimatedDropdown
-                                        isOpen={isEscalateDeptDropdownOpen}
-                                        setIsOpen={setIsEscalateDeptDropdownOpen}
-                                        selected={selectedDepartment || "Select Department"}
-                                        setSelected={setSelectedDepartment}
-                                        options={allowedEscalateDepartments.map(
-                                            (key) => DEPT_LABEL[key]
+                                                                {/* ⭐ FROM Department — Only if multiple allowed */}
+                                                                {allowedEscalateDepartments.length > 1 && (
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Select Department <span className="text-red-500">*</span>
+                                                                        </label>
+
+                                                                        <AnimatedDropdown
+                                                                            isOpen={isEscalateDeptDropdownOpen}
+                                                                            setIsOpen={setIsEscalateDeptDropdownOpen}
+                                                                            selected={selectedDepartment || "Select Department"}
+                                                                            setSelected={setSelectedDepartment}
+                                                                            options={allowedEscalateDepartments.map(
+                                                                                (key) => DEPT_LABEL[key]
+                                                                            )}
+                                                                            placeholder="Select Department"
+                                                                            icon={MapPin}
+                                                                        />
+                                                                    </div>
+                                                                )}
+
+                                                                {/* ⭐ ESCALATION LEVEL */}
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Select Escalation Level <span className="text-red-500">*</span>
+                                                                    </label>
+
+                                                                    <AnimatedDropdown
+                                                                        isOpen={isEscalationDropdownOpen}
+                                                                        setIsOpen={setIsEscalationDropdownOpen}
+                                                                        selected={escalationLevel || "Select Escalation Level"}
+                                                                        setSelected={setEscalationLevel}
+                                                                        options={escalationLevels}
+                                                                        placeholder="Select Level"
+                                                                        icon={TrendingUp}
+                                                                    />
+                                                                </div>
+
+                                                                {/* ⭐ ESCALATION NOTE */}
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                        Escalation Note <span className="text-red-500">*</span>
+                                                                    </label>
+
+                                                                    <textarea
+                                                                        value={escalationNote}
+                                                                        onChange={(e) => setEscalationNote(e.target.value)}
+                                                                        rows={4}
+                                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                                                                        placeholder="Provide escalation reason..."
+                                                                    />
+                                                                </div>
+
+                                                                {/* ⚠️ WARNING BOX */}
+                                                                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                                                                    <div className="flex items-center">
+                                                                        <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
+                                                                        <span className="text-sm text-red-800">
+                                                                            Higher authority will receive system + email notification.
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+
+                                                        {/* -------- FOOTER -------- */}
+                                                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                                                            <button
+                                                                onClick={closeAllModals}
+                                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                                            >
+                                                                Cancel
+                                                            </button>
+
+                                                            <button
+                                                                onClick={handleEscalateSubmit}
+                                                                disabled={!escalationLevel || !escalationNote.trim()}
+                                                                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                                            >
+                                                                Escalate Complaint
+                                                            </button>
+                                                        </div>
+
+                                                    </motion.div>
+                                                </div>
+                                            </motion.div>
                                         )}
-                                        placeholder="Select Department"
-                                        icon={MapPin}
-                                    />
-                                </div>
-                            )}
-
-                            {/* ⭐ ESCALATION LEVEL */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Select Escalation Level <span className="text-red-500">*</span>
-                                </label>
-
-                                <AnimatedDropdown
-                                    isOpen={isEscalationDropdownOpen}
-                                    setIsOpen={setIsEscalationDropdownOpen}
-                                    selected={escalationLevel || "Select Escalation Level"}
-                                    setSelected={setEscalationLevel}
-                                    options={escalationLevels}
-                                    placeholder="Select Level"
-                                    icon={TrendingUp}
-                                />
-                            </div>
-
-                            {/* ⭐ ESCALATION NOTE */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Escalation Note <span className="text-red-500">*</span>
-                                </label>
-
-                                <textarea
-                                    value={escalationNote}
-                                    onChange={(e) => setEscalationNote(e.target.value)}
-                                    rows={4}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                                    placeholder="Provide escalation reason..."
-                                />
-                            </div>
-
-                            {/* ⚠️ WARNING BOX */}
-                            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                                <div className="flex items-center">
-                                    <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
-                                    <span className="text-sm text-red-800">
-                                        Higher authority will receive system + email notification.
-                                    </span>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    {/* -------- FOOTER -------- */}
-                    <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-                        <button
-                            onClick={closeAllModals}
-                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                        >
-                            Cancel
-                        </button>
-
-                        <button
-                            onClick={handleEscalateSubmit}
-                            disabled={!escalationLevel || !escalationNote.trim()}
-                            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                        >
-                            Escalate Complaint
-                        </button>
-                    </div>
-
-                </motion.div>
-            </div>
-        </motion.div>
-    )}
-</AnimatePresence>
+                                    </AnimatePresence>
 
 
                                     {/* Modal 4: Full History */}
@@ -2334,15 +2562,23 @@ const handleEscalateSubmit = async () => {
 
                                                         {/* Content */}
                                                         <div className="px-6 py-4 mb-4 max-h-[calc(90vh-120px)] overflow-y-auto">
-                                                            <AnimatedDropdown
-                                                                isOpen={isForwardDeptDropdownOpen}
-                                                                setIsOpen={setIsForwardDeptDropdownOpen}
-                                                                selected={selectedDepartment || "Select Department"}
-                                                                setSelected={setSelectedDepartment}
-                                                                options={forwardDepartments}
-                                                                placeholder="Select Department"
-                                                                icon={MapPin}
-                                                            />
+                                                            {/* AUTO-DEPARTMENT MODE */}
+                                                            {singleDept ? (
+                                                                <div className="mb-4 px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-medium">
+                                                                    Department: {singleDeptLabel}
+                                                                </div>
+                                                            ) : (
+                                                                <AnimatedDropdown
+                                                                    isOpen={isForwardDeptDropdownOpen}
+                                                                    setIsOpen={setIsForwardDeptDropdownOpen}
+                                                                    selected={selectedDepartment || "Select Department"}
+                                                                    setSelected={setSelectedDepartment}
+                                                                    options={forwardDepartments}
+                                                                    placeholder="Select Department"
+                                                                    icon={MapPin}
+                                                                />
+                                                            )}
+
                                                             {/* Patient Info */}
                                                             <motion.div
                                                                 initial={{ opacity: 0, x: -20 }}
@@ -2459,60 +2695,7 @@ const handleEscalateSubmit = async () => {
                                                                 Close
                                                             </button>
                                                             <button
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        let response;
-
-                                                                        if (selectedDepartment) {
-                                                                            // 🔹 Partial In-Progress
-                                                                            const deptKey = Object.keys(DEPT_LABEL).find(
-                                                                                (k) => DEPT_LABEL[k] === selectedDepartment
-                                                                            );
-
-                                                                            response = await updateDepartmentProgressAPI(
-                                                                                complaint.id,
-                                                                                deptKey,
-                                                                                tempText,
-                                                                                uploadedFile
-                                                                            );
-
-                                                                            alert(
-                                                                                response?.message ||
-                                                                                `Department ${selectedDepartment} marked In-Progress.`
-                                                                            );
-                                                                        } else {
-                                                                            // 🔹 Full In-Progress
-                                                                            response = await updateProgressRemarkAPI(complaint.id, tempText);
-
-                                                                            alert(response?.message || "Progress remark updated successfully");
-                                                                        }
-
-                                                                        // ✅ Update local text
-                                                                        if (response?.data?.note || response?.updatedConcern?.note) {
-                                                                            setComplaintText(response.data?.note || response.updatedConcern.note);
-                                                                        } else {
-                                                                            setComplaintText(tempText);
-                                                                        }
-
-                                                                        // ✅ Update complaint status immediately
-                                                                        const newStatus =
-                                                                            response?.data?.status ||
-                                                                            response?.data?.data?.status ||
-                                                                            "in_progress";
-                                                                        setStatus(mapStatusUI(newStatus));
-
-                                                                        // ✅ Refresh timeline for UI
-                                                                        const newHistory = await fetchConcernHistory(complaint.id);
-                                                                        setHistoryData(newHistory);
-
-                                                                        setIsEditing(false);
-                                                                        setIsOpen(false);
-                                                                    } catch (error) {
-                                                                        console.error("Progress Remark Error:", error);
-                                                                        alert(error.message || "Failed to update progress");
-                                                                    }
-                                                                }}
-
+                                                                onClick={handleInProgressSubmit}
                                                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
                                                             >
                                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

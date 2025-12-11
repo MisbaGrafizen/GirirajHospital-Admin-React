@@ -108,6 +108,7 @@ const DEPARTMENT_MODULES = [
   { id: "diagnostic_service", name: "Diagnostic Services", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "it_department", name: "IT Department", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "bio_medical", name: "Bio Medical", permissions: ["View", "Forward", "Escalate", "Resolve"] },
+  { id: "front_desk", name: "Front Desk", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "medical_admin", name: "Medical Admin", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "pharmacy", name: "Pharmacy", permissions: ["View", "Forward", "Escalate", "Resolve"] },
   { id: "hr", name: "HR", permissions: ["View", "Forward", "Escalate", "Resolve"] },
