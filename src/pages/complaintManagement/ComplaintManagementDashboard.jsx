@@ -558,6 +558,7 @@ export default function ComplaintManagementDashboard() {
     const [top5Departments, setTop5Departments] = useState([]);
     const [rawConcerns, setRawConcerns] = useState([]);
     const [tatComplaints, setTatComplaints] = useState([]);
+    const [wardSummary, setWardSummary] = useState([]);
     const [internalComplaints, setInternalComplaints] = useState([]);
     const doctorOptions = useMemo(() => {
         const unique = new Set();
@@ -663,27 +664,123 @@ export default function ComplaintManagementDashboard() {
     }, []);
 
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await ApiGet("/admin/complaint-summary");
-                const summary = res?.floorSummary || [];
+useEffect(() => {
+    let alive = true;
 
-                const total = summary.reduce((acc, s) => acc + s.count, 0);
+    (async () => {
+        try {
+            const res = await ApiGet("/admin/complaint-summary");
+            if (!alive) return;
 
-                setDepartmentData(
-                    summary.map((s, idx) => ({
-                        label: s.ward,
-                        count: s.count,
-                        percentage: total > 0 ? Math.round((s.count / total) * 100) : 0,
-                        color: ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6"][idx % 5],
-                    }))
-                );
-            } catch (err) {
-                console.error("Error loading ward summary:", err);
-            }
-        })();
-    }, []);
+            setWardSummary(res?.floorSummary || []);
+        } catch (err) {
+            console.error("Error loading complaint-summary:", err);
+            setWardSummary([]);
+        }
+    })();
+
+    return () => {
+        alive = false;
+    };
+}, []); // 👈 runs once only
+
+
+useEffect(() => {
+    if (
+        !Array.isArray(rawConcerns) ||
+        rawConcerns.length === 0 ||
+        !Array.isArray(wardSummary) ||
+        wardSummary.length === 0
+    ) {
+        setDepartmentData([]);
+        return;
+    }
+
+    // 🔁 Apply SAME filters as table
+    const filteredDocs = applyFilters(
+        rawConcerns,
+        filters,
+        allowedBlocks,
+        selectedStatus,
+        searchTerm
+    );
+
+    if (!filteredDocs.length) {
+        setDepartmentData([]);
+        return;
+    }
+
+    // 🔧 Normalize helper
+    const normalize = (v) =>
+        String(v || "")
+            .toLowerCase()
+            .replace(/\s+/g, "")
+            .trim();
+
+    // 1️⃣ Count wards from FILTERED complaints
+    const wardCountMap = {};
+
+    filteredDocs.forEach((doc) => {
+        let ward =
+            doc.ward ||
+            doc.floor ||
+            doc.floorName ||
+            "Unknown Floor";
+
+        if (!ward || String(ward).trim() === "") {
+            ward = "Unknown Floor";
+        }
+
+        const key = normalize(ward);
+        wardCountMap[key] = (wardCountMap[key] || 0) + 1;
+    });
+
+    // 2️⃣ Merge with backend ward list
+    const merged = wardSummary.map((s) => {
+        const key = normalize(s.ward);
+        return {
+            ward: s.ward || "Unknown Floor",
+            count: wardCountMap[key] || 0,
+        };
+    });
+
+    // 3️⃣ Remove zero-count wards
+    const visible = merged.filter((s) => s.count > 0);
+
+    if (!visible.length) {
+        setDepartmentData([]);
+        return;
+    }
+
+    // 4️⃣ Prepare donut chart data
+    const total = visible.reduce((acc, s) => acc + s.count, 0);
+
+    const chartData = visible.map((s, idx) => ({
+        label: s.ward,
+        count: s.count,
+        percentage:
+            total > 0 ? Math.round((s.count / total) * 100) : 0,
+        color: [
+            "#3B82F6",
+            "#EF4444",
+            "#10B981",
+            "#F59E0B",
+            "#8B5CF6",
+            "#22C55E",
+        ][idx % 6],
+    }));
+
+    setDepartmentData(chartData);
+}, [
+    rawConcerns,
+    wardSummary,
+    filters,
+    selectedStatus,
+    searchTerm,
+    allowedBlocks,
+]);
+
+
 
 
     const [rows, setRows] = useState([])
